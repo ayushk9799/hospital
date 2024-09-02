@@ -11,6 +11,7 @@ import PharmacyReports from "../components/custom/pharmacy/PharmacyReports";
 import PharmacyDashboard from "../components/custom/pharmacy/PharmacyDashboard";
 import Supplier from "../components/custom/pharmacy/Supplier";
 import ItemsMaster from "../components/custom/pharmacy/ItemsMaster";
+import PatientBill from "../components/custom/pharmacy/PatientBill";
 
 const Pharmacy = () => {
   return (
@@ -23,6 +24,7 @@ const Pharmacy = () => {
           <TabsTrigger value="purchases">Purchases</TabsTrigger>
           <TabsTrigger value="itemsMaster">Items Master</TabsTrigger>
           <TabsTrigger value="reports">Reports</TabsTrigger>
+          <TabsTrigger value="billing">Patient Bill</TabsTrigger>
         </TabsList>
         <TabsContent value="dashboard"><PharmacyDashboard /></TabsContent>
         <TabsContent value="sales"><Sales /></TabsContent>
@@ -30,6 +32,7 @@ const Pharmacy = () => {
         <TabsContent value="purchases"><Purchase /></TabsContent>
         <TabsContent value="reports"><PharmacyReports /></TabsContent>
         <TabsContent value="itemsMaster"><ItemsMaster /></TabsContent>
+        <TabsContent value="billing"><PatientBill /></TabsContent>
       </Tabs>
     </div>
   );

@@ -6,8 +6,8 @@ import { Badge } from "../../ui/badge";
 import { CircleCheckBigIcon, EllipsisVerticalIcon, SearchIcon } from 'lucide-react'
 import { Input } from "../../ui/input";
 
-const PatientEntry = ({ name, id, timing, status }) => (
-  <div className="py-2 px-4 bg-white shadow rounded-lg mb-2">
+const PatientEntry = ({ name, id, timing, status, onSelect }) => (
+  <div className="py-2 px-4 bg-white shadow rounded-lg mb-2" onClick={() => onSelect({ name, id, timing, status })}>
     <div className="flex justify-between items-center">
       <div>
         <h3 className="font-semibold">{name} <span className="text-xs text-gray-500">({id})</span></h3>
@@ -43,7 +43,7 @@ const PatientEntry = ({ name, id, timing, status }) => (
   </div>
 );
 
-const AppointmentsQueue = () => {
+const AppointmentsQueue = ({ onPatientSelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
 
   const patients = {
@@ -136,18 +136,18 @@ const AppointmentsQueue = () => {
         <div className="flex-grow overflow-auto">
           <TabsContent value="today">
             {filteredPatients.today.map((patient) => (
-              <PatientEntry key={patient.id} {...patient} status="today" />
+              <PatientEntry key={patient.id} {...patient} status="today" onSelect={onPatientSelect} />
             ))}
           </TabsContent>
           <TabsContent value="waiting">
             {filteredPatients.waiting.map((patient) => (
-              <PatientEntry key={patient.id} {...patient} status="waiting" />
+              <PatientEntry key={patient.id} {...patient} status="waiting" onSelect={onPatientSelect} />
             ))}
           </TabsContent>
           <TabsContent value="engaging">
             {filteredPatients.engaging.length > 0 ? (
               filteredPatients.engaging.map((patient) => (
-                <PatientEntry key={patient.id} {...patient} status="engaging" />
+                <PatientEntry key={patient.id} {...patient} status="engaging" onSelect={onPatientSelect} />
               ))
             ) : (
               <div className="p-4 text-center text-gray-500">No patients currently engaging</div>
@@ -155,7 +155,7 @@ const AppointmentsQueue = () => {
           </TabsContent>
           <TabsContent value="done">
             {filteredPatients.done.map((patient) => (
-              <PatientEntry key={patient.id} {...patient} status="done" />
+              <PatientEntry key={patient.id} {...patient} status="done" onSelect={onPatientSelect} />
             ))}
           </TabsContent>
         </div>

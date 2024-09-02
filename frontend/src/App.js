@@ -6,6 +6,7 @@ import VerticalNav from "./components/custom/Navigations/VerticalNav";
 import HorizontalNav from "./components/custom/Navigations/HorizontalNav";
 import Dashboard from "./pages/Dashboard";
 import Billings from "./pages/Billings";
+import Doctors from "./pages/Doctors";
 import Patients from "./pages/Patients";
 import PatientDetails from "./pages/PatientDetails";
 import Rooms from "./pages/Rooms";
@@ -40,6 +41,7 @@ const App = () => {
               <Route path="/patients" Component={Patients} />
               <Route path="/patients/:patientId" Component={PatientDetails} />
               <Route path="/appointments" Component={Appointments} />
+              <Route path="/doctors" Component={Doctors} />
               <Route path="/rooms" Component={Rooms} />
               <Route path="/reports" Component={Reports} />
               <Route path="/settings" Component={Settings} />

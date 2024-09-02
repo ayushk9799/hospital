@@ -7,6 +7,7 @@ import {
   CommandItem,
   CommandList,
 } from "../components/ui/command"
+import { Input } from "../components/ui/input"
 
 const suggestedItems = ["rajiv", "ranjan", "meme", "task"];
 
@@ -14,8 +15,8 @@ export default function Settings() {
   const [isOpen, setIsOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
 
-  const handleInputChange = (value) => {
-    setInputValue(value);
+  const handleInputChange = (e) => {
+    setInputValue(e.target.value);
     setIsOpen(true);
   };
 
@@ -25,16 +26,18 @@ export default function Settings() {
   };
 
   const handleInputClick = () => {
-    setIsOpen(true);
+    setIsOpen(!isOpen);
   };
-
+console.log(inputValue);
   return (
     <Command className="rounded-lg border shadow-md md:min-w-[450px]">
-      <CommandInput 
+      <Input 
         placeholder="Type a command or search..." 
+        type="text"
         value={inputValue}
-        onValueChange={handleInputChange}
+        onChange={handleInputChange}
         onClick={handleInputClick}
+        className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
       />
       {isOpen && (
         <CommandList>

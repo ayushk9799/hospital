@@ -13,7 +13,7 @@ const AppointmentHeader = () => {
     <header className="bg-white text-gray-800 px-4 py-2 flex justify-between items-center shadow-sm border-b border-gray-200 h-[50px]">
       <div className="flex items-center space-x-2">
         <CalendarIcon className="h-4 w-4" />
-        <h1 className="text-base font-semibold">Calendar</h1>
+        <h1 className="text-base font-semibold">Appointment List</h1>
       </div>
       <div className="flex items-center space-x-2">
         <Button variant="ghost" size="xs" className="text-gray-600 hover:bg-gray-100" onClick={() => setDate(prev => new Date(prev.setDate(prev.getDate() - 1)))}>
