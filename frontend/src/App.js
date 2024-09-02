@@ -15,6 +15,7 @@ import StaffProfile from './pages/StaffProfile';
 import Appointments from './pages/Appointments';
 import Analytics from './pages/Analytics';
 import Pharmacy from './pages/Pharmacy';
+import PharmacyAllBills from './pages/PharmacyAllBills';
 
 const App = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -39,6 +40,7 @@ const App = () => {
               <Route path='/staff/:staffId' Component={StaffProfile} />
               <Route path='/analytics' Component={Analytics} />
               <Route path='/pharmacy' Component={Pharmacy} />
+              <Route path='/pharmacy/all-bills' Component={PharmacyAllBills} />
             </Routes>
           </main>
         </div>

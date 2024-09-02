@@ -9,15 +9,21 @@ import { Plus, Pencil, Trash } from 'lucide-react'  // Add this import
 const SalesBody = () => {
   const [searchType, setSearchType] = useState("itemName")
   const [items, setItems] = useState([
-    { id: 1, name: 'Paracetamol', unit: 10, pack: '10', batchNo: 'B001', mrp: 50, qty: 100, disc: 0, base: 'Base 1', amount: 5000 },
-    { id: 2, name: 'Amoxicillin', unit: 15, pack: '15', batchNo: 'B002', mrp: 75, qty: 50, disc: 5, base: 'Base 1', amount: 3562.5 },
-    { id: 3, name: 'Ibuprofen', unit: 20, pack: '20', batchNo: 'B003', mrp: 60, qty: 75, disc: 2, base: 'Base 1', amount: 4410 },
+    { id: 1, name: 'Paracetamol', mrp: 50, qty: 100, disc: 0 },
+    { id: 2, name: 'Amoxicillin', mrp: 75, qty: 50, disc: 5 },
+    { id: 3, name: 'Ibuprofen', mrp: 60, qty: 75, disc: 2 },
   ])
 
   const handleSearchTypeChange = (value) => {
     setSearchType(value)
     // You can add additional logic here, e.g., triggering a search
     console.log("Search type changed to:", value)
+  }
+
+  const calculateAmount = (mrp, qty, disc) => {
+    const amount = mrp * qty;
+    const discountAmount = amount * (disc / 100);
+    return amount - discountAmount;
   }
 
   return (
@@ -54,13 +60,9 @@ const SalesBody = () => {
           <TableRow className='bg-blue-200 border-2 border-blue-300 hover:bg-blue-200'>
             <TableHead className="h-7">Sr.</TableHead>
             <TableHead className="h-7">Item Name</TableHead>
-            <TableHead className="h-7">Unit</TableHead>
-            <TableHead className="h-7">Pack</TableHead>
-            <TableHead className="h-7">Batch No</TableHead>
             <TableHead className="h-7">MRP</TableHead>
             <TableHead className="h-7">Qty</TableHead>
             <TableHead className="h-7">Disc</TableHead>
-            <TableHead className="h-7">Base</TableHead>
             <TableHead className="h-7">Amount</TableHead>
             <TableHead className="h-7">Action</TableHead>
           </TableRow>
@@ -69,13 +71,9 @@ const SalesBody = () => {
           <TableRow className='border-2 border-blue-300'>
             <TableCell></TableCell>
             <TableCell><Input type="text" placeholder="Item Name" className="h-7 text-sm" /></TableCell>
-            <TableCell className="w-20"><Input type="text" placeholder="Unit" className="h-7 text-sm" /></TableCell>
-            <TableCell className="w-20"><Input type="text" placeholder="Pack" className="h-7 text-sm" /></TableCell>
-            <TableCell className="w-[120px]"><Input type="text" placeholder="Batch No" className="h-7 text-sm" /></TableCell>
-            <TableCell>₹0.00</TableCell>
-            <TableCell className="w-20"><Input type="text" placeholder="Qty" className="h-7 text-sm" /></TableCell>
-            <TableCell className="w-20"><Input type="text" placeholder="Disc" className="h-7 text-sm" /></TableCell>
-            <TableCell>Base 1</TableCell>
+            <TableCell className="w-[120px]"><Input type="number" placeholder="MRP" className="h-7 text-sm w-[100px]" /></TableCell>
+            <TableCell className="w-[120px]"><Input type="text" placeholder="Qty" className="h-7 text-sm" /></TableCell>
+            <TableCell className="w-[120px]"><Input type="text" placeholder="Disc" className="h-7 text-sm" /></TableCell>
             <TableCell>₹0.00</TableCell>
             <TableCell>
               <Button size="icon" variant="outline" className="h-7 w-7 mr-1">
@@ -86,28 +84,27 @@ const SalesBody = () => {
               </Button>
             </TableCell>
           </TableRow>
-          {items.map((item) => (
-            <TableRow key={item.id}>
-              <TableCell>{item.id}</TableCell>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>{item.unit}</TableCell>
-              <TableCell>{item.pack}</TableCell>
-              <TableCell>{item.batchNo}</TableCell>
-              <TableCell>₹{item.mrp.toFixed(2)}</TableCell>
-              <TableCell>{item.qty}</TableCell>
-              <TableCell>{item.disc}%</TableCell>
-              <TableCell>{item.base}</TableCell>
-              <TableCell>₹{item.amount.toFixed(2)}</TableCell>
-              <TableCell>
-                <Button size="icon" variant="outline" className="h-7 w-7 mr-1">
-                  <Pencil className="h-4 w-4" />
-                </Button>
-                <Button size="icon" variant="outline" className="h-7 w-7">
-                  <Trash className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
+          {items.map((item) => {
+            const amount = calculateAmount(item.mrp, item.qty, item.disc);
+            return (
+              <TableRow key={item.id}>
+                <TableCell>{item.id}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell>₹{item.mrp}</TableCell>
+                <TableCell>{item.qty}</TableCell>
+                <TableCell>{item.disc}%</TableCell>
+                <TableCell>₹{amount.toFixed(2)}</TableCell>
+                <TableCell>
+                  <Button size="icon" variant="outline" className="h-7 w-7 mr-1">
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                  <Button size="icon" variant="outline" className="h-7 w-7">
+                    <Trash className="h-4 w-4" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            );
+          })}
         </TableBody>
       </Table>
       
