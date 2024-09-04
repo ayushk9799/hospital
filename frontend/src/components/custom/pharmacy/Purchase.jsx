@@ -20,7 +20,7 @@ import {
 } from "../../ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Label } from "../../ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+// import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { ChevronRight } from "lucide-react";
 import { BriefcaseMedicalIcon } from "lucide-react";
 import { supplierArray } from "./Supplier";

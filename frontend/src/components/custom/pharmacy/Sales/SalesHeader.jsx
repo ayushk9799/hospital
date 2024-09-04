@@ -8,10 +8,12 @@ import {
   SelectValue,
 } from "../../../ui/select"
 import { ChevronRight, BriefcaseMedicalIcon } from "lucide-react"
+import SalesTodayDialog from './SalesTodayDialog'
 
 export default function Component() {
   const [salesOn, setSalesOn] = useState("MRP")
   const [saleType, setSaleType] = useState("SALE")
+  const [isSalesTodayOpen, setIsSalesTodayOpen] = useState(false)
 
   return (
     <header className="flex items-center justify-between p-1 bg-gray-100 border-b">
@@ -43,19 +45,19 @@ export default function Component() {
             <SelectItem value="RETURN">RETURN</SelectItem>
           </SelectContent>
         </Select>
-        <Button variant="default" size="sm" className="bg-green-600 hover:bg-green-700 text-white text-xs">
-          Patient List
-        </Button>
-        <Button variant="default" size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs">
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
+          onClick={() => setIsSalesTodayOpen(true)}
+        >
           Sales Today
         </Button>
         <Button variant="default" size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs">
-          Show List
-        </Button>
-        <Button variant="destructive" size="sm" className="text-xs">
-          Clear Screen
+          Patient List
         </Button>
       </div>
+      <SalesTodayDialog isOpen={isSalesTodayOpen} setIsOpen={setIsSalesTodayOpen} />
     </header>
   )
 }
