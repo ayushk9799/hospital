@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { format, subDays, isWithinInterval, startOfDay, endOfDay, startOfWeek, parseISO, isBefore, subMonths } from 'date-fns'
 import { 
   Table, 
@@ -51,6 +51,7 @@ import { cn } from "../lib/utils"
 import { useNavigate } from 'react-router-dom'
 import PatientRegistration from '../components/custom/registration/OPDRegDialog'
 import IPDRegDialog from '../components/custom/registration/IPDRegDialog'
+import { useSelector } from 'react-redux'
 
 // Sample patient data
 const patients = [
@@ -127,6 +128,8 @@ const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
   )
 }
 
+// Add this selector function at the top of your file, outside of the component
+
 export default function Patients() {
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
@@ -138,33 +141,42 @@ export default function Patients() {
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false)
   const [registrationType, setRegistrationType] = useState(null)
 
+  // Use the useSelector hook to get the patients from the Redux store
+  const patients = useSelector((state) => state.patients.patientlist);
+  const doctors = useSelector((state) => state.staff.doctors);
+  const staff = useSelector((state) => state.staff.staffMembers);
+   console.log(patients);
+   console.log(doctors);
+   console.log(staff);
+
+  // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
+
   const filteredPatients = patients.filter(patient => {
-    const nameMatch = patient.name.toLowerCase().includes(searchTerm.toLowerCase())
-    const typeMatch = activeTab === 'All' || patient.type === activeTab
-    const statusMatch = filterStatus === 'All' || patient.status === filterStatus
+    const nameMatch = patient.patient.name.toLowerCase().includes(searchTerm.toLowerCase())
+    
     
     let dateMatch = true
-    const visitDate = parseISO(patient.lastVisit)
+    const visitDate = patient.bookingDate;
     const today = new Date()
 
-    switch (dateFilter) {
-      case 'Today':
-        dateMatch = isWithinInterval(visitDate, { start: startOfDay(today), end: endOfDay(today) })
-        break
-      case 'Yesterday':
-        dateMatch = isWithinInterval(visitDate, { start: startOfDay(subDays(today, 1)), end: endOfDay(subDays(today, 1)) })
-        break
-      case 'LastWeek':
-        dateMatch = isWithinInterval(visitDate, { start: startOfWeek(subDays(today, 7)), end: endOfDay(today) })
-        break
-      case 'Custom':
-        if (dateRange.from && dateRange.to) {
-          dateMatch = isWithinInterval(visitDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })
-        }
-        break
-    }
+    // switch (dateFilter) {
+    //   case 'Today':
+    //     dateMatch = isWithinInterval(visitDate, { start: startOfDay(today), end: endOfDay(today) })
+    //     break
+    //   case 'Yesterday':
+    //     dateMatch = isWithinInterval(visitDate, { start: startOfDay(subDays(today, 1)), end: endOfDay(subDays(today, 1)) })
+    //     break
+    //   case 'LastWeek':
+    //     dateMatch = isWithinInterval(visitDate, { start: startOfWeek(subDays(today, 7)), end: endOfDay(today) })
+    //     break
+    //   case 'Custom':
+    //     if (dateRange.from && dateRange.to) {
+    //       dateMatch = isWithinInterval(visitDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })
+    //     }
+    //     break
+    // }
 
-    return nameMatch && typeMatch && statusMatch && dateMatch
+    return nameMatch && dateMatch
   })
 
   const PatientTable = ({ patients }) => {
@@ -179,10 +191,8 @@ export default function Patients() {
             <TableHead>Mobile</TableHead>
             <TableHead>Gender</TableHead>
             <TableHead>Doctor</TableHead>
-            <TableHead>Last Visit</TableHead>
-            <TableHead>Frequency</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Type</TableHead>
-            <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -196,14 +206,13 @@ export default function Patients() {
                   className="p-0 h-auto font-normal"
                   onClick={() => navigate(`/patients/${patient.id}`)}
                 >
-                  {patient.name}
+                  {patient.patient.name}
                 </Button>
               </TableCell>
-              <TableCell>{patient.mobile}</TableCell>
-              <TableCell>{patient.gender}</TableCell>
-              <TableCell>{patient.doctor}</TableCell>
-              <TableCell>{patient.lastVisit}</TableCell>
-              <TableCell>{patient.frequency}</TableCell>
+              <TableCell>{patient.patient.contactNumber}</TableCell>
+              <TableCell>{patient.patient.gender}</TableCell>
+              <TableCell>{patient.doctor || '--'}</TableCell>
+              <TableCell>{patient.bookingDate}</TableCell>
               <TableCell>
                 <Badge variant={
                   patient.type === 'OPD' ? 'secondary' :
@@ -213,19 +222,7 @@ export default function Patients() {
                   {patient.type}
                 </Badge>
               </TableCell>
-              <TableCell>
-                <Badge 
-                  variant={
-                    patient.status === 'Active' ? 'default' :
-                    patient.status === 'Admitted' ? 'secondary' :
-                    patient.status === 'Discharged' ? 'outline' :
-                    patient.status === 'Critical' ? 'destructive' :
-                    'warning'
-                  }
-                >
-                  {patient.status}
-                </Badge>
-              </TableCell>
+             
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

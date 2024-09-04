@@ -1,13 +1,6 @@
 import mongoose from "mongoose";
 import {hospitalPlugin} from '../plugins/hospitalPlugin.js'
-// const scheduleSchema = new mongoose.Schema({
-//   date: { type: Date, required: true },
-//   startTime: { type: Date, required: true },
-//   endTime: { type: Date, required: true },
-//   eventName: { type: String, required: true },
-//   eventType: { type: String, required: true },
-//   notes: String
-// });
+
 
 const staffSchema = new mongoose.Schema({
   name: {
@@ -46,19 +39,16 @@ const staffSchema = new mongoose.Schema({
   address: {
     type: String,
   },
-  dateOfBirth: Date,
+  dateOfBirth: String,
   gender: { type: String, enum: ["Male", "Female", "Other"] },
-  hireDate: { type: Date},
+  hireDate:String,
   qualifications: [String],
   certifications: [String],
   shift: {
     type: { type: String, enum: ["Morning", "Afternoon", "Night", "Rotating"] },
     hours: { start: String, end: String },
   },
-  salary: {
-    amount: Number,
-    currency: String,
-  },
+  salary: Number,
   payrollInfo: {
     bankName: String,
     accountNumber: String,

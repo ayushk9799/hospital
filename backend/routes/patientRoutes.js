@@ -63,7 +63,7 @@ router.post('/', verifyToken, checkPermission('write:patients'), async (req, res
 });
 
 // Get all patients (All authenticated staff)
-router.post('/search', verifyToken, async (req, res) => {
+router.post('/search', async (req, res) => {
   try {
     const { name, date, patientType, dateAdmitted, dateDischarged } = req.body;
     
@@ -104,7 +104,47 @@ router.post('/search', verifyToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+router.get('/details', verifyToken, async (req, res) => {
+  try {
+    const visits = await Visit.find()
+      .populate('patient', 'name dateOfBirth gender contactNumber email address bloodType')
+      .populate('doctor', 'name')
+     
 
+    const ipdAdmissions = await IPDAdmission.find()
+      .populate('patient', 'name dateOfBirth gender contactNumber email address bloodType')
+      .populate('assignedDoctor', 'name')
+      .populate('assignedRoom', 'roomNumber type')
+      
+
+    const processedVisits = visits.map(visit => ({
+      _id: visit._id,
+      bookingNumber: visit.bookingNumber,
+      patient: visit.patient,
+      bookingDate: visit.bookingDate,
+      doctor: visit.doctor,
+      reasonForVisit: visit.reasonForVisit,
+      type: 'OPD'
+    }));
+
+    const processedAdmissions = ipdAdmissions.map(admission => ({
+      _id: admission._id,
+      bookingNumber: admission.bookingNumber,
+      patient: admission.patient,
+      bookingDate: admission.bookingDate,
+      doctor: admission.assignedDoctor,
+      assignedRoom: admission.assignedRoom,
+      reasonForAdmission: admission.reasonForAdmission,
+      type: 'IPD'
+    }));
+
+    const combinedData = [...processedVisits, ...processedAdmissions];
+
+    res.json(combinedData);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 // Get a specific patient by ID (All authenticated staff)
 router.get('/:id', verifyToken, async (req, res) => {
   try {
@@ -137,7 +177,6 @@ router.put('/:id', verifyToken, checkPermission("write:patients"), async (req, r
 }
 });
 
-// Delete a patient (Admin and Manager only)
 router.delete('/:id', verifyToken, checkPermission("write:patients"),  async (req, res) => {
   try {
     const patient = await Patient.findByIdAndDelete(req.params.id);
@@ -285,24 +324,6 @@ router.post('/:id/revisit', verifyToken, checkPermission('write:patients'), asyn
 });
 
 // Get all details from visits and IPD admissions with populated patient information
-router.get('/details', verifyToken, async (req, res) => {
-  try {
-    const visits = await Visit.find()
-      .populate('patient', 'name dateOfBirth gender contactNumber email')
-      .populate('doctor', 'name');
 
-    const ipdAdmissions = await IPDAdmission.find()
-      .populate('patient', 'name dateOfBirth gender contactNumber email')
-      .populate('assignedDoctor', 'name')
-      .populate('assignedRoom', 'roomNumber type');
-
-    res.json({
-      visits: visits,
-      ipdAdmissions: ipdAdmissions
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 export default router;

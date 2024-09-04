@@ -38,4 +38,4 @@ const patientSchema = new mongoose.Schema({
   },
 });
 patientSchema.plugin(hospitalPlugin)
-export const Patient = mongoose.model("patient", patientSchema);
+export const Patient = mongoose.model("Patient", patientSchema);

@@ -13,7 +13,6 @@ const orderSchema = new mongoose.Schema({
   orderDate: { type: Date, default: Date.now },
 });
 
-// Add this pre-save middleware
 
 
 orderSchema.plugin(hospitalPlugin);
