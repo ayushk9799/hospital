@@ -41,7 +41,7 @@ const staffSlice = createSlice({
   },
   reducers: {
     getDoctors: (state, action) => {
-      state.doctors = state.staffMembers.filter(
+      state.doctors = state.staffMembers?.filter(
         (staff) => staff.role.includes('doctor')
       );
     },

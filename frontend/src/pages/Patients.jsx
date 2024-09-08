@@ -136,7 +136,7 @@ export default function Patients() {
   const [dateFilter, setDateFilter] = useState('All')
   const [dateRange, setDateRange] = useState({ from: null, to: null })
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null })
-  const [activeTab, setActiveTab] = useState('All')
+  const [activeTab, setActiveTab] = useState('OPD')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false)
   const [registrationType, setRegistrationType] = useState(null)
@@ -179,32 +179,36 @@ export default function Patients() {
     return nameMatch && dateMatch
   })
 
-  const PatientTable = ({ patients }) => {
+  const PatientTable = ({ patients, type }) => {
     const navigate = useNavigate()
 
     return (
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>ID</TableHead>
+            <TableHead>S.No</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Mobile</TableHead>
             <TableHead>Gender</TableHead>
             <TableHead>Doctor</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Type</TableHead>
+            {type === 'IPD' && (
+              <>
+                <TableHead>Date of Admission</TableHead>
+                <TableHead>Date of Discharge</TableHead>
+              </>
+            )}
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {patients.map((patient) => (
-            <TableRow key={patient.id}>
-              <TableCell>{patient.id}</TableCell>
+            <TableRow key={patient.bookingNumber}>
+                <TableCell>{patient.bookingNumber}</TableCell>
               <TableCell>
                 <Button
                   variant="link"
                   className="p-0 h-auto font-normal"
-                  onClick={() => navigate(`/patients/${patient.id}`)}
+                  onClick={() => navigate(`/patients/${patient.patient._id}`)}
                 >
                   {patient.patient.name}
                 </Button>
@@ -212,17 +216,12 @@ export default function Patients() {
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
               <TableCell>{patient.doctor || '--'}</TableCell>
-              <TableCell>{patient.bookingDate}</TableCell>
-              <TableCell>
-                <Badge variant={
-                  patient.type === 'OPD' ? 'secondary' :
-                  patient.type === 'IPD' ? 'default' :
-                  'destructive'
-                }>
-                  {patient.type}
-                </Badge>
-              </TableCell>
-             
+              {type === 'IPD' && (
+                <>
+                  <TableCell>{patient.dateOfAdmission || '--'}</TableCell>
+                  <TableCell>{patient.dateOfDischarge || '--'}</TableCell>
+                </>
+              )}
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -272,12 +271,10 @@ export default function Patients() {
           open={isIPDDialogOpen}
           onOpenChange={setIsIPDDialogOpen}
         />
-        <Tabs defaultValue="All" className="w-full" onValueChange={setActiveTab}>
+        <Tabs defaultValue="OPD" className="w-full" onValueChange={setActiveTab}>
           <TabsList>
-            <TabsTrigger value="All">All</TabsTrigger>
             <TabsTrigger value="OPD">OPD</TabsTrigger>
             <TabsTrigger value="IPD">IPD</TabsTrigger>
-            <TabsTrigger value="Emergency">Emergency</TabsTrigger>
           </TabsList>
           <div className="flex flex-col space-y-4 mb-4 mt-4">
           <div className="flex justify-between items-center">
@@ -373,17 +370,11 @@ export default function Patients() {
           </div>
           
         </div>
-          <TabsContent value="All">
-            <PatientTable patients={filteredPatients} />
-          </TabsContent>
           <TabsContent value="OPD">
-            <PatientTable patients={filteredPatients.filter(p => p.type === 'OPD')} />
+            <PatientTable patients={filteredPatients.filter(p => p.type === 'OPD')} type="OPD" />
           </TabsContent>
           <TabsContent value="IPD">
-            <PatientTable patients={filteredPatients.filter(p => p.type === 'IPD')} />
-          </TabsContent>
-          <TabsContent value="Emergency">
-            <PatientTable patients={filteredPatients.filter(p => p.type === 'Emergency')} />
+            <PatientTable patients={filteredPatients.filter(p => p.type === 'IPD')} type="IPD" />
           </TabsContent>
         </Tabs>
       </CardContent>

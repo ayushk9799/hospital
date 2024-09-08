@@ -28,8 +28,8 @@ const patientSchema = new mongoose.Schema({
     required: true,
     default: "OPD",
   },
-  admissionDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "IPDAdmission" }],
-  visits: [ { type: mongoose.Schema.Types.ObjectId, ref: "Visit" } ],
+  admissionDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "ipdAdmission" }],
+  visits: [ { type: mongoose.Schema.Types.ObjectId, ref: "visit" } ],
     
   insuranceDetails: {
     provider: String,

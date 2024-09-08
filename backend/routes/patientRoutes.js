@@ -35,6 +35,7 @@ router.post('/', verifyToken, checkPermission('write:patients'), async (req, res
         ...visit,
         patient: patient._id
       });
+      patient.visits.push(admissionRecord._id);
     } else if (patientType === 'IPD') {
       if (!admission) {
         throw new Error('Admission details are required for IPD patients');
@@ -44,12 +45,12 @@ router.post('/', verifyToken, checkPermission('write:patients'), async (req, res
         ...admission,
         patient: patient._id
       });
+      patient.admissionDetails.push(admissionRecord._id);
     }
 
     await admissionRecord.save({ session });
 
     // Add admission reference to patient
-    patient.admissionDetails = [admissionRecord._id];
     await patient.save({ session });
 
     await session.commitTransaction();
@@ -148,7 +149,7 @@ router.get('/details', verifyToken, async (req, res) => {
 // Get a specific patient by ID (All authenticated staff)
 router.get('/:id', verifyToken, async (req, res) => {
   try {
-    const patient = await Patient.findById(req.params.id);
+    const patient = await Patient.findById(req.params.id).populate('visits').populate('admissionDetails');
     if (!patient) {
       return res.status(404).json({ error: 'Patient not found' });
     }
