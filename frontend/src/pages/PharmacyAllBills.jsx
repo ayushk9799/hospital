@@ -45,24 +45,24 @@ import { cn } from "../lib/utils";
 import ViewBillDialog from "../components/custom/pharmacy/reports/ViewBillDialog";
 
 const recentBillsArray = [
-  { billNo: "#B001234", dateTime: "2023-06-15 14:30", customer: "John Doe", amount: 78.50, status: "Paid", items: [
+  { billNo: "#B001234", dateTime: "2023-06-15 14:30", customer: "John Doe", amount: 78.50, status: "Paid", paymentMethod: "Cash", items: [
     { name: "Paracetamol", quantity: 2, price: 15.00 },
     { name: "Amoxicillin", quantity: 1, price: 48.50 }
   ]},
-  { billNo: "#B001235", dateTime: "2023-06-15 15:15", customer: "Jane Smith", amount: 125.00, status: "Pending", items: [
+  { billNo: "#B001235", dateTime: "2023-06-15 15:15", customer: "Jane Smith", amount: 125.00, status: "Pending", paymentMethod: "UPI", items: [
     { name: "Ibuprofen", quantity: 1, price: 20.00 },
     { name: "Vitamin C", quantity: 2, price: 30.00 },
     { name: "Allergy Medication", quantity: 1, price: 75.00 }
   ]},
-  { billNo: "#B001236", dateTime: "2023-06-15 16:00", customer: "Bob Johnson", amount: 45.75, status: "Paid", items: [
+  { billNo: "#B001236", dateTime: "2023-06-15 16:00", customer: "Bob Johnson", amount: 45.75, status: "Paid", paymentMethod: "Card", items: [
     { name: "Cough Syrup", quantity: 1, price: 25.75 },
     { name: "Throat Lozenges", quantity: 2, price: 10.00 }
   ]},
-  { billNo: "#B001237", dateTime: "2023-06-15 16:45", customer: "Alice Brown", amount: 92.30, status: "Paid", items: [
+  { billNo: "#B001237", dateTime: "2023-06-15 16:45", customer: "Alice Brown", amount: 92.30, status: "Paid", paymentMethod: "Cash", items: [
     { name: "Blood Pressure Medication", quantity: 1, price: 65.30 },
     { name: "Multivitamins", quantity: 1, price: 27.00 }
   ]},
-  { billNo: "#B001238", dateTime: "2023-06-15 17:30", customer: "Charlie Davis", amount: 63.20, status: "Pending", items: [
+  { billNo: "#B001238", dateTime: "2023-06-15 17:30", customer: "Charlie Davis", amount: 63.20, status: "Pending", paymentMethod: "UPI", items: [
     { name: "Antacid", quantity: 1, price: 18.20 },
     { name: "Pain Relief Gel", quantity: 1, price: 45.00 }
   ]},
@@ -262,6 +262,7 @@ const PharmacyAllBills = () => {
               <TableHead>Date & Time</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Payment Method</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
@@ -277,6 +278,7 @@ const PharmacyAllBills = () => {
                     {bill.status}
                   </Badge>
                 </TableCell>
+                <TableCell>{bill.paymentMethod}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"

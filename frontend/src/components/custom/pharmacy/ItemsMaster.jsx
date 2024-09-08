@@ -37,7 +37,7 @@ import { Badge } from "../../ui/badge";
 import AddItemDialog from "./itemMaster/AddItemDialog"; // Import the AddItemDialog component
 import EditItemDialog from "./itemMaster/EditItemDialog"; // Import the EditItemDialog component
 
-const sampleItems = [
+export const sampleItems = [
   {
     id: "1",
     name: "Aspirin",
