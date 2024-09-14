@@ -4,6 +4,7 @@ import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Card } from '../components/ui/card';
+import { Textarea } from '../components/ui/textarea';
 import { PlusCircle, X } from 'lucide-react';
 
 const labReportFields = {
@@ -217,6 +218,78 @@ const labReportFields = {
       { name: 'antibody_identification', label: 'Antibody Identification', unit: '', normalRange: 'None detected' },
     ],
   },
+  'radiology': {
+    'ct-scan': [
+      { name: 'study_area', label: 'Study Area', unit: '', normalRange: 'N/A' },
+      { name: 'contrast_used', label: 'Contrast Used', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'mri': [
+      { name: 'study_area', label: 'Study Area', unit: '', normalRange: 'N/A' },
+      { name: 'sequence_used', label: 'Sequences Used', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'ultrasonography': [
+      { name: 'study_area', label: 'Study Area', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'x-ray': [
+      { name: 'study_area', label: 'Study Area', unit: '', normalRange: 'N/A' },
+      { name: 'view', label: 'View', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'ivp-intravenous-pyelogram': [
+      { name: 'contrast_used', label: 'Contrast Used', unit: '', normalRange: 'N/A' },
+      { name: 'kidney_function', label: 'Kidney Function', unit: '', normalRange: 'N/A' },
+      { name: 'ureter_visibility', label: 'Ureter Visibility', unit: '', normalRange: 'N/A' },
+      { name: 'bladder_appearance', label: 'Bladder Appearance', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'ct-kub': [
+      { name: 'kidney_appearance', label: 'Kidney Appearance', unit: '', normalRange: 'N/A' },
+      { name: 'ureter_status', label: 'Ureter Status', unit: '', normalRange: 'N/A' },
+      { name: 'bladder_appearance', label: 'Bladder Appearance', unit: '', normalRange: 'N/A' },
+      { name: 'calculi_presence', label: 'Calculi Presence', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'pet-scan': [
+      { name: 'radiopharmaceutical', label: 'Radiopharmaceutical Used', unit: '', normalRange: 'N/A' },
+      { name: 'uptake_areas', label: 'Areas of Uptake', unit: '', normalRange: 'N/A' },
+      { name: 'suv_max', label: 'SUV Max', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'mammography': [
+      { name: 'breast_composition', label: 'Breast Composition', unit: '', normalRange: 'N/A' },
+      { name: 'mass_presence', label: 'Mass Presence', unit: '', normalRange: 'N/A' },
+      { name: 'calcifications', label: 'Calcifications', unit: '', normalRange: 'N/A' },
+      { name: 'birads_category', label: 'BIRADS Category', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'bone-densitometry-dexa': [
+      { name: 'lumbar_spine_bmd', label: 'Lumbar Spine BMD', unit: 'g/cm²', normalRange: 'N/A' },
+      { name: 'lumbar_spine_tscore', label: 'Lumbar Spine T-score', unit: '', normalRange: 'N/A' },
+      { name: 'femoral_neck_bmd', label: 'Femoral Neck BMD', unit: 'g/cm²', normalRange: 'N/A' },
+      { name: 'femoral_neck_tscore', label: 'Femoral Neck T-score', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+    'angiography': [
+      { name: 'study_area', label: 'Study Area', unit: '', normalRange: 'N/A' },
+      { name: 'contrast_used', label: 'Contrast Used', unit: '', normalRange: 'N/A' },
+      { name: 'vessel_patency', label: 'Vessel Patency', unit: '', normalRange: 'N/A' },
+      { name: 'stenosis_presence', label: 'Stenosis Presence', unit: '', normalRange: 'N/A' },
+      { name: 'findings', label: 'Findings', unit: '', normalRange: 'N/A' },
+      { name: 'impression', label: 'Impression', unit: '', normalRange: 'N/A' },
+    ],
+  },
 };
 
 const CreateLabReport = () => {
@@ -265,28 +338,38 @@ const CreateLabReport = () => {
             {fields.map((field) => (
               <div key={field.name} className="flex flex-col">
                 <Label htmlFor={field.name} className="mb-1">{field.label}</Label>
-                <div className="flex items-center">
-                  <Input
-                    type="number"
+                {field.name === 'findings' || field.name === 'impression' ? (
+                  <Textarea
                     id={field.name}
                     name={field.name}
                     value={field.value}
                     onChange={(e) => handleInputChange(e, field.name)}
-                    className="mr-2"
-                    step="0.01"
+                    className="h-32"
                   />
-                  <span className="text-sm text-gray-500 w-16">{field.unit}</span>
-                  {!labReportFields[category][type].some(f => f.name === field.name) && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleRemoveField(field.name)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
+                ) : (
+                  <div className="flex items-center">
+                    <Input
+                      type={field.unit ? "number" : "text"}
+                      id={field.name}
+                      name={field.name}
+                      value={field.value}
+                      onChange={(e) => handleInputChange(e, field.name)}
+                      className="mr-2"
+                      step={field.unit ? "0.01" : undefined}
+                    />
+                    {field.unit && <span className="text-sm text-gray-500 w-16">{field.unit}</span>}
+                    {!labReportFields[category][type].some(f => f.name === field.name) && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleRemoveField(field.name)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                )}
                 {field.normalRange && (
                   <span className="text-xs text-gray-500 mt-1">Normal Range: {field.normalRange}</span>
                 )}

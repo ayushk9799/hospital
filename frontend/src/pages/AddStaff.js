@@ -99,10 +99,10 @@ export default function AddStaff() {
 
   const addQualification = () => {
     if (newQualification.trim()) {
-      setFormData({
-        ...formData,
-        qualifications: [...formData.qualifications, newQualification.trim()]
-      });
+      setFormData(prevData => ({
+        ...prevData,
+        qualifications: [...(prevData.qualifications || []), newQualification.trim()]
+      }));
       setNewQualification("");
     }
   };
@@ -114,10 +114,10 @@ export default function AddStaff() {
 
   const addCertification = () => {
     if (newCertification.trim()) {
-      setFormData({
-        ...formData,
-        certifications: [...formData.certifications, newCertification.trim()]
-      });
+      setFormData(prevData => ({
+        ...prevData,
+        certifications: [...(prevData.certifications || []), newCertification.trim()]
+      }));
       setNewCertification("");
     }
   };

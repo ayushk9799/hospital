@@ -1,13 +1,15 @@
 import React, { useState } from 'react'
 import { Button } from "../../ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select"
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, UserPlus } from "lucide-react"
+import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle } from "lucide-react"
 import { Calendar } from "../../ui/calendar"
 import { format } from 'date-fns'
 import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover"
+import AddEventModal from './AddEventModal'
 
 const AppointmentHeader = () => {
   const [date, setDate] = useState(new Date())
+  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false)
 
   return (
     <header className="bg-white text-gray-800 px-4 py-2 flex justify-between items-center shadow-sm border-b border-gray-200 h-[50px]">
@@ -47,11 +49,11 @@ const AppointmentHeader = () => {
             <SelectItem value="all">All Dr. Yogesh Bala...</SelectItem>
           </SelectContent>
         </Select>
-        {/* <Button variant="secondary" size="xs" className="bg-blue-500 text-white hover:bg-blue-600 h-8 px-5">Add Patient</Button> */}
-        <Button variant="outline" size="xs" className="h-8 px-5">
-          <UserPlus className="mr-2 h-4 w-4" /> Add Patient
+        <Button variant="outline" size="xs" className="h-8 px-5" onClick={() => setIsAddEventModalOpen(true)}>
+          <PlusCircle className="mr-2 h-4 w-4" /> Add Event
         </Button>
       </div>
+      <AddEventModal isOpen={isAddEventModalOpen} onClose={() => setIsAddEventModalOpen(false)} />
     </header>
   )
 }

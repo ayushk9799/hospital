@@ -143,6 +143,7 @@ export default function Patients() {
 
   // Use the useSelector hook to get the patients from the Redux store
   const patients = useSelector((state) => state.patients.patientlist);
+  console.log(patients);
   const doctors = useSelector((state) => state.staff.doctors);
   const staff = useSelector((state) => state.staff.staffMembers);
    console.log(patients);

@@ -7,29 +7,46 @@ export const fetchStaffMembers = createAsyncThunk(
   'staff/fetchStaffMembers',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/staff`,{headers:{'Content-Type':'application/json'},credentials:'include'});
+      const response = await fetch(`${Backend_URL}/api/staff`, {
+        headers: {'Content-Type':'application/json'},
+        credentials: 'include'
+      });
+      if (response.status === 500) {
+        throw new Error('Server error: 500 Internal Server Error');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
       return await response.json();
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );
-
 
 export const createStaffMember = createAsyncThunk(
   'staff/createStaffMember',
   async (staffData, { rejectWithValue }) => {
     try {
-      const response = await axios.post(`${Backend_URL}/api/staff`, staffData);
-      return response.data.staff;
+      const response = await fetch(`${Backend_URL}/api/staff`, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        credentials: 'include',
+        body: JSON.stringify(staffData)
+      });
+      if (response.status === 500) {
+        throw new Error('Server error: 500 Internal Server Error');
+      }
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const data = await response.json();
+      return data.staff;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );
-
-
-
 
 const staffSlice = createSlice({
   name: 'staff',
@@ -54,12 +71,10 @@ const staffSlice = createSlice({
       .addCase(fetchStaffMembers.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.staffMembers = action.payload;
-        console.log(state.staffMembers)
-        console.log(action.payload)
       })
       .addCase(fetchStaffMembers.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload.error;
+        state.error = action.payload;
       })
       .addCase(createStaffMember.pending, (state) => {
         state.status = 'loading';
@@ -70,10 +85,10 @@ const staffSlice = createSlice({
       })
       .addCase(createStaffMember.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.payload.error;
-        
-      })
-     
-}});
+        state.error = action.payload;
+      });
+  }
+});
+
 export const { getDoctors } = staffSlice.actions;
 export default staffSlice.reducer;

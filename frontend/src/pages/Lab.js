@@ -101,6 +101,22 @@ const labCategories = [
       'Australian Antigen (Hepatitis B Surface Antigen)',
       'Antibody Screening'
     ]
+  },
+  {
+    name: 'Radiology',
+    description: 'Imaging studies and reports',
+    types: [
+      'CT Scan',
+      'MRI',
+      'Ultrasonography',
+      'X-Ray',
+      'IVP (Intravenous Pyelogram)',
+      'CT KUB',
+      'PET Scan',
+      'Mammography',
+      'Bone Densitometry (DEXA)',
+      'Angiography'
+    ]
   }
 ];
 

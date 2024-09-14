@@ -64,7 +64,7 @@ export default function PatientDetails() {
           <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
           <TabsTrigger value="treatment">Treatment</TabsTrigger>
           <TabsTrigger value="medications">Medications</TabsTrigger>
-          <TabsTrigger value="labReport">Lab Report</TabsTrigger>
+          <TabsTrigger value="labTests">Lab Tests</TabsTrigger>
           <TabsTrigger value="vitals">Vitals</TabsTrigger>
         </TabsList>
 
@@ -104,17 +104,46 @@ export default function PatientDetails() {
               <CardTitle>Medications</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>{visitData.medications}</p>
+              {visitData.medications && visitData.medications.length > 0 ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Frequency</TableHead>
+                      <TableHead>Duration</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {visitData.medications.map((medication, index) => (
+                      <TableRow key={index}>
+                        <TableCell>{medication.name}</TableCell>
+                        <TableCell>{medication.frequency}</TableCell>
+                        <TableCell>{medication.duration}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <p>No medications prescribed.</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
-        <TabsContent value="labReport">
+        <TabsContent value="labTests">
           <Card>
             <CardHeader>
-              <CardTitle>Lab Report</CardTitle>
+              <CardTitle>Lab Tests</CardTitle>
             </CardHeader>
             <CardContent>
-              <p>{visitData.labReport}</p>
+              {visitData.labTests && visitData.labTests.length > 0 ? (
+                <ul className="list-disc pl-5 space-y-1">
+                  {visitData.labTests.map((test, index) => (
+                    <li key={index}>{test}</li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No lab tests ordered.</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -125,13 +154,13 @@ export default function PatientDetails() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                <div><strong>BP:</strong> {visitData.vitals?.bp}</div>
-                <div><strong>Pulse:</strong> {visitData.vitals?.pulse}</div>
-                <div><strong>Temp:</strong> {visitData.vitals?.temp}</div>
+                <div><strong>BP:</strong> {visitData.vitals?.bloodPressure}</div>
+                <div><strong>Pulse:</strong> {visitData.vitals?.heartRate}</div>
+                <div><strong>Temp:</strong> {visitData.vitals?.temperature}</div>
                 <div><strong>Weight:</strong> {visitData.vitals?.weight}</div>
                 <div><strong>Height:</strong> {visitData.vitals?.height}</div>
                 <div><strong>Oxygen Saturation:</strong> {visitData.vitals?.oxygenSaturation}</div>
-                <div><strong>Respiration Rate:</strong> {visitData.vitals?.respirationRate}</div>
+                <div><strong>Respiration Rate:</strong> {visitData.vitals?.respiratoryRate}</div>
               </div>
             </CardContent>
           </Card>

@@ -17,6 +17,7 @@ import hospitalRoutes from './routes/hospitalRoutes.js';
 import superAdminRoutes from './routes/superAdmin.js';
 import orderRoutes from './routes/orderRoutes.js';
 import pharmacyRoutes from './routes/pharmacyRoutes.js';
+import eventRoutes from './routes/eventRoutes.js';
 dotenv.config({path:'./config/config.env'});
 
 const app = express();
@@ -53,6 +54,7 @@ app.use('/api/prescriptions', prescriptionRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/pharmacy', pharmacyRoutes);
+app.use('/api/events', eventRoutes);
 
 // Serve index.html for any other routes
 app.get('*', (req, res) => {

@@ -13,9 +13,12 @@ export const fetchDepartments = createAsyncThunk(
         },
         credentials: 'include',
       });
+      if (response.status === 500) {
+        throw new Error('Server error: 500 Internal Server Error');
+      }
       return await response.json();
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -32,9 +35,12 @@ export const createDepartment = createAsyncThunk(
         credentials: 'include',
         body: JSON.stringify({ name, staffIds }),
       });
+      if (response.status === 500) {
+        throw new Error('Server error: 500 Internal Server Error');
+      }
       return await response.json();
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -51,9 +57,12 @@ export const addDoctorToDepartment = createAsyncThunk(
         credentials: 'include',
         body: JSON.stringify({ doctorId }),
       });
+      if (response.status === 500) {
+        throw new Error('Server error: 500 Internal Server Error');
+      }
       return await response.json();
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );
@@ -70,9 +79,12 @@ export const removeDoctorFromDepartment = createAsyncThunk(
         credentials: 'include',
         body: JSON.stringify({ doctorId }),
       });
+      if (response.status === 500) {
+        throw new Error('Server error: 500 Internal Server Error');
+      }
       return await response.json();
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.message);
     }
   }
 );

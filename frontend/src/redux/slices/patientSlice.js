@@ -4,9 +4,17 @@ import { Backend_URL } from '../../assets/Data';
 export const fetchPatients = createAsyncThunk(
   'patients/fetchPatients',
   async () => {
-    const response = await fetch(`${Backend_URL}/api/patients/details`,{headers:{'Content-Type':'application/json'},credentials:'include'});
-   const data=await response.json();
-   console.log(data)
+    const response = await fetch(`${Backend_URL}/api/patients/details`, {
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include'
+    });
+    
+    if (response.status === 500) {
+      throw new Error('Server error: 500 Internals Server Error');
+    }
+    
+    const data = await response.json();
+    console.log(data);
     return data;
   }
 );
