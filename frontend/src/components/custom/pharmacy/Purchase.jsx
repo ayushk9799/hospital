@@ -1,8 +1,7 @@
-// use scroll area for item table, rupee symbol for amount paying
-
 import React, { useState, useEffect } from "react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
+import { Textarea } from "../../ui/textarea";
 import {
   Table,
   TableBody,
@@ -23,30 +22,16 @@ import { Label } from "../../ui/label";
 // import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { ChevronRight } from "lucide-react";
 import { BriefcaseMedicalIcon } from "lucide-react";
-import { supplierArray } from "./Supplier";
 import { Plus, Pencil, Trash, Package, CheckCircle } from 'lucide-react';
+import { useDispatch, useSelector } from 'react-redux';
+import { createOrder } from '../../../redux/slices/pharmacySlice';
 
-const LabeledInput = ({ label, value, readOnly = false, onChange, className = "", type = "text", placeholder="", required=false }) => (
-  <div className="relative">
-    <input
-      type={type}
-      value={value}
-      readOnly={readOnly}
-      onChange={onChange}
-      className={`pl-2 pr-2 pt-4 pb-1 w-full text-sm border rounded ${className} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-      placeholder={placeholder}
-      required={required}
-    />
-    <label className="absolute text-xs text-gray-500 top-1 left-2">
-      {label}
-    </label>
-  </div>
-);
+
 
 export default function Purchase() {
   const [itemID, setItemID] = useState(1); // for unique id of item
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [supplierInfo, setSupplierInfo] = useState({
+    name: "",
     phone: "",
     email: "",
     address: "",
@@ -56,28 +41,19 @@ export default function Purchase() {
 
   const [newItem, setNewItem] = useState({
     name: '',
+    type: '',
     quantity: '',
-    unitPrice: '',
+    MRP: '',
     discount: '',
-    tax: '',
+    expiryDate: '',
   });
 
   const [amountPaying, setAmountPaying] = useState('');
 
-  useEffect(() => {
-    if (selectedSupplier) {
-      setSupplierInfo({
-        phone: selectedSupplier.contactNumber || "",
-        email: selectedSupplier.email || "",
-        address: selectedSupplier.address || "",
-      });
-    }
-  }, [selectedSupplier]);
+  const dispatch = useDispatch();
+  const { status, error } = useSelector(state => state.pharmacy);
 
-  const handleSupplierChange = (value) => {
-    const supplier = supplierArray.find((s) => s.id === value);
-    setSelectedSupplier(supplier);
-  };
+  const [hasAttemptedPurchase, setHasAttemptedPurchase] = useState(false);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -89,17 +65,15 @@ export default function Purchase() {
     setNewItem(prev => {
       const updatedItem = { ...prev, [name]: value };
       
-      // Calculate total if quantity and unitPrice are present
-      if (updatedItem.quantity && updatedItem.unitPrice) {
+      // Calculate total if quantity and MRP are present
+      if (updatedItem.quantity && updatedItem.MRP) {
         const quantity = parseFloat(updatedItem.quantity);
-        const unitPrice = parseFloat(updatedItem.unitPrice);
+        const MRP = parseFloat(updatedItem.MRP);
         const discount = parseFloat(updatedItem.discount) || 0;
-        const tax = parseFloat(updatedItem.tax) || 0;
 
-        const subtotal = quantity * unitPrice;
+        const subtotal = quantity * MRP;
         const discountAmount = subtotal * (discount / 100);
-        const taxAmount = (subtotal - discountAmount) * (tax / 100);
-        updatedItem.total = subtotal - discountAmount + taxAmount;
+        updatedItem.total = subtotal - discountAmount;
       } else {
         updatedItem.total = null;
       }
@@ -108,45 +82,51 @@ export default function Purchase() {
     });
   };
 
+  const handleTypeChange = (value) => {
+    setNewItem(prev => ({
+      ...prev,
+      type: value
+    }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     addItem();
   };
 
   const addItem = () => {
-    if (!newItem.name || !newItem.quantity || !newItem.unitPrice) {
-      alert('Please fill in at least the item name, quantity, and unit price.');
+    if (!newItem.name || !newItem.quantity || !newItem.MRP) {
+      alert('Please fill in at least the item name, quantity, and MRP.');
       return;
     }
 
     const quantity = parseFloat(newItem.quantity);
-    const unitPrice = parseFloat(newItem.unitPrice);
+    const MRP = parseFloat(newItem.MRP);
     const discount = parseFloat(newItem.discount) || 0;
-    const tax = parseFloat(newItem.tax) || 0;
 
-    const subtotal = quantity * unitPrice;
+    const subtotal = quantity * MRP;
     const discountAmount = subtotal * (discount / 100);
-    const taxAmount = (subtotal - discountAmount) * (tax / 100);
-    const total = subtotal - discountAmount + taxAmount;
+    const total = subtotal - discountAmount;
 
     const newItemWithId = {
       id: itemID,
       ...newItem,
       quantity,
-      unitPrice,
+      MRP,
       discount,
-      tax,
       total,
+      expiryDate: newItem.expiryDate,
     };
 
     setItems(prev => [...prev, newItemWithId]);
     setItemID(prev => prev + 1);
     setNewItem({
       name: '',
+      type: '',
       quantity: '',
-      unitPrice: '',
+      MRP: '',
       discount: '',
-      tax: '',
+      expiryDate: '',
     });
   };
 
@@ -163,26 +143,25 @@ export default function Purchase() {
   const clearNewItem = () => {
     setNewItem({
       name: '',
+      type: '',
       quantity: '',
-      unitPrice: '',
+      MRP: '',
       discount: '',
-      tax: '',
+      expiryDate: '',
     });
   };
 
   const calculateTotals = () => {
     const totals = items.reduce((acc, item) => {
-      const subtotal = item.quantity * item.unitPrice;
+      const subtotal = item.quantity * item.MRP;
       const discountAmount = subtotal * (item.discount / 100);
-      const taxAmount = (subtotal - discountAmount) * (item.tax / 100);
       
       acc.subtotal += subtotal;
-      acc.taxTotal += taxAmount;
       acc.discountTotal += discountAmount;
-      acc.grandTotal += subtotal - discountAmount + taxAmount;
+      acc.grandTotal += subtotal - discountAmount;
 
       return acc;
-    }, { subtotal: 0, taxTotal: 0, discountTotal: 0, grandTotal: 0 });
+    }, { subtotal: 0, discountTotal: 0, grandTotal: 0 });
 
     const dueAmount = totals.grandTotal - parseFloat(amountPaying || 0);
     return { ...totals, dueAmount };
@@ -198,10 +177,40 @@ export default function Purchase() {
 
   const handleCreatePurchaseOrder = (e) => {
     e.preventDefault();
-    // Implement logic to create the purchase order
-    console.log("Creating purchase order...", { items, supplierInfo, totals });
-    // You might want to send this data to your backend to create the order
+    if(items.length === 0){
+      alert('Please add at least one item to the purchase order.');
+      return;
+    }
+    if(supplierInfo.name === '' || supplierInfo.phone === ''){
+      alert('Please fill name and phone the supplier information.');
+      return;
+    }
+    const orderData = {
+      supplierInfo,
+      items,
+      total: {
+        subtotal: totals.subtotal,
+        totalAmount: totals.grandTotal,
+        paidAmount: parseFloat(amountPaying) || 0,
+      },
+    };
+
+    setHasAttemptedPurchase(true);
+    dispatch(createOrder(orderData));
   };
+
+  useEffect(() => {
+    if (hasAttemptedPurchase) {
+      if (status === 'succeeded') {
+        alert('Purchase order created successfully!');
+        // Reset form or navigate away
+        setHasAttemptedPurchase(false);
+      } else if (status === 'failed') {
+        alert(`Failed to create purchase order: ${error}`);
+        setHasAttemptedPurchase(false);
+      }
+    }
+  }, [status, error, hasAttemptedPurchase]);
 
   const handlePayFullAmount = () => {
     setAmountPaying(totals.grandTotal.toFixed(2));
@@ -226,20 +235,18 @@ export default function Purchase() {
           <div className="w-3/4 space-y-4 h-full">
             {/* Item Table */}
             <Card className="h-full">
-              <CardHeader>
-                <CardTitle className="font-semibold">Purchase Items</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4">
+              <CardContent className="px-4 pt-4">
                 <form onSubmit={handleSubmit}>
                   <Table className="w-full">
                     <TableHeader>
                       <TableRow className='bg-blue-200 border-2 border-blue-300 hover:bg-blue-200'>
                         <TableHead className="h-7">Sr.</TableHead>
                         <TableHead className="h-7 ">Item Name</TableHead>
+                        <TableHead className="h-7">Type</TableHead>
                         <TableHead className="h-7">Quantity</TableHead>
-                        <TableHead className="h-7">Unit Price</TableHead>
-                        <TableHead className="h-7">Discount (%)</TableHead>
-                        <TableHead className="h-7">Tax (%)</TableHead>
+                        <TableHead className="h-7">MRP</TableHead>
+                        <TableHead className="h-7">Disc (%)</TableHead>
+                        <TableHead className="h-7">Expiry Date</TableHead>
                         <TableHead className="h-7">Total</TableHead>
                         <TableHead className="h-7">Action</TableHead>
                       </TableRow>
@@ -259,6 +266,21 @@ export default function Purchase() {
                           />
                         </TableCell>
                         <TableCell>
+                          <Select name="type" value={newItem.type} onValueChange={handleTypeChange}>
+                            <SelectTrigger className="h-7 text-sm w-28">
+                              <SelectValue placeholder="Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Tablet">Tablet</SelectItem>
+                              <SelectItem value="Capsule">Capsule</SelectItem>
+                              <SelectItem value="Injection">Injection</SelectItem>
+                              <SelectItem value="syrup">Syrup</SelectItem>
+                              <SelectItem value="Liquid">Liquid</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
                           <Input
                             type="number"
                             name="quantity"
@@ -272,11 +294,11 @@ export default function Purchase() {
                         <TableCell>
                           <Input
                             type="number"
-                            name="unitPrice"
-                            value={newItem.unitPrice}
+                            name="MRP"
+                            value={newItem.MRP}
                             onChange={handleNewItemChange}
                             placeholder="0.00"
-                            className="h-7 text-sm w-24"
+                            className="h-7 text-sm w-20"
                             required
                           />
                         </TableCell>
@@ -292,16 +314,15 @@ export default function Purchase() {
                         </TableCell>
                         <TableCell>
                           <Input
-                            type="number"
-                            name="tax"
-                            value={newItem.tax}
+                            type="month"
+                            name="expiryDate"
+                            value={newItem.expiryDate}
                             onChange={handleNewItemChange}
-                            placeholder="0"
-                            className="h-7 text-sm w-20"
+                            className="h-7 text-sm w-25"
                           />
                         </TableCell>
-                        <TableCell>
-                          {newItem.quantity && newItem.unitPrice
+                        <TableCell className="w-20">
+                          {newItem.quantity && newItem.MRP
                             ? `₹${newItem.total.toFixed(2)}`
                             : '₹0.00'}
                         </TableCell>
@@ -321,7 +342,7 @@ export default function Purchase() {
                         </TableCell>
                       </TableRow>
                       {items.length === 0 ? (
-                        <TableRow>
+                        <TableRow className="hover:bg-white">
                           <TableCell colSpan={8} className="text-center py-8">
                             <div className="flex flex-col items-center text-gray-500">
                               <Package className="h-12 w-12 mb-2" />
@@ -334,10 +355,11 @@ export default function Purchase() {
                           <TableRow key={item.id}>
                             <TableCell>{index + 1}</TableCell>
                             <TableCell>{item.name}</TableCell>
+                            <TableCell>{item.type}</TableCell>
                             <TableCell>{item.quantity}</TableCell>
-                            <TableCell>₹{item.unitPrice.toFixed(2)}</TableCell>
+                            <TableCell>₹{item.MRP.toFixed(2)}</TableCell>
                             <TableCell>{item.discount}%</TableCell>
-                            <TableCell>{item.tax}%</TableCell>
+                            <TableCell>{item.expiryDate}</TableCell>
                             <TableCell>₹{item.total.toFixed(2)}</TableCell>
                             <TableCell>
                               <Button size="icon" variant="outline" className="h-7 w-7 mr-1" onClick={() => editItem(item.id)}>
@@ -369,19 +391,13 @@ export default function Purchase() {
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
-                <Label htmlFor="supplier-name">Supplier Name</Label>
-                <Select onValueChange={handleSupplierChange}>
-                  <SelectTrigger id="supplier-name">
-                    <SelectValue placeholder="Select supplier" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {supplierArray.map((supplier) => (
-                      <SelectItem key={supplier.id} value={supplier.id}>
-                        {supplier.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  placeholder="Supplier Name"
+                  value={supplierInfo.name}
+                  onChange={handleInputChange}
+                />
               </div>
               <div>
                 <Label htmlFor="phone">Phone</Label>
@@ -404,7 +420,7 @@ export default function Purchase() {
               </div>
               <div>
                 <Label htmlFor="address">Address</Label>
-                <Input
+                <Textarea
                   id="address"
                   placeholder="Supplier Address"
                   value={supplierInfo.address}
@@ -419,9 +435,8 @@ export default function Purchase() {
         <Card className="mt-2 p-2 flex items-center">
           <CardContent className=" w-full p-2">
             <form className="grid grid-cols-4 gap-4 p-2" onSubmit={handleCreatePurchaseOrder}>
-            <div className="grid col-span-3 grid-cols-6 gap-4">
+            <div className="grid col-span-3 grid-cols-5 gap-4">
               <LabeledInput label="Subtotal" value={`₹${totals.subtotal.toFixed(2)}`} readOnly className="w-full" />
-              <LabeledInput label="Tax Total" value={`₹${totals.taxTotal.toFixed(2)}`} readOnly className="w-full" />
               <LabeledInput label="Discount Total" value={`₹${totals.discountTotal.toFixed(2)}`} readOnly className="w-full" />
               <LabeledInput label="Grand Total" value={`₹${totals.grandTotal.toFixed(2)}`} readOnly className="w-full font-bold" />
               <div className="relative">
@@ -460,3 +475,20 @@ export default function Purchase() {
     </div>
   );
 }
+
+const LabeledInput = ({ label, value, readOnly = false, onChange, className = "", type = "text", placeholder="", required=false }) => (
+  <div className="relative">
+    <input
+      type={type}
+      value={value}
+      readOnly={readOnly}
+      onChange={onChange}
+      className={`pl-2 pr-2 pt-4 pb-1 w-full text-sm border rounded ${className} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+      placeholder={placeholder}
+      required={required}
+    />
+    <label className="absolute text-xs text-gray-500 top-1 left-2">
+      {label}
+    </label>
+  </div>
+);

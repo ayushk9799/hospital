@@ -56,3 +56,90 @@ const billSchema = [
         createdBy : "user1",
     }
 ]
+
+export const supplierArray = [
+  {
+    id: "SID145",
+    name: "ABC Pharmaceuticals",
+    lastPurchased: "2023-04-15",
+    address: "123 Pharma St, Med City, MC 12345",
+    contactNumber: "+1 (555) 123-4567",
+    email: "contact@abcpharma.com",
+    totalPurchaseValue: 10000,
+    itemsOffered: ["Aspirin", "Ibuprofen", "Amoxicillin"],
+    orders: [
+      {
+        id: "ORD001",
+        date: "2023-04-15",
+        deliveredDate: "2023-04-20",
+        status: "Delivered",
+        items: [
+          {
+            name: "Aspirin",
+            type: "Tablet",
+            expiryDate: "2025-04-15",
+            unitPrice: 0.5,
+            quantity: 1000,
+            amountPaid : 400,
+            discount: 5,
+          },
+          {
+            name: "Ibuprofen",
+            type: "Capsule",
+            expiryDate: "2025-06-30",
+            unitPrice: 0.75,
+            quantity: 500,
+            amountPaid : 300,
+            discount: 3,
+          }
+        ],
+        payments: [
+          { id: "PAY001", amount: 400, date: "2023-04-15" },
+          { id: "PAY002", amount: 300, date: "2023-04-16" },
+        ],
+      },
+    ],
+  },
+  {
+    id: "SID146",
+    name: "MediCorp Supplies",
+    lastPurchased: "2023-05-02",
+    address: "456 Health Ave, Wellness, WT 67890",
+    contactNumber: "+1 (555) 987-6543",
+    email: "info@medicorpsupplies.com",
+    totalPurchaseValue: 15000,
+    itemsOffered: ["Paracetamol", "Omeprazole", "Metformin"],
+    orders: [
+      {
+        id: "ORD003",
+        date: "2023-05-02",
+        deliveredDate: "2023-05-05",
+        status: "Delivered",
+        items: [
+          {
+            name: "Paracetamol",
+            type: "Tablet",
+            expiryDate: "2025-05-02",
+            unitPrice: 0.3,
+            quantity: 2000,
+            discount: 2,
+            amountPaid : 500,
+          },
+          {
+            name: "Omeprazole",
+            type: "Capsule",
+            expiryDate: "2024-11-30",
+            unitPrice: 1.2,
+            quantity: 500,
+            discount: 5,
+            amountPaid : 500,
+          }
+        ],
+        payments: [
+          { id: "PAY003", amount: 500, date: "2023-05-02" },
+          { id: "PAY004", amount: 500, date: "2023-05-03" },
+        ],
+      },
+    ],
+  },
+]
