@@ -51,9 +51,7 @@ export default function Purchase() {
   const [amountPaying, setAmountPaying] = useState('');
 
   const dispatch = useDispatch();
-  const { status, error } = useSelector(state => state.pharmacy);
-
-  const [hasAttemptedPurchase, setHasAttemptedPurchase] = useState(false);
+  const { createOrderStatus, error } = useSelector(state => state.pharmacy);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -195,22 +193,17 @@ export default function Purchase() {
       },
     };
 
-    setHasAttemptedPurchase(true);
     dispatch(createOrder(orderData));
   };
 
   useEffect(() => {
-    if (hasAttemptedPurchase) {
-      if (status === 'succeeded') {
-        alert('Purchase order created successfully!');
-        // Reset form or navigate away
-        setHasAttemptedPurchase(false);
-      } else if (status === 'failed') {
-        alert(`Failed to create purchase order: ${error}`);
-        setHasAttemptedPurchase(false);
-      }
+    if (createOrderStatus === 'succeeded') {
+      alert('Purchase order created successfully!');
+      // Reset form or navigate away
+    } else if (createOrderStatus === 'failed') {
+      alert(`Failed to create purchase order: ${error}`);
     }
-  }, [status, error, hasAttemptedPurchase]);
+  }, [createOrderStatus, error]);
 
   const handlePayFullAmount = () => {
     setAmountPaying(totals.grandTotal.toFixed(2));

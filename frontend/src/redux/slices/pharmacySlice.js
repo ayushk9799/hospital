@@ -1,14 +1,21 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 import { Backend_URL } from "../../assets/Data";
 
 const initialState = {
   orders: [],
   suppliers: [],
   selectedSupplier: null,
-  status: "idle",
+  items: [],
+  ordersStatus: "idle",
+  suppliersStatus: "idle",
+  supplierDetailsStatus: "idle",
+  itemsStatus: "idle",
+  createOrderStatus: "idle",
   error: null,
 };
 
+// fetch all orders
 export const fetchOrders = createAsyncThunk("orders/fetchOrders", async () => {
   const response = await fetch(`${Backend_URL}/api/orders`, {
     credentials: 'include'
@@ -50,7 +57,7 @@ export const fetchSuppliers = createAsyncThunk("suppliers/fetchSuppliers", async
 });
 
 // New thunk for fetching supplier details
-export const fetchSupplierDetails = createAsyncThunk(
+export const fetchSupplierDetails = createLoadingAsyncThunk(
   "suppliers/fetchSupplierDetails",
   async (supplierId) => {
     const response = await fetch(`${Backend_URL}/api/orders/supplier/${supplierId}`, {
@@ -60,58 +67,82 @@ export const fetchSupplierDetails = createAsyncThunk(
       throw new Error('Failed to fetch supplier details');
     }
     return response.json();
-  }
+  },
+  { useGlobalLoader: true }
 );
+
+// New thunk for fetching items
+export const fetchItems = createLoadingAsyncThunk("items/fetchItems", async () => {
+  const response = await fetch(`${Backend_URL}/api/orders/items`, {
+    credentials: 'include'
+  });
+  if (!response.ok) {
+    throw new Error('Failed to fetch items');
+  }
+  return response.json();
+}, { useGlobalLoader: true });
 
 const pharmacySlice = createSlice({
   name: "pharmacy",
   initialState,
-  reducers: {},
+  reducers: {
+    // Empty reducers object, setStatusIdle removed
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchOrders.pending, (state) => {
-        state.status = "loading";
+        state.ordersStatus = "loading";
       })
       .addCase(fetchOrders.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.ordersStatus = "succeeded";
         state.orders = action.payload;
       })
       .addCase(fetchOrders.rejected, (state, action) => {
-        state.status = "failed";
+        state.ordersStatus = "failed";
         state.error = action.error.message;
       })
       .addCase(createOrder.pending, (state) => {
-        state.status = "loading";
+        state.createOrderStatus = "loading";
       })
       .addCase(createOrder.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        // state.orders.push(action.payload);
-        console.log(action.payload)
+        state.createOrderStatus = "succeeded";
+        console.log(action.payload);
       })
       .addCase(createOrder.rejected, (state, action) => {
-        state.status = "failed";
-          state.error = action.error.message;
-        })
+        state.createOrderStatus = "failed";
+        state.error = action.error.message;
+      })
       .addCase(fetchSuppliers.pending, (state) => {
-        state.status = "loading";
+        state.suppliersStatus = "loading";
       })
       .addCase(fetchSuppliers.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.suppliersStatus = "succeeded";
         state.suppliers = action.payload;
       })
       .addCase(fetchSuppliers.rejected, (state, action) => {
-        state.status = "failed";
+        state.suppliersStatus = "failed";
         state.error = action.error.message;
       })
       .addCase(fetchSupplierDetails.pending, (state) => {
-        state.status = "loading";
+        state.supplierDetailsStatus = "loading";
       })
       .addCase(fetchSupplierDetails.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.supplierDetailsStatus = "succeeded";
         state.selectedSupplier = action.payload;
       })
       .addCase(fetchSupplierDetails.rejected, (state, action) => {
-        state.status = "failed";
+        state.supplierDetailsStatus = "failed";
+        state.error = action.error.message;
+      })
+      .addCase(fetchItems.pending, (state) => {
+        state.itemsStatus = "loading";
+      })
+      .addCase(fetchItems.fulfilled, (state, action) => {
+        state.itemsStatus = "succeeded";
+        state.items = action.payload;
+      })
+      .addCase(fetchItems.rejected, (state, action) => {
+        state.itemsStatus = "failed";
         state.error = action.error.message;
       });
   },

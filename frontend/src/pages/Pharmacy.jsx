@@ -15,7 +15,7 @@ import ItemsMaster from "../components/custom/pharmacy/ItemsMaster";
 const Pharmacy = () => {
   return (
     <div className="flex flex-col flex-1 mt-1 h-[calc(100vh-52px)]">
-      <Tabs defaultValue="purchases" className="w-full h-full">
+      <Tabs defaultValue="reports" className="w-full h-full">
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="sales">Sales</TabsTrigger>

@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardContent, CardHeader, CardTitle } from "../../../ui/card";
 import { Label } from "../../../ui/label";
 import { Plus, Pencil, Trash, Package, Search } from "lucide-react";
-import { sampleItems } from "../ItemsMaster";
+import {sampleItems} from '../Demo'
 import { SearchSuggestion } from "../../registration/CustomSearchSuggestion";
 
 const customerArray = [

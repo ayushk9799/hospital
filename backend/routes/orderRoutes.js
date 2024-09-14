@@ -215,5 +215,17 @@ router.get("/supplier/:supplierId", async (req, res) => {
   }
 });
 
+// Get all items (inventory)
+router.get("/items", async (req, res) => {
+  try {
+    const items = await Inventory.find().populate('supplier', 'name');
+    res.status(200).json(items);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching items", error: error.message });
+  }
+});
+
 export default router;
 
