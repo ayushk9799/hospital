@@ -6,14 +6,16 @@ const orderSchema = new mongoose.Schema({
   items: [{
     item: { type: mongoose.Schema.Types.ObjectId, ref: 'Inventory', },
     quantity: { type: Number, required: true },
-    
+    MRP : { type: Number, required: true },
+    discount : { type: Number, default : 0 },
+    expiryDate : { type: Date},
   }],
-  totalAmount: { type: Number  },
-  paymentDone: { type: Number,  },
+  totalAmount: { type: Number},
+  paidAmount: { type: Number},
+  subtotal: { type: Number},
   orderDate: { type: Date, default: Date.now },
+  payment : {type : mongoose.Schema.Types.ObjectId, ref : 'Payment'}
 });
-
-
 
 orderSchema.plugin(hospitalPlugin);
 export const Order = mongoose.model('Order', orderSchema);

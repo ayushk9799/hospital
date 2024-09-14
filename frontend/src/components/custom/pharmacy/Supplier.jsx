@@ -1,4 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchSuppliers, fetchSupplierDetails } from "../../../redux/slices/pharmacySlice";
+import { formatDate } from "../../../assets/Data";
 import {
   ChevronRight,
   BriefcaseMedicalIcon,
@@ -17,101 +20,24 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import OrderDetailsDialog from './supplier/OrderDetailsDialog';
 import SupplierRegDialog from './supplier/SupplierRegDialog';
 
-export const supplierArray = [
-    {
-      id: "SID145",
-      name: "ABC Pharmaceuticals",
-      lastPurchased: "2023-04-15",
-      address: "123 Pharma St, Med City, MC 12345",
-      contactNumber: "+1 (555) 123-4567",
-      email: "contact@abcpharma.com",
-      totalPurchaseValue: 10000,
-      itemsOffered: ["Aspirin", "Ibuprofen", "Amoxicillin"],
-      orders: [
-        {
-          id: "ORD001",
-          date: "2023-04-15",
-          deliveredDate: "2023-04-20",
-          status: "Delivered",
-          items: [
-            {
-              name: "Aspirin",
-              type: "Tablet",
-              expiryDate: "2025-04-15",
-              unitPrice: 0.5,
-              quantity: 1000,
-              amountPaid : 400,
-              discount: 5,
-            },
-            {
-              name: "Ibuprofen",
-              type: "Capsule",
-              expiryDate: "2025-06-30",
-              unitPrice: 0.75,
-              quantity: 500,
-              amountPaid : 300,
-              discount: 3,
-            }
-          ],
-          payments: [
-            { id: "PAY001", amount: 400, date: "2023-04-15" },
-            { id: "PAY002", amount: 300, date: "2023-04-16" },
-          ],
-        },
-      ],
-    },
-    {
-      id: "SID146",
-      name: "MediCorp Supplies",
-      lastPurchased: "2023-05-02",
-      address: "456 Health Ave, Wellness, WT 67890",
-      contactNumber: "+1 (555) 987-6543",
-      email: "info@medicorpsupplies.com",
-      totalPurchaseValue: 15000,
-      itemsOffered: ["Paracetamol", "Omeprazole", "Metformin"],
-      orders: [
-        {
-          id: "ORD003",
-          date: "2023-05-02",
-          deliveredDate: "2023-05-05",
-          status: "Delivered",
-          items: [
-            {
-              name: "Paracetamol",
-              type: "Tablet",
-              expiryDate: "2025-05-02",
-              unitPrice: 0.3,
-              quantity: 2000,
-              discount: 2,
-              amountPaid : 500,
-            },
-            {
-              name: "Omeprazole",
-              type: "Capsule",
-              expiryDate: "2024-11-30",
-              unitPrice: 1.2,
-              quantity: 500,
-              discount: 5,
-              amountPaid : 500,
-            }
-          ],
-          payments: [
-            { id: "PAY003", amount: 500, date: "2023-05-02" },
-            { id: "PAY004", amount: 500, date: "2023-05-03" },
-          ],
-        },
-      ],
-    },
-  ]
-
 const Supplier = () => {
-  const [suppliers, setSuppliers] = useState(supplierArray);
-  const [newSupplier, setNewSupplier] = useState("");
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const dispatch = useDispatch();
+  const { suppliers, status, error, selectedSupplier } = useSelector((state) => state.pharmacy);
+  // const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSupplierRegDialogOpen, setIsSupplierRegDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchSuppliers());
+    }
+  }, [status, dispatch]);
+
+  const handleSupplierClick = (supplier) => {
+    dispatch(fetchSupplierDetails(supplier._id));
+  };
 
   const calculateOrderTotal = (order) => {
     if (order.items && order.items.length > 0) {
@@ -131,14 +57,8 @@ const Supplier = () => {
   };
 
   const calculateOverallDiscount = (order) => {
-    if (order.items && order.items.length > 0) {
-      const totalBeforeDiscount = order.items.reduce((acc, item) => acc + (item.unitPrice * item.quantity), 0);
-      const totalAfterDiscount = calculateOrderTotal(order);
-      const discountAmount = totalBeforeDiscount - totalAfterDiscount;
-      const discountPercentage = (discountAmount / totalBeforeDiscount) * 100;
-      return discountPercentage.toFixed(2) + '%';
-    }
-    return order.discount || 'N/A';
+    const discount = ((order.subtotal-order.totalAmount)/100).toFixed(2);
+    return discount || 'N/A';
   };
 
   const calculateTotalPaymentsForOrder = (order) => {
@@ -159,8 +79,17 @@ const Supplier = () => {
     supplier.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (status === "loading") {
+    return <div>Loading suppliers...</div>;
+  }
+
+  if (status === "failed") {
+    return <div>Error: {error}</div>;
+  }
+
   return (
     <div className="h-full w-full flex flex-col">
+      {/* header */}
       <div className="flex items-center space-x-1 bg-gray-100 p-1 justify-between">
        <div className="flex items-center space-x-1">
             <Button variant="ghost" size="sm" className="text-gray-600">
@@ -178,15 +107,17 @@ const Supplier = () => {
          <PlusIcon className="h-4 w-4" /> <span className="font-semibold text-gray-700 text-sm">Add Supplier</span>
        </Button>
       </div>
+      {/* body */}
       <div className="grid grid-cols-4 w-full flex-grow">
+        {/* supplier details */}
         <div className="col-span-3 border-r-2 border-gray-200 p-4">
           {selectedSupplier ? (
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>
                   <CardHeader>
-                    <CardTitle>
-                      {selectedSupplier.name} <span className="text-sm text-gray-500">({selectedSupplier.id})</span>
+                    <CardTitle className="capitalize">
+                      {selectedSupplier.name} <span className="text-sm text-gray-500">({selectedSupplier._id.slice(-6)})</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-2">
@@ -196,10 +127,10 @@ const Supplier = () => {
                         <span className="text-sm">{selectedSupplier.address}</span>
                       </div>
                     )}
-                    {selectedSupplier.contactNumber && (
+                    {selectedSupplier.phone && (
                       <div className="flex items-center space-x-2 text-gray-600">
                         <Phone size={16} />
-                        <span className="text-sm">{selectedSupplier.contactNumber}</span>
+                        <span className="text-sm">+91-{selectedSupplier.phone}</span>
                       </div>
                     )}
                     {selectedSupplier.email && (
@@ -219,13 +150,19 @@ const Supplier = () => {
                     {selectedSupplier.lastPurchased && (
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">Last Purchase:</span>
-                        <span className="text-sm">{selectedSupplier.lastPurchased}</span>
+                        <span className="text-sm">{formatDate(selectedSupplier.lastPurchased)}</span>
                       </div>
                     )}
-                    {selectedSupplier.totalPurchaseValue !== undefined && (
+                    {selectedSupplier.amountPaid !== undefined && (
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">Total Purchase Value:</span>
-                        <span className="text-sm">${selectedSupplier.totalPurchaseValue.toLocaleString()}</span>
+                        <span className="text-sm">₹{(Number(selectedSupplier.amountPaid) + Number(selectedSupplier.amountDue))}</span>
+                      </div>
+                    )}
+                    {selectedSupplier.amountDue !== undefined && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-medium">Amount Due:</span>
+                        <span className="text-sm">₹{selectedSupplier.amountDue.toLocaleString()}</span>
                       </div>
                     )}
                   </CardContent>
@@ -236,12 +173,12 @@ const Supplier = () => {
                     <CardTitle>Items Offered</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {selectedSupplier.itemsOffered && selectedSupplier.itemsOffered.length > 0 ? (
-                      <ul className="list-disc list-inside text-sm">
-                        {selectedSupplier.itemsOffered.map((item, index) => (
-                          <li key={index}>{item}</li>
+                    {selectedSupplier.items && selectedSupplier.items.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedSupplier.items.map((item, index) => (
+                          <Badge key={index} variant="outline" className="capitalize">{item.name}</Badge>
                         ))}
-                      </ul>
+                      </div>
                     ) : (
                       <p className="text-sm text-gray-500">No items offered</p>
                     )}
@@ -255,7 +192,6 @@ const Supplier = () => {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Order ID</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Order Date</TableHead>
                       <TableHead>Quantity</TableHead>
                       <TableHead>Total Price</TableHead>
@@ -267,26 +203,17 @@ const Supplier = () => {
                   </TableHeader>
                   <TableBody>
                     {selectedSupplier.orders.map((order) => (
-                      <TableRow key={order.id}>
-                        <TableCell>{order.id}</TableCell>
-                        <TableCell>
-                          <Badge variant={
-                            order.status === 'Delivered' ? 'success' :
-                            order.status === 'Pending' ? 'warning' :
-                            order.status === 'Return' ? 'destructive' : 'default'
-                          }>
-                            {order.status || 'N/A'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{order.date}</TableCell>
+                      <TableRow key={order._id}>
+                        <TableCell className='capitalize'>ORD{order._id.slice(-5)}</TableCell>
+                        <TableCell>{formatDate(order.orderDate)}</TableCell>
                         <TableCell>{calculateOrderQuantity(order)}</TableCell>
-                        <TableCell>₹{calculateOrderTotal(order).toLocaleString()}</TableCell>
-                        <TableCell>{order.deliveredDate || 'N/A'}</TableCell>
-                        <TableCell>{calculateOverallDiscount(order)}</TableCell>
-                        <TableCell>₹{calculateTotalPaymentsForOrder(order).toLocaleString()}</TableCell>
+                        <TableCell>₹{order.totalAmount.toLocaleString()}</TableCell>
+                        <TableCell>{formatDate(order.orderDate)}</TableCell>
+                        <TableCell>{calculateOverallDiscount(order)}%</TableCell>
+                        <TableCell>₹{order.paidAmount.toLocaleString()}</TableCell>
                         <TableCell>
                           <OrderDetailsDialog 
-                            order={{...order, payments: order.payments}} 
+                            order={order} 
                             trigger={
                               <Button variant="ghost" size="sm" onClick={() => handleOpenOrderDialog(order)}>
                                 <Info size={16} />
@@ -309,6 +236,7 @@ const Supplier = () => {
             <p className="text-gray-500">Select a supplier to view details</p>
           )}
         </div>
+        {/* supplier list */}
         <div className="px-2 py-4 flex flex-col h-full">
           <h2 className="text-lg font-semibold mb-4">Supplier List</h2>
           <Input
@@ -321,25 +249,25 @@ const Supplier = () => {
             <div className="space-y-2 pr-4">
               {filteredSuppliers.map((supplier) => (
                 <div
-                  key={supplier.id}
+                  key={supplier._id}
                   className={`py-2 px-4 bg-white shadow rounded-lg mb-2 cursor-pointer transition-colors duration-200 hover:bg-gray-100 ${
-                    selectedSupplier && selectedSupplier.id === supplier.id
+                    selectedSupplier && selectedSupplier._id === supplier._id
                       ? 'border-2 border-blue-400 shadow-md'
                       : ''
                   }`}
-                  onClick={() => setSelectedSupplier(supplier)}
+                  onClick={() => handleSupplierClick(supplier)}
                 >
-                  <h3 className="font-semibold">
+                  <h3 className="font-semibold capitalize">
                     {supplier.name}{" "}
                     <span className="text-xs text-gray-500">
-                      ({supplier.id})
+                      ({supplier._id.slice(-6)})
                     </span>
                   </h3>
                   <p className="text-sm text-gray-500">
-                    Last purchase: {supplier.lastPurchased}
+                    Last purchase: {formatDate(supplier.lastPurchased)}
                   </p>
                   <p className="text-sm text-gray-500">
-                    Total Purchase Value: ${supplier.totalPurchaseValue}
+                    Total Purchase Value: ₹{supplier.amountPaid+supplier.amountDue}
                   </p>
                 </div>
               ))}
