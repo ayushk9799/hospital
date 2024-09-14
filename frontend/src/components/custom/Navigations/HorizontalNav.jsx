@@ -13,6 +13,8 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar"
 import { ColorfulLogo } from "./VerticalNav";
 
+// Remove the labReportTypes and handleCreateLabReport function
+
 const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white shadow z-50 sticky top-0">

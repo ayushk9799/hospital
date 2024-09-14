@@ -5,6 +5,7 @@ import { Label } from "../components/ui/label";
 import { ScrollArea } from "../components/ui/scroll-area";
 import AppointmentsQueue from "../components/custom/appointments/AppointmentsQueue";
 import AppointmentHeader from "../components/custom/appointments/AppointmentHeader";
+import {Backend_URL} from "../assets/Data"
 import AppointmentsBody from "../components/custom/appointments/AppointmentsBody";
 import { Separator } from "../components/ui/separator";
 import { Textarea } from "../components/ui/textarea";
@@ -51,34 +52,39 @@ export default function Doctors() {
     respiratoryRate: "",
     height: "",
     weight: "",
-    bmi: "",
     oxygenSaturation: "",
   });
   const [prescription, setPrescription] = useState({
     diagnosis: "",
+    treatment: "",
     medications: [{ name: "", frequency: "0-0-0", duration: "" }],
     additionalInstructions: "",
   });
   const [labTests, setLabTests] = useState([""]); // New state for lab tests
 
-  const handlePatientSelect = (patient) => {
+  const [selectedVisitId, setSelectedVisitId] = useState(null);
+
+  const handlePatientSelect = ({ ID,bookingNumber, patient, bookingDate, reasonForVisit, type,vitals,diagnosis,treatment,medications,additionalInstructions,labTests }) => {
+    console.log(vitals);
+    console.log("hello patrient select")
     setSelectedPatient(patient);
     setVitals({
-      temperature: "",
-      heartRate: "",
-      bloodPressure: "",
-      respiratoryRate: "",
-      height: "",
-      weight: "",
-      bmi: "",
-      oxygenSaturation: "",
+      temperature: vitals.temperature || "",
+      heartRate: vitals.heartRate || "",
+      bloodPressure: vitals.bloodPressure || "",
+      respiratoryRate: vitals.respiratoryRate || "",
+      height: vitals.height || "",
+      weight: vitals.weight || "",
+      oxygenSaturation: vitals.oxygenSaturation || "",
     });
     setPrescription({
-      diagnosis: "",
-      medications: [{ name: "", frequency: "0-0-0", duration: "" }],
-      additionalInstructions: "",
+      diagnosis: diagnosis || "",
+      treatment: treatment || "",
+      medications: medications.length > 0 ? medications : [{ name: "", frequency: "0-0-0", duration: "" }],
+        additionalInstructions: additionalInstructions || "",
     });
-    setLabTests([""]); // Reset lab tests when selecting a new patient
+    setLabTests(labTests.length > 0 ? labTests : [""]); // Reset lab tests when selecting a new patient
+    setSelectedVisitId(ID);
   };
 
   const handleVitalChange = (e) => {
@@ -139,13 +145,38 @@ export default function Doctors() {
     setLabTests(newLabTests);
   };
 
-  const handleSavePrescription = () => {
-    console.log(
-      "Saving prescription, vitals, and lab tests for patient:",
-      selectedPatient?.id,
-      { prescription, vitals, labTests }
-    );
-    alert("Prescription, vitals, and lab tests saved successfully!");
+  const handleSavePrescription = async () => {
+    if (!selectedVisitId) {
+      alert("No visit selected!");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/visit/${selectedVisitId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          // Replace with your actual auth token
+        },
+        credentials:"include",
+        body: JSON.stringify({
+          vitals,
+          prescription,
+          labTests
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert("Prescription, vitals, and lab tests saved successfully!");
+        // Optionally, you can update the local state or refetch the appointments queue here
+      } else {
+        throw new Error("Failed to save data");
+      }
+    } catch (error) {
+      console.error("Error saving prescription:", error);
+      alert("Failed to save prescription. Please try again.");
+    }
   };
 
   return (   <div className="h-full w-full flex flex-col">
@@ -171,7 +202,7 @@ export default function Doctors() {
                     name="temperature"
                     value={vitals.temperature}
                     onChange={handleVitalChange}
-                    placeholder="36.5"
+                   
                     className="h-8 text-sm font-medium"
                   />
                 </div>
@@ -182,7 +213,6 @@ export default function Doctors() {
                     name="heartRate"
                     value={vitals.heartRate}
                     onChange={handleVitalChange}
-                    placeholder="70"
                     className="h-8 text-sm font-medium"
                   />
                 </div>
@@ -193,7 +223,6 @@ export default function Doctors() {
                     name="bloodPressure"
                     value={vitals.bloodPressure}
                     onChange={handleVitalChange}
-                    placeholder="120/80"
                     className="h-8 text-sm font-medium"
                   />
                 </div>
@@ -204,7 +233,6 @@ export default function Doctors() {
                     name="respiratoryRate"
                     value={vitals.respiratoryRate}
                     onChange={handleVitalChange}
-                    placeholder="12"
                     className="h-8 text-sm font-medium"
                   />
                 </div>
@@ -215,7 +243,6 @@ export default function Doctors() {
                     name="height"
                     value={vitals.height}
                     onChange={handleVitalChange}
-                    placeholder="170"
                     className="h-8 text-sm font-medium"
                   />
                 </div>
@@ -226,7 +253,6 @@ export default function Doctors() {
                     name="weight"
                     value={vitals.weight}
                     onChange={handleVitalChange}
-                    placeholder="70"
                     className="h-8 text-sm font-medium"
                   />
                 </div>
@@ -237,7 +263,6 @@ export default function Doctors() {
                     name="bmi"
                     value={vitals.bmi}
                     readOnly
-                    placeholder="Calculated"
                     className="h-8 text-sm font-medium bg-gray-100"
                   />
                 </div>
@@ -248,7 +273,6 @@ export default function Doctors() {
                     name="oxygenSaturation"
                     value={vitals.oxygenSaturation}
                     onChange={handleVitalChange}
-                    placeholder="98"
                     className="h-8 text-sm font-medium"
                   />
                 </div>
@@ -256,7 +280,7 @@ export default function Doctors() {
             </div>
             <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
               <h3 className="text-lg font-semibold">
-                Diagnosis and Medications
+                Diagnosis, Treatment, and Medications
               </h3>
               <div>
                 <Label htmlFor="diagnosis" className="font-semibold">Diagnosis</Label>
@@ -270,8 +294,19 @@ export default function Doctors() {
                 />
               </div>
               <div>
+                <Label htmlFor="treatment" className="font-semibold">Treatment</Label>
+                <Textarea
+                  id="treatment"
+                  name="treatment"
+                  value={prescription.treatment}
+                  onChange={handlePrescriptionChange}
+                  placeholder="Enter recommended treatment"
+                  className="min-h-[100px] text-sm font-medium"
+                />
+              </div>
+              <div>
                 <Label className="font-semibold">Medications</Label>
-                {prescription.medications.map((medication, index) => (
+                {prescription.medications?.map((medication, index) => (
                   <div key={index} className="grid grid-cols-4 gap-2 mb-2">
                     <Popover>
                       <PopoverTrigger asChild>
@@ -371,7 +406,7 @@ export default function Doctors() {
             </div>
             <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
               <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
-              {labTests.map((test, index) => (
+              {labTests?.map((test, index) => (
                 <div key={index} className="flex items-center space-x-2">
                   <Input
                     placeholder="Enter lab test"

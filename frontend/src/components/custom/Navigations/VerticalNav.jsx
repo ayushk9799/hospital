@@ -13,7 +13,9 @@ import {
   User,
   ReceiptText,
   BriefcaseMedicalIcon,
-  PillIcon
+  PillIcon,
+  TestTube,
+  ChevronRight,
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
@@ -24,6 +26,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../ui/tooltip";
+
+const labReportTypes = [
+  { name: "Lipid Profile", path: "/lab/lipid-profile" },
+  { name: "Blood Work", path: "/lab/blood-work" },
+  { name: "CT Scan", path: "/lab/ct-scan" },
+  { name: "IVP", path: "/lab/ivp" },
+  { name: "MRI", path: "/lab/mri" },
+];
 
 const navItems = [
   { name: "Dashboard", icon: Home, path: "/" },
@@ -38,6 +48,11 @@ const navItems = [
   { name: "Reports", icon: FileText, path: "/reports" },
   { name: "Analytics", icon: BarChart, path: "/analytics" },
   { name: "Settings", icon: Settings, path: "/settings" },
+  {
+    name: "Lab",
+    icon: TestTube,
+    path: "/lab",
+  },
 ];
 
 export const ColorfulLogo = ({ className }) => (
@@ -79,13 +94,18 @@ export default function VerticalNav({ isCollapsed }) {
   const location = useLocation();
   const [activeItem, setActiveItem] = useState(() => {
     const currentPath = location.pathname;
-    const currentItem = navItems.find(item => item.path === currentPath);
+    const currentItem = navItems.find((item) => item.path === currentPath);
     return currentItem ? currentItem.name : "Dashboard";
   });
+  const [expandedItems, setExpandedItems] = useState({});
 
   const handleNavigation = (item) => {
     setActiveItem(item.name);
     navigate(item.path);
+  };
+
+  const toggleExpand = (itemName) => {
+    setExpandedItems((prev) => ({ ...prev, [itemName]: !prev[itemName] }));
   };
 
   return (
@@ -111,12 +131,28 @@ export default function VerticalNav({ isCollapsed }) {
                           : "text-gray-600 hover:bg-blue-50 hover:text-blue-900",
                         isCollapsed ? "px-2" : "px-4"
                       )}
-                      onClick={() => handleNavigation(item)}
+                      onClick={() =>
+                        item.subItems
+                          ? toggleExpand(item.name)
+                          : handleNavigation(item)
+                      }
                     >
                       <item.icon
                         className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")}
                       />
-                      {!isCollapsed && <span>{item.name}</span>}
+                      {!isCollapsed && (
+                        <>
+                          <span>{item.name}</span>
+                          {item.subItems && (
+                            <ChevronRight
+                              className={cn(
+                                "ml-auto h-4 w-4 transition-transform",
+                                expandedItems[item.name] && "rotate-90"
+                              )}
+                            />
+                          )}
+                        </>
+                      )}
                     </Button>
                   </TooltipTrigger>
                   {isCollapsed && (
@@ -126,6 +162,26 @@ export default function VerticalNav({ isCollapsed }) {
                   )}
                 </Tooltip>
               </TooltipProvider>
+              {!isCollapsed && item.subItems && expandedItems[item.name] && (
+                <ul className="ml-6 mt-1 space-y-1">
+                  {item.subItems.map((subItem) => (
+                    <li key={subItem.name}>
+                      <Button
+                        variant="ghost"
+                        className={cn(
+                          "w-full justify-start px-4",
+                          activeItem === subItem.name
+                            ? "bg-blue-100 text-blue-900"
+                            : "text-gray-600 hover:bg-blue-50 hover:text-blue-900"
+                        )}
+                        onClick={() => handleNavigation(subItem)}
+                      >
+                        <span>{subItem.name}</span>
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </li>
           ))}
         </ul>

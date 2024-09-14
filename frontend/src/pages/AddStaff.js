@@ -16,6 +16,7 @@ import { Backend_URL } from "../assets/Data";
 import {useSelector} from 'react-redux'
 export default function AddStaff() {
   const departments=useSelector((state)=>state.departments.departments);
+  console.log(departments)
   const [formData, setFormData] = useState({});
 
   const [errors, setErrors] = useState({});
@@ -374,7 +375,7 @@ console.log(formData)
             <div>
               <Label>Departments</Label>
               <div className="grid grid-cols-2 gap-2">
-                {(departments.map((d)=>d.name)).map((dep) => (
+                {(departments?.map((d)=>d.name)).map((dep) => (
                   <div key={dep} className="flex items-center space-x-2">
                     <Checkbox
                       id={`department-${dep}`}

@@ -188,6 +188,7 @@ export default function Patients() {
           <TableRow>
             <TableHead>S.No</TableHead>
             <TableHead>Name</TableHead>
+            <TableHead>Date</TableHead>
             <TableHead>Mobile</TableHead>
             <TableHead>Gender</TableHead>
             <TableHead>Doctor</TableHead>
@@ -213,6 +214,7 @@ export default function Patients() {
                   {patient.patient.name}
                 </Button>
               </TableCell>
+              <TableCell>{patient.bookingDate}</TableCell>
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
               <TableCell>{patient.doctor || '--'}</TableCell>

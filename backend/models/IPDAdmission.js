@@ -25,8 +25,22 @@ const ipdAdmissionSchema = new mongoose.Schema({
   patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
   dateDischarged: { type: Date },
   reasonForAdmission: { type: String },
+  diagnosis: { type: String, },
+  treatment: { type: String,  },
+  medications:{type:String,},
+  labReports:{type:String,},
+  vitals:{
+    bloodPressure:String,
+    heartRate:Number,
+    temperature:Number,
+    weight:Number,
+    height:Number,
+    oxygenSaturation:Number,
+    respiratoryRate:Number,
+  },
   assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
   assignedRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+  notes:{type:String},
 });
 
 ipdAdmissionSchema.pre('save', async function(next) {

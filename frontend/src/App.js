@@ -1,6 +1,6 @@
 import "./App.css";
 import React, { useEffect,useState } from "react";
-import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import { Route, BrowserRouter as Router, Routes,Navigate } from "react-router-dom";
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 import { useDispatch } from 'react-redux';
@@ -26,6 +26,9 @@ import PharmacyAllBills from './pages/PharmacyAllBills';
 import AddStaff from './pages/AddStaff';
 import { fetchDepartments } from "./redux/slices/departmentSlice";
 import { fetchRooms } from "./redux/slices/roomSlice";
+import CreateBloodWork from './pages/CreateBloodWork'; // Add this import
+import Lab from './pages/Lab';
+import CreateLabReport from './pages/CreateLabReport';
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -68,6 +71,9 @@ const AppContent = () => {
             <Route path='/pharmacy' Component={Pharmacy} />
             <Route path='/pharmacy/all-bills' Component={PharmacyAllBills} />
             <Route path='/addstaff' Component={AddStaff} />
+            <Route path='/lab' element={<Lab />} />
+            <Route path='/lab/create/:category/:type' element={<CreateLabReport />} />
+            <Route path='/lab/blood-work/create' element={<CreateBloodWork />} />
           </Routes>
         </main>
       </div>

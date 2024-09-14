@@ -22,13 +22,31 @@ const visitSchema = new mongoose.Schema({
   doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff",  },
   department: { type: String,  },
   reasonForVisit: { type: String,  },
-  diagnosis: { type: String, },
-  treatment: { type: String,  },
+  diagnosis: { type: String },
+  treatment: { type: String },
+  medications: [{
+    name: String,
+    frequency: String,
+    duration: String
+  }],
+  labTests: [String],
+  additionalInstructions: { type: String },
+  vitals:{
+    bloodPressure:String,
+    heartRate:Number,
+    temperature:Number,
+    weight:Number,
+    height:Number,
+    oxygenSaturation:Number,
+    respiratoryRate:Number,
+  },
+  
+  
 });
 visitSchema.pre('save', async function(next) {
     if (!this.bookingNumber) {
       const counter = await Counter.findOneAndUpdate(
-        { date: formatDate(new Date()) },
+        { date: this.bookingDate?this.bookingDate:formatDate(new Date()) },
         { $inc: { seq: 1 } },
         { new: true, upsert: true,setDefaultsOnInsert: true }
       );

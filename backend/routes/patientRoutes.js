@@ -109,14 +109,12 @@ router.get('/details', verifyToken, async (req, res) => {
   try {
     const visits = await Visit.find()
       .populate('patient', 'name dateOfBirth gender contactNumber email address bloodType')
-      .populate('doctor', 'name')
-     
+      .populate('doctor', 'name');
 
     const ipdAdmissions = await IPDAdmission.find()
       .populate('patient', 'name dateOfBirth gender contactNumber email address bloodType')
       .populate('assignedDoctor', 'name')
-      .populate('assignedRoom', 'roomNumber type')
-      
+      .populate('assignedRoom', 'roomNumber type');
 
     const processedVisits = visits.map(visit => ({
       _id: visit._id,
@@ -125,6 +123,12 @@ router.get('/details', verifyToken, async (req, res) => {
       bookingDate: visit.bookingDate,
       doctor: visit.doctor,
       reasonForVisit: visit.reasonForVisit,
+      vitals: visit.vitals,
+      diagnosis: visit.diagnosis,
+      treatment: visit.treatment,
+      medications: visit.medications,
+      labTests: visit.labTests,
+      additionalInstructions: visit.additionalInstructions,
       type: 'OPD'
     }));
 
@@ -135,13 +139,33 @@ router.get('/details', verifyToken, async (req, res) => {
       bookingDate: admission.bookingDate,
       doctor: admission.assignedDoctor,
       assignedRoom: admission.assignedRoom,
+      diagnosis: admission.diagnosis,
+      treatment: admission.treatment,
+      medications: admission.medications,
+      additionalInstructions: admission.additionalInstructions,
+      labTests: admission.labTests,
       reasonForAdmission: admission.reasonForAdmission,
+      vitals: admission.vitals,
       type: 'IPD'
     }));
 
     const combinedData = [...processedVisits, ...processedAdmissions];
 
-    res.json(combinedData);
+    // Sort the combined data
+    const sortedData = combinedData.sort((a, b) => {
+      // Convert date strings to Date objects for comparison
+      const dateA = new Date(a.bookingDate.split('-').reverse().join('-'));
+      const dateB = new Date(b.bookingDate.split('-').reverse().join('-'));
+      
+      // Compare dates first (descending order)
+      if (dateB > dateA) return 1;
+      if (dateB < dateA) return -1;
+      
+      // If dates are equal, compare booking numbers (ascending order)
+      return a.bookingNumber - b.bookingNumber;
+    });
+
+    res.json(sortedData);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -300,7 +324,10 @@ router.post('/:id/revisit', verifyToken, checkPermission('write:patients'), asyn
       doctor: visit.doctor || null,
       department: visit.department || null,
       diagnosis: visit.diagnosis || null,
-      treatment: visit.treatment || null
+      treatment: visit.treatment || null,
+      vitals: visit.vitals || null,
+      bookingNumber: visit.bookingNumber || null,
+      bookingDate: visit.bookingDate || null
     });
 
     await newVisit.save({ session });
@@ -326,5 +353,46 @@ router.post('/:id/revisit', verifyToken, checkPermission('write:patients'), asyn
 
 // Get all details from visits and IPD admissions with populated patient information
 
+
+// Update visit details
+router.put('/visit/:id', verifyToken, checkPermission('write:patients'), async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const { vitals, prescription, labTests } = req.body;
+
+    const visit = await Visit.findById(id).session(session);
+    if (!visit) {
+      throw new Error('Visit not found');
+    }
+
+    // Update vitals
+    visit.vitals = {
+      ...visit.vitals,
+      ...vitals
+    };
+
+    // Update prescription details
+    visit.diagnosis = prescription.diagnosis;
+    visit.treatment = prescription.treatment;
+    visit.medications = prescription.medications;
+    visit.additionalInstructions = prescription.additionalInstructions;
+
+    // Update lab tests
+    visit.labTests = labTests;
+
+    await visit.save({ session });
+
+    await session.commitTransaction();
+    res.json({ message: 'Visit updated successfully', visit });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
 
 export default router;

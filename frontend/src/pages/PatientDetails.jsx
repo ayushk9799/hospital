@@ -14,15 +14,24 @@ export default function PatientDetails() {
   const { patientId } = useParams();
   const [patientData, setPatientData] = useState(null);
   const [selectedVisit, setSelectedVisit] = useState(null);
+  const [activeTab, setActiveTab] = useState('');
 
   useEffect(() => {
     const fetchPatientDetails = async () => {
       try {
-        const response = await fetch(`${Backend_URL}/api/patients/${patientId}`,{headers:{'Content-Type':'application/json'},credentials:'include'});
+        const response = await fetch(`${Backend_URL}/api/patients/${patientId}`, {headers:{'Content-Type':'application/json'}, credentials:'include'});
         const data = await response.json();
         setPatientData(data);
-        if (data.visits && data.visits.length > 0) {
-          setSelectedVisit(data.visits[data.visits.length - 1]._id);
+        
+        // Set the most recent visit/admission as the default selected
+        const allDates = [
+          ...(data.visits || []).map(visit => ({ date: visit.bookingDate, type: 'visit', data: visit })),
+          ...(data.admissionDetails || []).map(admission => ({ date: admission.bookingDate, type: 'admission', data: admission }))
+        ].sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        if (allDates.length > 0) {
+          setSelectedVisit(allDates[0].date);
+          setActiveTab(allDates[0].data.reasonForVisit ? 'reason' : (allDates[0].data.diagnosis ? 'diagnosis' : 'reason'));
         }
       } catch (error) {
         console.error("Error fetching patient details:", error);
@@ -37,8 +46,100 @@ export default function PatientDetails() {
     ...(patientData.visits || []).map(visit => ({ date: visit.bookingDate, type: 'visit', data: visit })),
     ...(patientData.admissionDetails || []).map(admission => ({ date: admission.bookingDate, type: 'admission', data: admission }))
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
-console.log(allDates);
-console.log(patientData);
+
+  const selectedItem = allDates.find(item => item.date === selectedVisit);
+
+  const renderVisitDetails = () => {
+    if (!selectedVisit || !patientData) return null;
+
+    const visitData = patientData.visits.find(v => v.bookingDate === selectedVisit) || 
+                      patientData.admissionDetails.find(a => a.bookingDate === selectedVisit);
+
+    if (!visitData) return null;
+
+    return (
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <TabsList className="grid w-full grid-cols-6 mb-4">
+          <TabsTrigger value="reason">Reason</TabsTrigger>
+          <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
+          <TabsTrigger value="treatment">Treatment</TabsTrigger>
+          <TabsTrigger value="medications">Medications</TabsTrigger>
+          <TabsTrigger value="labReport">Lab Report</TabsTrigger>
+          <TabsTrigger value="vitals">Vitals</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="reason">
+          <Card>
+            <CardHeader>
+              <CardTitle>Reason for Visit</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{visitData.reasonForVisit}</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="diagnosis">
+          <Card>
+            <CardHeader>
+              <CardTitle>Diagnosis</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{visitData.diagnosis}</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="treatment">
+          <Card>
+            <CardHeader>
+              <CardTitle>Treatment</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{visitData.treatment}</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="medications">
+          <Card>
+            <CardHeader>
+              <CardTitle>Medications</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{visitData.medications}</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="labReport">
+          <Card>
+            <CardHeader>
+              <CardTitle>Lab Report</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p>{visitData.labReport}</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="vitals">
+          <Card>
+            <CardHeader>
+              <CardTitle>Vitals</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div><strong>BP:</strong> {visitData.vitals?.bp}</div>
+                <div><strong>Pulse:</strong> {visitData.vitals?.pulse}</div>
+                <div><strong>Temp:</strong> {visitData.vitals?.temp}</div>
+                <div><strong>Weight:</strong> {visitData.vitals?.weight}</div>
+                <div><strong>Height:</strong> {visitData.vitals?.height}</div>
+                <div><strong>Oxygen Saturation:</strong> {visitData.vitals?.oxygenSaturation}</div>
+                <div><strong>Respiration Rate:</strong> {visitData.vitals?.respirationRate}</div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    );
+  };
+
   return (
     <div className="container p-4 space-y-4">
       <div className="flex justify-between items-center">
@@ -90,44 +191,20 @@ console.log(patientData);
         </CardContent>
       </Card>
 
-      <Tabs defaultValue={allDates[0]?.date}>
-        <TabsList className="flex space-x-2 overflow-x-auto">
-          {allDates.map((item) => (
-            <TabsTrigger key={item.date} value={item.date} className="px-4 py-2">
-              {item.date}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <div className="flex flex-wrap gap-2 mt-4">
         {allDates.map((item) => (
-          <TabsContent key={item.date} value={item.date}>
-            <Card>
-              <CardHeader>
-                <CardTitle>{item.type === 'visit' ? 'Visit Details' : 'IPD Admission Details'}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {item.type === 'visit' ? (
-                  <div>
-                    <p>Date: {item.data?.bookingDate}</p>
-                    <p>Booking Number: {item.data?.bookingNumber}</p>
-                    <p>Department: {item.data?.department}</p>
-                    <p>Doctor: {item.data?.doctor?.name}</p>
-                    <p>Reason for Visit: {item.data?.reasonForVisit}</p>
-                    <p>Diagnosis: {item.data?.diagnosis}</p>
-                    <p>Treatment: {item.data?.treatment}</p>
-                  </div>
-                ) : (
-                  <div>
-                    <p>Admission Date: {item.data?.bookingDate}</p>
-                    <p>Discharge Date: {item.data?.dateDischarged || 'Not discharged'}</p>
-                    <p>Reason for Admission: {item.data?.reasonForAdmission}</p>
-                    <p>Assigned Doctor: {item.data?.assignedDoctor?.name}</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+          <Button
+            key={item.date}
+            variant="outline"
+            className={`px-4 py-2 ${selectedVisit === item.date ? 'bg-primary text-primary-foreground' : ''}`}
+            onClick={() => setSelectedVisit(item.date)}
+          >
+            {new Date(item.date).toLocaleDateString()}
+          </Button>
         ))}
-      </Tabs>
+      </div>
+     
+      {renderVisitDetails()}
     </div>
   );
 }

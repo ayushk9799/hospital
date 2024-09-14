@@ -38,7 +38,6 @@ mongoose.connect('mongodb+srv://ayushkumarsanu6969:fk7f7SRyMjd6B84V@cluster0.ajy
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Apply tenant plugin to all schemas
-mongoose.plugin(hospitalPlugin)
 
 // API routes
 app.use('/api/hospitals', hospitalRoutes);
