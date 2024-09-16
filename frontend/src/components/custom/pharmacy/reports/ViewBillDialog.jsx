@@ -7,9 +7,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "../../../ui/dialog";
-import { Input } from "../../../ui/input";
 import { Label } from "../../../ui/label";
 import {
   Table,
@@ -21,99 +19,82 @@ import {
 } from "../../../ui/table";
 import {  PrinterIcon } from "lucide-react";
 
-// Add this new Badge component
-const Badge = ({ status }) => {
-  const getStatusColor = (status) => {
-    switch (status.toLowerCase()) {
-      case "paid":
-        return "bg-green-100 text-green-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      case "cancelled":
-        return "bg-red-100 text-red-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
-  return (
-    <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(
-        status
-      )}`}
-    >
-      {status}
-    </span>
-  );
-};
-
 export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
-  console.log(billData);
-  const bill = billData || {
-    billNo: "",
-    dateTime: "",
-    customer: "",
-    amount: 0,
-    status: "",
-    items: [],
-  };
+  if (!billData) return null;
+
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-3xl">
-        <DialogHeader className="flex flex-row items-center justify-between mr-7">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="flex flex-row items-center justify-between mr-7 pb-2">
           <div>
             <DialogTitle>Bill Details</DialogTitle>
             <DialogDescription>Full details of the bill</DialogDescription>
           </div>
-            <Badge status={bill.status} />
+          <Badge status={billData.payment.status} />
         </DialogHeader>
-        <div className="grid gap-4 py-0">
-          <div className="grid grid-cols-3 gap-4">
+        <div className="grid gap-2 py-0">
+          <div className="grid grid-cols-3 gap-2">
             <div>
               <Label className="text-right">Customer Name</Label>
-              <p className="mt-1 font-medium">{bill.customer}</p>
+              <p className="mt-1 font-medium">{billData.patientInfo.name}</p>
             </div>
             <div>
               <Label className="text-right">Bill Number</Label>
-              <p className="mt-1 font-medium">{bill.billNo}</p>
+              <p className="mt-1 font-medium">{`#B${billData._id.slice(-6)}`}</p>
             </div>
             <div>
               <Label className="text-right">Date and Time</Label>
-              <p className="mt-1 font-medium">{bill.dateTime}</p>
+              <p className="mt-1 font-medium">{new Date(billData.createdAt).toLocaleString()}</p>
             </div>
           </div>
-          <div className="mt-2">
-            <h3 className="text-lg font-semibold mb-2">Bill Items</h3>
+          <div className="mt-1">
+            <h3 className="text-lg font-semibold mb-1">Bill Items</h3>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Item Name</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Quantity</TableHead>
-                  <TableHead>Unit Price</TableHead>
+                  <TableHead>MRP</TableHead>
+                  <TableHead>Discount(%)</TableHead>
                   <TableHead>Total</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {bill.items.map((item, index) => (
+                {billData.items.map((item, index) => (
                   <TableRow key={index}>
-                    <TableCell>{item.name}</TableCell>
+                    <TableCell>{item.item.name}</TableCell>
+                    <TableCell>{item.item.type}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>₹{item.price.toFixed(2)}</TableCell>
+                    <TableCell>₹{item.MRP.toFixed(2)}</TableCell>
+                    <TableCell>{item.discount.toFixed(0)}%</TableCell>
                     <TableCell>
-                      ₹{(item.quantity * item.price).toFixed(2)}
+                      ₹{(item.quantity * item.MRP * (1 - item.discount / 100)).toFixed(2)}
                     </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
             </Table>
-            <div className="mt-4 text-right">
-              <span className="font-semibold">Total Amount: </span>
-              <span className="text-lg font-bold">₹{bill.amount.toFixed(2)}</span>
+            <div className="mt-4 border-t border-gray-200 pt-2">
+              <div className="flex flex-col items-end space-y-1">
+                <div className="flex justify-between w-72">
+                  <span className="text-sm text-gray-600">Sub Total:</span>
+                  <span className="text-sm">₹{billData.subtotal.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between w-72">
+                  <span className="text-sm text-gray-600">Additional Discount  ({((billData.subtotal - billData.totalAmount) / billData.subtotal * 100).toFixed(0)}%):</span>
+                  <span className="text-sm">-₹{(billData.subtotal - billData.totalAmount).toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between w-72 border-t border-gray-200 pt-2 font-semibold">
+                  <span>Total Amount:</span>
+                  <span>₹{billData.totalAmount.toFixed(2)}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-        <DialogFooter className="sm:justify-start">
+        <DialogFooter className="sm:justify-start pt-2">
           <Button
             type="button"
             variant="secondary"
@@ -130,3 +111,27 @@ export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
     </Dialog>
   );
 }
+
+// Add this new Badge component
+const Badge = ({ status }) => {
+  const getStatusColor = (status) => {
+    switch (status.toLowerCase()) {
+      case "paid":
+        return "bg-green-100 text-green-800";
+      case "due":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  return (
+    <span
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize ${getStatusColor(
+        status
+      )}`}
+    >
+      {status}
+    </span>
+  );
+};

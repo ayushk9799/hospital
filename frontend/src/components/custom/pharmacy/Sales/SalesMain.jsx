@@ -1,4 +1,6 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchItems, createSalesBill, setCreateSalesBillStatus, fetchSalesBills } from "../../../../redux/slices/pharmacySlice";
 import { Button } from "../../../ui/button";
 import { ScrollArea } from "../../../ui/scroll-area";
 import { Input } from "../../../ui/input";
@@ -7,124 +9,72 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Card, CardContent, CardHeader, CardTitle } from "../../../ui/card";
 import { Label } from "../../../ui/label";
 import { Plus, Pencil, Trash, Package, Search } from "lucide-react";
-import { sampleItems } from "../ItemsMaster";
 import { SearchSuggestion } from "../../registration/CustomSearchSuggestion";
-
-const customerArray = [
-  {
-    id: "1",
-    name: "John Doe",
-    contactNumber: "1234567890",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    contactNumber: "9876543210",
-  },
-  {
-    id: "3",
-    name: "Bob Johnson",
-    contactNumber: "5555555555",
-  },
-];
-
-// input field with label for input box table
-const LabeledInput = ({
-  label,
-  value,
-  readOnly = false,
-  onChange,
-  className = "",
-  type = "text",
-  placeholder = "",
-  required = false,
-  suffix = "",
-  onFocus,
-  min,
-  max,
-}) => (
-  <div className="relative">
-    <input
-      type={type}
-      value={value}
-      readOnly={readOnly}
-      onChange={onChange}
-      onFocus={onFocus}
-      className={`pl-2 pr-8 pt-4 pb-1 w-full text-sm border rounded ${className} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-      placeholder={placeholder}
-      required={required}
-      min={min}
-      max={max}
-    />
-    <label className="absolute text-xs text-gray-500 top-1 left-2">
-      {label}
-    </label>
-    {suffix && (
-      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-        {suffix}
-      </span>
-    )}
-  </div>
-);
+import { useToast } from "../../../../hooks/use-toast";
 
 export default function SalesMain() {
-  const [itemID, setItemID] = useState(1);
+  const dispatch = useDispatch();
+  const {toast} = useToast();
+
+  const {items : sampleItems, itemsStatus, createSalesBillStatus, error, salesBills, salesBillsStatus} = useSelector((state) => state.pharmacy);
   const [itemName, setItemName] = useState("");
-  const [selectedCustomer, setSelectedCustomer] = useState("");
-  const [customerInfo, setCustomerInfo] = useState({ phone: "" });
+  const [customerInfo, setCustomerInfo] = useState({ name: "", phone: "" });
   const [items, setItems] = useState([]);
-  const [newItem, setNewItem] = useState({ name: "", quantity: "", mrp: "", discount: "", tax: "", });
+  const [newItem, setNewItem] = useState({id : "", name: "", quantity: "", mrp: "", discount: "" });
   const [paymentMethod, setPaymentMethod] = useState("");
   const [buyerName, setBuyerName] = useState("");
   const [additionalDiscount, setAdditionalDiscount] = useState("");
-
   const itemNameInputRef = useRef(null);
+
+  // fetch items from backend 
+  useEffect(() => {
+    if(itemsStatus === 'idle'){
+      dispatch(fetchItems());
+    }
+    if(salesBillsStatus === 'idle'){  
+      dispatch(fetchSalesBills());
+    }
+  }, [dispatch, itemsStatus, salesBillsStatus]);
+
+  useEffect(() => {
+    if (createSalesBillStatus === 'succeeded') {
+      alert('Sales order created successfully!');
+      // Reset form or navigate away
+    } else if (createSalesBillStatus === 'failed') {
+      alert(`Failed to create sales order: ${error}`);
+    }
+    return () => {
+      dispatch(setCreateSalesBillStatus('idle'));
+    }
+  }, [createSalesBillStatus, error]);
 
   const handlePaymentMethodChange = (value) => {
     setPaymentMethod(value);
   };
 
-  useEffect(() => {
-    if (selectedCustomer) {
-      setCustomerInfo({
-        phone: selectedCustomer.contactNumber || "",
-      });
-    }
-  }, [selectedCustomer]);
-
-  const handleCustomerChange = (value) => {
-    const customer = customerArray.find((c) => c.id === value);
-    setSelectedCustomer(customer);
-  };
-
-  // customer info input change
+  // handle input change in customer info
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     setCustomerInfo((prev) => ({ ...prev, [id]: value }));
   };
 
-  // Add this function to handle suggestion selection
+  // handle item suggestion select
   const handleItemSuggestionSelect = (suggestion) => {
-    setNewItem((prev) => ({ ...prev, mrp: suggestion.MRP }));
+    setNewItem((prev) => ({ ...prev, mrp: suggestion.MRP, id : suggestion._id }));
   };
 
-  
+  // handle new item change
   const handleNewItemChange = (e) => {
     const { name, value } = e.target;
     setNewItem((prev) => {
       const updatedItem = { ...prev, [name]: value };
 
-      // Calculate total if quantity and mrp are present
       if (updatedItem.quantity && updatedItem.mrp) {
         const quantity = parseFloat(updatedItem.quantity);
         const mrp = parseFloat(updatedItem.mrp);
         const discount = parseFloat(updatedItem.discount) || 0;
-        const tax = parseFloat(updatedItem.tax) || 0;
 
-        const subtotal = quantity * mrp;
-        const discountAmount = subtotal * (discount / 100);
-        const taxAmount = (subtotal - discountAmount) * (tax / 100);
-        updatedItem.total = subtotal - discountAmount + taxAmount;
+        updatedItem.total = quantity * mrp * (1 - discount / 100);
       } else {
         updatedItem.total = null;
       }
@@ -133,36 +83,28 @@ export default function SalesMain() {
     });
   };
 
-  // item name change in search suggestion
+  // handle item name change in search suggestion
   useEffect(() => {
     if (itemName) {
       setNewItem((prev) => ({ ...prev, name: itemName }));
     }
   }, [itemName]);
 
-  // add item to table-->when form is submitted
-  const handleSubmit = (e) => {
+  // handle add item in table
+  const handleAddItemInTable = (e) => {
     e.preventDefault();
-    addItem();
-  };
-
-  // add item to table-->when form is submitted-
-  const addItem = () => {
-    const quantity = parseFloat(newItem.quantity);
+    const quantity = parseInt(newItem.quantity);
     const mrp = parseFloat(newItem.mrp);
     const discount = parseFloat(newItem.discount) || 0;
-    const tax = parseFloat(newItem.tax) || 0;
 
     const subtotal = quantity * mrp;
     const discountAmount = subtotal * (discount / 100);
-    const taxAmount = (subtotal - discountAmount) * (tax / 100);
-    const total = subtotal - discountAmount + taxAmount;
+    const total = subtotal - discountAmount;
 
-    const newItemWithId = { id: itemID, ...newItem, quantity, mrp, discount, tax, total};
+    const newItemWithId = { ...newItem, quantity, mrp, discount, total };
 
     setItems((prev) => [...prev, newItemWithId]);
-    setItemID((prev) => prev + 1);
-    setNewItem({ name: "", quantity: "", mrp: "", discount: "", tax: ""});
+    setNewItem({ name: "", quantity: "", mrp: "", discount: "", id : "" });
     setItemName("");
 
     // Focus on the item name input after adding an item
@@ -171,10 +113,12 @@ export default function SalesMain() {
     }
   };
 
+  // handle delete item from table
   const deleteItem = (id) => {
     setItems((prevItems) => prevItems.filter((item) => item.id !== id));
   };
 
+  // handle edit item from table
   const editItem = (id) => {
     const itemToEdit = items.find((item) => item.id === id);
     deleteItem(id);
@@ -182,34 +126,19 @@ export default function SalesMain() {
     setItemName(itemToEdit.name);
   };
 
+  // clear new item
   const clearNewItem = () => {
-    setNewItem({ name: "", quantity: "", mrp: "", discount: "", tax: "", });
+    setNewItem({ name: "", quantity: "", mrp: "", discount: "" });
     setItemName("");
   };
 
-  const calculateTotals = () => {
-    const totals = items.reduce(
-      (acc, item) => {
-        const subtotal = item.quantity * item.mrp;
-        const discountAmount = subtotal * (item.discount / 100);
+  // calculate totals
+  const totals = useMemo(() => {
+    const subtotal = items.reduce((acc, item) => acc + item.total, 0);
+    const additionalDiscountAmount = subtotal * (additionalDiscount / 100);
+    return { subtotal, totalAmount: subtotal - additionalDiscountAmount };
+  }, [items, additionalDiscount]);
 
-        acc.subtotal += subtotal;
-        acc.discountTotal += discountAmount;
-
-        return acc;
-      },
-      { subtotal: 0, discountTotal: 0 }
-    );
-
-    const additionalDiscountAmount =
-      totals.subtotal *
-      ((additionalDiscount === "" ? 0 : additionalDiscount) / 100);
-    totals.finalTotal =
-      totals.subtotal - totals.discountTotal - additionalDiscountAmount;
-    return totals;
-  };
-
-  const totals = calculateTotals();
 
   const handleSaveDraft = () => {
     // Implement logic to save the current state as a draft
@@ -220,14 +149,26 @@ export default function SalesMain() {
   const handleCreateSalesOrder = (e) => {
     e.preventDefault();
     // Implement logic to create the sales order
-    console.log("Creating sales order...", {
-      items,
-      customerInfo,
-      totals,
-      paymentMethod,
-      buyerName,
-    });
-    // You might want to send this data to your backend to create the order
+    if(items.length === 0 || customerInfo.name === "" || paymentMethod === ""){
+      toast({
+        title: "Please add items and customer name to create a sales order",
+      });
+      return;
+    }
+    if(paymentMethod === "Due" && buyerName === ""){
+      toast({
+        title: "Please enter buyer name",
+      });
+      return;
+    }
+    const itemsArray = items.map(item =>  ({
+      item : item.id,
+      quantity : item.quantity,
+      MRP : item.mrp,
+      discount : item.discount,
+    }));
+
+    dispatch(createSalesBill({ items : itemsArray, patientInfo : customerInfo, totals, paymentMethod, buyerName }));
   };
 
   const handleAdditionalDiscountChange = (e) => {
@@ -255,7 +196,7 @@ export default function SalesMain() {
             <Card className="h-full pt-2">
              <ScrollArea className="h-[calc(100vh-235px)]">
               <CardContent className="px-4 h-full">
-                <form onSubmit={handleSubmit} className="h-full">
+                <form onSubmit={handleAddItemInTable} className="h-full">
                   <Table className="w-full h-full ">
                     <TableHeader>
                       <TableRow className=" bg-blue-200 border-2 border-blue-300 hover:bg-blue-200">
@@ -264,7 +205,6 @@ export default function SalesMain() {
                         <TableHead className="h-7">Quantity</TableHead>
                         <TableHead className="h-7">MRP</TableHead>
                         <TableHead className="h-7">Discount (%)</TableHead>
-                        <TableHead className="h-7">Tax (%)</TableHead>
                         <TableHead className="h-7">Total</TableHead>
                         <TableHead className="h-7">Action</TableHead>
                       </TableRow>
@@ -273,7 +213,14 @@ export default function SalesMain() {
                       <TableRow className="border-2 border-blue-300 overflow-visible ">
                         <TableCell></TableCell>
                         <TableCell className="overflow-visible">
-                          <SearchSuggestion suggestions={sampleItems} placeholder="Enter Item name" value={itemName} setValue={setItemName} ref={itemNameInputRef} onSuggestionSelect={handleItemSuggestionSelect}/>
+                          <SearchSuggestion 
+                          suggestions={sampleItems} 
+                          placeholder="Enter Item name" 
+                          value={itemName} 
+                          setValue={setItemName} 
+                          ref={itemNameInputRef} 
+                          onSuggestionSelect={handleItemSuggestionSelect}
+                          />
                         </TableCell>
                         <TableCell>
                           <Input
@@ -307,9 +254,6 @@ export default function SalesMain() {
                             className="h-7 text-sm w-20"
                           />
                         </TableCell>
-                        <TableCell>
-                          <Input type="number" name="tax" value={newItem.tax} onChange={handleNewItemChange} placeholder="0" className="h-7 text-sm w-20" />
-                        </TableCell>
                         <TableCell className='w-20'>
                           {newItem.quantity && newItem.mrp ? `₹${newItem.total.toFixed(2)}` : "₹0.00"}
                         </TableCell>
@@ -339,7 +283,6 @@ export default function SalesMain() {
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>₹{item.mrp.toFixed(2)}</TableCell>
                             <TableCell>{item.discount}%</TableCell>
-                            <TableCell>{item.tax}%</TableCell>
                             <TableCell>₹{item.total.toFixed(2)}</TableCell>
                             <TableCell>
                               <Button size="icon" variant="outline" className="h-7 w-7 mr-1" onClick={() => editItem(item.id)}>
@@ -382,44 +325,44 @@ export default function SalesMain() {
               </CardHeader>
               <CardContent className="space-y-2">
                 <div>
-                  <Label htmlFor="customer-name">Customer Name</Label>
-                  <SearchSuggestion suggestions={customerArray} placeholder="Enter Customer name" value={selectedCustomer} setValue={setSelectedCustomer}/>
+                  <Label htmlFor="name">Customer Name</Label>
+                  <Input
+                    id="name"
+                    placeholder="Enter Customer name"
+                    value={customerInfo.name}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone</Label>
-                  <Input id="phone" placeholder="Phone Number" value={customerInfo.phone} onChange={handleInputChange}/>
+                  <Input
+                    id="phone"
+                    placeholder="Phone Number"
+                    value={customerInfo.phone}
+                    onChange={handleInputChange}
+                  />
                 </div>
               </CardContent>
             </Card>
             <Card>
-                <CardHeader>
+                <CardHeader className="pb-2">
                     <CardTitle className="font-semibold">Recent Bills</CardTitle>
                 </CardHeader>
                 <CardContent>
                     <Table>
-                        <TableHeader>
+                        <TableHeader >
                             <TableRow>
-                                <TableHead>Patient Name</TableHead>
+                                <TableHead>Customer Name</TableHead>
                                 <TableHead>Amount</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            <TableRow>
-                                <TableCell>John Doe</TableCell>
-                                <TableCell>₹100</TableCell>
+                          {salesBills.slice(0, 4).map((bill) => (
+                            <TableRow key={bill._id}>
+                                <TableCell>{bill.patientInfo.name}</TableCell>
+                                <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
                             </TableRow>
-                            <TableRow>
-                                <TableCell>John Doe</TableCell>
-                                <TableCell>₹100</TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell>John Doe</TableCell>
-                                <TableCell>₹100</TableCell>
-                            </TableRow>
-                            <TableRow>
-                                <TableCell>John Doe</TableCell>
-                                <TableCell>₹100</TableCell>
-                            </TableRow>
+                          ))}
                         </TableBody>
                     </Table>
                 </CardContent>
@@ -438,9 +381,11 @@ export default function SalesMain() {
                       <SelectValue placeholder="Select payment method" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="cash">Cash</SelectItem>
-                      <SelectItem value="upi">UPI</SelectItem>
-                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="UPI">UPI</SelectItem>
+                      <SelectItem value="Card">Card</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                      <SelectItem value="Due">Due</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -456,7 +401,7 @@ export default function SalesMain() {
                   min="0"
                   max="100"
                 />
-                <LabeledInput label="Total" value={`₹${totals.finalTotal.toFixed(2)}`} readOnly className="w-full" />
+                <LabeledInput label="Total" value={`₹${totals.totalAmount.toFixed(2)}`} readOnly className="w-full" />
               </div>
               <div className="grid grid-cols-2 gap-4 items-center">
                 <Button variant="outline" size="sm" onClick={handleSaveDraft}>
@@ -473,3 +418,42 @@ export default function SalesMain() {
     </div>
   );
 }
+
+// input field with label for input box table
+const LabeledInput = React.memo(({
+  label,
+  value,
+  readOnly = false,
+  onChange,
+  className = "",
+  type = "text",
+  placeholder = "",
+  required = false,
+  suffix = "",
+  onFocus,
+  min,
+  max,
+}) => (
+  <div className="relative">
+    <input
+      type={type}
+      value={value}
+      readOnly={readOnly}
+      onChange={onChange}
+      onFocus={onFocus}
+      className={`pl-2 pr-8 pt-4 pb-1 w-full text-sm border rounded ${className} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+      placeholder={placeholder}
+      required={required}
+      min={min}
+      max={max}
+    />
+    <label className="absolute text-xs text-gray-500 top-1 left-2">
+      {label}
+    </label>
+    {suffix && (
+      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
+        {suffix}
+      </span>
+    )}
+  </div>
+));

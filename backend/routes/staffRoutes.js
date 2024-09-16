@@ -13,9 +13,11 @@ router.post('/', verifyToken, checkPermission('write:all'), async (req, res) => 
 
   try {
     const staff = new Staff(req.body);
+     console.log("roles")
+    console.log(req.body);
     await staff.save({ session });
 
-    if (req.body.department && Array.isArray(req.body.department)) {
+    if (req.body.department && Array.isArray(req.body.department)) {  //chhange required here no need to chck array mnualluu convert
       for (const depName of req.body.department) {
         const department = await Department.findOne({ name: depName }).session(session);
         if (department) {

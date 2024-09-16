@@ -1,12 +1,13 @@
 import React from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../../../ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../../../ui/dialog"
 import { Button } from "../../../ui/button"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "../../../ui/card"
 import { Badge } from "../../../ui/badge"
 import { CalendarIcon, PackageIcon } from "lucide-react"
 import { formatDate } from '../../../../assets/Data'
-export default function OrderDetailsDialog({ order, trigger, onClose, open, setOpen }) {
+
+export default function OrderDetailsDialog({ order, isOpen, setIsOpen }) {
   if (!order) return null;
 
   // Calculate total amount and discount
@@ -20,10 +21,7 @@ export default function OrderDetailsDialog({ order, trigger, onClose, open, setO
   const remainingAmount = totalAmount - totalPaid;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger}
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-4xl max-h-[70vh] overflow-y-auto p-6">
         <DialogHeader>
           <DialogTitle className="text-lg font-bold">Order Details</DialogTitle>
@@ -71,7 +69,7 @@ export default function OrderDetailsDialog({ order, trigger, onClose, open, setO
                   <TableBody>
                     <TableRow>
                       <TableCell className="text-sm py-1">{order.payment._id.slice(-5)}</TableCell>
-                      <TableCell className="text-sm py-1 text-right">₹{order.payment.amount.toFixed(2)}</TableCell>
+                      <TableCell className="text-sm py-1 text-right">₹{order.payment.amount.toFixed(2).toLocaleString()}</TableCell>
                       <TableCell className="text-sm py-1">{formatDate(order.payment.createdAt)}</TableCell>
                     </TableRow>
                   </TableBody>
@@ -103,7 +101,7 @@ export default function OrderDetailsDialog({ order, trigger, onClose, open, setO
                       <TableCell className="text-sm py-1 capitalize">{item.item.name}</TableCell>
                       <TableCell className="text-sm py-1 capitalize">{item.item.type}</TableCell>
                       <TableCell className="text-sm py-1">{item.quantity.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm py-1">₹{item.MRP.toFixed(2)}</TableCell>
+                      <TableCell className="text-sm py-1">₹{item.MRP.toFixed(2).toLocaleString()}</TableCell>
                       <TableCell className="text-sm py-1">{item.discount}%</TableCell>
                       <TableCell className="text-sm py-1">₹{(item.quantity * item.MRP * (1 - item.discount / 100)).toLocaleString()}</TableCell>
                       <TableCell className="text-sm py-1">{formatDate(item.expiryDate)}</TableCell>
@@ -123,23 +121,23 @@ export default function OrderDetailsDialog({ order, trigger, onClose, open, setO
                 <TableBody>
                   <TableRow>
                     <TableCell className="text-sm py-1 font-semibold">Subtotal:</TableCell>
-                    <TableCell className="text-sm py-1 text-right">₹{order.subtotal.toFixed(2)}</TableCell>
+                    <TableCell className="text-sm py-1 text-right">₹{order.subtotal.toLocaleString()}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-sm py-1 font-semibold">Total Discount ({((totalDiscount/order.subtotal)*100).toFixed(2)}%):</TableCell>
-                    <TableCell className="text-sm py-1 text-right">₹{totalDiscount.toFixed(2)}</TableCell>
+                    <TableCell className="text-sm py-1 text-right">₹{totalDiscount.toLocaleString()}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-sm py-1 font-semibold">Total Amount:</TableCell>
-                    <TableCell className="text-sm py-1 text-right">₹{totalAmount.toFixed(2)}</TableCell>
+                    <TableCell className="text-sm py-1 text-right">₹{totalAmount.toLocaleString()}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-sm py-1 font-semibold">Total Amount Paid:</TableCell>
-                    <TableCell className="text-sm py-1 text-right">₹{totalPaid.toFixed(2)}</TableCell>
+                    <TableCell className="text-sm py-1 text-right">₹{totalPaid.toLocaleString()}</TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="text-base py-1 font-semibold">Remaining Amount to be Paid:</TableCell>
-                    <TableCell className="text-base py-1 text-right font-bold">₹{remainingAmount.toFixed(2)}</TableCell>
+                    <TableCell className="text-base py-1 text-right font-bold">₹{remainingAmount.toLocaleString()}</TableCell>
                   </TableRow>
                 </TableBody>
               </Table>
@@ -148,7 +146,7 @@ export default function OrderDetailsDialog({ order, trigger, onClose, open, setO
 
           <div className="flex justify-end space-x-2 mt-2">
             <Button variant="outline" size="sm">Print Order</Button>
-            <Button size="sm" onClick={() => setOpen(false)}>Close</Button>
+            <Button size="sm" onClick={() => setIsOpen(false)}>Close</Button>
           </div>
         </div>
       </DialogContent>

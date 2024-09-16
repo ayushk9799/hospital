@@ -170,7 +170,7 @@ router.get("/", async (req, res) => {
 // get all supplier 
 router.get("/suppliers", async (req, res) => {
   try {
-    const suppliers = await Supplier.find().select("name lastPurchased amountPaid amountDue");
+    const suppliers = await Supplier.find().select("name lastPurchased amountDue amountPaid");
     res.status(200).json(suppliers);
   } catch (error) {
     res
@@ -201,7 +201,7 @@ router.get("/supplier/:supplierId", async (req, res) => {
           }
         ]
       })
-      .populate('items', 'name');
+      .populate('items', 'name type MRP CP');
 
     if (!supplier) {
       return res.status(404).json({ message: "Supplier not found" });
@@ -212,6 +212,18 @@ router.get("/supplier/:supplierId", async (req, res) => {
     res
       .status(500)
       .json({ message: "Error fetching supplier", error: error.message });
+  }
+});
+
+// Get all items (inventory)
+router.get("/items", async (req, res) => {
+  try {
+    const items = await Inventory.find().populate('supplier', 'name');
+    res.status(200).json(items);
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error fetching items", error: error.message });
   }
 });
 

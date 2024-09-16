@@ -1,24 +1,27 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../../ui/dialog";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../ui/table";
-import { Badge } from "../../../ui/badge";
 import { Button } from "../../../ui/button";
-import { Eye, FileDown } from "lucide-react";
+import { FileDown } from "lucide-react";
 import { format } from 'date-fns';
+import BillsTableWithDialog from '../itemMaster/BillsTableWithDialog';
+import { fetchSalesBills } from '../../../../redux/slices/pharmacySlice';
 
 const SalesTodayDialog = ({ isOpen, setIsOpen }) => {
-  // Mock data for today's sales
-  const [todaySales] = useState([
-    { billNo: "#B001234", customer: "John Doe", time: "14:30", amount: 78.50, status: "Paid" },
-    { billNo: "#B001235", customer: "Jane Smith", time: "15:15", amount: 125.00, status: "Pending" },
-    { billNo: "#B001236", customer: "Bob Johnson", time: "16:00", amount: 45.75, status: "Paid" },
-    // Add more mock data as needed
-  ]);
+  const dispatch = useDispatch();
+  const { salesBills, salesBillsStatus } = useSelector(state => state.pharmacy);
 
-  const handleViewBill = (bill) => {
-    // Implement view bill functionality
-    console.log("Viewing bill:", bill);
-  };
+  useEffect(() => {
+    if (isOpen && salesBillsStatus === 'idle') {
+      dispatch(fetchSalesBills());
+    }
+  }, [isOpen, salesBillsStatus, dispatch]);
+
+  const todaySales = salesBills.filter(bill => {
+    const billDate = new Date(bill.createdAt);
+    const today = new Date();
+    return billDate.toDateString() === today.toDateString();
+  });
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -32,43 +35,13 @@ const SalesTodayDialog = ({ isOpen, setIsOpen }) => {
             <FileDown className="mr-2 h-4 w-4" /> Export
           </Button>
         </DialogHeader>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Bill No</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Time</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {todaySales.map((sale) => (
-              <TableRow key={sale.billNo}>
-                <TableCell>{sale.billNo}</TableCell>
-                <TableCell>{sale.customer}</TableCell>
-                <TableCell>{sale.time}</TableCell>
-                <TableCell>₹{sale.amount.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge variant={sale.status === "Paid" ? "success" : "warning"}>
-                    {sale.status}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleViewBill(sale)}
-                  >
-                    <Eye className="h-3 w-3 mr-2" />
-                    View
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        {salesBillsStatus === 'loading' ? (
+          <p>Loading sales data...</p>
+        ) : salesBillsStatus === 'failed' ? (
+          <p>Error loading sales data. Please try again.</p>
+        ) : (
+          <BillsTableWithDialog bills={todaySales} />
+        )}
       </DialogContent>
     </Dialog>
   );

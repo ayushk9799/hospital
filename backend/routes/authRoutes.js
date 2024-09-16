@@ -24,7 +24,8 @@ router.post('/register', async (req, res) => {
     user = new Staff({
       username,
       password: hashedPassword,
-      name
+      name,
+      ...req.body
     });
 
    const savedStaff= await user.save();

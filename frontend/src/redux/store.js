@@ -4,12 +4,14 @@ import staffReducer from './slices/staffSlice';
 import departmentReducer from './slices/departmentSlice';
 import roomReducer from './slices/roomSlice';
 import pharmacyReducer from './slices/pharmacySlice';
+import loaderReducer from './slices/loaderSlice';
 export const store = configureStore({
   reducer: {
     patients: patientReducer,
     staff: staffReducer,
     departments:departmentReducer,
     rooms:roomReducer,
-    pharmacy:pharmacyReducer
+    pharmacy:pharmacyReducer,
+    loader:loaderReducer
   },
 });
