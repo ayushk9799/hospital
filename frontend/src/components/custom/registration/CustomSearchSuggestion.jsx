@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, forwardRef } from 'react';
 import { Input } from "../../ui/input";
+import { Badge } from "../../ui/badge"; // Add this import
 
-export const SearchSuggestion = forwardRef(({ suggestions=[], placeholder, value, setValue, onSuggestionSelect }, ref) => {
+export const SearchSuggestion = forwardRef(({ suggestions=[], placeholder, value, setValue, onSuggestionSelect, showStock=false }, ref) => {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
@@ -84,7 +85,14 @@ export const SearchSuggestion = forwardRef(({ suggestions=[], placeholder, value
                 index === selectedIndex ? 'bg-gray-100' : ''
               }`}
             >
-              {suggestion.name}
+              <div className="flex justify-between items-center">
+                <span className='capitalize'>{suggestion.name}</span>
+                {showStock && suggestion.quantity !== undefined && (
+                  <Badge variant={suggestion.quantity <= 100 ? "destructive" : "success"}>
+                    {suggestion.quantity}
+                  </Badge>
+                )}
+              </div>
             </li>
           ))}
         </ul>

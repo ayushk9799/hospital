@@ -10,12 +10,11 @@ import { ChevronRight } from "lucide-react";
 import { BriefcaseMedicalIcon } from "lucide-react";
 import { Plus, Pencil, Trash, Package, CheckCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createOrder, setCreateOrderStatus, fetchSuppliers, fetchSupplierDetails } from '../../../redux/slices/pharmacySlice';
+import { createOrder, setCreateOrderStatus, fetchSuppliers, fetchSupplierDetails, clearSelectedSupplier } from '../../../redux/slices/pharmacySlice';
 import { SearchSuggestion } from "../registration/CustomSearchSuggestion";
 
 export default function Purchase() {
   const dispatch = useDispatch();
-  const [itemID, setItemID] = useState(1); // for unique id of item
   const [supplierInfo, setSupplierInfo] = useState({ name: "", phone: "", email: "", address: "",});
   const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState({id : '', name: '', type: '', quantity: '', MRP: '', discount: '', expiryDate: ''});
@@ -101,7 +100,6 @@ export default function Purchase() {
     };
 
     setItems(prev => [...prev, newItemWithId]);
-    setItemID(prev => prev + 1);
     setNewItem({
       name: '',
       type: '',
@@ -204,18 +202,30 @@ export default function Purchase() {
     }));
   };
 
+  const handleClearAll = () => {
+    setSupplierInfo({ name: "", phone: "", email: "", address: "" });
+    setItems([]);
+    setNewItem({id: '', name: '', type: '', quantity: '', MRP: '', discount: '', expiryDate: ''});
+    setAmountPaying('');
+    setSupplierName("");
+    dispatch(clearSelectedSupplier());
+  };
+
   return (
     <div className="flex flex-col">
       {/* Main Content */}
       <div className="flex-1">
-        <div className="flex items-center p-1 space-x-1 bg-gray-100">
-          <Button variant="ghost" size="sm" className="text-gray-600">
-            <BriefcaseMedicalIcon className="h-4 w-4" />
-          </Button>
-          <ChevronRight className="h-3 w-3 text-gray-400" />
-          <span className="font-semibold text-gray-700 text-sm">
-            Purchase Order
-          </span>
+        <div className="flex items-center justify-between p-1 space-x-1 bg-gray-100">
+          <div className="flex items-center space-x-1">
+            <Button variant="ghost" size="sm" className="text-gray-600">
+              <BriefcaseMedicalIcon className="h-4 w-4" />
+            </Button>
+            <ChevronRight className="h-3 w-3 text-gray-400" />
+            <span className="font-semibold text-gray-700 text-sm">
+              Purchase Order
+            </span>
+          </div>
+          <Button variant="outline" size="sm" onClick={handleClearAll} className="whitespace-nowrap">Clear All</Button>
         </div>
 
         <div className="flex space-x-2 h-[calc(100vh-245px)]">
@@ -354,43 +364,43 @@ export default function Purchase() {
 
           {/* Supplier Information */}
           <div className="w-1/4 space-y-2">
-          <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="p-0 font-semibold ">Search Supplier</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4">
-                    <SearchSuggestion 
-                      suggestions={suppliers} 
-                      placeholder="Enter Supplier name"
-                      value={supplierName}
-                      setValue={setSupplierName}
-                      onSuggestionSelect={handleSupplierSuggestionSelect}
-                    />
-                </CardContent>
+            <Card className="flex-grow">
+              <CardHeader className="pb-2">
+                <CardTitle className="p-0 font-semibold">Search Supplier</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-4">
+                <SearchSuggestion 
+                  suggestions={suppliers} 
+                  placeholder="Enter Supplier name"
+                  value={supplierName}
+                  setValue={setSupplierName}
+                  onSuggestionSelect={handleSupplierSuggestionSelect}
+                />
+              </CardContent>
             </Card>
-          <Card className='h-[calc(100vh-340px)]'>
-            <CardHeader>
-              <CardTitle>Supplier Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <div>
-                <Label htmlFor="name">Name</Label>
-                <Input id="name" placeholder="Supplier Name" value={supplierInfo.name} onChange={handleInputChange}/>
-              </div>
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" placeholder="Phone Number" value={supplierInfo.phone} onChange={handleInputChange}/>
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="Email Address" value={supplierInfo.email} onChange={handleInputChange}/>
-              </div>
-              <div>
-                <Label htmlFor="address">Address</Label>
-                <Textarea id="address" placeholder="Supplier Address" value={supplierInfo.address} onChange={handleInputChange}/>
-              </div>
-            </CardContent>
-          </Card>
+            <Card className='h-[calc(100vh-340px)]'>
+              <CardHeader>
+                <CardTitle>Supplier Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div>
+                  <Label htmlFor="name">Name</Label>
+                  <Input id="name" placeholder="Supplier Name" value={supplierInfo.name} onChange={handleInputChange}/>
+                </div>
+                <div>
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input id="phone" placeholder="Phone Number" value={supplierInfo.phone} onChange={handleInputChange}/>
+                </div>
+                <div>
+                  <Label htmlFor="email">Email</Label>
+                  <Input id="email" type="email" placeholder="Email Address" value={supplierInfo.email} onChange={handleInputChange}/>
+                </div>
+                <div>
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea id="address" placeholder="Supplier Address" value={supplierInfo.address} onChange={handleInputChange}/>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
 

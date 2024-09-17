@@ -219,6 +219,7 @@ export default function SalesMain() {
                           value={itemName} 
                           setValue={setItemName} 
                           ref={itemNameInputRef} 
+                          showStock={true}
                           onSuggestionSelect={handleItemSuggestionSelect}
                           />
                         </TableCell>

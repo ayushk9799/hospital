@@ -71,4 +71,23 @@ router.get('/sales-bills', async (req, res) => {
     }
 });
 
+// New route to edit inventory items
+router.post('/inventory/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const updateData = req.body;
+
+        const updatedItem = await Inventory.findByIdAndUpdate(id, updateData, { new: true })
+            .populate('supplier', 'name'); // Populate the supplier field with the name
+
+        if (!updatedItem) {
+            return res.status(404).json({ error: 'Inventory item not found' });
+        }
+
+        res.status(200).json(updatedItem);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;
