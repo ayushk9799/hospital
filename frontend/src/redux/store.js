@@ -13,6 +13,7 @@ export const store = configureStore({
     departments:departmentReducer,
     rooms:roomReducer,
     pharmacy:pharmacyReducer,
-    user:userReducer
+    user:userReducer,
+    loader:loaderReducer
   },
 });

@@ -42,8 +42,8 @@ const AppContent = () => {
       dispatch(fetchPatients()),
       dispatch(fetchStaffMembers()),
       dispatch(fetchDepartments()),
+      dispatch(fetchUserData()),
        dispatch(fetchRooms()),
-      dispatch(getDoctors())
     ]).then(() => {
       dispatch(setLoading(false));
     });

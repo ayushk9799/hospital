@@ -19,6 +19,7 @@ import { ColorfulLogo } from "./VerticalNav";
 const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
 
   const user = useSelector((state) => state.user.userData);
+  console.log(user)
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white shadow z-50 sticky top-0">
       <div className="flex items-center">
