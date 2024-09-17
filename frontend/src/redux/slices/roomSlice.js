@@ -1,22 +1,22 @@
+import { Backend_URL } from '../../assets/Data';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 // Async thunk for fetching rooms
 export const fetchRooms = createAsyncThunk('rooms/fetchRooms', async () => {
-  const response = await axios.get('/api/rooms');
-  return response.data;
-});
-
-// Async thunk for creating a room
-export const createRoom = createAsyncThunk('rooms/createRoom', async (roomData) => {
-  const response = await axios.post('/api/rooms', roomData);
-  return response.data;
-});
-
-// Async thunk for updating a room
-export const updateRoom = createAsyncThunk('rooms/updateRoom', async ({ id, roomData }) => {
-  const response = await axios.put(`/api/rooms/${id}`, roomData);
-  return response.data;
+  const response = await fetch(`${Backend_URL}/api/rooms`, {
+    method: 'GET',
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+    }, // Include credentials
+  });
+  if(response.status === 500){
+    throw new Error('Server Error');
+  } 
+  if (!response.ok) {
+    throw new Error('Failed to fetch rooms');
+  }
+  return response.json();
 });
 
 const roomSlice = createSlice({
@@ -39,15 +39,6 @@ const roomSlice = createSlice({
       .addCase(fetchRooms.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.error.message;
-      })
-      .addCase(createRoom.fulfilled, (state, action) => {
-        state.rooms.push(action.payload);
-      })
-      .addCase(updateRoom.fulfilled, (state, action) => {
-        const index = state.rooms.findIndex(room => room._id === action.payload._id);
-        if (index !== -1) {
-          state.rooms[index] = action.payload;
-        }
       });
   },
 });

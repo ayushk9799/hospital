@@ -6,13 +6,14 @@ const router = express.Router();
 // Create a new event
 router.post('/', async (req, res) => {
   try {
-    const { eventName, timeSlot, staffId } = req.body;
+    const { eventName, timeSlot, staffId,eventDate } = req.body;
     const newEvent = new Event({
       eventName,
       timeSlot: {
         start: timeSlot.start,
         end: timeSlot.end
       },
+      eventDate:eventDate,
       staff: staffId
     });
     await newEvent.save();
@@ -23,9 +24,9 @@ router.post('/', async (req, res) => {
 });
 
 // Get all events
-router.get('/events/:staffId', async (req, res) => {
+router.get('/events/:staffId/:eventDate', async (req, res) => {
   try {
-    const events = await Event.find({ staff: req.params.staffId }).populate('staff', 'name'); // Populate staff name
+    const events = await Event.find({ staff: req.params.staffId,eventDate:req.params.eventDate }).populate('staff', 'name'); // Populate staff name
     res.json(events);
   } catch (error) {
     res.status(500).json({ message: error.message });

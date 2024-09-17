@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { Backend_URL } from '../../../assets/Data'
+import { useSelector } from 'react-redux'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../ui/dialog"
 import { Button } from "../../ui/button"
 import { Input } from "../../ui/input"
@@ -7,23 +9,65 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 
 const AddEventModal = ({ isOpen, onClose }) => {
   const [eventName, setEventName] = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
+  const [eventDate, setEventDate] = useState(getCurrentDate())
+  const [startHour, setStartHour] = useState('')
+  const [startMinute, setStartMinute] = useState('')
+  const [endHour, setEndHour] = useState('')
+  const [endMinute, setEndMinute] = useState('')
   const [startAmPm, setStartAmPm] = useState('AM')
   const [endAmPm, setEndAmPm] = useState('AM')
+  const [staffId, setStaffId] = useState('')
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // TODO: Handle event creation logic here
-    console.log('Event created:', { eventName, startTime: `${startTime} ${startAmPm}`, endTime: `${endTime} ${endAmPm}` })
-    onClose()
+  const staffList = useSelector((state)=> state.staff.doctors)
+   console.log(staffList)
+  function getCurrentDate() {
+    const today = new Date();
+    const dd = String(today.getDate()).padStart(2, '0');
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const yyyy = today.getFullYear();
+    return `${dd}-${mm}-${yyyy}`;
   }
 
-  const timeOptions = Array.from({ length: 24 }, (_, i) => {
-    const hour = i % 12 || 12
-    const minute = '00'
-    return `${hour.toString().padStart(2, '0')}:${minute}`
-  })
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    const startTime = `${startHour}:${startMinute} ${startAmPm}`
+    const endTime = `${endHour}:${endMinute} ${endAmPm}`
+    
+    const eventData = {
+      eventName,
+      eventDate,
+      timeSlot: {
+        start: startTime,
+        end: endTime
+      },
+      staffId
+    }
+
+    try {
+      const response = await fetch(`${Backend_URL}/api/events`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(eventData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create event');
+      }
+
+      const newEvent = await response.json();
+      console.log('Event created:', newEvent);
+      onClose();
+    } catch (error) {
+      console.error('Error creating event:', error);
+      // Handle error (e.g., show error message to user)
+    }
+  }
+
+  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
+  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -42,43 +86,43 @@ const AddEventModal = ({ isOpen, onClose }) => {
               className="w-full"
             />
           </div>
-          <div className="space-y-2">
-            <Label>Time Slot</Label>
-            <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
-              <div className="flex items-center space-x-1 sm:w-1/2">
-                <Select value={startTime} onValueChange={setStartTime}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Start" />
+          <div>
+            <Label htmlFor="eventDate">Event Date</Label>
+            <Input
+              id="eventDate"
+              type="text"
+              value={eventDate}
+              onChange={(e) => setEventDate(e.target.value)}
+              placeholder="DD-MM-YYYY"
+              className="w-full"
+            />
+          </div>
+          <div className="flex space-x-2">
+            <div className="flex-1">
+              <Label>Start Time</Label>
+              <div className="flex space-x-2">
+                <Select value={startHour} onValueChange={setStartHour}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="HH" />
                   </SelectTrigger>
                   <SelectContent>
-                    {timeOptions.map((time) => (
-                      <SelectItem key={time} value={time}>{time}</SelectItem>
+                    {hours.map(hour => (
+                      <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={startMinute} onValueChange={setStartMinute}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="MM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minutes.map(minute => (
+                      <SelectItem key={minute} value={minute}>{minute}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
                 <Select value={startAmPm} onValueChange={setStartAmPm}>
-                  <SelectTrigger className="w-[70px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AM">AM</SelectItem>
-                    <SelectItem value="PM">PM</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center space-x-1 sm:w-1/2">
-                <Select value={endTime} onValueChange={setEndTime}>
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="End" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {timeOptions.map((time) => (
-                      <SelectItem key={time} value={time}>{time}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select value={endAmPm} onValueChange={setEndAmPm}>
-                  <SelectTrigger className="w-[70px]">
+                  <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -88,6 +132,57 @@ const AddEventModal = ({ isOpen, onClose }) => {
                 </Select>
               </div>
             </div>
+          </div>
+          <div className="flex space-x-2">
+            <div className="flex-1">
+              <Label>End Time</Label>
+              <div className="flex space-x-2">
+                <Select value={endHour} onValueChange={setEndHour}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="HH" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hours.map(hour => (
+                      <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={endMinute} onValueChange={setEndMinute}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="MM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {minutes.map(minute => (
+                      <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={endAmPm} onValueChange={setEndAmPm}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AM">AM</SelectItem>
+                    <SelectItem value="PM">PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="staffId">Staff</Label>
+            <Select value={staffId} onValueChange={setStaffId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select staff" />
+              </SelectTrigger>
+              <SelectContent>
+                {staffList.map(staff => (
+                  <SelectItem key={staff._id} value={staff._id.toString()}>
+                    {staff.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>

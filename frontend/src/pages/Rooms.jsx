@@ -43,62 +43,18 @@ import {
 import { ScrollArea } from "../components/ui/scroll-area";
 
 // Updated sample room data without duplicates
-const rooms = [
-  {
-    id: 101,
-    type: "General",
-    status: "Partially Occupied",
-    beds: [
-      { id: "A", status: "Occupied", patient: "John Doe", admissionDate: "2023-06-15", expectedDischarge: "2023-06-20" },
-      { id: "B", status: "Available", patient: null, admissionDate: null, expectedDischarge: null },
-    ],
-  },
-  {
-    id: 102,
-    type: "ICU",
-    status: "Available",
-    beds: [
-      { id: "A", status: "Available", patient: null, admissionDate: null, expectedDischarge: null },
-    ],
-  },
-  {
-    id: 201,
-    type: "Pediatric",
-    status: "Fully Occupied",
-    beds: [
-      { id: "A", status: "Occupied", patient: "Jane Smith", admissionDate: "2023-06-14", expectedDischarge: "2023-06-18" },
-      { id: "B", status: "Occupied", patient: "Tom Wilson", admissionDate: "2023-06-13", expectedDischarge: "2023-06-17" },
-    ],
-  },
-  {
-    id: 202,
-    type: "General",
-    status: "Cleaning",
-    beds: [
-      { id: "A", status: "Cleaning", patient: null, admissionDate: null, expectedDischarge: null },
-      { id: "B", status: "Cleaning", patient: null, admissionDate: null, expectedDischarge: null },
-    ],
-  },
-  {
-    id: 301,
-    type: "ICU",
-    status: "Partially Occupied",
-    beds: [
-      { id: "A", status: "Occupied", patient: "Alice Johnson", admissionDate: "2023-06-16", expectedDischarge: "2023-06-22" },
-      { id: "B", status: "Available", patient: null, admissionDate: null, expectedDischarge: null },
-    ],
-  },
-];
+import { useSelector } from "react-redux";
 
 export default function RoomManagementDashboard() {
+  const { rooms } = useSelector((state) => state.rooms);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
 
   const filteredRooms = rooms.filter(
     (room) =>
-      (room.id.toString().includes(searchTerm) ||
-        room.beds.some(
+      (room.roomNumber.toString().includes(searchTerm) ||
+        room.beds?.some(
           (bed) =>
             bed.patient &&
             bed.patient.toLowerCase().includes(searchTerm.toLowerCase())
@@ -116,7 +72,7 @@ export default function RoomManagementDashboard() {
     (room) => room.status === "Available"
   ).length;
   const maintenanceRooms = rooms.filter(
-    (room) => room.status === "Cleaning" || room.status === "Maintenance"
+    (room) => room.status === "Under Maintenance"
   ).length;
 
   const BedDetailsDialog = ({ room }) => (
@@ -140,14 +96,13 @@ export default function RoomManagementDashboard() {
                 <TableHead>Bed Number</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Patient</TableHead>
-                <TableHead>Admission Date</TableHead>
-                <TableHead>Expected Discharge</TableHead>
+                
               </TableRow>
             </TableHeader>
             <TableBody>
               {room.beds.map((bed) => (
-                <TableRow key={bed.id}>
-                  <TableCell>{bed.id}</TableCell>
+                <TableRow key={bed.bednumber}>
+                  <TableCell>{bed.bedNumber}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
@@ -155,7 +110,7 @@ export default function RoomManagementDashboard() {
                           ? "default"
                           : bed.status === "Available"
                           ? "secondary"
-                          : bed.status === "Cleaning"
+                          : bed.status === "Under Maintenance"
                           ? "warning"
                           : "destructive"
                       }
@@ -163,9 +118,8 @@ export default function RoomManagementDashboard() {
                       {bed.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{bed.patient || "-"}</TableCell>
-                  <TableCell>{bed.admissionDate || "-"}</TableCell>
-                  <TableCell>{bed.expectedDischarge || "-"}</TableCell>
+                  <TableCell>{bed.currentPatient?.name || "-"}</TableCell>
+                 
                 </TableRow>
               ))}
             </TableBody>
@@ -177,87 +131,6 @@ export default function RoomManagementDashboard() {
 
   return (
     <div className="container mx-auto p-6 space-y-4 pt-2">
-      {/* <h1 className="text-3xl font-bold">Room Management Dashboard</h1> */}
-
-      <div className="grid grid-cols-5 gap-4">
-        {/* basic rooms data */}
-        <div className="grid grid-cols-3 col-span-2 gap-4">
-          <Card className="bg-pink-100 transition-all hover:shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <HotelIcon className="w-10 h-10 text-pink-600" />
-                  <p className="text-2xl font-bold text-pink-600">{availableRooms}</p>
-                  <p className="text-sm text-gray-600">Available Rooms</p>
-                  <p className="text-xs text-green-600 mt-1">
-                    Out of {totalRooms}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-orange-100 transition-all hover:shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <BedIcon className="w-10 h-10 text-orange-600" />
-                  <p className="text-2xl font-bold text-orange-600">104</p>
-                  <p className="text-sm text-gray-600">Beds Available</p>
-                  <p className="text-xs text-green-600 mt-1">
-                    Out of 450
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="bg-orange-100 transition-all hover:shadow-lg">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <BedIcon className="w-10 h-10 text-orange-600" />
-                  <p className="text-2xl font-bold text-orange-600">104</p>
-                  <p className="text-sm text-gray-600">Beds Available</p>
-                  <p className="text-xs text-green-600 mt-1">
-                    Out of 450
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-        {/* Department Occupancy */}
-        <div className="col-span-3">
-          <Card className="col-span-1">
-            <CardHeader>
-              <CardTitle>Department Occupancy</CardTitle>
-              <CardDescription>Current occupancy by department</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 gap-4">
-                {[
-                  { name: "General", occupancy: 85 },
-                  { name: "ICU", occupancy: 92 },
-                  { name: "Pediatric", occupancy: 60 },
-                  { name: "Personal", occupancy: 60 },
-                ].map((dept, index) => (
-                  <div key={index} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium leading-none">
-                        {dept.name}
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        {dept.occupancy}%
-                      </p>
-                    </div>
-                    <Progress value={dept.occupancy} className="h-3" />
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
       <Card>
         <CardHeader>
           <CardTitle>Room List</CardTitle>
@@ -283,7 +156,9 @@ export default function RoomManagementDashboard() {
                   <SelectItem value="All">All Types</SelectItem>
                   <SelectItem value="General">General</SelectItem>
                   <SelectItem value="ICU">ICU</SelectItem>
-                  <SelectItem value="Pediatric">Pediatric</SelectItem>
+                  <SelectItem value="Operation Theater">Operation Theater</SelectItem>
+                  <SelectItem value="Semi-Private">Semi-Private</SelectItem>
+                  <SelectItem value="Private">Private</SelectItem>
                 </SelectContent>
               </Select>
               <Select onValueChange={setFilterStatus} defaultValue="All">
@@ -292,13 +167,12 @@ export default function RoomManagementDashboard() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All Statuses</SelectItem>
-                  <SelectItem value="Fully Occupied">Fully Occupied</SelectItem>
-                  <SelectItem value="Partially Occupied">
-                    Partially Occupied
+                  <SelectItem value="Occupied">Occupied</SelectItem>
+                  <SelectItem value="Partially Available">
+                    Partially Available
                   </SelectItem>
                   <SelectItem value="Available">Available</SelectItem>
-                  <SelectItem value="Cleaning">Cleaning</SelectItem>
-                  <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -315,35 +189,37 @@ export default function RoomManagementDashboard() {
                 <TableHead>Type</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Beds</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead>Current Occupancy</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredRooms.map((room) => (
-                <TableRow key={room.id}>
-                  <TableCell>{room.id}</TableCell>
+                <TableRow key={room._id}>
+                  <TableCell>{room.roomNumber}</TableCell>
                   <TableCell>{room.type}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        room.status === "Fully Occupied"
+                        room.status === "Occupied"
                           ? "default"
-                          : room.status === "Partially Occupied"
+                          : room.status === "Partially Available"
                           ? "warning"
-                          : room.status === "Available"
-                          ? "secondary"
-                          : room.status === "Cleaning"
+                          : room.status === "Under Maintenance"
                           ? "warning"
-                          : "destructive"
+                          : "outline"
                       }
+                      className={room.status === "Available" ? "bg-green-100 text-green-800 border-green-500" : ""}
                     >
                       {room.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{room.beds.length}</TableCell>
+                  <TableCell>{room.capacity}</TableCell>
                   <TableCell>
-                    <BedDetailsDialog room={room} />
+                    {room.currentOccupancy}
+                    {/* <BedDetailsDialog room={room} /> */}
                   </TableCell>
+                  <BedDetailsDialog room={room} />
                 </TableRow>
               ))}
             </TableBody>

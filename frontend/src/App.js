@@ -6,6 +6,7 @@ import { store } from './redux/store';
 import { useDispatch } from 'react-redux';
 import { fetchPatients } from './redux/slices/patientSlice';
 import { fetchStaffMembers } from './redux/slices/staffSlice';
+import  CreateRoom  from './pages/CreateRoom';
 import { getDoctors } from './redux/slices/staffSlice';
 import Home from './pages/Home';
 import VerticalNav from './components/custom/Navigations/VerticalNav';
@@ -26,6 +27,7 @@ import PharmacyAllBills from './pages/PharmacyAllBills';
 import AddStaff from './pages/AddStaff';
 import { fetchDepartments } from "./redux/slices/departmentSlice";
 import { fetchRooms } from "./redux/slices/roomSlice";
+import { fetchUserData } from "./redux/slices/userSlice";
 import CreateBloodWork from './pages/CreateBloodWork'; // Add this import
 import Lab from './pages/Lab';
 import CreateLabReport from './pages/CreateLabReport';
@@ -35,11 +37,11 @@ const AppContent = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
+    dispatch(fetchUserData());
     dispatch(fetchPatients());
     dispatch(fetchStaffMembers());
     dispatch(fetchDepartments());
     dispatch(fetchRooms())
-    dispatch(getDoctors());
   }, [dispatch]);
 
   return (
@@ -74,6 +76,7 @@ const AppContent = () => {
             <Route path='/lab' element={<Lab />} />
             <Route path='/lab/create/:category/:type' element={<CreateLabReport />} />
             <Route path='/lab/blood-work/create' element={<CreateBloodWork />} />
+            <Route path='/create-room' Component={CreateRoom} />
           </Routes>
         </main>
       </div>

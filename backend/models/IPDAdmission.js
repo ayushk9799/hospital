@@ -4,12 +4,14 @@ const CounterSchema = new mongoose.Schema({
   date: { type: String },
   seq: { type: Number, default: 0 }
 });
+CounterSchema.plugin(hospitalPlugin);
 const Counter = mongoose.model('IPDCounter', CounterSchema);
 
 function formatDate(date,number) {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0'); 
   const year = date.getFullYear();
+  console.log(day,month,year)
   if(number===1){
     return `${day}-${month}-${year}`;
   }
@@ -40,6 +42,8 @@ const ipdAdmissionSchema = new mongoose.Schema({
   },
   assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
   assignedRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+  assignedBed:{ type: mongoose.Schema.Types.ObjectId, ref: "Room.beds" },
+ 
   notes:{type:String},
 });
 

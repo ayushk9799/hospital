@@ -218,7 +218,7 @@ export default function Patients() {
               <TableCell>{patient.bookingDate}</TableCell>
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
-              <TableCell>{patient.doctor || '--'}</TableCell>
+              <TableCell>{patient.doctor?.name || '--'}</TableCell>
               {type === 'IPD' && (
                 <>
                   <TableCell>{patient.dateOfAdmission || '--'}</TableCell>

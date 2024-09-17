@@ -57,11 +57,7 @@ const staffSlice = createSlice({
     error: null,
   },
   reducers: {
-    getDoctors: (state, action) => {
-      state.doctors = state.staffMembers?.filter(
-        (staff) => staff.role.includes('doctor')
-      );
-    },
+  
   },
   extraReducers: (builder) => {
     builder
@@ -71,6 +67,9 @@ const staffSlice = createSlice({
       .addCase(fetchStaffMembers.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.staffMembers = action.payload;
+        state.doctors = state.staffMembers?.filter(
+          (staff) => staff.roles.includes('doctor')
+        );
       })
       .addCase(fetchStaffMembers.rejected, (state, action) => {
         state.status = 'failed';

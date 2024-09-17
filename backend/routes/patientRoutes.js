@@ -46,6 +46,20 @@ router.post('/', verifyToken, checkPermission('write:patients'), async (req, res
         patient: patient._id
       });
       patient.admissionDetails.push(admissionRecord._id);
+
+      // Update Room if assigned
+      if (admission.assignedRoom) {
+        const room = await Room.findById(admission.assignedRoom).session(session);
+        if (!room) {
+          throw new Error('Assigned room not found');
+        }
+        if(room.currentOccupancy >= room.capacity){
+          throw new Error('Room is at full capacity');
+        }
+        room.currentOccupancy += 1;
+        room.currentPatients.push(patient._id);
+        await room.save({ session });
+      }
     }
 
     await admissionRecord.save({ session });
@@ -221,11 +235,11 @@ router.post('/:id/admit', verifyToken, checkPermission('write:patients'), async 
 
   try {
     const { id } = req.params;
-    const { dateAdmitted, reasonForAdmission, assignedDoctor, assignedRoom } = req.body;
+    const { dateAdmitted, reasonForAdmission, assignedDoctor, assignedRoom, assignedBed } = req.body;
 
     // Validate required fields
-    if (!dateAdmitted || !assignedRoom) {
-      throw new Error('Date admitted and assigned room are required');
+    if (!dateAdmitted || !assignedRoom || !assignedBed) {
+      throw new Error('Date admitted, assigned room, and assigned bed are required');
     }
 
     const patient = await Patient.findById(id).session(session);
@@ -237,41 +251,47 @@ router.post('/:id/admit', verifyToken, checkPermission('write:patients'), async 
       throw new Error('Patient is already admitted');
     }
 
-    const room = await Room.findById(assignedRoom).session(session);
-    if (!room) {
-      throw new Error('Room not found');
-    }
-
-    if (room.currentOccupancy >= room.capacity) {
-      throw new Error('Room is at full capacity');
-    }
-
-    // Optimistic concurrency control for room update
+    // Find the room and update the specific bed
     const updatedRoom = await Room.findOneAndUpdate(
       { 
         _id: assignedRoom, 
-        currentOccupancy: room.currentOccupancy,
-        currentPatients: room.currentPatients
+        'beds': { 
+          $elemMatch: { 
+            _id: assignedBed, 
+            status: 'Available' 
+          } 
+        }
       },
       { 
         $inc: { currentOccupancy: 1 },
-        $push: { currentPatients: patient._id },
-        $set: { status: room.currentOccupancy + 1 === room.capacity ? 'Occupied' : room.status }
+        $set: { 
+          'beds.$.status': 'Occupied',
+          'beds.$.currentPatient': patient._id
+        }
       },
       { new: true, session, runValidators: true }
     );
 
     if (!updatedRoom) {
-      throw new Error('Room data has been modified. Please try again.');
+      throw new Error('Room or bed not available');
     }
+
+    // Update room status if necessary
+    if (updatedRoom.currentOccupancy === updatedRoom.capacity) {
+      updatedRoom.status = 'Occupied';
+    } else if (updatedRoom.currentOccupancy > 0) {
+      updatedRoom.status = 'Partially Available';
+    }
+    await updatedRoom.save({ session });
 
     // Create new IPD admission
     const newAdmission = new IPDAdmission({
       patient: patient._id,
-      admissionDate: dateAdmitted || null,
+      admissionDate: dateAdmitted,
       reasonForAdmission: reasonForAdmission || 'Not specified',
       assignedDoctor: assignedDoctor || null,
-      assignedRoom
+      assignedRoom: updatedRoom._id,
+      assignedBed: assignedBed
     });
 
     await newAdmission.save({ session });
@@ -284,7 +304,7 @@ router.post('/:id/admit', verifyToken, checkPermission('write:patients'), async 
     await session.commitTransaction();
     session.endSession();
 
-    res.json({ patient, admission: newAdmission });
+    res.json({ patient, admission: newAdmission, room: updatedRoom });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();

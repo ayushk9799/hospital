@@ -5,17 +5,28 @@ const router = express.Router();
 
 router.post('/', async (req, res) => {
   try {
-    const room = new Room(req.body);
+    const roomData = req.body;
+    
+    // Ensure the number of beds matches the capacity
+    if (roomData.beds.length !== roomData.capacity) {
+      return res.status(400).json({ error: 'Number of beds must match the room capacity' });
+    }
+    
+    // Create bed objects with bedNumber property
+    roomData.beds = roomData.beds.map(bedNumber => ({ bedNumber }));
+  
+    
+    const room = new Room(roomData);
     await room.save();
     res.status(201).json(room);
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: error.message });
   }
 });
 
 router.get('/', async (req, res) => {
   try {
-    const rooms = await Room.find();
+    const rooms = await Room.find().populate('beds.currentPatient');
     res.json(rooms);
   } catch (error) {
     res.status(500).json({ error: error.message });

@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronDown, LogOut, Bell, User, Menu } from "lucide-react";
 import { Input } from "../../ui/input";
+import { useSelector } from "react-redux";
 import { Button } from "../../ui/button";
 import {
   DropdownMenu,
@@ -16,6 +17,8 @@ import { ColorfulLogo } from "./VerticalNav";
 // Remove the labReportTypes and handleCreateLabReport function
 
 const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
+
+  const user = useSelector((state) => state.user.userData);
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white shadow z-50 sticky top-0">
       <div className="flex items-center">
@@ -42,9 +45,9 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
             <Button variant="ghost" size="sm" className="ml-3 flex items-center">
               <Avatar className="h-6 w-6 mr-2">
                 <AvatarImage src="/placeholder.svg?height=24&width=24" alt="User" />
-                <AvatarFallback>JS</AvatarFallback>
+                <AvatarFallback>{(user?.name?.charAt(0))?.toUpperCase()}</AvatarFallback>
               </Avatar>
-              <span className="text-sm">Dr. Jane Smith</span>
+              <span className="text-sm">{user?.name}</span>
               <ChevronDown className="ml-1 h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>

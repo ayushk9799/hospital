@@ -4,6 +4,7 @@ const CounterSchema = new mongoose.Schema({
     date: { type: String },
     seq: { type: Number, default: 0 }
   });
+  CounterSchema.plugin(hospitalPlugin);
   const Counter = mongoose.model('Counter', CounterSchema);
 
 function formatDate(date) {

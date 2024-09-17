@@ -8,25 +8,31 @@ import { SearchIcon } from 'lucide-react'
 import { Input } from "../../ui/input";
 
 const PatientEntry = ({ID, bookingNumber, patient, bookingDate, reasonForVisit, type, onSelect, vitals ,diagnosis,treatment,medications,additionalInstructions,labTests}) => {
-  console.log(patient)
- return (<div
-  className="flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100"
-  onClick={() => onSelect({ID, bookingNumber, patient, bookingDate, reasonForVisit, type, vitals,diagnosis,treatment,medications,additionalInstructions,labTests })}
->
-  <div className="flex items-center space-x-4">
-    <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-      {patient.name.charAt(0)}
+  const truncateName = (name, maxLength = 15) => {
+    return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
+  };
+
+  return (
+    <div
+      className="flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100"
+      onClick={() => onSelect({ID, bookingNumber, patient, bookingDate, reasonForVisit, type, vitals,diagnosis,treatment,medications,additionalInstructions,labTests })}
+    >
+      <div className="flex items-center space-x-4">
+        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+          {patient.name.charAt(0)}
+        </div>
+        <div>
+          <h3 className="font-semibold">{truncateName(patient.name)}</h3>
+          <p className="text-sm text-gray-500">{patient.contactNumber}</p>
+        </div>
+      </div>
+      <div className="text-right">
+        <p className="text-sm font-semibold">{bookingDate}</p>
+        <Badge variant="outline">{type}</Badge>
+      </div>
     </div>
-    <div>
-      <h3 className="font-semibold">{patient.name}</h3>
-      <p className="text-sm text-gray-500">{patient.contactNumber}</p>
-    </div>
-  </div>
-  <div className="text-right">
-    <p className="text-sm font-semibold">{bookingDate}</p>
-    <Badge variant="outline">{type}</Badge>
-  </div>
-</div>)};
+  );
+};
 
 const AppointmentsQueue = ({ onPatientSelect }) => {
   const [searchTerm, setSearchTerm] = useState("");

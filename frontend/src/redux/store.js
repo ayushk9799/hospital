@@ -2,6 +2,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import patientReducer from './slices/patientSlice';
 import staffReducer from './slices/staffSlice';
 import departmentReducer from './slices/departmentSlice';
+import userReducer from './slices/userSlice';
 import roomReducer from './slices/roomSlice';
 import pharmacyReducer from './slices/pharmacySlice';
 export const store = configureStore({
@@ -10,6 +11,7 @@ export const store = configureStore({
     staff: staffReducer,
     departments:departmentReducer,
     rooms:roomReducer,
-    pharmacy:pharmacyReducer
+    pharmacy:pharmacyReducer,
+    user:userReducer
   },
 });

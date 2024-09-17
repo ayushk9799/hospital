@@ -44,7 +44,14 @@ router.get('/', verifyToken, checkPermission('read:all'), async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+router.get('/me',verifyToken,async(req,res)=>{
+  try {
+    const staff = await Staff.findById(req.user._id).select('-password');
+    res.json(staff);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+})
 // Get a specific staff member by ID (Admin, Manager, and Self)
 router.get('/:id', verifyToken, async (req, res) => {
   try {
