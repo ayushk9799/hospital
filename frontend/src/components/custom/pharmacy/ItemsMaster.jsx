@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
-import { fetchItems } from "../../../redux/slices/pharmacySlice";
+import { fetchItems, setUpdateInventoryStatusIdle } from "../../../redux/slices/pharmacySlice";
 import { Search, ChevronLeft, ChevronRight, Pencil, Trash, FileDown, Plus, ListFilter, PackageX } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { Input } from "../../ui/input";
@@ -9,17 +9,17 @@ import { Button } from "../../ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
 import { Badge } from "../../ui/badge";
-import AddItemDialog from "./itemMaster/AddItemDialog";
 import EditItemDialog from "./itemMaster/EditItemDialog";
+import { useToast } from "../../../hooks/use-toast";
 
 export default function ItemsMaster() {
   const dispatch = useDispatch();
-  const {items, itemsStatus} = useSelector((state) => state.pharmacy);
+  const {items, itemsStatus, updateInventoryItemStatus} = useSelector((state) => state.pharmacy);
+  const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
-  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
   const [isEditItemDialogOpen, setIsEditItemDialogOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState(null);
 
@@ -30,6 +30,22 @@ export default function ItemsMaster() {
       dispatch(fetchItems());
     }
   }, [itemsStatus, dispatch]);
+
+  // show when the item is updated
+  useEffect(() => {
+    if (updateInventoryItemStatus === "succeeded") {
+      console.log("updateInventoryItemStatus");
+      toast({
+        title: "Changes saved",
+        description: "The item has been updated successfully.",
+        variant: "default",
+      });
+    }
+    return () => {
+      dispatch(setUpdateInventoryStatusIdle());
+    };
+  }, [updateInventoryItemStatus, dispatch]);
+
 
   const filteredItems = items
     .filter((item) =>
@@ -70,14 +86,6 @@ export default function ItemsMaster() {
     console.log(`Delete item with id: ${id}`);
   };
 
-  const handleAddItemClick = () => {
-    setIsAddItemDialogOpen(true);
-  };
-
-  const handleCloseAddItemDialog = () => {
-    setIsAddItemDialogOpen(false);
-  };
-
   const handleCloseEditItemDialog = () => {
     setIsEditItemDialogOpen(false);
     setItemToEdit(null);
@@ -115,9 +123,6 @@ export default function ItemsMaster() {
                 </DropdownMenu>
               </div>
               <div className="flex space-x-2">
-                <Button variant="outline" onClick={handleAddItemClick}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Item
-                </Button>
                 <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" /> Export
                 </Button>
@@ -204,7 +209,6 @@ export default function ItemsMaster() {
           </>
         )}
       </CardContent>
-      <AddItemDialog isOpen={isAddItemDialogOpen} onClose={handleCloseAddItemDialog} />
       <EditItemDialog isOpen={isEditItemDialogOpen} onClose={handleCloseEditItemDialog} item={itemToEdit} />
     </Card>
   );
