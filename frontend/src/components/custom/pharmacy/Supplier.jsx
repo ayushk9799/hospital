@@ -2,15 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchSuppliers, fetchSupplierDetails } from "../../../redux/slices/pharmacySlice";
 import { formatDate } from "../../../assets/Data";
-import {
-  ChevronRight,
-  BriefcaseMedicalIcon,
-  Building2,
-  Phone,
-  Mail,
-  Info,
-  PlusIcon
-} from "lucide-react";
+import { ChevronRight, BriefcaseMedicalIcon, Building2, Phone, Mail, Info, PlusIcon } from "lucide-react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "../../ui/card";
@@ -22,31 +14,21 @@ import SupplierRegDialog from './supplier/SupplierRegDialog';
 
 const Supplier = () => {
   const dispatch = useDispatch();
-  const { suppliers, status, error, selectedSupplier } = useSelector((state) => state.pharmacy);
-  // const [selectedSupplier, setSelectedSupplier] = useState(null);
+  const { suppliers, suppliersStatus,selectedSupplier } = useSelector((state) => state.pharmacy);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSupplierRegDialogOpen, setIsSupplierRegDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (status === "idle") {
+    if (suppliersStatus === "idle") {
       dispatch(fetchSuppliers());
     }
-  }, [status, dispatch]);
+  }, [suppliersStatus, dispatch]);
+
 
   const handleSupplierClick = (supplier) => {
     dispatch(fetchSupplierDetails(supplier._id));
-  };
-
-  const calculateOrderTotal = (order) => {
-    if (order.items && order.items.length > 0) {
-      return order.items.reduce((acc, item) => {
-        const itemTotal = item.unitPrice * item.quantity * (1 - item.discount / 100);
-        return acc + itemTotal;
-      }, 0);
-    }
-    return 0;
   };
 
   const calculateOrderQuantity = (order) => {
@@ -57,12 +39,8 @@ const Supplier = () => {
   };
 
   const calculateOverallDiscount = (order) => {
-    const discount = ((order.subtotal-order.totalAmount)/100).toFixed(2);
+    const discount = ((1-order.totalAmount/order.subtotal)*100).toFixed(2);
     return discount || 'N/A';
-  };
-
-  const calculateTotalPaymentsForOrder = (order) => {
-    return order.payments.reduce((total, payment) => total + payment.amount, 0);
   };
 
   const handleOpenOrderDialog = (order) => {
@@ -78,14 +56,6 @@ const Supplier = () => {
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
-
-  if (status === "loading") {
-    return <div>Loading suppliers...</div>;
-  }
-
-  if (status === "failed") {
-    return <div>Error: {error}</div>;
-  }
 
   return (
     <div className="h-full w-full flex flex-col">
@@ -156,7 +126,7 @@ const Supplier = () => {
                     {selectedSupplier.amountPaid !== undefined && (
                       <div className="flex justify-between items-center">
                         <span className="text-sm font-medium">Total Purchase Value:</span>
-                        <span className="text-sm">₹{(Number(selectedSupplier.amountPaid) + Number(selectedSupplier.amountDue))}</span>
+                        <span className="text-sm">₹{((Number(selectedSupplier.amountPaid) + Number(selectedSupplier.amountDue)).toLocaleString())}</span>
                       </div>
                     )}
                     {selectedSupplier.amountDue !== undefined && (
@@ -194,8 +164,7 @@ const Supplier = () => {
                       <TableHead>Order ID</TableHead>
                       <TableHead>Order Date</TableHead>
                       <TableHead>Quantity</TableHead>
-                      <TableHead>Total Price</TableHead>
-                      <TableHead>Delivered Date</TableHead>
+                      <TableHead>Total Amount</TableHead>
                       <TableHead>Discount</TableHead>
                       <TableHead>Payments</TableHead>
                       <TableHead>Action</TableHead>
@@ -208,21 +177,12 @@ const Supplier = () => {
                         <TableCell>{formatDate(order.orderDate)}</TableCell>
                         <TableCell>{calculateOrderQuantity(order)}</TableCell>
                         <TableCell>₹{order.totalAmount.toLocaleString()}</TableCell>
-                        <TableCell>{formatDate(order.orderDate)}</TableCell>
                         <TableCell>{calculateOverallDiscount(order)}%</TableCell>
                         <TableCell>₹{order.paidAmount.toLocaleString()}</TableCell>
                         <TableCell>
-                          <OrderDetailsDialog 
-                            order={order} 
-                            trigger={
-                              <Button variant="ghost" size="sm" onClick={() => handleOpenOrderDialog(order)}>
-                                <Info size={16} />
-                              </Button>
-                            } 
-                            onClose={handleCloseOrderDialog}
-                            open={isOrderDialogOpen}
-                            setOpen={setIsOrderDialogOpen}
-                          />
+                          <Button variant="ghost" size="sm" onClick={() => handleOpenOrderDialog(order)}>
+                            <Info size={16} />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -246,32 +206,38 @@ const Supplier = () => {
             className="mb-2"
           />
           <ScrollArea className="flex-grow">
-            <div className="space-y-2 pr-4">
-              {filteredSuppliers.map((supplier) => (
-                <div
-                  key={supplier._id}
-                  className={`py-2 px-4 bg-white shadow rounded-lg mb-2 cursor-pointer transition-colors duration-200 hover:bg-gray-100 ${
-                    selectedSupplier && selectedSupplier._id === supplier._id
-                      ? 'border-2 border-blue-400 shadow-md'
-                      : ''
-                  }`}
-                  onClick={() => handleSupplierClick(supplier)}
-                >
-                  <h3 className="font-semibold capitalize">
-                    {supplier.name}{" "}
-                    <span className="text-xs text-gray-500">
-                      ({supplier._id.slice(-6)})
-                    </span>
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    Last purchase: {formatDate(supplier.lastPurchased)}
-                  </p>
-                  <p className="text-sm text-gray-500">
-                    Total Purchase Value: ₹{supplier.amountPaid+supplier.amountDue}
-                  </p>
-                </div>
-              ))}
-            </div>
+            {filteredSuppliers.length > 0 ? (
+              <div className="space-y-2 pr-4">
+                {filteredSuppliers.map((supplier) => (
+                  <div
+                    key={supplier._id}
+                    className={`py-2 px-4 bg-white shadow rounded-lg mb-2 cursor-pointer transition-colors duration-200 hover:bg-gray-100 ${
+                      selectedSupplier && selectedSupplier._id === supplier._id
+                        ? 'border-2 border-blue-400 shadow-md'
+                        : ''
+                    }`}
+                    onClick={() => handleSupplierClick(supplier)}
+                  >
+                    <h3 className="font-semibold capitalize">
+                      {supplier.name}{" "}
+                      <span className="text-xs text-gray-500">
+                        ({supplier._id.slice(-6)})
+                      </span>
+                    </h3>
+                    <p className="text-sm text-gray-500">
+                      Last purchase: {formatDate(supplier.lastPurchased)}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Total Purchase Value: ₹{supplier.amountPaid+supplier.amountDue}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p className="text-gray-500">No suppliers found</p>
+              </div>
+            )}
           </ScrollArea>
         </div>
       </div>
@@ -279,6 +245,12 @@ const Supplier = () => {
       <SupplierRegDialog 
         open={isSupplierRegDialogOpen} 
         setOpen={setIsSupplierRegDialogOpen} 
+      />
+      
+      <OrderDetailsDialog 
+        isOpen={isOrderDialogOpen}
+        setIsOpen={setIsOrderDialogOpen}
+        order={selectedOrder}
       />
     </div>
   );

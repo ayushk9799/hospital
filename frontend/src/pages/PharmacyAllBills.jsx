@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchSalesBills } from '../redux/slices/pharmacySlice';
 import {
   Search,
   ChevronLeft,
@@ -6,7 +8,6 @@ import {
   FileDown,
   Eye,
   Calendar as CalendarIcon,
-  Filter,
 } from "lucide-react";
 import {
   Card,
@@ -44,96 +45,9 @@ import { Calendar } from "../components/ui/calendar";
 import { cn } from "../lib/utils";
 import ViewBillDialog from "../components/custom/pharmacy/reports/ViewBillDialog";
 
-const recentBillsArray = [
-  { billNo: "#B001234", dateTime: "2023-06-15 14:30", customer: "John Doe", amount: 78.50, status: "Paid", paymentMethod: "Cash", items: [
-    { name: "Paracetamol", quantity: 2, price: 15.00 },
-    { name: "Amoxicillin", quantity: 1, price: 48.50 }
-  ]},
-  { billNo: "#B001235", dateTime: "2023-06-15 15:15", customer: "Jane Smith", amount: 125.00, status: "Pending", paymentMethod: "UPI", items: [
-    { name: "Ibuprofen", quantity: 1, price: 20.00 },
-    { name: "Vitamin C", quantity: 2, price: 30.00 },
-    { name: "Allergy Medication", quantity: 1, price: 75.00 }
-  ]},
-  { billNo: "#B001236", dateTime: "2023-06-15 16:00", customer: "Bob Johnson", amount: 45.75, status: "Paid", paymentMethod: "Card", items: [
-    { name: "Cough Syrup", quantity: 1, price: 25.75 },
-    { name: "Throat Lozenges", quantity: 2, price: 10.00 }
-  ]},
-  { billNo: "#B001237", dateTime: "2023-06-15 16:45", customer: "Alice Brown", amount: 92.30, status: "Paid", paymentMethod: "Cash", items: [
-    { name: "Blood Pressure Medication", quantity: 1, price: 65.30 },
-    { name: "Multivitamins", quantity: 1, price: 27.00 }
-  ]},
-  { billNo: "#B001238", dateTime: "2023-06-15 17:30", customer: "Charlie Davis", amount: 63.20, status: "Pending", paymentMethod: "UPI", items: [
-    { name: "Antacid", quantity: 1, price: 18.20 },
-    { name: "Pain Relief Gel", quantity: 1, price: 45.00 }
-  ]},
-  // 40 new bills added here
-];
-
-const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
-  const [open, setOpen] = useState(false);
-
-  const handleSearch = () => {
-    onSearch();
-    setOpen(false);
-  };
-
-  const handleCancel = () => {
-    onCancel();
-    setOpen(false);
-  };
-
-  const today = new Date();
-  const lastMonth = subMonths(today, 1);
-
-  return (
-    <div className={cn("grid gap-2")}>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            id="date"
-            variant={"outline"}
-            className={cn(
-              "w-[300px] justify-start text-left font-normal",
-              !from && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {from ? (
-              to ? (
-                <>
-                  {format(from, "LLL dd, y")} - {format(to, "LLL dd, y")}
-                </>
-              ) : (
-                format(from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date range</span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={lastMonth}
-            selected={{ from, to }}
-            onSelect={onSelect}
-            numberOfMonths={2}
-            disabled={(date) => isBefore(today, date)}
-            toDate={today}
-          />
-          <div className="flex justify-end gap-2 p-2">
-            <Button variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
-            <Button size="sm" onClick={handleSearch}>Search</Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  );
-};
-
 const PharmacyAllBills = () => {
-  const [bills, setBills] = useState(recentBillsArray);
+  const dispatch = useDispatch();
+  const { salesBills, salesBillsStatus } = useSelector((state) => state.pharmacy);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const billsPerPage = 10;
@@ -143,12 +57,18 @@ const PharmacyAllBills = () => {
   const [selectedBill, setSelectedBill] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
 
-  const filteredBills = bills.filter((bill) => {
-    const searchMatch = bill.billNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bill.customer.toLowerCase().includes(searchTerm.toLowerCase());
+  useEffect(() => {
+    if (salesBillsStatus === 'idle') {
+      dispatch(fetchSalesBills());
+    }
+  }, [salesBillsStatus, dispatch]);
+
+  const filteredBills = salesBills.filter((bill) => {
+    const searchMatch = `#B${bill._id.slice(-6)}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.patientInfo.name.toLowerCase().includes(searchTerm.toLowerCase());
     
     let dateMatch = true;
-    const billDate = parseISO(bill.dateTime.split(' ')[0]);
+    const billDate = parseISO(bill.createdAt);
     const today = new Date();
 
     switch (dateFilter) {
@@ -262,23 +182,23 @@ const PharmacyAllBills = () => {
               <TableHead>Date & Time</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Payment Method</TableHead>
+              <TableHead>Method</TableHead>
               <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedBills.map((bill) => (
-              <TableRow key={bill.billNo}>
-                <TableCell>{bill.billNo}</TableCell>
-                <TableCell>{bill.customer}</TableCell>
-                <TableCell>{bill.dateTime}</TableCell>
-                <TableCell>₹{bill.amount.toFixed(2)}</TableCell>
+              <TableRow key={bill._id}>
+                <TableCell>{`#B${bill._id.slice(-6)}`}</TableCell>
+                <TableCell className='capitalize'>{bill.patientInfo.name}</TableCell>
+                <TableCell>{new Date(bill.createdAt).toLocaleString()}</TableCell>
+                <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
                 <TableCell>
-                  <Badge variant={bill.status === "Paid" ? "success" : "warning"}>
-                    {bill.status}
+                  <Badge variant={bill.payment.status === "paid" ? "success" : "warning"}>
+                    {bill.payment.status === "paid" ? "Paid" : "Due"}
                   </Badge>
                 </TableCell>
-                <TableCell>{bill.paymentMethod}</TableCell>
+                <TableCell>{bill.payment.paymentMethod}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
@@ -329,3 +249,66 @@ const PharmacyAllBills = () => {
 };
 
 export default PharmacyAllBills;
+
+const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
+  const [open, setOpen] = useState(false);
+
+  const handleSearch = () => {
+    onSearch();
+    setOpen(false);
+  };
+
+  const handleCancel = () => {
+    onCancel();
+    setOpen(false);
+  };
+
+  const today = new Date();
+  const lastMonth = subMonths(today, 1);
+
+  return (
+    <div className={cn("grid gap-2")}>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            id="date"
+            variant={"outline"}
+            className={cn(
+              "w-[300px] justify-start text-left font-normal",
+              !from && "text-muted-foreground"
+            )}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {from ? (
+              to ? (
+                <>
+                  {format(from, "LLL dd, y")} - {format(to, "LLL dd, y")}
+                </>
+              ) : (
+                format(from, "LLL dd, y")
+              )
+            ) : (
+              <span>Pick a date range</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            initialFocus
+            mode="range"
+            defaultMonth={lastMonth}
+            selected={{ from, to }}
+            onSelect={onSelect}
+            numberOfMonths={2}
+            disabled={(date) => isBefore(today, date)}
+            toDate={today}
+          />
+          <div className="flex justify-end gap-2 p-2">
+            <Button variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
+            <Button size="sm" onClick={handleSearch}>Search</Button>
+          </div>
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+};

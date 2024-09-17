@@ -3,12 +3,11 @@ import React, { useEffect,useState } from "react";
 import { Route, BrowserRouter as Router, Routes,Navigate } from "react-router-dom";
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { fetchPatients } from './redux/slices/patientSlice';
 import { fetchStaffMembers } from './redux/slices/staffSlice';
 import  CreateRoom  from './pages/CreateRoom';
 import { getDoctors } from './redux/slices/staffSlice';
-import Home from './pages/Home';
 import VerticalNav from './components/custom/Navigations/VerticalNav';
 import HorizontalNav from './components/custom/Navigations/HorizontalNav';
 import Dashboard from './pages/Dashboard';
@@ -31,21 +30,28 @@ import { fetchUserData } from "./redux/slices/userSlice";
 import CreateBloodWork from './pages/CreateBloodWork'; // Add this import
 import Lab from './pages/Lab';
 import CreateLabReport from './pages/CreateLabReport';
+import { setLoading } from './redux/slices/loaderSlice';
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
+  const isLoading = useSelector((state) => state.loader.isLoading);
 
   useEffect(() => {
-    dispatch(fetchUserData());
-    dispatch(fetchPatients());
-    dispatch(fetchStaffMembers());
-    dispatch(fetchDepartments());
-    dispatch(fetchRooms())
-  }, [dispatch]);
+    Promise.all([
+      dispatch(fetchPatients()),
+      dispatch(fetchStaffMembers()),
+      dispatch(fetchDepartments()),
+       dispatch(fetchRooms()),
+      dispatch(getDoctors())
+    ]).then(() => {
+      dispatch(setLoading(false));
+    });
+  }, [dispatch]); 
 
   return (
     <div className="flex flex-col relative">
+      {isLoading && <div className="youtube-loader"></div>}
       <HorizontalNav
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}

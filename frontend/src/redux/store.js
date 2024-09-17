@@ -5,6 +5,7 @@ import departmentReducer from './slices/departmentSlice';
 import userReducer from './slices/userSlice';
 import roomReducer from './slices/roomSlice';
 import pharmacyReducer from './slices/pharmacySlice';
+import loaderReducer from './slices/loaderSlice';
 export const store = configureStore({
   reducer: {
     patients: patientReducer,

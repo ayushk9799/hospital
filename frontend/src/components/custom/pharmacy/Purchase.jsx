@@ -2,58 +2,45 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Textarea } from "../../ui/textarea";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../ui/table";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import { Label } from "../../ui/label";
-// import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { ChevronRight } from "lucide-react";
 import { BriefcaseMedicalIcon } from "lucide-react";
 import { Plus, Pencil, Trash, Package, CheckCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
-import { createOrder } from '../../../redux/slices/pharmacySlice';
-
-
+import { createOrder, setCreateOrderStatus, fetchSuppliers, fetchSupplierDetails } from '../../../redux/slices/pharmacySlice';
+import { SearchSuggestion } from "../registration/CustomSearchSuggestion";
 
 export default function Purchase() {
-  const [itemID, setItemID] = useState(1); // for unique id of item
-  const [supplierInfo, setSupplierInfo] = useState({
-    name: "",
-    phone: "",
-    email: "",
-    address: "",
-  });
-
-  const [items, setItems] = useState([]);
-
-  const [newItem, setNewItem] = useState({
-    name: '',
-    type: '',
-    quantity: '',
-    MRP: '',
-    discount: '',
-    expiryDate: '',
-  });
-
-  const [amountPaying, setAmountPaying] = useState('');
-
   const dispatch = useDispatch();
-  const { status, error } = useSelector(state => state.pharmacy);
+  const [itemID, setItemID] = useState(1); // for unique id of item
+  const [supplierInfo, setSupplierInfo] = useState({ name: "", phone: "", email: "", address: "",});
+  const [items, setItems] = useState([]);
+  const [newItem, setNewItem] = useState({id : '', name: '', type: '', quantity: '', MRP: '', discount: '', expiryDate: ''});
+  const [amountPaying, setAmountPaying] = useState('');
+  const { createOrderStatus, error, suppliers, suppliersStatus, selectedSupplier } = useSelector(state => state.pharmacy);
+  const [supplierName, setSupplierName] = useState("");
+  const [itemSuggestions, setItemSuggestions] = useState([]);
 
-  const [hasAttemptedPurchase, setHasAttemptedPurchase] = useState(false);
+  useEffect(() => {
+    if(suppliersStatus === 'idle'){
+      dispatch(fetchSuppliers());
+    }
+  }, [dispatch, suppliersStatus]);
+
+  useEffect(() => {
+    if (selectedSupplier) {
+      setSupplierInfo({
+        name: selectedSupplier.name,
+        phone: selectedSupplier.phone,
+        email: selectedSupplier.email,
+        address: selectedSupplier.address,
+      });
+      setItemSuggestions(selectedSupplier.items);
+    }
+  }, [selectedSupplier]);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -77,16 +64,12 @@ export default function Purchase() {
       } else {
         updatedItem.total = null;
       }
-
       return updatedItem;
     });
   };
 
   const handleTypeChange = (value) => {
-    setNewItem(prev => ({
-      ...prev,
-      type: value
-    }));
+    setNewItem(prev => ({...prev, type: value}));
   };
 
   const handleSubmit = (e) => {
@@ -100,7 +83,7 @@ export default function Purchase() {
       return;
     }
 
-    const quantity = parseFloat(newItem.quantity);
+    const quantity = parseInt(newItem.quantity);
     const MRP = parseFloat(newItem.MRP);
     const discount = parseFloat(newItem.discount) || 0;
 
@@ -109,7 +92,6 @@ export default function Purchase() {
     const total = subtotal - discountAmount;
 
     const newItemWithId = {
-      id: itemID,
       ...newItem,
       quantity,
       MRP,
@@ -127,6 +109,7 @@ export default function Purchase() {
       MRP: '',
       discount: '',
       expiryDate: '',
+      id : ''
     });
   };
 
@@ -141,14 +124,7 @@ export default function Purchase() {
   }
 
   const clearNewItem = () => {
-    setNewItem({
-      name: '',
-      type: '',
-      quantity: '',
-      MRP: '',
-      discount: '',
-      expiryDate: '',
-    });
+    setNewItem({ name: '', type: '', quantity: '', MRP: '', discount: '', expiryDate: '',});
   };
 
   const calculateTotals = () => {
@@ -194,33 +170,45 @@ export default function Purchase() {
         paidAmount: parseFloat(amountPaying) || 0,
       },
     };
-
-    setHasAttemptedPurchase(true);
     dispatch(createOrder(orderData));
   };
 
   useEffect(() => {
-    if (hasAttemptedPurchase) {
-      if (status === 'succeeded') {
-        alert('Purchase order created successfully!');
-        // Reset form or navigate away
-        setHasAttemptedPurchase(false);
-      } else if (status === 'failed') {
-        alert(`Failed to create purchase order: ${error}`);
-        setHasAttemptedPurchase(false);
-      }
+    if (createOrderStatus === 'succeeded') {
+      alert('Purchase order created successfully!');
+    } else if (createOrderStatus === 'failed') {
+      alert(`Failed to create purchase order: ${error}`);
     }
-  }, [status, error, hasAttemptedPurchase]);
+    return () => {
+      dispatch(setCreateOrderStatus('idle'));
+    }
+  }, [createOrderStatus, error]);
 
   const handlePayFullAmount = () => {
     setAmountPaying(totals.grandTotal.toFixed(2));
+  };
+
+  const handleSupplierSuggestionSelect = (suggestion) => {
+    setItems([]);
+    setNewItem({id : '', name: '', type: '', quantity: '', MRP: '', discount: '', expiryDate: '',})
+    dispatch(fetchSupplierDetails(suggestion._id));
+  };
+
+  const handleItemSuggestionSelect = (suggestion) => {
+    setNewItem(prev => ({
+      ...prev,
+      name: suggestion.name,
+      type: suggestion.type,
+      MRP: suggestion.MRP,
+      id : suggestion._id,
+    }));
   };
 
   return (
     <div className="flex flex-col">
       {/* Main Content */}
       <div className="flex-1">
-        <div className="flex items-center p-1 space-x-1 bg-gray-100 mb-2">
+        <div className="flex items-center p-1 space-x-1 bg-gray-100">
           <Button variant="ghost" size="sm" className="text-gray-600">
             <BriefcaseMedicalIcon className="h-4 w-4" />
           </Button>
@@ -230,12 +218,12 @@ export default function Purchase() {
           </span>
         </div>
 
-        <div className="flex  space-x-2 h-[calc(100vh-245px)]">
+        <div className="flex space-x-2 h-[calc(100vh-245px)]">
           {/* Purchase Order Details and Item Table */}
           <div className="w-3/4 space-y-4 h-full">
             {/* Item Table */}
             <Card className="h-full">
-              <CardContent className="px-4 pt-4">
+              <CardContent className="px-4 pt-2">
                 <form onSubmit={handleSubmit}>
                   <Table className="w-full">
                     <TableHeader>
@@ -254,15 +242,13 @@ export default function Purchase() {
                     <TableBody>
                       <TableRow className='border-2 border-blue-300'>
                         <TableCell></TableCell>
-                        <TableCell>
-                          <Input
-                            type="text"
-                            name="name"
-                            value={newItem.name}
-                            onChange={handleNewItemChange}
+                        <TableCell className="w-40">
+                          <SearchSuggestion
+                            suggestions={itemSuggestions}
                             placeholder="Enter Item name"
-                            className="h-7 text-sm w-40"
-                            required
+                            value={newItem.name}
+                            setValue={(value) => setNewItem(prev => ({ ...prev, name: value }))}
+                            onSuggestionSelect={handleItemSuggestionSelect}
                           />
                         </TableCell>
                         <TableCell>
@@ -313,36 +299,22 @@ export default function Purchase() {
                           />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="month"
-                            name="expiryDate"
-                            value={newItem.expiryDate}
-                            onChange={handleNewItemChange}
-                            className="h-7 text-sm w-25"
-                          />
+                          <Input type="month" size="sm" name="expiryDate" value={newItem.expiryDate} onChange={handleNewItemChange} className="h-7 text-sm w-25" />
                         </TableCell>
                         <TableCell className="w-20">
-                          {newItem.quantity && newItem.MRP
-                            ? `₹${newItem.total.toFixed(2)}`
-                            : '₹0.00'}
+                          {newItem.quantity && newItem.MRP ? `₹${newItem.total.toFixed(2)}` : '₹0.00'}
                         </TableCell>
                         <TableCell>
                           <Button type="submit" size="icon" variant="outline" className="h-7 w-7 mr-1">
                             <Plus className="h-4 w-4" />
                           </Button>
-                          <Button 
-                            type="button"
-                            size="icon" 
-                            variant="outline" 
-                            className="h-7 w-7" 
-                            onClick={clearNewItem}
-                          >
+                          <Button type="button" size="icon" variant="outline" className="h-7 w-7" onClick={clearNewItem}>
                             <Trash className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
                       {items.length === 0 ? (
-                        <TableRow className="hover:bg-white">
+                        <TableRow className="hover:bg-white border-b-0">
                           <TableCell colSpan={8} className="text-center py-8">
                             <div className="flex flex-col items-center text-gray-500">
                               <Package className="h-12 w-12 mb-2" />
@@ -365,18 +337,14 @@ export default function Purchase() {
                               <Button size="icon" variant="outline" className="h-7 w-7 mr-1" onClick={() => editItem(item.id)}>
                                 <Pencil className="h-4 w-4" />
                               </Button>
-                              <Button 
-                                size="icon" 
-                                variant="outline" 
-                                className="h-7 w-7"
-                                onClick={() => deleteItem(item.id)}
-                              >
+                              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => deleteItem(item.id)}>
                                 <Trash className="h-4 w-4" />
                               </Button>
                             </TableCell>
                           </TableRow>
                         ))
                       )}
+                      <TableRow style ={{height:`${250 - items.length*40}px`, display: items.length <= 5 ? 'block' : 'none'}} className="w-full"></TableRow>
                     </TableBody>
                   </Table>
                 </form>
@@ -385,50 +353,45 @@ export default function Purchase() {
           </div>
 
           {/* Supplier Information */}
-          <Card className="w-1/4">
+          <div className="w-1/4 space-y-2">
+          <Card>
+                <CardHeader className="pb-2">
+                    <CardTitle className="p-0 font-semibold ">Search Supplier</CardTitle>
+                </CardHeader>
+                <CardContent className="pb-4">
+                    <SearchSuggestion 
+                      suggestions={suppliers} 
+                      placeholder="Enter Supplier name"
+                      value={supplierName}
+                      setValue={setSupplierName}
+                      onSuggestionSelect={handleSupplierSuggestionSelect}
+                    />
+                </CardContent>
+            </Card>
+          <Card className='h-[calc(100vh-340px)]'>
             <CardHeader>
               <CardTitle>Supplier Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               <div>
                 <Label htmlFor="name">Name</Label>
-                <Input
-                  id="name"
-                  placeholder="Supplier Name"
-                  value={supplierInfo.name}
-                  onChange={handleInputChange}
-                />
+                <Input id="name" placeholder="Supplier Name" value={supplierInfo.name} onChange={handleInputChange}/>
               </div>
               <div>
                 <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  placeholder="Phone Number"
-                  value={supplierInfo.phone}
-                  onChange={handleInputChange}
-                />
+                <Input id="phone" placeholder="Phone Number" value={supplierInfo.phone} onChange={handleInputChange}/>
               </div>
               <div>
                 <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="Email Address"
-                  value={supplierInfo.email}
-                  onChange={handleInputChange}
-                />
+                <Input id="email" type="email" placeholder="Email Address" value={supplierInfo.email} onChange={handleInputChange}/>
               </div>
               <div>
                 <Label htmlFor="address">Address</Label>
-                <Textarea
-                  id="address"
-                  placeholder="Supplier Address"
-                  value={supplierInfo.address}
-                  onChange={handleInputChange}
-                />
+                <Textarea id="address" placeholder="Supplier Address" value={supplierInfo.address} onChange={handleInputChange}/>
               </div>
             </CardContent>
           </Card>
+          </div>
         </div>
 
         {/* Totals footer */}
@@ -449,13 +412,7 @@ export default function Purchase() {
                   placeholder="Type Amount"
                   required
                 />
-                <Button
-                  type="button"
-                  size="icon"
-                  variant="ghost"
-                  className="absolute right-0 top-1/2 transform -translate-y-1/2"
-                  onClick={handlePayFullAmount}
-                >
+                <Button type="button"  size="icon" variant="ghost"  className="absolute right-0 top-1/2 transform -translate-y-1/2" onClick={handlePayFullAmount}>
                   <CheckCircle className="h-4 w-4 hover:text-green-500" />
                 </Button>
               </div>
@@ -487,8 +444,6 @@ const LabeledInput = ({ label, value, readOnly = false, onChange, className = ""
       placeholder={placeholder}
       required={required}
     />
-    <label className="absolute text-xs text-gray-500 top-1 left-2">
-      {label}
-    </label>
+    <label className="absolute text-xs text-gray-500 top-1 left-2">{label}</label>
   </div>
 );
