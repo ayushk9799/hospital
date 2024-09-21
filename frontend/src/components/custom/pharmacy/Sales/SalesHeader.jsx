@@ -1,18 +1,9 @@
 import { useState } from 'react'
 import { Button } from "../../../ui/button"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../ui/select"
 import { ChevronRight, BriefcaseMedicalIcon } from "lucide-react"
 import SalesTodayDialog from './SalesTodayDialog'
 
 export default function Component() {
-  const [salesOn, setSalesOn] = useState("MRP")
-  const [saleType, setSaleType] = useState("SALE")
   const [isSalesTodayOpen, setIsSalesTodayOpen] = useState(false)
 
   return (
@@ -24,27 +15,7 @@ export default function Component() {
         <ChevronRight className="h-3 w-3 text-gray-400" />
         <span className="font-semibold text-gray-700 text-sm">Sales</span>
       </div>
-      <div className="flex items-center space-x-1">
-        <span className="text-xs text-gray-600">Sales on:</span>
-        <Select value={salesOn} onValueChange={setSalesOn}>
-          <SelectTrigger className="w-[80px] h-8 text-sm">
-            <SelectValue placeholder="MRP" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="MRP">MRP</SelectItem>
-            <SelectItem value="Cost">Cost</SelectItem>
-            <SelectItem value="Retail">Retail</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={saleType} onValueChange={setSaleType}>
-          <SelectTrigger className="w-[80px] h-8 text-sm">
-            <SelectValue placeholder="SALE" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="SALE">SALE</SelectItem>
-            <SelectItem value="RETURN">RETURN</SelectItem>
-          </SelectContent>
-        </Select>
+      <div className="flex items-center space-x-2">
         <Button 
           variant="default" 
           size="sm" 

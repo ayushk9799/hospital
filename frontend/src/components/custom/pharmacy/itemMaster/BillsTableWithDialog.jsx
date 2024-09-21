@@ -11,6 +11,7 @@ import { Badge } from "../../../ui/badge";
 import { Button } from "../../../ui/button";
 import { Eye, FileX } from "lucide-react";
 import ViewBillDialog from "../reports/ViewBillDialog";
+import { format } from "date-fns";
 
 const BillsTableWithDialog = ({ bills }) => {
   const [selectedBill, setSelectedBill] = useState(null);
@@ -50,14 +51,14 @@ const BillsTableWithDialog = ({ bills }) => {
               <TableRow key={bill._id}>
                 <TableCell>{`#B${bill._id.slice(-6)}`}</TableCell>
                 <TableCell className='capitalize'>{bill.patientInfo.name}</TableCell>
-                <TableCell>{new Date(bill.createdAt).toLocaleString()}</TableCell>
+                <TableCell>{format(new Date(bill.createdAt), "MMM dd, hh:mm a")}</TableCell>
                 <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
                 <TableCell>
-                  <Badge variant={bill.payment.status === "paid" ? "success" : "warning"}>
-                    {bill.payment.status === "paid" ? "Paid" : "Due"}
+                  <Badge variant={bill?.payment?.status === "paid" ? "success" : "destructive"}>
+                    {bill?.payment?.status === "paid" ? "Paid" : "Due"}
                   </Badge>
                 </TableCell>
-                <TableCell>{bill.payment.paymentMethod}</TableCell>
+                <TableCell>{bill?.payment?.paymentMethod || "__"}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"

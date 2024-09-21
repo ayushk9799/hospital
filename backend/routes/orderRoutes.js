@@ -100,10 +100,10 @@ router.post("/create", async (req, res) => {
 
       order.items.unshift({
         item: inventoryItem._id,
-        quantity: item.quantity,
-        MRP : item.MRP,
-        discount : item.discount,
-        expiryDate : item.expiryDate,
+        quantity: item?.quantity,
+        MRP : item?.MRP,
+        discount : item?.discount,
+        expiryDate : item?.expiryDate,
       });
     }
 

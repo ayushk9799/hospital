@@ -76,7 +76,8 @@ const AppContent = () => {
             <Route path='/settings' Component={Settings} />
             <Route path='/staff/:staffId' Component={StaffProfile} />
             <Route path='/analytics' Component={Analytics} />
-            <Route path='/pharmacy' Component={Pharmacy} />
+            <Route path='/pharmacy' element={<Navigate to="/pharmacy/dashboard" replace />} />
+            <Route path='/pharmacy/:tab' Component={Pharmacy} />
             <Route path='/pharmacy/all-bills' Component={PharmacyAllBills} />
             <Route path='/addstaff' Component={AddStaff} />
             <Route path='/lab' element={<Lab />} />

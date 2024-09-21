@@ -147,8 +147,8 @@ const PharmacyReports = () => {
                         <TableRow key={index}>
                           <TableCell className="capitalize">{item.name}</TableCell>
                           <TableCell>{item.type}</TableCell>
-                          <TableCell className="capitalize">{item.supplier.name || 'N/A'}</TableCell>
-                          <TableCell>{format(new Date(item.expiryDate), 'MMM, yyyy')}</TableCell>
+                          <TableCell className="capitalize">{item?.supplier?.name || '——'}</TableCell>
+                          <TableCell>{format(new Date(item?.expiryDate), 'MMM, yyyy')}</TableCell>
                           <TableCell>{item.quantity}</TableCell>
                           <TableCell>
                             <Button variant="outline" size="sm">
@@ -193,9 +193,9 @@ const PharmacyReports = () => {
                       lowStockItems.map((item, index) => (
                         <TableRow key={index}>
                           <TableCell className="capitalize">{item.name}</TableCell>
-                          <TableCell>{item.type}</TableCell>
-                          <TableCell className="capitalize">{item.supplier.name || 'N/A'}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
+                          <TableCell>{item?.type}</TableCell>
+                          <TableCell className="capitalize">{item?.supplier?.name || '—'}</TableCell>
+                          <TableCell>{item?.quantity}</TableCell>
                           <TableCell>
                             <Button variant="outline" size="sm">
                               Reorder
