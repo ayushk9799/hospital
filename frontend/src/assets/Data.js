@@ -137,8 +137,7 @@ export const calculatePercentageChange = (current, previous) => {
   return Number(change.toFixed(2)); // Round to 2 decimal places
 };
 
-  };
-  export const convertTo12Hour=(time24)=> {
+export const convertTo12Hour=(time24)=> {
     const [hours, minutes] = time24.split(':');
     let hour = parseInt(hours, 10);
     const ampm = hour >= 12 ? 'PM' : 'AM';
