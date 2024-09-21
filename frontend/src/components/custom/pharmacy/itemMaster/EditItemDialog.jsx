@@ -4,48 +4,83 @@ import { Input } from "../../../ui/input";
 import { Button } from "../../../ui/button";
 import { Label } from "../../../ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../../ui/select"; // Import Select components
+import { useToast } from "../../../../hooks/use-toast";
+import { useDispatch, useSelector } from "react-redux";
+import { updateInventoryItem, setUpdateInventoryStatusIdle } from "../../../../redux/slices/pharmacySlice";
 
 export default function EditItemDialog({ isOpen, onClose, item }) {
+  const dispatch = useDispatch();
+  const { updateInventoryItemStatus } = useSelector((state) => state.pharmacy);
+  const { toast } = useToast();
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
+  const [quantity, setQuantity] = useState("");
   const [expiryDate, setExpiryDate] = useState("");
   const [MRP, setMRP] = useState("");
   const [types, setTypes] = useState("");
-  const [supplierName, setSupplierName] = useState(""); // New state for supplier name
+  const [supplierName, setSupplierName] = useState("");
 
-  const typeOptions = ["Type1", "Type2", "Type3"];
-  const categoryOptions = ["Category1", "Category2", "Category3"];
+  const typeOptions = ['Tablet', 'Capsule', 'Liquid', 'Injection', 'Syrup', 'Other'];
 
   useEffect(() => {
     if (item) {
       setName(item.name);
-      setCategory(item.category);
-      setPrice(item.price);
-      setStock(item.stock);
-      setExpiryDate(item.expiryDate);
+      setPrice(item.CP);
+      setQuantity(item.quantity);
+      setExpiryDate(new Date(item.expiryDate).toISOString().slice(0, 7)); // Format as YYYY-MM
       setMRP(item.MRP);
-      setTypes(item.types);
-      setSupplierName(item.supplierName || ""); // Set supplier name if available
+      setTypes(item.type);
+      setSupplierName(item.supplier.name || "");
     }
   }, [item]);
 
+  useEffect(() => {
+    if (updateInventoryItemStatus === "succeeded") {
+      console.log("updateInventoryItemStatus");
+      toast({
+        title: "Changes saved",
+        description: "The item has been updated successfully.",
+        variant: "default",
+      });
+      onClose();
+    }
+    return () => {
+      dispatch(setUpdateInventoryStatusIdle());
+    };
+  }, [updateInventoryItemStatus, dispatch]);
+
   const handleEditItem = () => {
-    // Implement edit item functionality here
-    console.log("Item edited:", { name, category, price, stock, expiryDate, MRP, types, supplierName });
-    onClose();
+    const changedValues = {};
+    if (name !== item.name) changedValues.name = name;
+    if (price !== item.CP) changedValues.price = price;
+    if (quantity !== item.quantity) changedValues.quantity = quantity;
+    if (expiryDate !== new Date(item.expiryDate).toISOString().slice(0, 7)) changedValues.expiryDate = expiryDate;
+    if (MRP !== item.MRP) changedValues.MRP = MRP;
+    if (types !== item.type) changedValues.type = types;
+
+    if (Object.keys(changedValues).length === 0) {
+      toast({
+        title: "No changes made",
+        description: "No items were modified.",
+        variant: "default",
+      });
+    } else {
+      dispatch(updateInventoryItem({ itemId: item._id, updateData: changedValues }));
+      // console.log(changedValues, item._id);
+    }
   };
+
+
+
 
   const handleReset = () => {
     setName("");
-    setCategory("");
     setPrice("");
-    setStock("");
+    setQuantity("");
     setExpiryDate("");
     setMRP("");
     setTypes("");
-    setSupplierName(""); // Reset supplier name
+    setSupplierName("");
   };
 
   return (
@@ -77,19 +112,6 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
               </Select>
             </div>
             <div>
-              <Label htmlFor="category">Category</Label>
-              <Select onValueChange={(value) => setCategory(value)} value={category}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryOptions.map((category) => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <Label htmlFor="price">Price</Label>
               <Input id="price" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
@@ -98,16 +120,22 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
               <Input id="MRP" placeholder="MRP" value={MRP} onChange={(e) => setMRP(e.target.value)} />
             </div>
             <div>
-              <Label htmlFor="stock">Stock</Label>
-              <Input id="stock" placeholder="Stock" value={stock} onChange={(e) => setStock(e.target.value)} />
+              <Label htmlFor="quantity">Quantity</Label>
+              <Input id="quantity" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="expiryDate">Expiry Date</Label>
-              <Input id="expiryDate" type="date" placeholder="Expiry Date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+              <Input 
+                id="expiryDate" 
+                type="month" 
+                placeholder="Expiry Date" 
+                value={expiryDate} 
+                onChange={(e) => setExpiryDate(e.target.value)} 
+              />
             </div>
             <div>
-              <Label htmlFor="supplierName">Supplier Name</Label> {/* New field for supplier name */}
-              <Input id="supplierName" placeholder="Supplier Name" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+              <Label htmlFor="supplierName">Supplier Name</Label>
+              <Input id="supplierName" placeholder="Supplier Name" readOnly value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
             </div>
           </div>
           <DialogFooter className="mt-4">
