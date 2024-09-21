@@ -24,6 +24,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../components/ui/popover";
+import { labCategories } from "../assets/Data";
+import SearchSuggestion from "../components/custom/registration/CustomSearchSuggestion";
 
 // Mock data for patients
 const patients = [
@@ -43,6 +45,11 @@ const commonMedications = [
   { value: "omeprazole", label: "Omeprazole" },
 ];
 
+// Flatten the lab categories
+const allLabTests = labCategories.flatMap(category => 
+  category.types.map(type => ({ name: type }))
+);
+
 export default function Doctors() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [vitals, setVitals] = useState({
@@ -60,12 +67,15 @@ export default function Doctors() {
     medications: [{ name: "", frequency: "0-0-0", duration: "" }],
     additionalInstructions: "",
   });
-  const [labTests, setLabTests] = useState([""]); // New state for lab tests
-
+  const [labTests, setLabTests] = useState([{ name: "" }]);
+  console.log("lab tests")
+  console.log(labTests)
   const [selectedVisitId, setSelectedVisitId] = useState(null);
 
   const handlePatientSelect = ({ ID,bookingNumber, patient, bookingDate, reasonForVisit, type,vitals,diagnosis,treatment,medications,additionalInstructions,labTests }) => {
     console.log(vitals);
+    console.log(labTests);
+    console.log(medications);
     console.log("hello patrient select")
     setSelectedPatient(patient);
     setVitals({
@@ -83,7 +93,7 @@ export default function Doctors() {
       medications: medications.length > 0 ? medications : [{ name: "", frequency: "0-0-0", duration: "" }],
         additionalInstructions: additionalInstructions || "",
     });
-    setLabTests(labTests.length > 0 ? labTests : [""]); // Reset lab tests when selecting a new patient
+    setLabTests(labTests.length > 0 ? labTests.map(test => ({ name: test })) : [{ name: "" }]);
     setSelectedVisitId(ID);
   };
 
@@ -130,14 +140,14 @@ export default function Doctors() {
     setPrescription({ ...prescription, medications: newMedications });
   };
 
-  const handleLabTestChange = (index, value) => {
+  const handleLabTestChange = (index, suggestion) => {
     const newLabTests = [...labTests];
-    newLabTests[index] = value;
+    newLabTests[index] = suggestion;
     setLabTests(newLabTests);
   };
 
   const addLabTest = () => {
-    setLabTests([...labTests, ""]);
+    setLabTests([...labTests, { name: "" }]);
   };
 
   const removeLabTest = (index) => {
@@ -162,7 +172,7 @@ export default function Doctors() {
         body: JSON.stringify({
           vitals,
           prescription,
-          labTests
+          labTests: labTests.map(test => test.name)
         })
       });
 
@@ -406,13 +416,14 @@ export default function Doctors() {
             </div>
             <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
               <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
-              {labTests?.map((test, index) => (
-                <div key={index} className="flex items-center space-x-2">
-                  <Input
-                    placeholder="Enter lab test"
-                    value={test}
-                    onChange={(e) => handleLabTestChange(index, e.target.value)}
-                    className="font-medium"
+              {labTests.map((test, index) => (
+                <div key={index} className="flex items-center space-x-2 mb-2">
+                  <SearchSuggestion
+                    suggestions={allLabTests}
+                    placeholder="Select lab test"
+                    value={test.name}
+                    setValue={(value) => handleLabTestChange(index, { name: value })}
+                    onSuggestionSelect={(suggestion) => handleLabTestChange(index, suggestion)}
                   />
                   <Button
                     variant="destructive"

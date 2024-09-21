@@ -41,38 +41,34 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu"
-
+import {useSelector} from 'react-redux'
 // Sample staff data
-const staffData = [
-  { id: 1, name: 'Dr. John Smith', role: 'Doctor', department: 'Cardiology', status: 'Active', email: 'john.smith..hospital.com', phone: '+1234567890', shift: 'Day' },
-  { id: 2, name: 'Nurse Sarah Johnson', role: 'Nurse', department: 'Emergency', status: 'On Leave', email: 'sarah.johnson..hospital.com', phone: '+1234567891', shift: 'Night' },
-  { id: 3, name: 'Dr. Emily Brown', role: 'Doctor', department: 'Pediatrics', status: 'Active', email: 'emily.brown..hospital.com', phone: '+1234567892', shift: 'Day' },
-  { id: 4, name: 'Tech Alex Lee', role: 'Technician', department: 'Radiology', status: 'Active', email: 'alex.lee..hospital.com', phone: '+1234567893', shift: 'Evening' },
-  { id: 5, name: 'Admin Jane Doe', role: 'Administrative', department: 'Front Desk', status: 'Inactive', email: 'jane.doe..hospital.com', phone: '+1234567894', shift: 'Day' },
-]
+
 
 export default function Reports() {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
+  const {staffMembers} = useSelector((state)=>state.staff)
   const [searchTerm, setSearchTerm] = useState('')
   const [filterDepartment, setFilterDepartment] = useState('All')
   const [filterRole, setFilterRole] = useState('All')
-
-  const filteredStaff = staffData.filter(staff => 
+  const departments = useSelector((state)=>state.departments.departments)
+  const filteredStaff = staffMembers.filter(staff => 
     staff.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-    (filterDepartment === 'All' || staff.department === filterDepartment) &&
-    (filterRole === 'All' || staff.role === filterRole)
+    (filterDepartment === 'All' || staff.department.includes(filterDepartment)) &&
+    (filterRole === 'All' || staff.roles.includes(filterRole.toLowerCase()))
   )
 
-  const totalStaff = staffData.length
-  const activeStaff = staffData.filter(staff => staff.status === 'Active').length
-  const onLeaveStaff = staffData.filter(staff => staff.status === 'On Leave').length
-  const departments = [...new Set(staffData.map(staff => staff.department))]
+  const totalStaff = staffMembers.length
+
+  const handleStaffClick = (staff) => {
+    navigate(`/staff/${staff._id}`, { state: { staffData: staff } });
+  };
 
   return (
     <div className="container mx-auto p-6 space-y-8">
       <h1 className="text-3xl font-bold">Staff Management Dashboard</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Staff</CardTitle>
@@ -109,7 +105,7 @@ export default function Reports() {
             <div className="text-2xl font-bold">{departments.length}</div>
           </CardContent>
         </Card>
-      </div>
+      </div> */}
 
       <Card>
         <CardHeader>
@@ -135,7 +131,7 @@ export default function Reports() {
                 <SelectContent>
                   <SelectItem value="All">All Departments</SelectItem>
                   {departments.map((dept) => (
-                    <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                    <SelectItem key={dept.name} value={dept.name}>{dept.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -145,10 +141,10 @@ export default function Reports() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All Roles</SelectItem>
-                  <SelectItem value="Doctor">Doctor</SelectItem>
-                  <SelectItem value="Nurse">Nurse</SelectItem>
-                  <SelectItem value="Technician">Technician</SelectItem>
-                  <SelectItem value="Administrative">Administrative</SelectItem>
+                  <SelectItem value="doctor">Doctor</SelectItem>
+                  <SelectItem value="nurse">Nurse</SelectItem>
+                  <SelectItem value="technician">Technician</SelectItem>
+                  <SelectItem value="admin">Administrative</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -164,7 +160,7 @@ export default function Reports() {
                 <TableHead>Name</TableHead>
                 <TableHead>Role</TableHead>
                 <TableHead>Department</TableHead>
-                <TableHead>Status</TableHead>
+                
                 <TableHead>Shift</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -179,17 +175,22 @@ export default function Reports() {
                       <Avatar>
                         <AvatarFallback>{staff.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                       </Avatar>
-                      <span onClick={() => navigate(`/staff/${staff.id}`)} className='cursor-pointer hover:underline'>{staff.name}</span>
+                      <span 
+                        onClick={() => handleStaffClick(staff)} 
+                        className='cursor-pointer hover:underline'
+                      >
+                        {staff.name}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell>{staff.role}</TableCell>
-                  <TableCell>{staff.department}</TableCell>
-                  <TableCell>
+                  <TableCell>{staff.roles.join(',')}</TableCell>
+                  <TableCell>{staff.department.join(',')}</TableCell>
+                  {/* <TableCell>
                     <Badge variant={staff.status === 'Active' ? 'default' : 'secondary'}>
                       {staff.status}
                     </Badge>
-                  </TableCell>
-                  <TableCell>{staff.shift}</TableCell>
+                  </TableCell> */}
+                  <TableCell>{staff.shift?.type}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -204,19 +205,19 @@ export default function Reports() {
                           <Mail className="mr-2 h-4 w-4" />
                           <span>Email</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.location.href = `tel:${staff.phone}`}>
+                        <DropdownMenuItem onClick={() => window.location.href = `tel:${staff.contactNumber}`}>
                           <Phone className="mr-2 h-4 w-4" />
                           <span>Call</span>
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate(`/schedule/${staff.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`/schedule/${staff._id}`)}>
                           <Clock className="mr-2 h-4 w-4" />
                           <span>View Schedule</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/staff/${staff.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`/staff/${staff._id}`)}>
                           View Profile
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/edit/${staff.id}`)}>
+                        <DropdownMenuItem onClick={() => navigate(`/edit/${staff._id}`)}>
                           Edit Details
                         </DropdownMenuItem>
                       </DropdownMenuContent>

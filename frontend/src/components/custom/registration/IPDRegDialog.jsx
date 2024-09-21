@@ -8,8 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../ui/dialog";
+import { useSelector } from "react-redux";
 import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
+import { Backend_URL } from "../../../assets/Data";
 import {
   Select,
   SelectTrigger,
@@ -18,49 +19,102 @@ import {
   SelectContent,
 } from "../../ui/select";
 import { Textarea } from "../../ui/textarea";
-import CustomInput from "./CustomInput";
+import { useDispatch } from 'react-redux';
+import { fetchPatients } from '../../../redux/slices/patientSlice';
+import { Label } from "../../ui/label";
+
+const initialFormData = {
+  name: "",
+  registrationNumber: "",
+  dateOfBirth: "",
+  age: "",
+  gender: "",
+  contactNumber: "",
+  email: "",
+  address: "",
+  bloodType: "",
+  patientType: "IPD",
+  
+  admission: {
+    reasonForAdmission: "",
+    department: "",
+    assignedDoctor: "",
+    assignedRoom:"",
+    assignedBed:"",
+    vitals:{
+      bloodPressure:"",
+      heartRate:"",
+      temperature:"",
+      weight:"",
+      height:"",
+      oxygenSaturation:"",
+      respiratoryRate:"",
+    },
+    bookingDate:new Date().toLocaleDateString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit'}).split('/').reverse().join('-'),
+    timeSlot:{
+      start:"",
+      end:"",
+    },
+    insuranceDetails:{
+      provider:"",
+      policyNumber:"",
+    }
+  },
+}
+
+const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 export default function IPDRegDialog({ open, onOpenChange }) {
-  const [formData, setFormData] = useState({
-    fullName: "",
-    dob: "",
-    age: "",
-    gender: "",
-    department: "",
-    assignedDoctors: "",
-    phone: "",
-    emergencyContact: "",
-    email: "",
-    patientCondition: "",
-    paymentMethod: "",
-    heardFrom: "",
-    address: "",
-    roomType: "",
-    roomNumber: "",
-    estimatedStayDuration: "",
-    bloodGroup: "",
-  });
-  const [reasonForAdmission, setReasonForAdmission] = useState([]);
-  const [availableRooms, setAvailableRooms] = useState([]);
-
+  // Assume these are coming from Redux
+  const departments = useSelector(state => state.departments.departments);
+  const rooms = useSelector(state => state.rooms.rooms);
+  const doctors = useSelector(state => state.staff.doctors);
+const dispatch = useDispatch();
+  const [formData, setFormData] = useState(initialFormData);
+    console.log(formData)
   const [errors, setErrors] = useState({});
+
+  const [startTime, setStartTime] = useState({ hour: '', minute: '', amPm: 'AM' });
+  const [endTime, setEndTime] = useState({ hour: '', minute: '', amPm: 'AM' });
+
+  
+
+  const handleTimeChange = (field, type, value) => {
+    const timeState = field === 'start' ? startTime : endTime;
+    const setTimeState = field === 'start' ? setStartTime : setEndTime;
+
+    setTimeState({ ...timeState, [type]: value });
+
+    let newTime;
+    if (type === 'hour') newTime = `${value}:${timeState.minute} ${timeState.amPm}`;
+    else if (type === 'minute') newTime = `${timeState.hour}:${value} ${timeState.amPm}`;
+    else if (type === 'amPm') newTime = `${timeState.hour}:${timeState.minute} ${value}`;
+
+    handleInputChange({ target: { id: `admission.timeSlot.${field}`, value: newTime } });
+  };
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormData({ ...formData, [id]: value });
+    setFormData((prev) => {
+      const keys = id.split(".");
+      let newState = { ...prev };
+      let current = newState;
+      for (let i = 0; i < keys.length - 1; i++) {
+        current[keys[i]] = { ...current[keys[i]] };
+        current = current[keys[i]];
+      }
+      current[keys[keys.length - 1]] = value;
+      return newState;
+    });
   };
 
-  const handleSelectChange = (id, value) => {
-    setFormData({ ...formData, [id]: value });
-    if (id === "roomType") {
-      fetchAvailableRooms(value);
-      setFormData((prev) => ({ ...prev, roomNumber: "" }));
-    }
-  };
+  const handleSelectChange = (id, value) =>
+    handleInputChange({ target: { id, value } });
 
   const handleDobChange = (e) => {
     const dateOfBirth = e.target.value;
-    setFormData({ ...formData, dob: dateOfBirth });
+    setFormData({ ...formData, dateOfBirth });
     if (dateOfBirth) {
       const birthDate = new Date(dateOfBirth);
       const calculatedAge = new Date().getFullYear() - birthDate.getFullYear();
@@ -72,71 +126,93 @@ export default function IPDRegDialog({ open, onOpenChange }) {
 
   const handleAgeChange = (e) => {
     const age = e.target.value;
-    setFormData({ ...formData, age, dob: "" });
+    setFormData({ ...formData, age, dateOfBirth: "" });
   };
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.fullName) newErrors.fullName = "Full name is required";
-    if (!formData.dob && !formData.age)
+    if (!formData.name.trim()) newErrors.name = "Full name is required";
+    if (!formData.dateOfBirth && !formData.age)
       newErrors.age = "Date of birth or age is required";
     if (!formData.gender) newErrors.gender = "Gender is required";
-    if (!formData.phone) newErrors.phone = "Phone number is required";
-    if (!formData.bloodGroup) newErrors.bloodGroup = "Blood group is required";
-    if (!formData.roomType) newErrors.roomType = "Room type is required";
-    if (!formData.roomNumber) newErrors.roomNumber = "Room number is required";
+    if (!formData.contactNumber) newErrors.contactNumber = "Phone number is required";
+    if (!formData.admission.assignedRoom) newErrors['admission.assignedRoom'] = "Room is required";
+    if (!formData.admission.assignedBed) newErrors['admission.assignedBed'] = "Bed is required";
+    if (!formData.admission.bookingDate) newErrors['admission.bookingDate'] = "Booking date is required";
+    if (!formData.admission.timeSlot.start) newErrors['admission.timeSlot.start'] = "Start time is required";
+    if (!formData.admission.timeSlot.end) newErrors['admission.timeSlot.end'] = "End time is required";
+    
+    
     // Add more validations as needed
+   console.log(newErrors)
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log("Form submitted:", { ...formData, reasonForAdmission });
-      // Here you would typically send the data to your backend
-      // After successful submission, you might want to close the dialog:
-      onOpenChange(false);
+      const submissionData = {
+        ...formData,
+        age: parseInt(formData.age, 10),
+        patientType: 'IPD',
+        admission: {
+          ...formData.admission,
+          bookingDate:formData.admission.bookingDate.split('-').reverse().join('-'),
+          vitals: Object.fromEntries(
+            Object.entries(formData.admission.vitals || {}).map(([key, value]) =>
+              key === "bloodPressure"
+                ? [key, value]
+                : [key, parseFloat(value) || null]
+            )
+          ),
+        },
+      };
+
+      console.log("Submission data:", submissionData);
+
+      try {
+        const response = await fetch(`${Backend_URL}/api/patients`, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+             // Assuming you store the token in localStorage
+          },
+          body: JSON.stringify(submissionData),
+          credentials: "include",
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to register patient");
+        }
+
+        const result = await response.json();
+        console.log("Patient registered successfully:", result);
+        onOpenChange(false);
+        dispatch(fetchPatients());
+      } catch (error) {
+        console.error("Error registering patient:", error);
+        // You might want to show an error message to the user here
+      }
     }
   };
 
+  const handleDialogClose = () => {
+    onOpenChange(false);
+    setErrors({})
+    setFormData(initialFormData);
+  }
+
   const handleReset = () => {
-    setFormData({
-      fullName: "",
-      dob: "",
-      age: "",
-      gender: "",
-      department: "",
-      assignedDoctors: "",
-      phone: "",
-      emergencyContact: "",
-      email: "",
-      patientCondition: "",
-      paymentMethod: "",
-      heardFrom: "",
-      address: "",
-      roomType: "",
-      roomNumber: "",
-      estimatedStayDuration: "",
-      bloodGroup: "",
-    });
+    setFormData(initialFormData);
     setErrors({});
-    setReasonForAdmission([]);
   };
 
-  const fetchAvailableRooms = (roomType) => {
-    // This is a mock function. In a real application, you would fetch this data from your backend.
-    const mockRooms = {
-      general: ["101", "102", "103"],
-      "semi-private": ["201", "202"],
-      private: ["301", "302"],
-      icu: ["401", "402"],
-    };
-    setAvailableRooms(mockRooms[roomType] || []);
-  };
+  
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="max-w-[1200px]">
         <DialogHeader>
           <DialogTitle>Register New IPD Patient</DialogTitle>
@@ -144,323 +220,310 @@ export default function IPDRegDialog({ open, onOpenChange }) {
             Fill basic details of patient for new IPD registration
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-4 gap-4">
-            <div className="grid grid-cols-3 col-span-3 gap-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-3 gap-4">
+            {/* Personal Information */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm">Personal Information</h3>
               <div>
-                <Label htmlFor="fullName">Full Name</Label>
                 <Input
-                  id="fullName"
-                  placeholder="John Doe"
-                  value={formData.fullName}
+                  id="name"
+                  placeholder="Full Name"
+                  value={formData.name}
                   onChange={handleInputChange}
                 />
-                {errors.fullName && (
-                  <span className="text-red-500 text-sm">
-                    {errors.fullName}
-                  </span>
-                )}
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
               </div>
-              <div className="grid grid-cols-5 gap-4">
-                <div className="col-span-3">
-                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                  <Input
-                    id="dateOfBirth"
-                    type="date"
-                    value={formData.dob}
-                    onChange={handleDobChange}
-                  />
-                </div>
-                <div className="col-span-2">
-                  <Label htmlFor="age">Age</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    value={formData.age}
-                    onChange={handleAgeChange}
-                    placeholder="Enter age"
-                  />
-                </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  id="registrationNumber"
+                  placeholder="Registration Number"
+                  value={formData.registrationNumber}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  id="dateOfBirth"
+                  type="date"
+                  value={formData.dateOfBirth}
+                  onChange={handleDobChange}
+                />
               </div>
-
-              <div>
-                <Label htmlFor="department">Department</Label>
-                <Select
-                  id="department"
-                  onValueChange={(value) =>
-                    handleSelectChange("department", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cardiology">Cardiology</SelectItem>
-                    <SelectItem value="neurology">Neurology</SelectItem>
-                    <SelectItem value="orthopedics">Orthopedics</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="gender">Gender</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <Input
+                  id="age"
+                  type="number"
+                  placeholder="Age"
+                  value={formData.age}
+                  onChange={handleAgeChange}
+                />
                 <Select
                   id="gender"
-                  onValueChange={(value) => handleSelectChange("gender", value)}
+                  onValueChange={(value) => handleSelectChange('gender', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
+                    <SelectValue placeholder="Gender" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.gender && (
-                  <span className="text-red-500 text-sm">{errors.gender}</span>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="patientCondition">Patient's Condition</Label>
-                <Select
-                  id="patientCondition"
-                  onValueChange={(value) =>
-                    handleSelectChange("patientCondition", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Patient Condition" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Normal">Normal</SelectItem>
-                    <SelectItem value="Moderate">Moderate</SelectItem>
-                    <SelectItem value="Critical">Critical</SelectItem>
-                    <SelectItem value="Emergency">Emergency</SelectItem>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-
               <div>
-                <Label htmlFor="assignedDoctors">Assigned Doctor(s)</Label>
                 <Select
-                  id="assignedDoctors"
-                  onValueChange={(value) =>
-                    handleSelectChange("assignedDoctors", value)
-                  }
+                  id="bloodType"
+                  onValueChange={(value) => handleSelectChange('bloodType', value)}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select Doctor" />
+                    <SelectValue placeholder="Blood Group" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="dr1">Dr. Jane Smith</SelectItem>
-                    <SelectItem value="dr2">Dr. John Doe</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="(123) 456-7890"
-                  value={formData.phone}
-                  onChange={handleInputChange}
-                />
-                {errors.phone && (
-                  <span className="text-red-500 text-sm">{errors.phone}</span>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="emergencyContact">Emergency Contact</Label>
-                <Input
-                  id="emergencyContact"
-                  placeholder="Jane Doe, (987) 654-3210"
-                  value={formData.emergencyContact}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={handleInputChange}
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="bloodGroup">Blood Group</Label>
-                <Select
-                  id="bloodGroup"
-                  onValueChange={(value) =>
-                    handleSelectChange("bloodGroup", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Blood Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="A+">A+</SelectItem>
-                    <SelectItem value="A-">A-</SelectItem>
-                    <SelectItem value="B+">B+</SelectItem>
-                    <SelectItem value="B-">B-</SelectItem>
-                    <SelectItem value="AB+">AB+</SelectItem>
-                    <SelectItem value="AB-">AB-</SelectItem>
-                    <SelectItem value="O+">O+</SelectItem>
-                    <SelectItem value="O-">O-</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.bloodGroup && (
-                  <span className="text-red-500 text-sm">
-                    {errors.bloodGroup}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="roomType">Room Type</Label>
-                <Select
-                  id="roomType"
-                  onValueChange={(value) =>
-                    handleSelectChange("roomType", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Room Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="general">General Ward</SelectItem>
-                    <SelectItem value="semi-private">Semi-Private</SelectItem>
-                    <SelectItem value="private">Private</SelectItem>
-                    <SelectItem value="icu">ICU</SelectItem>
-                  </SelectContent>
-                </Select>
-                {errors.roomType && (
-                  <span className="text-red-500 text-sm">
-                    {errors.roomType}
-                  </span>
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="roomNumber">Room Number</Label>
-                <Select
-                  id="roomNumber"
-                  onValueChange={(value) =>
-                    handleSelectChange("roomNumber", value)
-                  }
-                  disabled={!formData.roomType}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Room Number" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableRooms.map((room) => (
-                      <SelectItem key={room} value={room}>
-                        {room}
-                      </SelectItem>
+                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
+                      <SelectItem key={type} value={type}>{type}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors.roomNumber && (
-                  <span className="text-red-500 text-sm">
-                    {errors.roomNumber}
-                  </span>
-                )}
+                {errors.bloodType && <p className="text-red-500 text-xs mt-1">{errors.bloodType}</p>}
               </div>
-
-              <div>
-                <Label htmlFor="paymentMethod">Payment Method</Label>
-                <Select
-                  id="paymentMethod"
-                  onValueChange={(value) =>
-                    handleSelectChange("paymentMethod", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Payment Method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="upi">UPI</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="heardFrom">How did you hear about us?</Label>
-                <Select
-                  id="heardFrom"
-                  onValueChange={(value) =>
-                    handleSelectChange("heardFrom", value)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an option" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="internet">Internet Search</SelectItem>
-                    <SelectItem value="referral">Doctor Referral</SelectItem>
-                    <SelectItem value="friend">Friend or Family</SelectItem>
-                    <SelectItem value="advertisement">Advertisement</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label htmlFor="estimatedStayDuration">
-                  Estimated Stay Duration (days)
-                </Label>
+              {/* Move booking date and time slot here */}
+              <div className="flex items-center space-x-2">
+                <label htmlFor="admission.bookingDate" className="text-sm font-medium w-24">Booking Date:</label>
                 <Input
-                  id="estimatedStayDuration"
-                  type="number"
-                  placeholder="Enter number of days"
-                  value={formData.estimatedStayDuration}
+                  id="admission.bookingDate"
+                  type="date"
+                  placeholder="Booking Date"
+                  value={formData.admission.bookingDate}
+                  onChange={handleInputChange}
+                  className="flex-grow"
+                />
+              </div>
+              {errors['admission.bookingDate'] && 
+                <p className="text-red-500 text-xs mt-1">{errors['admission.bookingDate']}</p>}
+
+              <div className="grid grid-cols-4 items-center mb-2">
+                <Label>Start Time:</Label>
+                <div className="flex space-x-2 col-span-3">
+                  <Select value={startTime.hour} onValueChange={(value) => handleTimeChange('start', 'hour', value)}>
+                    <SelectTrigger className="w-[70px]">
+                      <SelectValue placeholder="HH" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hours.map(hour => (
+                        <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={startTime.minute} onValueChange={(value) => handleTimeChange('start', 'minute', value)}>
+                    <SelectTrigger className="w-[70px]">
+                      <SelectValue placeholder="MM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {minutes.map(minute => (
+                        <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={startTime.amPm} onValueChange={(value) => handleTimeChange('start', 'amPm', value)}>
+                    <SelectTrigger className="w-[60px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AM">AM</SelectItem>
+                      <SelectItem value="PM">PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {errors['admission.timeSlot.start'] && 
+                <p className="text-red-500 text-xs mt-1">{errors['admission.timeSlot.start']}</p>}
+
+              <div className="grid grid-cols-4 items-center gap-2 mb-2">
+                <Label>End Time:</Label>
+                <div className="flex space-x-2 col-span-3">
+                  <Select value={endTime.hour} onValueChange={(value) => handleTimeChange('end', 'hour', value)}>
+                    <SelectTrigger className="w-[70px]">
+                      <SelectValue placeholder="HH" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hours.map(hour => (
+                        <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={endTime.minute} onValueChange={(value) => handleTimeChange('end', 'minute', value)}>
+                    <SelectTrigger className="w-[70px]">
+                      <SelectValue placeholder="MM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {minutes.map(minute => (
+                        <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={endTime.amPm} onValueChange={(value) => handleTimeChange('end', 'amPm', value)}>
+                    <SelectTrigger className="w-[60px]">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="AM">AM</SelectItem>
+                      <SelectItem value="PM">PM</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              {errors['admission.timeSlot.end'] && 
+                <p className="text-red-500 text-xs mt-1">{errors['admission.timeSlot.end']}</p>}
+            </div>
+
+            {/* Contact Information */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm">Contact Information</h3>
+              <div>
+                <Input
+                  id="contactNumber"
+                  type="tel"
+                  placeholder="Phone"
+                  value={formData.contactNumber}
                   onChange={handleInputChange}
                 />
+                {errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
+              </div>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Email"
+                value={formData.email}
+                onChange={handleInputChange}
+              />
+              <Textarea
+                id="address"
+                placeholder="Address"
+                value={formData.address}
+                onChange={handleInputChange}
+                className="h-[80px]"
+              />
+              {/* Move insurance details here */}
+              <div>
+                <Input
+                  id="admission.insuranceDetails.provider"
+                  placeholder="Insurance Provider"
+                  value={formData.admission.insuranceDetails.provider}
+                  onChange={handleInputChange}
+                />
+                {errors['admission.insuranceDetails.provider'] && 
+                  <p className="text-red-500 text-xs mt-1">{errors['admission.insuranceDetails.provider']}</p>}
+              </div>
+              <div>
+                <Input
+                  id="admission.insuranceDetails.policyNumber"
+                  placeholder="Policy Number"
+                  value={formData.admission.insuranceDetails.policyNumber}
+                  onChange={handleInputChange}
+                />
+                {errors['admission.insuranceDetails.policyNumber'] && 
+                  <p className="text-red-500 text-xs mt-1">{errors['admission.insuranceDetails.policyNumber']}</p>}
               </div>
             </div>
-            <div className="flex flex-col gap-4">
-              <div>
-                <Label htmlFor="reasonForAdmission">Reason for Visit</Label>
-                <CustomInput
-                  setReasons={setReasonForAdmission}
-                  reasons={reasonForAdmission}
-                />
-              </div>
 
+            {/* Admission Details */}
+            <div className="space-y-2">
+              <h3 className="font-semibold text-sm">Admission Details</h3>
               <div>
-                <Label htmlFor="address">Address</Label>
+                <Select
+                  id="admission.department"
+                  onValueChange={(value) => handleSelectChange('admission.department', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Department" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {departments.map(dept => (
+                      <SelectItem key={dept._id} value={dept._id}>{dept.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors['admission.department'] && <p className="text-red-500 text-xs mt-1">{errors['admission.department']}</p>}
+              </div>
+              <Select
+                id="admission.assignedDoctor"
+                onValueChange={(value) => handleSelectChange('admission.assignedDoctor', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Assigned Doctor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {doctors.map(doctor => (
+                    <SelectItem key={doctor._id} value={doctor._id}>{doctor.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="grid grid-cols-2 gap-2">
+                <Select
+                  id="admission.assignedRoom"
+                  onValueChange={(value) => {
+                    handleSelectChange('admission.assignedRoom', value);
+                    setFormData(prev => ({
+                      ...prev,
+                      admission: {
+                        ...prev.admission,
+                        assignedBed: ''
+                      }
+                    }));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Room" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {rooms
+                      .filter(room => room.status !== 'Occupied')
+                      .map(room => (
+                        <SelectItem key={room._id} value={room._id}>
+                          {room.roomNumber} - {room.type}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  id="admission.assignedBed"
+                  onValueChange={(value) => handleSelectChange('admission.assignedBed', value)}
+                  disabled={!formData.admission.assignedRoom}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Bed" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {formData.admission.assignedRoom &&
+                      rooms
+                        .find(room => room._id === formData.admission.assignedRoom)
+                        ?.beds.filter(bed => bed.status !== 'Occupied')
+                        .map(bed => (
+                          <SelectItem key={bed._id} value={bed._id}>
+                            {bed.bedNumber}
+                          </SelectItem>
+                        ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Textarea
-                  id="address"
-                  placeholder="123 Main St, Anytown USA"
-                  value={formData.address}
-                  onChange={handleInputChange}
+                  id="admission.reasonForAdmission"
+                  placeholder="Reason for Admission"
+                  value={formData.admission.reasonForAdmission}
+                  onChange={(e) => handleInputChange({ target: { id: 'admission.reasonForAdmission', value: e.target.value } })}
+                  className="h-[60px]"
                 />
+                {errors['admission.reasonForAdmission'] && <p className="text-red-500 text-xs mt-1">{errors['admission.reasonForAdmission']}</p>}
               </div>
             </div>
           </div>
-          <DialogFooter className="mt-4">
+
+          <DialogFooter>
             <Button type="button" variant="outline" onClick={handleReset}>
               Reset
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit">Register</Button>
+            <Button type="submit">Register Patient</Button>
           </DialogFooter>
         </form>
       </DialogContent>

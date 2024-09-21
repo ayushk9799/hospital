@@ -190,6 +190,7 @@ export default function Patients() {
             <TableHead>S.No</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead>Time Slot</TableHead>
             <TableHead>Mobile</TableHead>
             <TableHead>Gender</TableHead>
             <TableHead>Doctor</TableHead>
@@ -216,6 +217,7 @@ export default function Patients() {
                 </Button>
               </TableCell>
               <TableCell>{patient.bookingDate}</TableCell>
+              <TableCell>{patient.timeSlot?.start} - {patient.timeSlot?.end}</TableCell>
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
               <TableCell>{patient.doctor?.name || '--'}</TableCell>

@@ -11,7 +11,8 @@ const PatientEntry = ({ID, bookingNumber, patient, bookingDate, reasonForVisit, 
   const truncateName = (name, maxLength = 15) => {
     return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
   };
-
+  console.log("lab tests pateint entry");
+  console.log(labTests);
   return (
     <div
       className="flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100"
@@ -36,6 +37,7 @@ const PatientEntry = ({ID, bookingNumber, patient, bookingDate, reasonForVisit, 
 
 const AppointmentsQueue = ({ onPatientSelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("all");
   const dispatch = useDispatch();
   const { patientlist, status, error } = useSelector((state) => state.patients);
 
@@ -46,8 +48,9 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
   }, [status, dispatch]);
 
   const filteredPatients = patientlist.filter(booking => 
-    booking.patient.name?.toLowerCase()?.includes(searchTerm?.toLowerCase()) ||
-    booking.bookingNumber?.toString()?.includes(searchTerm)
+    (booking.patient.name?.toLowerCase()?.includes(searchTerm?.toLowerCase()) ||
+    booking.bookingNumber?.toString()?.includes(searchTerm)) &&
+    (activeTab === "all" || booking.type.toLowerCase() === activeTab)
   );
 
   if (status === 'loading') {
@@ -60,8 +63,8 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
 
   return (
     <Card className="h-full flex flex-col">
-      <Tabs defaultValue="all" className="w-full flex-grow flex flex-col">
-        <TabsList className="h-20 grid grid-cols-1 gap-2">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-grow flex flex-col">
+        <TabsList className="h-20 grid grid-cols-3 gap-2">
           <TabsTrigger value="all">
             <div className="flex flex-col justify-between items-center py-1 gap-1">
               <span>All Bookings</span>
@@ -70,7 +73,24 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
               </span>
             </div>
           </TabsTrigger>
+          <TabsTrigger value="opd">
+            <div className="flex flex-col justify-between items-center py-1 gap-1">
+              <span>OPD</span>
+              <span className="bg-green-500 text-white rounded-lg w-10 h-6 flex items-center justify-center">
+                {patientlist.filter(booking => booking.type.toLowerCase() === 'opd').length}
+              </span>
+            </div>
+          </TabsTrigger>
+          <TabsTrigger value="ipd">
+            <div className="flex flex-col justify-between items-center py-1 gap-1">
+              <span>IPD</span>
+              <span className="bg-yellow-500 text-white rounded-lg w-10 h-6 flex items-center justify-center">
+                {patientlist.filter(booking => booking.type.toLowerCase() === 'ipd').length}
+              </span>
+            </div>
+          </TabsTrigger>
         </TabsList>
+        
         <div className="px-2 pt-1">
           <div className="relative">
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -83,9 +103,50 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
             />
           </div>
         </div>
+        
         <div className="flex-grow overflow-auto">
           <TabsContent value="all">
             {filteredPatients.map((booking) => (
+              <PatientEntry 
+                key={booking._id}
+                ID={booking._id}
+                bookingNumber={booking.bookingNumber}
+                patient={booking.patient}
+                bookingDate={booking.bookingDate}
+                reasonForVisit={booking.reasonForVisit}
+                type={booking.type}
+                vitals={booking.vitals}
+                diagnosis={booking.diagnosis}
+                treatment={booking.treatment}
+                medications={booking.medications}
+                additionalInstructions={booking.additionalInstructions}
+                labTests={booking.labTests}
+                onSelect={onPatientSelect}
+              />
+            ))}
+          </TabsContent>
+          <TabsContent value="opd">
+            {filteredPatients.filter(booking => booking.type.toLowerCase() === 'opd').map((booking) => (
+              <PatientEntry 
+                key={booking._id}
+                ID={booking._id}
+                bookingNumber={booking.bookingNumber}
+                patient={booking.patient}
+                bookingDate={booking.bookingDate}
+                reasonForVisit={booking.reasonForVisit}
+                type={booking.type}
+                vitals={booking.vitals}
+                diagnosis={booking.diagnosis}
+                treatment={booking.treatment}
+                medications={booking.medications}
+                additionalInstructions={booking.additionalInstructions}
+                labTests={booking.labTests}
+                onSelect={onPatientSelect}
+              />
+            ))}
+          </TabsContent>
+          <TabsContent value="ipd">
+            {filteredPatients.filter(booking => booking.type.toLowerCase() === 'ipd').map((booking) => (
               <PatientEntry 
                 key={booking._id}
                 ID={booking._id}

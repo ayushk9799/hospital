@@ -12,6 +12,8 @@ import {
   FileText,
   Edit,
   Printer,
+  DollarSign,
+  Building,
 } from "lucide-react";
 import {
   Card,
@@ -41,59 +43,37 @@ import {
 import StaffMonthlyCalender from "../components/custom/staff/StaffMonthlyCalender";
 
 const staffMember = {
-  id: 1,
-  name: "Dr. John Smith",
-  role: "Senior Cardiologist",
-  department: "Cardiology",
-  email: "john.smith..hospital.com",
-  phone: "+1 (555) 123-4567",
-  status: "Active",
-  joinDate: "2015-03-15",
-  shift: "Day",
-  education: [
-    { degree: "MD", institution: "Harvard Medical School", year: "2005" },
-    {
-      degree: "Residency in Internal Medicine",
-      institution: "Massachusetts General Hospital",
-      year: "2008",
-    },
-    {
-      degree: "Fellowship in Cardiology",
-      institution: "Johns Hopkins Hospital",
-      year: "2011",
-    },
-  ],
-  certifications: [
-    { name: "Board Certified in Cardiovascular Disease", year: "2012" },
-    { name: "Advanced Cardiac Life Support (ACLS)", year: "2021" },
-  ],
-  schedule: [
-    { day: "Monday", hours: "8:00 AM - 5:00 PM" },
-    { day: "Tuesday", hours: "8:00 AM - 5:00 PM" },
-    { day: "Wednesday", hours: "8:00 AM - 12:00 PM" },
-    { day: "Thursday", hours: "8:00 AM - 5:00 PM" },
-    { day: "Friday", hours: "8:00 AM - 5:00 PM" },
-  ],
-  recentPatients: [
-    {
-      id: "P001",
-      name: "Alice Johnson",
-      date: "2023-06-15",
-      diagnosis: "Hypertension",
-    },
-    {
-      id: "P002",
-      name: "Bob Williams",
-      date: "2023-06-14",
-      diagnosis: "Arrhythmia",
-    },
-    {
-      id: "P003",
-      name: "Carol Davis",
-      date: "2023-06-13",
-      diagnosis: "Coronary Artery Disease",
-    },
-  ],
+  id: "66ea972e8317a263bc18aa37",
+  name: "Raviket",
+  role: "Admin",
+  department: "Oncology",
+  email: "america@gmail.com",
+  phone: "", // Not provided in the data
+  status: "Active", // Assuming active since there's no status field
+  joinDate: "2019-02-18",
+  shift: {
+    type: "Morning",
+    hours: {
+      start: "09:31",
+      end: "14:31"
+    }
+  },
+  education: [], // Using qualifications, but it's empty in the provided data
+  certifications: [], // Empty in the provided data
+  schedule: [], // Not provided in the data
+  recentPatients: [], // Using currentPatients, but it's empty in the provided data
+  employeeID: "123455",
+  username: "iam_ayush691",
+  yearsOfExperience: 5,
+  address: "DM residence road ,banka-813102 ,Bihar",
+  dateOfBirth: "2019-02-18",
+  gender: "Male",
+  salary: 50000,
+  payrollInfo: {
+    bankName: "bank of india",
+    accountNumber: "123455234543",
+    ifscCode: "12343234"
+  }
 };
 
 export default function StaffProfile() {
@@ -143,8 +123,8 @@ export default function StaffProfile() {
                 <span>{staffMember.email}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4 text-gray-500" />
-                <span>{staffMember.phone}</span>
+                <User className="h-4 w-4 text-gray-500" />
+                <span>{staffMember.username}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Briefcase className="h-4 w-4 text-gray-500" />
@@ -165,28 +145,24 @@ export default function StaffProfile() {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="font-semibold">Status:</span>
-              <Badge
-                variant={
-                  staffMember.status === "Active" ? "default" : "secondary"
-                }
-              >
+              <Badge variant="default">
                 {staffMember.status}
               </Badge>
             </div>
             <div className="flex justify-between items-center">
               <span className="font-semibold">Shift:</span>
-              <span>{staffMember.shift}</span>
+              <span>{staffMember.shift.type}</span>
             </div>
             <div className="flex align-center justify-between">
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-green-500" />
                 <span className="font-semibold">Time In:</span>
-                <span>9:00 AM</span>
+                <span>{staffMember.shift.hours.start}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-red-500" />
                 <span className="font-semibold">Time Out:</span>
-                <span>5:00 PM</span>
+                <span>{staffMember.shift.hours.end}</span>
               </div>
             </div>
           </CardContent>
@@ -194,51 +170,82 @@ export default function StaffProfile() {
 
         <Card className="md:col-span-1">
           <CardHeader>
-            <CardTitle>Future Status</CardTitle>
+            <CardTitle>Employee Info</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
             <div className="flex justify-between items-center">
-              <span className="font-semibold">Status:</span>
-              <span>Active</span>
+              <span className="font-semibold">Employee ID:</span>
+              <span>{staffMember.employeeID}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="font-semibold">Experience:</span>
+              <span>{staffMember.yearsOfExperience} years</span>
             </div>
           </CardContent>
         </Card>
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Tabs defaultValue="schedule" className="w-full">
+        <Tabs defaultValue="personal" className="w-full">
           <TabsList className="mb-2">
-            <TabsTrigger value="schedule">Schedule</TabsTrigger>
-            <TabsTrigger value="education">
-              Education & Certifications
-            </TabsTrigger>
-            <TabsTrigger value="patients">Recent Patients</TabsTrigger>
+            <TabsTrigger value="personal">Personal Info</TabsTrigger>
+            <TabsTrigger value="payroll">Payroll Info</TabsTrigger>
+            <TabsTrigger value="education">Education & Certifications</TabsTrigger>
           </TabsList>
-          <TabsContent value="schedule">
+          <TabsContent value="personal">
             <Card>
               <CardHeader>
-                <CardTitle>Weekly Schedule</CardTitle>
-                <CardDescription>
-                  Dr. Smith's regular working hours
-                </CardDescription>
+                <CardTitle>Personal Information</CardTitle>
               </CardHeader>
               <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Day</TableHead>
-                      <TableHead>Hours</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {staffMember.schedule.map((day, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{day.day}</TableCell>
-                        <TableCell>{day.hours}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Calendar className="h-4 w-4 text-gray-500" />
+                    <span className="font-semibold">Date of Birth:</span>
+                    <span>{staffMember.dateOfBirth}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <span className="font-semibold">Gender:</span>
+                    <span>{staffMember.gender}</span>
+                  </div>
+                  <div className="flex items-start space-x-2">
+                    <Building className="h-4 w-4 text-gray-500 mt-1" />
+                    <span className="font-semibold">Address:</span>
+                    <span>{staffMember.address}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="payroll">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payroll Information</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <DollarSign className="h-4 w-4 text-gray-500" />
+                    <span className="font-semibold">Salary:</span>
+                    <span>₹{staffMember.salary}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Building className="h-4 w-4 text-gray-500" />
+                    <span className="font-semibold">Bank Name:</span>
+                    <span>{staffMember.payrollInfo.bankName}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    <span className="font-semibold">Account Number:</span>
+                    <span>{staffMember.payrollInfo.accountNumber}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <FileText className="h-4 w-4 text-gray-500" />
+                    <span className="font-semibold">IFSC Code:</span>
+                    <span>{staffMember.payrollInfo.ifscCode}</span>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -254,80 +261,48 @@ export default function StaffProfile() {
                 <div className="space-y-6">
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Education</h3>
-                    <ul className="space-y-2">
-                      {staffMember.education.map((edu, index) => (
-                        <li key={index} className="flex items-start space-x-2">
-                          <BookOpen className="h-5 w-5 text-blue-500 mt-0.5" />
-                          <div>
-                            <p className="font-medium">{edu.degree}</p>
-                            <p className="text-sm text-gray-600">
-                              {edu.institution}, {edu.year}
-                            </p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                    {staffMember.education.length > 0 ? (
+                      <ul className="space-y-2">
+                        {staffMember.education.map((edu, index) => (
+                          <li key={index} className="flex items-start space-x-2">
+                            <BookOpen className="h-5 w-5 text-blue-500 mt-0.5" />
+                            <div>
+                              <p className="font-medium">{edu.degree}</p>
+                              <p className="text-sm text-gray-600">
+                                {edu.institution}, {edu.year}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>No education information available.</p>
+                    )}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2">
                       Certifications
                     </h3>
-                    <ul className="space-y-2">
-                      {staffMember.certifications.map((cert, index) => (
-                        <li key={index} className="flex items-start space-x-2">
-                          <Award className="h-5 w-5 text-green-500 mt-0.5" />
-                          <div>
-                            <p className="font-medium">{cert.name}</p>
-                            <p className="text-sm text-gray-600">
-                              Obtained in {cert.year}
-                            </p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                    {staffMember.certifications.length > 0 ? (
+                      <ul className="space-y-2">
+                        {staffMember.certifications.map((cert, index) => (
+                          <li key={index} className="flex items-start space-x-2">
+                            <Award className="h-5 w-5 text-green-500 mt-0.5" />
+                            <div>
+                              <p className="font-medium">{cert.name}</p>
+                              <p className="text-sm text-gray-600">
+                                Obtained in {cert.year}
+                              </p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p>No certification information available.</p>
+                    )}
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </TabsContent>
-          <TabsContent value="patients">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Patients</CardTitle>
-                <CardDescription>
-                  Patients seen in the last few days
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Patient ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Diagnosis</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {staffMember.recentPatients.map((patient, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">
-                          {patient.id}
-                        </TableCell>
-                        <TableCell>{patient.name}</TableCell>
-                        <TableCell>{patient.date}</TableCell>
-                        <TableCell>{patient.diagnosis}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-              <CardFooter>
-                <Button variant="outline">
-                  <FileText className="mr-2 h-4 w-4" />
-                  View Full Patient List
-                </Button>
-              </CardFooter>
             </Card>
           </TabsContent>
         </Tabs>

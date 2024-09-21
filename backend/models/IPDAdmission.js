@@ -23,14 +23,16 @@ function formatDate(date,number) {
 const ipdAdmissionSchema = new mongoose.Schema({
   bookingDate: { type: String, default: function() { return formatDate(new Date(),1) } },
   bookingNumber: { type: Number },
-  ipdNumber: { type: Number },
+  patientName:{type:String},
+  contactNumber:{type:String},
+  registrationNumber:{type:String},
   patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
   dateDischarged: { type: Date },
   reasonForAdmission: { type: String },
   diagnosis: { type: String, },
   treatment: { type: String,  },
-  medications:{type:String,},
-  labReports:{type:String,},
+  medications:[{name:String,duration:String,frequency:String}],
+  labTests:[String],
   vitals:{
     bloodPressure:String,
     heartRate:Number,
@@ -40,17 +42,25 @@ const ipdAdmissionSchema = new mongoose.Schema({
     oxygenSaturation:Number,
     respiratoryRate:Number,
   },
+  timeSlot:{
+    start: { type: String },
+    end: { type: String },
+  },
   assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
   assignedRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
   assignedBed:{ type: mongoose.Schema.Types.ObjectId, ref: "Room.beds" },
- 
+  insuranceDetails: {
+    provider: String,
+    policyNumber: String,
+    coverageType: String,
+  },
   notes:{type:String},
 });
 
 ipdAdmissionSchema.pre('save', async function(next) {
   if (!this.bookingNumber) {
     const counter = await Counter.findOneAndUpdate(
-      { date: formatDate(new Date()) },
+      { date: this.bookingDate?this.bookingDate:formatDate(new Date()) },
       { $inc: { seq: 1 } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );

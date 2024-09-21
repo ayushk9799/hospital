@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
-import {hospitalPlugin} from '../plugins/hospitalPlugin.js'
+import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 function formatDate(date) {
-  console.log(typeof(date))
-  const day = String(date.getDate()).padStart(2, '0')
-  const month = String(date.getMonth() + 1).padStart(2, '0'); 
+  console.log(typeof date);
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
-  console.log(`${day}-${month}-${year}`)
+  console.log(`${day}-${month}-${year}`);
   return `${day}-${month}-${year}`;
 }
 
@@ -28,14 +28,10 @@ const patientSchema = new mongoose.Schema({
     required: true,
     default: "OPD",
   },
-  admissionDetails: [{ type: mongoose.Schema.Types.ObjectId, ref: "ipdAdmission" }],
-  visits: [ { type: mongoose.Schema.Types.ObjectId, ref: "visit" } ],
-    
-  insuranceDetails: {
-    provider: String,
-    policyNumber: String,
-    coverageType: String,
-  },
+  admissionDetails: [
+    { type: mongoose.Schema.Types.ObjectId, ref: "ipdAdmission" },
+  ],
+  visits: [{ type: mongoose.Schema.Types.ObjectId, ref: "visit" }],
 });
-patientSchema.plugin(hospitalPlugin)
+patientSchema.plugin(hospitalPlugin);
 export const Patient = mongoose.model("Patient", patientSchema);

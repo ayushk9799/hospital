@@ -1,24 +1,23 @@
 import mongoose from "mongoose";
-import {hospitalPlugin} from '../plugins/hospitalPlugin.js'
-
+import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 
 const staffSchema = new mongoose.Schema({
   name: {
     type: String,
-    required:true
+    required: true,
   },
   username: {
     type: String,
     unique: true,
-    sparse:true,
+    sparse: true,
     trim: true,
   },
   password: {
     type: String,
     trim: true,
   },
-  hospital:{type:mongoose.Schema.Types.ObjectId, ref:'Hospital'},
- employeeID:{type:String, unique:true, sparse:true},
+  hospital: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital" },
+  employeeID: { type: String, unique: true, sparse: true },
   department: [{ type: String }],
   roles: [
     {
@@ -26,22 +25,22 @@ const staffSchema = new mongoose.Schema({
       enum: [
         "pharmacist",
         "admin",
-        "reception",
         "nurse",
         "receptionist",
         "doctor",
+        "technician",
       ],
     },
   ],
   yearsOfExperience: Number,
   currentPatients: [{ type: mongoose.Schema.Types.ObjectId, ref: "Patient" }],
-  email:{type:String,unique:true, sparse:true},
+  email: { type: String, unique: true, sparse: true },
   address: {
     type: String,
   },
   dateOfBirth: String,
   gender: { type: String, enum: ["Male", "Female", "Other"] },
-  hireDate:String,
+  hireDate: String,
   qualifications: [String],
   certifications: [String],
   shift: {
@@ -85,5 +84,5 @@ const staffSchema = new mongoose.Schema({
   // schedule: [scheduleSchema],
 });
 
- staffSchema.plugin(hospitalPlugin)
+staffSchema.plugin(hospitalPlugin);
 export const Staff = mongoose.model("Staff", staffSchema);

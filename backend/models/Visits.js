@@ -19,6 +19,9 @@ const visitSchema = new mongoose.Schema({
 
     bookingDate: { type: String, default: function() {return formatDate(new Date())} },
   bookingNumber: { type: Number },
+  patientName:{type:String},
+  contactNumber:{type:String},
+  registrationNumber:{type:String},
     patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient", },
   doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff",  },
   department: { type: String,  },
@@ -44,6 +47,11 @@ const visitSchema = new mongoose.Schema({
     height:Number,
     oxygenSaturation:Number,
     respiratoryRate:Number,
+  },
+  insuranceDetails: {
+    provider: String,
+    policyNumber: String,
+    coverageType: String,
   },
   
   

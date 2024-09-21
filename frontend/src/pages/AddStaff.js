@@ -352,7 +352,7 @@ console.log(formData)
             <div>
               <Label>Roles</Label>
               <div className="grid grid-cols-2 gap-2">
-                {["pharmacist", "admin", "reception", "nurse", "receptionist", "doctor"].map((role) => (
+                {["pharmacist", "admin","nurse", "receptionist", "doctor","technician"].map((role) => (
                   <div key={role} className="flex items-center space-x-2">
                     <Checkbox
                       id={role}

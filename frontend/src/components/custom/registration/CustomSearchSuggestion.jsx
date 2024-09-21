@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, forwardRef } from 'react';
 import { Input } from "../../ui/input";
+import { ChevronsUpDown } from "lucide-react";
 
 export const SearchSuggestion = forwardRef(({ suggestions=[], placeholder, value, setValue, onSuggestionSelect }, ref) => {
   const [filteredSuggestions, setFilteredSuggestions] = useState([]);
@@ -60,17 +61,21 @@ export const SearchSuggestion = forwardRef(({ suggestions=[], placeholder, value
 
   return (
     <div className="relative w-full max-w-md">
-      <Input
-        ref={ref}
-        type="text"
-        value={value}
-        onChange={handleInputChange}
-        onKeyDown={handleKeyDown}
-        onFocus={() => setShowSuggestions(true)}
-        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-        placeholder={placeholder || "Search or type"}
-        className="h-7 text-sm"
-      />
+      <div className="relative ">
+        <Input
+          ref={ref}
+          type="text"
+          value={value}
+          onChange={handleInputChange}
+          onKeyDown={handleKeyDown}
+          onFocus={() => setShowSuggestions(true)}
+          onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+          placeholder={placeholder || "Search or type"}
+          className="pr-8 hover:cursor-pointer font-semibold" // Add right padding to accommodate the icon
+        />
+        <ChevronsUpDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50 " />
+      </div>
+
       {showSuggestions && filteredSuggestions.length > 0 && (
         <ul
           ref={suggestionListRef}
