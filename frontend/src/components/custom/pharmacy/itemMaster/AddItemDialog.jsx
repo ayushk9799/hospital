@@ -4,35 +4,52 @@ import { Input } from "../../../ui/input";
 import { Button } from "../../../ui/button";
 import { Label } from "../../../ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../../ui/select"; // Import Select components
+import { typeOptions } from "./EditItemDialog";
+import { useDispatch } from "react-redux";
+import { createInventoryItem } from "../../../../redux/slices/pharmacySlice";
 
 export default function AddItemDialog({ isOpen, onClose }) {
+  const dispatch = useDispatch();
   const [name, setName] = useState("");
-  const [category, setCategory] = useState("");
   const [price, setPrice] = useState("");
-  const [stock, setStock] = useState("");
+  const [quantity, setQuantity] = useState(""); // Changed from stock to quantity
   const [expiryDate, setExpiryDate] = useState("");
   const [MRP, setMRP] = useState("");
   const [types, setTypes] = useState("");
-  const [supplierName, setSupplierName] = useState(""); // New state for supplier name
-
-  const typeOptions = ["Type1", "Type2", "Type3"];
-  const categoryOptions = ["Category1", "Category2", "Category3"];
+  const [supplierName, setSupplierName] = useState("");
+  const [supplierPhone, setSupplierPhone] = useState(""); // New state for supplier phone
+  const [supplierAddress, setSupplierAddress] = useState(""); // New state for supplier address
 
   const handleAddItem = () => {
-    // Implement add item functionality here
-    console.log("Item added:", { name, category, price, stock, expiryDate, MRP, types, supplierName });
+    const itemData = {
+      itemsDetails : {
+        name,
+        CP: parseFloat(price),
+        quantity: parseInt(quantity),
+        expiryDate,
+        MRP: parseFloat(MRP),
+        type: types,
+      },
+      supplierInfo: {
+        name: supplierName,
+        phone: supplierPhone,
+        address: supplierAddress
+      }
+    };
+    dispatch(createInventoryItem(itemData));
     onClose();
   };
 
   const handleReset = () => {
     setName("");
-    setCategory("");
     setPrice("");
-    setStock("");
+    setQuantity(""); // Changed from setStock to setQuantity
     setExpiryDate("");
     setMRP("");
     setTypes("");
-    setSupplierName(""); // Reset supplier name
+    setSupplierName("");
+    setSupplierPhone(""); // Reset supplier phone
+    setSupplierAddress(""); // Reset supplier address
   };
 
   return (
@@ -48,11 +65,11 @@ export default function AddItemDialog({ isOpen, onClose }) {
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="name">Item Name</Label>
-              <Input id="name" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input id="name" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
             <div>
               <Label htmlFor="types">Type</Label>
-              <Select onValueChange={(value) => setTypes(value)}>
+              <Select onValueChange={(value) => setTypes(value)} required>
                 <SelectTrigger id="types">
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
@@ -64,37 +81,38 @@ export default function AddItemDialog({ isOpen, onClose }) {
               </Select>
             </div>
             <div>
-              <Label htmlFor="category">Category</Label>
-              <Select onValueChange={(value) => setCategory(value)}>
-                <SelectTrigger id="category">
-                  <SelectValue placeholder="Select Category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categoryOptions.map((category) => (
-                    <SelectItem key={category} value={category}>{category}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
               <Label htmlFor="price">Price</Label>
-              <Input id="price" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
+              <Input id="price" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} required />
             </div>
             <div>
               <Label htmlFor="MRP">MRP</Label>
-              <Input id="MRP" placeholder="MRP" value={MRP} onChange={(e) => setMRP(e.target.value)} />
+              <Input id="MRP" placeholder="MRP" value={MRP} onChange={(e) => setMRP(e.target.value)} required />
             </div>
             <div>
-              <Label htmlFor="stock">Stock</Label>
-              <Input id="stock" placeholder="Stock" value={stock} onChange={(e) => setStock(e.target.value)} />
+              <Label htmlFor="quantity">Quantity</Label>
+              <Input id="quantity" placeholder="Quantity" value={quantity} onChange={(e) => setQuantity(e.target.value)} required />
             </div>
             <div>
               <Label htmlFor="expiryDate">Expiry Date</Label>
-              <Input id="expiryDate" type="date" placeholder="Expiry Date" value={expiryDate} onChange={(e) => setExpiryDate(e.target.value)} />
+              <Input
+                id="expiryDate"
+                type="month"
+                placeholder="Expiry Date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+              />
             </div>
             <div>
               <Label htmlFor="supplierName">Supplier Name</Label> {/* New field for supplier name */}
               <Input id="supplierName" placeholder="Supplier Name" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="supplierPhone">Supplier Phone</Label>
+              <Input id="supplierPhone" placeholder="Supplier Phone" value={supplierPhone} onChange={(e) => setSupplierPhone(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="supplierAddress">Supplier Address</Label>
+              <Input id="supplierAddress" placeholder="Supplier Address" value={supplierAddress} onChange={(e) => setSupplierAddress(e.target.value)} />
             </div>
           </div>
           <DialogFooter className="mt-4">

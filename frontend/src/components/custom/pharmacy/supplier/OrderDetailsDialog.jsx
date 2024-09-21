@@ -98,13 +98,13 @@ export default function OrderDetailsDialog({ order, isOpen, setIsOpen }) {
                 <TableBody>
                   {order.items && order.items.map((item, index) => (
                     <TableRow key={index}>
-                      <TableCell className="text-sm py-1 capitalize">{item.item.name}</TableCell>
-                      <TableCell className="text-sm py-1 capitalize">{item.item.type}</TableCell>
-                      <TableCell className="text-sm py-1">{item.quantity.toLocaleString()}</TableCell>
-                      <TableCell className="text-sm py-1">₹{item.MRP.toFixed(2).toLocaleString()}</TableCell>
-                      <TableCell className="text-sm py-1">{item.discount}%</TableCell>
-                      <TableCell className="text-sm py-1">₹{(item.quantity * item.MRP * (1 - item.discount / 100)).toLocaleString()}</TableCell>
-                      <TableCell className="text-sm py-1">{formatDate(item.expiryDate)}</TableCell>
+                      <TableCell className="text-sm py-1 capitalize">{item?.item?.name || 'Deleted Item'}</TableCell>
+                      <TableCell className="text-sm py-1 capitalize">{item?.item?.type || 'N/A'}</TableCell>
+                      <TableCell className="text-sm py-1">{item?.quantity.toLocaleString() || 'N/A'}</TableCell>
+                      <TableCell className="text-sm py-1">₹{item?.MRP.toFixed(2).toLocaleString() || 'N/A'}</TableCell>
+                      <TableCell className="text-sm py-1">{item?.discount}%</TableCell>
+                      <TableCell className="text-sm py-1">₹{(item?.quantity * item?.MRP * (1 - item?.discount / 100)).toLocaleString() || 'N/A'}</TableCell>
+                      <TableCell className="text-sm py-1">{formatDate(item?.expiryDate) || 'N/A'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

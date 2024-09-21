@@ -1,7 +1,8 @@
+// toast is not shown when the item is updated->fixed this
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
-import { fetchItems, setUpdateInventoryStatusIdle } from "../../../redux/slices/pharmacySlice";
+import { fetchItems, deleteInventoryItem, setDeleteInventoryItemStatusIdle } from "../../../redux/slices/pharmacySlice";
 import { Search, ChevronLeft, ChevronRight, Pencil, Trash, FileDown, Plus, ListFilter, PackageX } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { Input } from "../../ui/input";
@@ -11,10 +12,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Badge } from "../../ui/badge";
 import EditItemDialog from "./itemMaster/EditItemDialog";
 import { useToast } from "../../../hooks/use-toast";
+import AddItemDialog from "./itemMaster/AddItemDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../ui/alert-dialog";
 
 export default function ItemsMaster() {
   const dispatch = useDispatch();
-  const {items, itemsStatus, updateInventoryItemStatus} = useSelector((state) => state.pharmacy);
+  const {items, itemsStatus, deleteInventoryItemStatus} = useSelector((state) => state.pharmacy);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
@@ -22,6 +34,10 @@ export default function ItemsMaster() {
   const itemsPerPage = 10;
   const [isEditItemDialogOpen, setIsEditItemDialogOpen] = useState(false);
   const [itemToEdit, setItemToEdit] = useState(null);
+  const [isAddItemDialogOpen, setIsAddItemDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [deleteConfirmation, setDeleteConfirmation] = useState("");
 
   const types = ["All", ...new Set(items.map((item) => item.type))];
 
@@ -31,20 +47,17 @@ export default function ItemsMaster() {
     }
   }, [itemsStatus, dispatch]);
 
-  // show when the item is updated
   useEffect(() => {
-    if (updateInventoryItemStatus === "succeeded") {
-      console.log("updateInventoryItemStatus");
+    if (deleteInventoryItemStatus === "succeeded") {
       toast({
-        title: "Changes saved",
-        description: "The item has been updated successfully.",
-        variant: "default",
+        title: "Item deleted successfully",
+        description: "The item has been successfully deleted from the inventory.",
       });
     }
     return () => {
-      dispatch(setUpdateInventoryStatusIdle());
-    };
-  }, [updateInventoryItemStatus, dispatch]);
+      dispatch(setDeleteInventoryItemStatusIdle());
+    }
+  }, [deleteInventoryItemStatus, dispatch, toast]);
 
 
   const filteredItems = items
@@ -82,13 +95,31 @@ export default function ItemsMaster() {
     setIsEditItemDialogOpen(true);
   };
 
-  const handleDelete = (id) => {
-    console.log(`Delete item with id: ${id}`);
+  const handleDelete = (item) => {
+    setItemToDelete(item);
+    setIsDeleteDialogOpen(true);
   };
+
+  const confirmDelete = () => {
+    console.log(`Deleting item with id: ${itemToDelete._id}`);
+    // Implement the actual delete logic here
+    dispatch(deleteInventoryItem(itemToDelete._id));
+    setIsDeleteDialogOpen(false);
+    setItemToDelete(null);
+    setDeleteConfirmation("");
+  }
 
   const handleCloseEditItemDialog = () => {
     setIsEditItemDialogOpen(false);
     setItemToEdit(null);
+  };
+
+  const handleOpenAddItemDialog = () => {
+    setIsAddItemDialogOpen(true);
+  };
+
+  const handleCloseAddItemDialog = () => {
+    setIsAddItemDialogOpen(false);
   };
 
   return (
@@ -123,6 +154,9 @@ export default function ItemsMaster() {
                 </DropdownMenu>
               </div>
               <div className="flex space-x-2">
+                <Button variant="outline" onClick={handleOpenAddItemDialog}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Item
+                </Button>
                 <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" /> Export
                 </Button>
@@ -154,28 +188,28 @@ export default function ItemsMaster() {
                       <TableRow key={item._id}>
                         <TableCell className='capitalize'>{item.name}</TableCell>
                         <TableCell>{item.type}</TableCell>
-                        <TableCell className="capitalize">{item.supplier.name}</TableCell>
+                        <TableCell className="capitalize">{item?.supplier?.name || "-"}</TableCell>
                         <TableCell>₹{item.CP.toFixed(2)}</TableCell>
                         <TableCell>₹{item.MRP.toFixed(2)}</TableCell>
                         <TableCell>
                           <Badge
                             variant={
-                              item.quantity < 30
+                              item.quantity <= 100
                                 ? "destructive"
-                                : item.quantity < 60
-                                ? "warning"
+                                : item.quantity <= 200
+                                ? "secondary"
                                 : "success"
                             }
                           >
                             {item.quantity}
                           </Badge>
                         </TableCell>
-                        <TableCell>{format(new Date(item.expiryDate), 'MMM, yyyy')}</TableCell>
+                        <TableCell>{item.expiryDate ? format(new Date(item.expiryDate), 'MMM, yyyy') : "-"}</TableCell>
                         <TableCell className="flex">
                           <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
                             <Pencil className="h-3 w-3" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(item._id)}>
+                          <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
                             <Trash className="h-3 w-3" />
                           </Button>
                         </TableCell>
@@ -210,6 +244,34 @@ export default function ItemsMaster() {
         )}
       </CardContent>
       <EditItemDialog isOpen={isEditItemDialogOpen} onClose={handleCloseEditItemDialog} item={itemToEdit} />
+      <AddItemDialog isOpen={isAddItemDialogOpen} onClose={handleCloseAddItemDialog} />
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {itemToDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription className="">
+              This will permanently delete the item from your inventory.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="">
+            <p className="text-sm mb-1">Please type <span className="font-semibold">{itemToDelete?.name}</span> to permanently delete the item.</p>
+            <Input
+              placeholder="Type item name"
+              value={deleteConfirmation}
+              onChange={(e) => setDeleteConfirmation(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              disabled={deleteConfirmation !== itemToDelete?.name}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

@@ -11,6 +11,7 @@ import { Label } from "../../../ui/label";
 import { Plus, Pencil, Trash, Package, Search } from "lucide-react";
 import { SearchSuggestion } from "../../registration/CustomSearchSuggestion";
 import { useToast } from "../../../../hooks/use-toast";
+import ViewBillDialog from "../reports/ViewBillDialog";
 
 export default function SalesMain() {
   const dispatch = useDispatch();
@@ -25,6 +26,8 @@ export default function SalesMain() {
   const [buyerName, setBuyerName] = useState("");
   const [additionalDiscount, setAdditionalDiscount] = useState("");
   const itemNameInputRef = useRef(null);
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
 
   // fetch items from backend 
   useEffect(() => {
@@ -38,15 +41,26 @@ export default function SalesMain() {
 
   useEffect(() => {
     if (createSalesBillStatus === 'succeeded') {
-      alert('Sales order created successfully!');
-      // Reset form or navigate away
+      toast({
+        title: 'Sales order created successfully!',
+      });
+      // Clear all input fields
+      setItems([]);
+      setNewItem({id: "", name: "", quantity: "", mrp: "", discount: "" });
+      setItemName("");
+      setCustomerInfo({ name: "", phone: "" });
+      setPaymentMethod("");
+      setBuyerName("");
+      setAdditionalDiscount("");
     } else if (createSalesBillStatus === 'failed') {
-      alert(`Failed to create sales order: ${error}`);
+      toast({
+        title: `Failed to create sales order: ${error}`,
+      });
     }
     return () => {
       dispatch(setCreateSalesBillStatus('idle'));
     }
-  }, [createSalesBillStatus, error]);
+  }, [createSalesBillStatus, error, dispatch]);
 
   const handlePaymentMethodChange = (value) => {
     setPaymentMethod(value);
@@ -182,6 +196,11 @@ export default function SalesMain() {
 
   const handleAdditionalDiscountFocus = (e) => {
     e.target.select();
+  };
+
+  const handleBillClick = (bill) => {
+    setSelectedBill(bill);
+    setIsViewBillDialogOpen(true);
   };
 
   return (
@@ -359,7 +378,7 @@ export default function SalesMain() {
                         </TableHeader>
                         <TableBody>
                           {salesBills.slice(0, 4).map((bill) => (
-                            <TableRow key={bill._id}>
+                            <TableRow key={bill._id} className="cursor-pointer hover:bg-gray-100" onClick={() => handleBillClick(bill)}>
                                 <TableCell>{bill.patientInfo.name}</TableCell>
                                 <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
                             </TableRow>
@@ -408,7 +427,7 @@ export default function SalesMain() {
                 <Button variant="outline" size="sm" onClick={handleSaveDraft}>
                   Save Draft
                 </Button>
-                <Button className="bg-green-500 hover:bg-green-600" size="sm" type="submit">
+                <Button className="bg-green-500 hover:bg-green-600" size="sm" type="submit" disabled={createSalesBillStatus === 'loading'}>
                   Create Sales Order
                 </Button>
               </div>
@@ -416,6 +435,13 @@ export default function SalesMain() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Add ViewBillDialog */}
+      <ViewBillDialog
+        isOpen={isViewBillDialogOpen}
+        setIsOpen={setIsViewBillDialogOpen}
+        billData={selectedBill}
+      />
     </div>
   );
 }

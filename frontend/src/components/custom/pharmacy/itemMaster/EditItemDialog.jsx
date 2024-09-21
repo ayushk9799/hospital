@@ -8,6 +8,8 @@ import { useToast } from "../../../../hooks/use-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { updateInventoryItem, setUpdateInventoryStatusIdle } from "../../../../redux/slices/pharmacySlice";
 
+export const typeOptions = ['Tablet', 'Capsule', 'Liquid', 'Injection', 'Syrup', 'Other'];
+
 export default function EditItemDialog({ isOpen, onClose, item }) {
   const dispatch = useDispatch();
   const { updateInventoryItemStatus } = useSelector((state) => state.pharmacy);
@@ -20,8 +22,6 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
   const [types, setTypes] = useState("");
   const [supplierName, setSupplierName] = useState("");
 
-  const typeOptions = ['Tablet', 'Capsule', 'Liquid', 'Injection', 'Syrup', 'Other'];
-
   useEffect(() => {
     if (item) {
       setName(item.name);
@@ -30,29 +30,14 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
       setExpiryDate(new Date(item.expiryDate).toISOString().slice(0, 7)); // Format as YYYY-MM
       setMRP(item.MRP);
       setTypes(item.type);
-      setSupplierName(item.supplier.name || "");
+      setSupplierName(item?.supplier?.name || "");
     }
   }, [item]);
-
-  useEffect(() => {
-    if (updateInventoryItemStatus === "succeeded") {
-      console.log("updateInventoryItemStatus");
-      toast({
-        title: "Changes saved",
-        description: "The item has been updated successfully.",
-        variant: "default",
-      });
-      onClose();
-    }
-    return () => {
-      dispatch(setUpdateInventoryStatusIdle());
-    };
-  }, [updateInventoryItemStatus, dispatch]);
 
   const handleEditItem = () => {
     const changedValues = {};
     if (name !== item.name) changedValues.name = name;
-    if (price !== item.CP) changedValues.price = price;
+    if (price !== item.CP) changedValues.CP = price;
     if (quantity !== item.quantity) changedValues.quantity = quantity;
     if (expiryDate !== new Date(item.expiryDate).toISOString().slice(0, 7)) changedValues.expiryDate = expiryDate;
     if (MRP !== item.MRP) changedValues.MRP = MRP;
@@ -66,7 +51,7 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
       });
     } else {
       dispatch(updateInventoryItem({ itemId: item._id, updateData: changedValues }));
-      // console.log(changedValues, item._id);
+      onClose();
     }
   };
 
@@ -112,12 +97,12 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
               </Select>
             </div>
             <div>
-              <Label htmlFor="price">Price</Label>
-              <Input id="price" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
-            </div>
-            <div>
               <Label htmlFor="MRP">MRP</Label>
               <Input id="MRP" placeholder="MRP" value={MRP} onChange={(e) => setMRP(e.target.value)} />
+            </div>
+            <div>
+              <Label htmlFor="price">Cost Price</Label>
+              <Input id="price" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} />
             </div>
             <div>
               <Label htmlFor="quantity">Quantity</Label>

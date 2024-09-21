@@ -1,5 +1,8 @@
 import * as React from "react";
+import { useRef, useState } from "react";
+import { useReactToPrint } from 'react-to-print';
 import { Button } from "../../../ui/button";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -19,76 +22,127 @@ import {
 } from "../../../ui/table";
 import {  PrinterIcon } from "lucide-react";
 
-export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
-  if (!billData) return null;
+// Update the PrintHeader component
+const PrintHeader = () => (
+  <div className="hidden print:block mb-4">
+    <h1 className="text-2xl font-bold text-center">Your Pharmacy Name</h1>
+    <p className="text-center">123 Pharmacy Street, City, Country</p>
+    <p className="text-center">Phone: (123) 456-7890</p>
+  </div>
+);
 
+export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
+  const componentRef = useRef();
+  const [isPrinting, setIsPrinting] = useState(false);
+
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+    onBeforeGetContent: () => {
+      setIsPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setIsPrinting(false);
+          resolve();
+        }, 0);
+      });
+    },
+    pageStyle: `
+      @media print {
+        @page {
+          size: auto;
+          margin: 0;
+        }
+        body {
+          padding: 20mm;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        .print-only {
+          display: block !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+      }
+    `,
+  });
+
+  if (!billData) return null;
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="flex flex-row items-center justify-between mr-7 pb-2">
-          <div>
-            <DialogTitle>Bill Details</DialogTitle>
-            <DialogDescription>Full details of the bill</DialogDescription>
+        <div 
+          ref={componentRef}
+          className={isPrinting ? 'print-content' : ''}
+        >
+          <PrintHeader />
+          <div className="no-print">
+            <DialogHeader className="flex flex-row items-center justify-between mr-7 pb-2">
+              <div>
+                <DialogTitle>Bill Details</DialogTitle>
+                <DialogDescription>Full details of the bill</DialogDescription>
+              </div>
+              <Badge status={billData.payment.status} />
+            </DialogHeader>
           </div>
-          <Badge status={billData.payment.status} />
-        </DialogHeader>
-        <div className="grid gap-2 py-0">
-          <div className="grid grid-cols-3 gap-2">
-            <div>
-              <Label className="text-right">Customer Name</Label>
-              <p className="mt-1 font-medium">{billData.patientInfo.name}</p>
+          <div className="grid gap-2 py-0">
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-right">Customer Name</Label>
+                <p className="mt-1 font-medium">{billData.patientInfo.name}</p>
+              </div>
+              <div>
+                <Label className="text-right">Bill Number</Label>
+                <p className="mt-1 font-medium">{`#B${billData._id.slice(-6)}`}</p>
+              </div>
+              <div>
+                <Label className="text-right">Date and Time</Label>
+                <p className="mt-1 font-medium">{format(new Date(billData.createdAt), "MMM dd, hh:mm a")}</p>
+              </div>
             </div>
-            <div>
-              <Label className="text-right">Bill Number</Label>
-              <p className="mt-1 font-medium">{`#B${billData._id.slice(-6)}`}</p>
-            </div>
-            <div>
-              <Label className="text-right">Date and Time</Label>
-              <p className="mt-1 font-medium">{new Date(billData.createdAt).toLocaleString()}</p>
-            </div>
-          </div>
-          <div className="mt-1">
-            <h3 className="text-lg font-semibold mb-1">Bill Items</h3>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item Name</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Quantity</TableHead>
-                  <TableHead>MRP</TableHead>
-                  <TableHead>Discount(%)</TableHead>
-                  <TableHead>Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {billData.items.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.item.name}</TableCell>
-                    <TableCell>{item.item.type}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell>₹{item.MRP.toFixed(2)}</TableCell>
-                    <TableCell>{item.discount.toFixed(0)}%</TableCell>
-                    <TableCell>
-                      ₹{(item.quantity * item.MRP * (1 - item.discount / 100)).toFixed(2)}
-                    </TableCell>
+            <div className="mt-1">
+              <h3 className="text-lg font-semibold mb-1">Bill Items</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Item Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Quantity</TableHead>
+                    <TableHead>MRP</TableHead>
+                    <TableHead>Discount(%)</TableHead>
+                    <TableHead>Total</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <div className="mt-4 border-t border-gray-200 pt-2">
-              <div className="flex flex-col items-end space-y-1">
-                <div className="flex justify-between w-72">
-                  <span className="text-sm text-gray-600">Sub Total:</span>
-                  <span className="text-sm">₹{billData.subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between w-72">
-                  <span className="text-sm text-gray-600">Additional Discount  ({((billData.subtotal - billData.totalAmount) / billData.subtotal * 100).toFixed(0)}%):</span>
-                  <span className="text-sm">-₹{(billData.subtotal - billData.totalAmount).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between w-72 border-t border-gray-200 pt-2 font-semibold">
-                  <span>Total Amount:</span>
-                  <span>₹{billData.totalAmount.toFixed(2)}</span>
+                </TableHeader>
+                <TableBody>
+                  {billData.items.map((item, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{item?.item?.name || "Item deleted"}</TableCell>
+                      <TableCell>{item?.item?.type || "Item deleted"}</TableCell>
+                      <TableCell>{item?.quantity || "Item deleted"}</TableCell>
+                      <TableCell>₹{item?.MRP?.toFixed(2)}</TableCell>
+                      <TableCell>{item?.discount?.toFixed(0)}%</TableCell>
+                      <TableCell>
+                        ₹{(item?.quantity * item?.MRP * (1 - item?.discount / 100)).toFixed(2)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              <div className="mt-4 border-t border-gray-200 pt-2">
+                <div className="flex flex-col items-end space-y-1">
+                  <div className="flex justify-between w-72">
+                    <span className="text-sm text-gray-600">Sub Total:</span>
+                    <span className="text-sm">₹{billData.subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between w-72">
+                    <span className="text-sm text-gray-600">Additional Discount  ({((billData.subtotal - billData.totalAmount) / billData.subtotal * 100).toFixed(0)}%):</span>
+                    <span className="text-sm">-₹{(billData.subtotal - billData.totalAmount).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between w-72 border-t border-gray-200 pt-2 font-semibold">
+                    <span>Total Amount:</span>
+                    <span>₹{billData.totalAmount.toFixed(2)}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -102,7 +156,7 @@ export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
           >
             Close
           </Button>
-          <Button type="button" variant="outline">
+          <Button type="button" variant="outline" onClick={handlePrint}>
             <PrinterIcon className="mr-2 h-4 w-4" />
             Print Bill
           </Button>

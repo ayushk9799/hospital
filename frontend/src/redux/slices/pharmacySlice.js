@@ -17,6 +17,11 @@ const initialState = {
   salesBillsStatus: "idle",
   createSalesBillStatus: "idle",
   updateInventoryStatus: "idle",
+  createInventoryItemStatus: "idle",
+  deleteInventoryItemStatus: "idle",
+  dashboardData: [],
+  dashboardDataStatus: "idle",
+  dashboardRange: "idle"
 };
 
 // fetch all orders
@@ -113,7 +118,7 @@ export const createSalesBill = createLoadingAsyncThunk(
     }
     return response.json();
   },
-  { useGlobalLoader: false }
+  { useGlobalLoader: true }
 );
 
 // New thunk for updating inventory items
@@ -133,7 +138,59 @@ export const updateInventoryItem = createLoadingAsyncThunk(
     }
     return response.json();
   },
-  { useGlobalLoader: false }
+  { useGlobalLoader: true }
+);
+
+// New thunk for creating an inventory item
+export const createInventoryItem = createLoadingAsyncThunk(
+  "pharmacy/createInventoryItem",
+  async (itemData) => {
+    const response = await fetch(`${Backend_URL}/api/pharmacy/inventory`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(itemData),
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to create inventory item');
+    }
+    return response.json();
+  },
+  { useGlobalLoader: true }
+);
+
+// New thunk for deleting an inventory item
+export const deleteInventoryItem = createLoadingAsyncThunk(
+  "pharmacy/deleteInventoryItem",
+  async (itemId) => {
+    const response = await fetch(`${Backend_URL}/api/pharmacy/inventory/${itemId}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to delete inventory item');
+    }
+    return itemId; // Return the deleted item's ID
+  },
+  { useGlobalLoader: true }
+);
+
+// New thunk for fetching pharmacy dashboard data
+export const fetchPharmacyDashboardData = createLoadingAsyncThunk(
+  "pharmacy/fetchDashboardData",
+  async ({ startDate, endDate, range }) => {
+    const params = new URLSearchParams({ startDate, endDate});
+    const response = await fetch(`${Backend_URL}/api/pharmacy/dashboard-data?${params}`, {
+      credentials: 'include'
+    });
+    if (!response.ok) {
+      throw new Error('Failed to fetch pharmacy dashboard data');
+    }
+    return response.json();
+  },
+  { useGlobalLoader: true }
 );
 
 const pharmacySlice = createSlice({
@@ -153,6 +210,15 @@ const pharmacySlice = createSlice({
     // New reducer to set updateInventoryStatus to idle
     setUpdateInventoryStatusIdle: (state) => {
       state.updateInventoryStatus = "idle";
+    },
+    setCreateInventoryItemStatusIdle: (state) => {
+      state.createInventoryItemStatus = "idle";
+    },
+    setDeleteInventoryItemStatusIdle: (state) => {
+      state.deleteInventoryItemStatus = "idle";
+    },
+    setDashboardDataStatusIdle: (state) => {
+      state.dashboardDataStatus = "idle";
     },
   },
   extraReducers: (builder) => {
@@ -228,7 +294,7 @@ const pharmacySlice = createSlice({
       })
       .addCase(createSalesBill.fulfilled, (state, action) => {
         state.createSalesBillStatus = "succeeded";
-        state.salesBills.push(action.payload);
+        state.salesBills.unshift(action.payload);
       })
       .addCase(createSalesBill.rejected, (state, action) => {
         state.createSalesBillStatus = "failed";
@@ -248,6 +314,40 @@ const pharmacySlice = createSlice({
       .addCase(updateInventoryItem.rejected, (state, action) => {
         state.updateInventoryStatus = "failed";
         state.error = action.error.message;
+      })
+      .addCase(createInventoryItem.pending, (state) => {
+        state.createInventoryItemStatus = "loading";
+      })
+      .addCase(createInventoryItem.fulfilled, (state, action) => {
+        state.createInventoryItemStatus = "succeeded";
+        state.items.unshift(action.payload);
+      })
+      .addCase(createInventoryItem.rejected, (state, action) => {
+        state.createInventoryItemStatus = "failed";
+        state.error = action.error.message;
+      })
+      .addCase(deleteInventoryItem.pending, (state) => {
+        state.deleteInventoryItemStatus = "loading";
+      })
+      .addCase(deleteInventoryItem.fulfilled, (state, action) => {
+        state.deleteInventoryItemStatus = "succeeded";
+        // Remove the deleted item from the items array
+        state.items = state.items.filter(item => item._id !== action.payload);
+      })
+      .addCase(deleteInventoryItem.rejected, (state, action) => {
+        state.deleteInventoryItemStatus = "failed";
+        state.error = action.error.message;
+      })
+      .addCase(fetchPharmacyDashboardData.pending, (state) => {
+        state.dashboardDataStatus = "loading";
+      })
+      .addCase(fetchPharmacyDashboardData.fulfilled, (state, action) => {
+        state.dashboardDataStatus = "succeeded";
+        state.dashboardData = action.payload;
+      })
+      .addCase(fetchPharmacyDashboardData.rejected, (state, action) => {
+        state.dashboardDataStatus = "failed";
+        state.error = action.error.message;
       });
   },
 });
@@ -257,6 +357,9 @@ export const {
   setCreateSalesBillStatus, 
   setCreateOrderStatus, 
   clearSelectedSupplier,
-  setUpdateInventoryStatusIdle // Add this new action
+  setUpdateInventoryStatusIdle,
+  setCreateInventoryItemStatusIdle,
+  setDeleteInventoryItemStatusIdle,
+  setDashboardDataStatusIdle
 } = pharmacySlice.actions;
 export default pharmacySlice.reducer;
