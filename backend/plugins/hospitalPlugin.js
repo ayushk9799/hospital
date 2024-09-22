@@ -9,7 +9,7 @@ export const hospitalPlugin = (schema) => {
 
   // Helper function to set hospital condition
   const setHospitalCondition = function() {
-    console.log("setting hospital")
+    // console.log("setting hospital")
     if (!this.getQuery().hospital && mongoose.connection.hospital) {
       this.where({ hospital: mongoose.connection.hospital });
     }

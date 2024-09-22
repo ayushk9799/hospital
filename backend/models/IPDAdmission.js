@@ -56,6 +56,9 @@ const ipdAdmissionSchema = new mongoose.Schema({
     coverageType: String,
   },
   notes:{type:String},
+  bills : {
+    pharmacy : [{type : mongoose.Schema.Types.ObjectId, ref : "pharmacyBill"}]
+  }
 },{timestamps:true});
 
 ipdAdmissionSchema.pre('save', async function(next) {

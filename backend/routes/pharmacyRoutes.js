@@ -3,6 +3,8 @@ import { PharmacyBill } from '../models/PharmacyBill.js';
 import { Payment } from '../models/Payment.js';
 import { Inventory } from '../models/Inventory.js';
 import { Supplier } from '../models/Supplier.js';
+import {Visit} from '../models/Visits.js';
+import {IPDAdmission} from '../models/IPDAdmission.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -11,7 +13,15 @@ router.post('/create-sales-bill', async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { patient, patientInfo, buyerName, items, paymentMethod, totals } = req.body;
+        const { patientInfo, billInfo, buyerName, items, paymentMethod, totals } = req.body;
+        let patient;
+        if(billInfo && billInfo._id && billInfo._id !== ""){
+            const modal = billInfo.type === 'OPD' ? Visit : IPDAdmission;
+            let patientValue = await modal.findById(billInfo._id)
+            if(patientValue && (patientValue.patientName === patientInfo.name)){
+                patient = patientValue;
+            }
+        }
         
         // Create payment
         const payment = new Payment({
@@ -25,13 +35,17 @@ router.post('/create-sales-bill', async (req, res) => {
 
         // Create pharmacy bill
         const newPharmacyBill = new PharmacyBill({
-            patient,
             patientInfo,
             buyerName,
             items,
             ...totals,
             payment: payment._id,
         });
+        if(patient) {
+            patient.bills.pharmacy.push(newPharmacyBill._id);
+            newPharmacyBill.patient = patient._id;
+            await patient.save({ session });
+        }
         await newPharmacyBill.save({ session });
 
         // Update inventory quantities

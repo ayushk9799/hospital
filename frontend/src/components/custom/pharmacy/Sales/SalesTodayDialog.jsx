@@ -25,7 +25,7 @@ const SalesTodayDialog = ({ isOpen, setIsOpen }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl max-h-[500px]">
         <DialogHeader className="flex flex-row items-center justify-between mr-5">
           <div>
             <DialogTitle>Sales Today - {format(new Date(), 'MMMM d, yyyy')}</DialogTitle>

@@ -222,9 +222,9 @@ export default function PatientDetails() {
   };
 
   return (
-    <div className="container p-4 space-y-4">
+    <div className="container p-2 space-y-2">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Patient Profile</h1>
+        <h1 className="text-xl font-bold">Patient Profile</h1>
         <div className="space-x-2">
           <Button variant="outline">
             <Edit className="mr-2 h-4 w-4" /> Edit Profile
@@ -240,7 +240,7 @@ export default function PatientDetails() {
           <div className="flex items-center space-x-4">
             <Avatar className="h-16 w-16">
               <AvatarImage src="/placeholder.svg" alt={patientData.name} />
-              <AvatarFallback>{patientData.name}</AvatarFallback>
+              <AvatarFallback>{patientData.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
               <h2 className="text-lg font-bold">{patientData.name}</h2>

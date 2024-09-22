@@ -101,8 +101,6 @@ export default function ItemsMaster() {
   };
 
   const confirmDelete = () => {
-    console.log(`Deleting item with id: ${itemToDelete._id}`);
-    // Implement the actual delete logic here
     dispatch(deleteInventoryItem(itemToDelete._id));
     setIsDeleteDialogOpen(false);
     setItemToDelete(null);

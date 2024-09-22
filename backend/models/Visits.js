@@ -48,6 +48,9 @@ const visitSchema = new mongoose.Schema({
     oxygenSaturation:Number,
     respiratoryRate:Number,
   },
+  bills : {
+    pharmacy : [{type : mongoose.Schema.Types.ObjectId, ref : "pharmacyBill"}]
+  },
   insuranceDetails: {
     provider: String,
     policyNumber: String,

@@ -138,7 +138,6 @@ const PharmacyReports = () => {
                       <TableHead>Supplier</TableHead>
                       <TableHead>Expiry Date</TableHead>
                       <TableHead>Quantity</TableHead>
-                      <TableHead>Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -150,11 +149,6 @@ const PharmacyReports = () => {
                           <TableCell className="capitalize">{item?.supplier?.name || '——'}</TableCell>
                           <TableCell>{format(new Date(item?.expiryDate), 'MMM, yyyy')}</TableCell>
                           <TableCell>{item.quantity}</TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">
-                              Manage
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       ))
                     ) : (
@@ -185,7 +179,6 @@ const PharmacyReports = () => {
                       <TableHead>Type</TableHead>
                       <TableHead>Supplier</TableHead>
                       <TableHead>Current Stock</TableHead>
-                      <TableHead>Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -196,11 +189,6 @@ const PharmacyReports = () => {
                           <TableCell>{item?.type}</TableCell>
                           <TableCell className="capitalize">{item?.supplier?.name || '—'}</TableCell>
                           <TableCell>{item?.quantity}</TableCell>
-                          <TableCell>
-                            <Button variant="outline" size="sm">
-                              Reorder
-                            </Button>
-                          </TableCell>
                         </TableRow>
                       ))
                     ) : (

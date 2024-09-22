@@ -2,38 +2,10 @@ import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { Button } from "../../ui/button";
-import { Progress } from "../../ui/progress";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  Label,
-} from "recharts";
-import {
-  Pill,
-  DollarSign,
-  Package,
-  Users,
-  Calendar as CalendarIcon,
-  Activity,
-  ChevronRight,
-  BriefcaseMedicalIcon,
-  Download,
-  AlertCircle,
-} from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Label } from "recharts";
+import { Pill, DollarSign, Package, Users, Calendar as CalendarIcon, Activity, ChevronRight, BriefcaseMedicalIcon, Download, AlertCircle } from "lucide-react";
 import { PieChart, Pie, Cell } from "recharts";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "../../ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../../ui/dropdown-menu";
 import { convertFilterToDateRange, DateRangePicker, calculatePercentageChange } from "../../../assets/Data";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPharmacyDashboardData } from "../../../redux/slices/pharmacySlice";
@@ -47,14 +19,10 @@ const PharmacyDashboard = () => {
   const {dashboardData, dashboardDataStatus} = useSelector((state) => state.pharmacy);
 
   const filteredData = useMemo(() => {
-    if(dateFilter === "Custom"){
-      return {currentValue: dashboardData, previousValue: []};
-    }
+    if(dateFilter === "Custom") return {currentValue: dashboardData, previousValue: []};
     const dates = convertFilterToDateRange(dateFilter);
     const startDate = (new Date(dates.from));
     const endDate = (new Date(dates.to));
-
-    // Calculate previous date range
     let previousStartDate, previousEndDate;
     if (dateFilter === "Today") {
       previousStartDate = startOfDay(subDays(startDate, 1));
@@ -69,23 +37,19 @@ const PharmacyDashboard = () => {
       previousStartDate = startOfMonth(subDays(startDate, 30));
       previousEndDate = endOfMonth(subDays(endDate, 30));
     } else {
-      // For other filters, set previous range to null
       previousStartDate = null;
       previousEndDate = null;
     }
-
     const currentValue = dashboardData.filter((item) => {
       const itemDate = new Date(item._id);
       return isWithinInterval(itemDate, { start: startDate, end: endDate });
     });
-
     const previousValue = previousStartDate && previousEndDate
       ? dashboardData.filter((item) => {
           const itemDate = new Date(item._id);
           return isWithinInterval(itemDate, { start: previousStartDate, end: previousEndDate });
         })
       : [];
-
     return { currentValue, previousValue };
   }, [dashboardData, dateFilter]);
 
@@ -100,31 +64,22 @@ const PharmacyDashboard = () => {
     return filteredData.currentValue.reduce((acc, curr) => {
       acc.totalRevenue += curr.totalRevenue;
       acc.totalPrescriptions += curr.totalCount;
-      
       curr.paymentMethods.forEach(method => {
         const methodName = method.method || 'Others';
-        if (!acc.paymentMethods[methodName]) {
-          acc.paymentMethods[methodName] = 0;
-        }
+        if (!acc.paymentMethods[methodName]) acc.paymentMethods[methodName] = 0;
         acc.paymentMethods[methodName] += parseInt(method.amount);
       });
-
       return acc;
     }, { totalRevenue: 0, totalPrescriptions: 0, paymentMethods: {} });
   }, [filteredData]);
 
   const paymentMethodData = useMemo(() => {
     const chartColors = {
-      'Cash': "hsl(var(--chart-1))",
-      'UPI': "hsl(var(--chart-2))",
-      'Card': "hsl(var(--chart-3))",
-      'Others': "hsl(var(--chart-4))"
+      'Cash': "hsl(var(--chart-1))", 'UPI': "hsl(var(--chart-2))",
+      'Card': "hsl(var(--chart-3))", 'Others': "hsl(var(--chart-4))"
     };
-
     return Object.entries(dashboardTotals.paymentMethods).map(([method, value]) => ({
-      method,
-      value,
-      fill: chartColors[method] || "hsl(var(--chart-4))"
+      method, value, fill: chartColors[method] || "hsl(var(--chart-4))"
     }));
   }, [dashboardTotals]);
 
@@ -132,14 +87,8 @@ const PharmacyDashboard = () => {
     const today = startOfDay(new Date());
     const last7Days = Array.from({ length: 7 }, (_, i) => {
       const date = subDays(today, 6 - i);
-      return {
-        date,
-        formattedDate: format(date, 'EEE'),
-        sales: 0,
-        prescriptions: 0
-      };
+      return { date, formattedDate: format(date, 'EEE'), sales: 0, prescriptions: 0 };
     });
-
     dashboardData.forEach(day => {
       const dayDate = startOfDay(new Date(day._id));
       const index = last7Days.findIndex(d => isEqual(d.date, dayDate));
@@ -148,7 +97,6 @@ const PharmacyDashboard = () => {
         last7Days[index].prescriptions = day.totalCount;
       }
     });
-
     return last7Days;
   }, [filteredData]);
 
@@ -173,15 +121,10 @@ const PharmacyDashboard = () => {
     setDateFilter(newFilter);
     if (newFilter !== "Custom") {
       let newDateRange;
-      if(newFilter === 'Today' || newFilter === 'Yesterday'){
-        newDateRange = convertFilterToDateRange('Last 7 Days');
-      } else if(newFilter === 'This Week'){
-        newDateRange = convertFilterToDateRange('This Week Fetched');
-      } else if(newFilter === 'This Month'){
-        newDateRange = convertFilterToDateRange('This Month Fetched');
-      } else{
-        newDateRange = convertFilterToDateRange(newFilter);
-      }
+      if(newFilter === 'Today' || newFilter === 'Yesterday') newDateRange = convertFilterToDateRange('Last 7 Days');
+      else if(newFilter === 'This Week') newDateRange = convertFilterToDateRange('This Week Fetched');
+      else if(newFilter === 'This Month') newDateRange = convertFilterToDateRange('This Month Fetched');
+      else newDateRange = convertFilterToDateRange(newFilter);
       fetchDashboardData(newDateRange);
     }
   };
@@ -202,19 +145,11 @@ const PharmacyDashboard = () => {
             <BriefcaseMedicalIcon className="h-4 w-4" />
           </Button>
           <ChevronRight className="h-3 w-3 text-gray-400" />
-          <span className="font-semibold text-gray-700 text-sm">
-            Pharmacy Dashboard
-          </span>
+          <span className="font-semibold text-gray-700 text-sm">Pharmacy Dashboard</span>
         </div>
         <div className="flex items-center space-x-4">
         {dateFilter === "Custom" && (
-            <DateRangePicker
-              from={tempDateRange.from}
-              to={tempDateRange.to}
-              onSelect={(range) => setTempDateRange(range)}
-              onSearch={handleDateRangeSearch}
-              onCancel={handleDateRangeCancel}
-            />
+            <DateRangePicker from={tempDateRange.from} to={tempDateRange.to} onSelect={(range) => setTempDateRange(range)} onSearch={handleDateRangeSearch} onCancel={handleDateRangeCancel} />
           )}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -226,38 +161,23 @@ const PharmacyDashboard = () => {
             <DropdownMenuContent align="end" className="w-[200px]">
               <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("Today")}>
-                Today
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("Yesterday")}>
-                Yesterday
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("This Week")}>
-                This Week
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("This Month")}>
-                This Month
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("All")}>
-                All Time
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("Custom")}>
-                Custom Range
-              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleDateFilterChange("Today")}>Today</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleDateFilterChange("Yesterday")}>Yesterday</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleDateFilterChange("This Week")}>This Week</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleDateFilterChange("This Month")}>This Month</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleDateFilterChange("All")}>All Time</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleDateFilterChange("Custom")}>Custom Range</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          
           <Button variant="outline" size="sm">
             <Download className="w-3 h-3 mr-2" />
             Export Dashboard
           </Button>
         </div>
       </div>
-
       <div className="space-y-4 mt-2">
         <div className="grid grid-cols-4 gap-4">
           <div className="col-span-3">
-            {/* Today's Stats */}
             <div className="grid grid-cols-3 gap-4 mb-4">
               <Card className="bg-blue-100">
                 <CardContent className="p-4">
@@ -284,46 +204,30 @@ const PharmacyDashboard = () => {
                   <Package className="w-8 h-8 text-yellow-600 mb-2" />
                   <p className="text-2xl font-bold text-yellow-600">1,890</p>
                   <p className="text-sm text-gray-600">Items in Stock</p>
-                  <p className="text-xs text-red-600 mt-1">
-                    -2% from last week
-                  </p>
+                  <p className="text-xs text-red-600 mt-1">-2% from last week</p>
                 </CardContent>
               </Card>
             </div>
-            {/* Quick Actions */}
             <Card>
               <CardHeader>
                 <CardTitle>Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="grid grid-cols-3 gap-4">
-                <Button
-                  className="w-full justify-center"
-                  variant="outline"
-                  onClick={() => navigate("/pharmacy/sales")}
-                >
+                <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/sales")}>
                   <Users className="mr-2 h-4 w-4" />
-                  New Prescription
+                  Pharmacy Sales
                 </Button>
-                <Button
-                  className="w-full justify-center"
-                  variant="outline"
-                  onClick={() => navigate("/pharmacy/items-master")}
-                >
+                <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/items-master")}>
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   Manage Inventory
                 </Button>
-                <Button
-                  className="w-full justify-center"
-                  variant="outline"
-                  onClick={() => navigate("/pharmacy/reports")}
-                >
+                <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/reports")}>
                   <Activity className="mr-2 h-4 w-4" />
                   View Reports
                 </Button>
               </CardContent>
             </Card>
           </div>
-           {/* Payment Methods Chart */}
            <Card>
             <CardHeader className='pb-0'>
               <CardTitle>Payment Methods</CardTitle>
@@ -335,21 +239,11 @@ const PharmacyDashboard = () => {
                   <div className="h-[180px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
-                        <Pie
-                          data={paymentMethodData}
-                          dataKey="value"
-                          nameKey="method"
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={45}
-                          outerRadius={85}
-                          paddingAngle={1}
-                        >
+                        <Pie data={paymentMethodData} dataKey="value" nameKey="method" cx="50%" cy="50%" innerRadius={45} outerRadius={85} paddingAngle={1}>
                           {paymentMethodData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={entry.fill} />
                           ))}
-                          <Label
-                            content={({ viewBox }) => {
+                          <Label content={({ viewBox }) => {
                               const { cx, cy } = viewBox;
                               return (
                                 <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
@@ -382,14 +276,10 @@ const PharmacyDashboard = () => {
             </CardContent>
           </Card>
         </div>
-
-        {/* Weekly Performance Chart */}
         <Card>
           <CardHeader>
             <CardTitle>Weekly Performance</CardTitle>
-            <CardDescription>
-              Sales and prescriptions filled in the last 7 days
-            </CardDescription>
+            <CardDescription>Sales and prescriptions filled in the last 7 days</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -399,47 +289,10 @@ const PharmacyDashboard = () => {
                 <YAxis yAxisId="right" orientation="right" stroke="#10b981" />
                 <Tooltip />
                 <Legend />
-                <Bar
-                  yAxisId="left"
-                  dataKey="sales"
-                  fill="#3b82f6"
-                  name="Sales (₹)"
-                />
-                <Bar
-                  yAxisId="right"
-                  dataKey="prescriptions"
-                  fill="#10b981"
-                  name="Prescriptions"
-                />
+                <Bar yAxisId="left" dataKey="sales" fill="#3b82f6" name="Sales (₹)" />
+                <Bar yAxisId="right" dataKey="prescriptions" fill="#10b981" name="Prescriptions" />
               </BarChart>
             </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        {/* Inventory Status */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Inventory Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {[
-                { name: "Pain Relievers", stock: 85 },
-                { name: "Antibiotics", stock: 62 },
-                { name: "Vitamins", stock: 78 },
-                { name: "Allergy Medication", stock: 45 },
-              ].map((category, index) => (
-                <div key={index} className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium">{category.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {category.stock}%
-                    </p>
-                  </div>
-                  <Progress value={category.stock} className="h-2" />
-                </div>
-              ))}
-            </div>
           </CardContent>
         </Card>
       </div>

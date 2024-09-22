@@ -19,7 +19,6 @@ const AddEventModal = ({ isOpen, onClose }) => {
   const [staffId, setStaffId] = useState('')
 
   const staffList = useSelector((state)=> state.staff.doctors)
-   console.log(staffList)
   function getCurrentDate() {
     const today = new Date();
     const dd = String(today.getDate()).padStart(2, '0');

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchItems, createSalesBill, setCreateSalesBillStatus, fetchSalesBills } from "../../../../redux/slices/pharmacySlice";
+import { fetchPatients, setSelectedPatient } from "../../../../redux/slices/patientSlice";
 import { Button } from "../../../ui/button";
 import { ScrollArea } from "../../../ui/scroll-area";
 import { Input } from "../../../ui/input";
@@ -8,50 +9,56 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "../../../ui/card";
 import { Label } from "../../../ui/label";
-import { Plus, Pencil, Trash, Package, Search } from "lucide-react";
+import { Plus, Pencil, Trash, Package } from "lucide-react";
 import { SearchSuggestion } from "../../registration/CustomSearchSuggestion";
 import { useToast } from "../../../../hooks/use-toast";
 import ViewBillDialog from "../reports/ViewBillDialog";
+import MedicineSuggDialog from './MedicineSuggDialog';
 
-export default function SalesMain() {
+export default function SalesMain({ clearTrigger, shouldOpenMedicineSuggDialog, setShouldOpenMedicineSuggDialog }) {
   const dispatch = useDispatch();
   const {toast} = useToast();
-
   const {items : sampleItems, itemsStatus, createSalesBillStatus, error, salesBills, salesBillsStatus} = useSelector((state) => state.pharmacy);
+  const { patientlist, status : patientsStatus, selectedPatient } = useSelector((state) => state.patients);
   const [itemName, setItemName] = useState("");
-  const [customerInfo, setCustomerInfo] = useState({ name: "", phone: "" });
+  const [customerInfo, setCustomerInfo] = useState({ name: "", phone: "", _id : "", type : "" });
   const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState({id : "", name: "", quantity: "", mrp: "", discount: "" });
   const [paymentMethod, setPaymentMethod] = useState("");
   const [buyerName, setBuyerName] = useState("");
   const [additionalDiscount, setAdditionalDiscount] = useState("");
+  const [patientName, setPatientName] = useState("");
   const itemNameInputRef = useRef(null);
   const [selectedBill, setSelectedBill] = useState(null);
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
+  const [isMedicineSuggDialogOpen, setIsMedicineSuggDialogOpen] = useState(false);
+
+  const patientListModified = useMemo(() => {
+    return patientlist.map(patient => ({
+      _id : patient._id,
+      patientId : patient.patient._id,
+      name: patient.patient.name,
+      phone: patient.patient.contactNumber,
+      gender: patient.patient.gender,
+      medications : patient.medications,
+      type : patient.type
+    }));
+  }, [patientlist]);
 
   // fetch items from backend 
   useEffect(() => {
-    if(itemsStatus === 'idle'){
-      dispatch(fetchItems());
-    }
-    if(salesBillsStatus === 'idle'){  
-      dispatch(fetchSalesBills());
-    }
-  }, [dispatch, itemsStatus, salesBillsStatus]);
+    if(itemsStatus === 'idle') dispatch(fetchItems());
+    if(salesBillsStatus === 'idle') dispatch(fetchSalesBills());
+    if(patientsStatus === 'idle') dispatch(fetchPatients());
+  }, [dispatch, itemsStatus, salesBillsStatus, patientsStatus]);
 
+  // feching initial data
   useEffect(() => {
     if (createSalesBillStatus === 'succeeded') {
       toast({
         title: 'Sales order created successfully!',
       });
-      // Clear all input fields
-      setItems([]);
-      setNewItem({id: "", name: "", quantity: "", mrp: "", discount: "" });
-      setItemName("");
-      setCustomerInfo({ name: "", phone: "" });
-      setPaymentMethod("");
-      setBuyerName("");
-      setAdditionalDiscount("");
+      // Reset form or navigate away
     } else if (createSalesBillStatus === 'failed') {
       toast({
         title: `Failed to create sales order: ${error}`,
@@ -60,7 +67,7 @@ export default function SalesMain() {
     return () => {
       dispatch(setCreateSalesBillStatus('idle'));
     }
-  }, [createSalesBillStatus, error, dispatch]);
+  }, [createSalesBillStatus, error]);
 
   const handlePaymentMethodChange = (value) => {
     setPaymentMethod(value);
@@ -92,7 +99,6 @@ export default function SalesMain() {
       } else {
         updatedItem.total = null;
       }
-
       return updatedItem;
     });
   };
@@ -155,34 +161,29 @@ export default function SalesMain() {
 
 
   const handleSaveDraft = () => {
-    // Implement logic to save the current state as a draft
     console.log("Saving draft...", { items, customerInfo, totals });
-    // You might want to send this data to your backend or store it locally
   };
 
+  // handle create sales order sending data to backend
   const handleCreateSalesOrder = (e) => {
     e.preventDefault();
-    // Implement logic to create the sales order
-    if(items.length === 0 || customerInfo.name === "" || paymentMethod === ""){
-      toast({
-        title: "Please add items and customer name to create a sales order",
-      });
-      return;
+    if(items.length === 0 || customerInfo.name === ""){toast({title: "Please add items and customer name to create a sales order"});return;}
+    if(paymentMethod === "") {toast({title : "Please select payment method"});return;}
+    if(paymentMethod === "Due" && buyerName === ""){toast({title: "Please enter buyer name"});return;}
+    const itemsArray = items.map(item =>  ({item : item.id,quantity : item.quantity,MRP : item.mrp,discount : item.discount}));
+    let billInfo = {};
+    if(customerInfo._id !== ""){
+      billInfo = {_id : customerInfo?._id, type : customerInfo?.type};
     }
-    if(paymentMethod === "Due" && buyerName === ""){
-      toast({
-        title: "Please enter buyer name",
-      });
-      return;
-    }
-    const itemsArray = items.map(item =>  ({
-      item : item.id,
-      quantity : item.quantity,
-      MRP : item.mrp,
-      discount : item.discount,
-    }));
-
-    dispatch(createSalesBill({ items : itemsArray, patientInfo : customerInfo, totals, paymentMethod, buyerName }));
+    const patientInfo = {
+      items : itemsArray,
+      patientInfo : {name : customerInfo.name, phone : customerInfo.phone},
+      billInfo,
+      totals,
+      paymentMethod,
+      buyerName
+    };
+    dispatch(createSalesBill(patientInfo));
   };
 
   const handleAdditionalDiscountChange = (e) => {
@@ -194,14 +195,64 @@ export default function SalesMain() {
     }
   };
 
-  const handleAdditionalDiscountFocus = (e) => {
-    e.target.select();
+  const handlePatientSuggestionSelect = (suggestion) => {
+    setCustomerInfo({
+      name: suggestion.name,
+      phone: suggestion.phone || "",
+      _id : suggestion._id || "",
+      type : suggestion.type || ""
+    });
+    // Find the full patient object from patientlist
+    const fullPatient = patientlist.find(p => p._id === suggestion._id);
+    dispatch(setSelectedPatient(fullPatient));
+    setShouldOpenMedicineSuggDialog(true);
   };
 
-  const handleBillClick = (bill) => {
+  const handleViewBill = (bill) => {
     setSelectedBill(bill);
     setIsViewBillDialogOpen(true);
   };
+
+  const handleConfirmedMedications = (confirmedMedications) => {
+    const newItems = confirmedMedications.map(med => {
+      const item = sampleItems.find(item => item.name === med.name);
+      if(item){
+        return {
+          id : item._id,
+          name : item.name,
+          quantity : parseInt(med.quantity),
+          mrp : parseFloat(item.MRP),
+          discount : 0,
+          total : parseFloat(item.MRP) * parseInt(med.quantity)
+        }
+      }
+    }).filter(item => item !== undefined);
+    setItems(prev => [...prev, ...newItems]);
+    dispatch(setSelectedPatient(null)); // Clear selected patient after handling
+  };
+
+  useEffect(() => {
+    clearAllFields();
+  }, [clearTrigger]);
+
+  const clearAllFields = () => {
+    setCustomerInfo({ name: "", phone: "", _id : "", type : "" });
+    setItems([]);
+    setNewItem({id: "", name: "", quantity: "", mrp: "", discount: "" });
+    setPaymentMethod("");
+    setBuyerName("");
+    setAdditionalDiscount("");
+    setPatientName("");
+    setItemName("");
+  };
+
+  useEffect(() => {
+    if (selectedPatient && shouldOpenMedicineSuggDialog) {
+      setCustomerInfo({name: selectedPatient.patient.name,phone: selectedPatient.patient.contactNumber || "", _id : selectedPatient._id || "", type : selectedPatient.type || ""});
+      setIsMedicineSuggDialogOpen(true);
+      setShouldOpenMedicineSuggDialog(false);
+    }
+  }, [selectedPatient, shouldOpenMedicineSuggDialog]);
 
   return (
     <div className="flex flex-col">
@@ -209,7 +260,6 @@ export default function SalesMain() {
       <div className="flex-1">
         <div className="flex space-x-2 h-[calc(100vh-220px)]">
           {/* Sales Order Details and Item Table */}
-          
           <div className="w-3/4 space-y-2 h-full">
             {/* Item Table */}
             <Card className="h-full pt-2">
@@ -232,47 +282,16 @@ export default function SalesMain() {
                       <TableRow className="border-2 border-blue-300 overflow-visible ">
                         <TableCell></TableCell>
                         <TableCell className="overflow-visible">
-                          <SearchSuggestion 
-                          suggestions={sampleItems} 
-                          placeholder="Enter Item name" 
-                          value={itemName} 
-                          setValue={setItemName} 
-                          ref={itemNameInputRef} 
-                          showStock={true}
-                          onSuggestionSelect={handleItemSuggestionSelect}
-                          />
+                          <SearchSuggestion suggestions={sampleItems} placeholder="Enter Item name" value={itemName} setValue={setItemName} ref={itemNameInputRef} showStock={true}onSuggestionSelect={handleItemSuggestionSelect}/>
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            name="quantity"
-                            value={newItem.quantity}
-                            onChange={handleNewItemChange}
-                            placeholder="0"
-                            className="h-7 text-sm w-20"
-                            required
-                          />
+                          <Input type="number" name="quantity" value={newItem.quantity} onChange={handleNewItemChange} placeholder="0" className="h-7 text-sm w-20" required />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            name="mrp"
-                            value={newItem.mrp}
-                            onChange={handleNewItemChange}
-                            placeholder="0.00"
-                            className="h-7 text-sm w-24"
-                            required
-                          />
+                          <Input type="number" name="mrp" value={newItem.mrp} onChange={handleNewItemChange} placeholder="0.00" className="h-7 text-sm w-24" required />
                         </TableCell>
                         <TableCell>
-                          <Input
-                            type="number"
-                            name="discount"
-                            value={newItem.discount}
-                            onChange={handleNewItemChange}
-                            placeholder="0"
-                            className="h-7 text-sm w-20"
-                          />
+                          <Input type="number" name="discount" value={newItem.discount} onChange={handleNewItemChange} placeholder="0" className="h-7 text-sm w-20" />
                         </TableCell>
                         <TableCell className='w-20'>
                           {newItem.quantity && newItem.mrp ? `₹${newItem.total.toFixed(2)}` : "₹0.00"}
@@ -305,12 +324,8 @@ export default function SalesMain() {
                             <TableCell>{item.discount}%</TableCell>
                             <TableCell>₹{item.total.toFixed(2)}</TableCell>
                             <TableCell>
-                              <Button size="icon" variant="outline" className="h-7 w-7 mr-1" onClick={() => editItem(item.id)}>
-                                <Pencil className="h-4 w-4" />
-                              </Button>
-                              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => deleteItem(item.id)}>
-                                <Trash className="h-4 w-4" />
-                              </Button>
+                              <Button size="icon" variant="outline" className="h-7 w-7 mr-1" onClick={() => editItem(item.id)}><Pencil className="h-4 w-4" /></Button>
+                              <Button size="icon" variant="outline" className="h-7 w-7" onClick={() => deleteItem(item.id)}><Trash className="h-4 w-4" /></Button>
                             </TableCell>
                           </TableRow>
                         ))
@@ -327,17 +342,12 @@ export default function SalesMain() {
           {/* Customer Information at footer */}
           <div className="w-1/4 space-y-2">
             <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="p-0 font-semibold ">Search Patients</CardTitle>
-                </CardHeader>
-                <CardContent className="pb-4">
-                    <div className="flex space-x-2">
-                        <Input className="h-7" placeholder="Enter patient name or mobile"/>
-                        <Button size="icon" variant="outline" className="h-7 w-7" >
-                            <Search className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </CardContent>
+              <CardHeader className="pb-2">
+                <CardTitle className="p-0 font-semibold ">Search Patients</CardTitle>
+              </CardHeader>
+              <CardContent className="pb-2">
+                <SearchSuggestion  suggestions={patientListModified}  placeholder="Enter patient name or mobile" value={patientName} setValue={setPatientName} onSuggestionSelect={handlePatientSuggestionSelect}/>
+              </CardContent>
             </Card>
             <Card>
               <CardHeader >
@@ -346,21 +356,11 @@ export default function SalesMain() {
               <CardContent className="space-y-2">
                 <div>
                   <Label htmlFor="name">Customer Name</Label>
-                  <Input
-                    id="name"
-                    placeholder="Enter Customer name"
-                    value={customerInfo.name}
-                    onChange={handleInputChange}
-                  />
+                  <Input id="name" placeholder="Enter Customer name" value={customerInfo.name} onChange={handleInputChange}/>
                 </div>
                 <div>
                   <Label htmlFor="phone">Phone</Label>
-                  <Input
-                    id="phone"
-                    placeholder="Phone Number"
-                    value={customerInfo.phone}
-                    onChange={handleInputChange}
-                  />
+                  <Input id="phone" placeholder="Phone Number" value={customerInfo.phone} onChange={handleInputChange}/>
                 </div>
               </CardContent>
             </Card>
@@ -378,7 +378,7 @@ export default function SalesMain() {
                         </TableHeader>
                         <TableBody>
                           {salesBills.slice(0, 4).map((bill) => (
-                            <TableRow key={bill._id} className="cursor-pointer hover:bg-gray-100" onClick={() => handleBillClick(bill)}>
+                            <TableRow key={bill._id} className="cursor-pointer hover:bg-gray-100" onClick={() => handleViewBill(bill)}>
                                 <TableCell>{bill.patientInfo.name}</TableCell>
                                 <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
                             </TableRow>
@@ -410,77 +410,28 @@ export default function SalesMain() {
                   </Select>
                 </div>
                 <LabeledInput label="Buyer Name" value={buyerName} onChange={(e) => setBuyerName(e.target.value)} className="w-full" placeholder="Enter buyer name"/>
-                <LabeledInput
-                  label="Additional Discount (%)"
-                  value={additionalDiscount}
-                  onChange={handleAdditionalDiscountChange}
-                  onFocus={handleAdditionalDiscountFocus}
-                  className="w-full"
-                  placeholder="0"
-                  suffix="%"
-                  min="0"
-                  max="100"
-                />
+                <LabeledInput label="Additional Discount (%)" value={additionalDiscount} onChange={handleAdditionalDiscountChange} onFocus={(e)=>{e.target.select();}} className="w-full" placeholder="0" suffix="%" min="0" max="100" />
                 <LabeledInput label="Total" value={`₹${totals.totalAmount.toFixed(2)}`} readOnly className="w-full" />
               </div>
               <div className="grid grid-cols-2 gap-4 items-center">
-                <Button variant="outline" size="sm" onClick={handleSaveDraft}>
-                  Save Draft
-                </Button>
-                <Button className="bg-green-500 hover:bg-green-600" size="sm" type="submit" disabled={createSalesBillStatus === 'loading'}>
-                  Create Sales Order
-                </Button>
+                <Button variant="outline" size="sm" onClick={handleSaveDraft}>Save Draft</Button>
+                <Button className="bg-green-500 hover:bg-green-600" size="sm" type="submit">Create Sales Order</Button>
               </div>
             </form>
           </CardContent>
         </Card>
       </div>
-
-      {/* Add ViewBillDialog */}
-      <ViewBillDialog
-        isOpen={isViewBillDialogOpen}
-        setIsOpen={setIsViewBillDialogOpen}
-        billData={selectedBill}
-      />
+      {/* Add ViewBillDialog component */}
+      <ViewBillDialog isOpen={isViewBillDialogOpen} setIsOpen={setIsViewBillDialogOpen} billData={selectedBill}/>
+      <MedicineSuggDialog isOpen={isMedicineSuggDialogOpen} setIsOpen={setIsMedicineSuggDialogOpen} selectedPatient={selectedPatient} onConfirm={handleConfirmedMedications}/>
     </div>
   );
 }
-
 // input field with label for input box table
-const LabeledInput = React.memo(({
-  label,
-  value,
-  readOnly = false,
-  onChange,
-  className = "",
-  type = "text",
-  placeholder = "",
-  required = false,
-  suffix = "",
-  onFocus,
-  min,
-  max,
-}) => (
+const LabeledInput = React.memo(({ label, value, readOnly = false, onChange, className = "", type = "text", placeholder = "", required = false, suffix = "", onFocus, min, max}) => (
   <div className="relative">
-    <input
-      type={type}
-      value={value}
-      readOnly={readOnly}
-      onChange={onChange}
-      onFocus={onFocus}
-      className={`pl-2 pr-8 pt-4 pb-1 w-full text-sm border rounded ${className} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-      placeholder={placeholder}
-      required={required}
-      min={min}
-      max={max}
-    />
-    <label className="absolute text-xs text-gray-500 top-1 left-2">
-      {label}
-    </label>
-    {suffix && (
-      <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-        {suffix}
-      </span>
-    )}
+    <input type={type} value={value} readOnly={readOnly} onChange={onChange} onFocus={onFocus} className={`pl-2 pr-8 pt-4 pb-1 w-full text-sm border rounded ${className} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`} placeholder={placeholder} required={required} min={min} max={max} />
+    <label className="absolute text-xs text-gray-500 top-1 left-2">{label}</label>
+    {suffix && (<span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">{suffix}</span>)}
   </div>
 ));

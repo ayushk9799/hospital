@@ -14,7 +14,30 @@ export const fetchPatients = createAsyncThunk(
     }
     
     const data = await response.json();
-    console.log(data);
+    return data;
+  }
+);
+
+export const savePrescription = createAsyncThunk(
+  'patients/savePrescription',
+  async ({ selectedVisitId, vitals, prescription,selectedPatientType, labTests }) => {
+    const response = await fetch(
+      `${Backend_URL}/api/patients/${selectedPatientType === "OPD" ? "visit" : "admission"}/${selectedVisitId}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({vitals,prescription,labTests}),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error('Failed to save data');
+    }
+
+    const data = await response.json();
     return data;
   }
 );
@@ -23,11 +46,16 @@ const patientSlice = createSlice({
   name: 'patients',
   initialState: {
     patientlist: [],
+    patientsStatus: 'idle',
+    selectedPatient: null,
     status: 'idle',
+    prescriptionUpdateStatus: 'idle',
     error: null,
   },
   reducers: {
-
+    setSelectedPatient: (state, action) => {
+      state.selectedPatient = action.payload
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -36,15 +64,32 @@ const patientSlice = createSlice({
       })
       .addCase(fetchPatients.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        console.log(action.payload)
         state.patientlist = action.payload;
-        console.log(state.patientlist)
       })
       .addCase(fetchPatients.rejected, (state, action) => {
         state.status = 'failed';
+        state.error = action.error.message;
+      })
+      .addCase(savePrescription.pending, (state) => {
+        state.prescriptionUpdateStatus = 'loading';
+      })
+      .addCase(savePrescription.fulfilled, (state, action) => {
+        state.prescriptionUpdateStatus = 'succeeded';
+        console.log('visit',action.payload);
+        // Update the patient in the patientlist
+        const value = action.payload;
+        
+        const index = state.patientlist.findIndex(patient => patient._id === value._id);
+        if (index !== -1) {
+          state.patientlist[index] = {...state.patientlist[index], ...value};
+        }
+      })
+      .addCase(savePrescription.rejected, (state, action) => {
+        state.prescriptionUpdateStatus = 'failed';
         state.error = action.error.message;
       });
   },
 });
 
+export const { setSelectedPatient } = patientSlice.actions
 export default patientSlice.reducer;

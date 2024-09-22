@@ -209,7 +209,7 @@ const pharmacySlice = createSlice({
     },
     // New reducer to set updateInventoryStatus to idle
     setUpdateInventoryStatusIdle: (state) => {
-      state.updateInventoryStatus = "idle";
+      state.updateInventoryItemStatus = "idle";
     },
     setCreateInventoryItemStatusIdle: (state) => {
       state.createInventoryItemStatus = "idle";
@@ -301,10 +301,10 @@ const pharmacySlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(updateInventoryItem.pending, (state) => {
-        state.updateInventoryStatus = "loading";
+        state.updateInventoryItemStatus = "loading";
       })
       .addCase(updateInventoryItem.fulfilled, (state, action) => {
-        state.updateInventoryStatus = "succeeded";
+        state.updateInventoryItemStatus = "succeeded";
         // Update the item in the items array
         const index = state.items.findIndex(item => item._id === action.payload._id);
         if (index !== -1) {
@@ -312,7 +312,7 @@ const pharmacySlice = createSlice({
         }
       })
       .addCase(updateInventoryItem.rejected, (state, action) => {
-        state.updateInventoryStatus = "failed";
+        state.updateInventoryItemStatus = "failed";
         state.error = action.error.message;
       })
       .addCase(createInventoryItem.pending, (state) => {

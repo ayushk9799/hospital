@@ -11,8 +11,6 @@ const PatientEntry = ({ID, bookingNumber, patient, bookingDate, reasonForVisit, 
   const truncateName = (name, maxLength = 15) => {
     return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
   };
-  console.log("lab tests pateint entry");
-  console.log(labTests);
   return (
     <div
       className="flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100"
@@ -39,7 +37,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const dispatch = useDispatch();
-  const { patientlist, status, error } = useSelector((state) => state.patients);
+  const { patientlist, status } = useSelector((state) => state.patients);
 
   useEffect(() => {
     if (status === 'idle') {
@@ -52,14 +50,6 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
     booking.bookingNumber?.toString()?.includes(searchTerm)) &&
     (activeTab === "all" || booking.type.toLowerCase() === activeTab)
   );
-
-  if (status === 'loading') {
-    return <div>Loading...</div>;
-  }
-
-  if (status === 'failed') {
-    return <div>Error: {error}</div>;
-  }
 
   return (
     <Card className="h-full flex flex-col">
@@ -77,7 +67,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
             <div className="flex flex-col justify-between items-center py-1 gap-1">
               <span>OPD</span>
               <span className="bg-green-500 text-white rounded-lg w-10 h-6 flex items-center justify-center">
-                {patientlist.filter(booking => booking.type.toLowerCase() === 'opd').length}
+                {patientlist?.filter(booking => booking.type.toLowerCase() === 'opd').length}
               </span>
             </div>
           </TabsTrigger>
