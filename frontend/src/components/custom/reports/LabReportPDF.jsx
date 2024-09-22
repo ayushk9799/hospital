@@ -1,0 +1,149 @@
+import React from 'react';
+import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
+import { format } from 'date-fns';
+import tinosRegular from '../../../fonts/Tinos-Regular.ttf';
+import tinosBold from '../../../fonts/Tinos-Bold.ttf';
+// Register fonts
+Font.register({
+    family: "Tinos",
+    fonts: [
+        { src: tinosRegular, fontWeight: "normal" },
+        { src: tinosBold, fontWeight: "bold" },
+    ],
+  });
+  
+
+const styles = StyleSheet.create({
+  page: {
+    fontFamily: 'Tinos',
+    paddingHorizontal: 30,
+    paddingTop: 10,
+    backgroundColor: "white",
+  },
+  
+  header: {
+    marginBottom: 2,
+    borderBottom: 1,
+    borderBottomColor: "#000000",
+    paddingBottom: 2,
+  },
+  clinicName: {
+    fontSize: 26,
+    textAlign: "center",
+    fontFamily: "Tinos",
+    // Use "bold" instead of "bolder"
+    marginBottom: 5,
+    color: "#1a5f7a",
+  },
+  clinicInfo: {
+    fontSize: 10,
+    textAlign: "center",
+    color: "#333333",
+  },
+  doctorInfo: {
+    fontSize: 12,
+    textAlign: "center",
+    marginTop: 5,
+    letterSpacing: 2,
+    color: "#1a5f7a",
+  },
+  subHeader: {
+    fontSize: 14,
+    marginBottom: 3,
+    color: '#34495e',
+  },
+  reportContainer: {
+    marginTop: 10,
+  },
+  reportRow: {
+    flexDirection: 'row',
+    borderBottomColor: '#ecf0f1',
+    borderBottomWidth: 1,
+    paddingVertical: 4,
+  },
+  testName: {
+    width: '30%',
+    fontSize: 12,
+
+    color: '#2c3e50',
+  },
+  testValue: {
+    width: '25%',
+    fontSize: 12,
+    
+    color: '#3498db',
+  },
+  testUnit: {
+    width: '20%',
+    fontSize: 12,
+    color: '#7f8c8d',
+  },
+  testRange: {
+    width: '25%',
+    fontSize: 12,
+    color: '#7f8c8d',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 20,
+    left: 30,
+    right: 30,
+    textAlign: 'center',
+    fontSize: 10,
+    color: '#95a5a6',
+  },
+});
+const HeaderTemplate=()=>{
+  return(
+    <>
+      <View style={styles.header}>
+          <View>
+            <Text style={styles.clinicName}>KIDNEY STONE & UROLOGY CLINIC</Text>
+          </View>
+          <View style={{ display: "flex", flexDirection: "row" }}>
+            <View style={{ marginLeft: 50 }}>
+              <Image
+                src={require("./Capture2.png")}
+                style={{ width: 70 }}
+              />
+            </View>
+            <View style={{ position: "absolute", width: "100%" }}>
+              <Text style={styles.clinicInfo}>
+                Jail Road, Near Mahindra Showroom, Tilkamanjhi, Bhagalpur
+              </Text>
+              <Text style={styles.doctorInfo}>DR. RAJAN KUMAR SINHA</Text>
+              <Text style={styles.clinicInfo}>
+                M.B.B.S(Ranchi), MS(Gen.Surgery), MCh(Urology), Kolkata
+              </Text>
+              <Text style={styles.clinicInfo}>Consultant Urologist</Text>
+              <Text style={styles.clinicInfo}>Mob : 9709993104</Text>
+            </View>
+          </View>
+        </View>
+    </>
+  )
+}   
+const LabReportPDF = ({ reportData, patientData }) => {
+  const reportEntries = Object.entries(reportData.report);
+
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+       <HeaderTemplate/>
+        
+        <View style={styles.reportContainer}>
+          {reportEntries.map(([key, value]) => (
+            <View style={styles.reportRow} key={key}>
+              <Text style={styles.testName}>{key}</Text>
+              <Text style={styles.testValue}>{value.value}</Text>
+              <Text style={styles.testUnit}>{value.unit}</Text>
+              <Text style={styles.testRange}>{value.normalRange}</Text>
+            </View>
+          ))}
+        </View>
+      </Page>
+    </Document>
+  );
+};
+
+export default LabReportPDF;

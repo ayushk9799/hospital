@@ -420,13 +420,15 @@ router.post(
       // Create new visit
       const newVisit = new Visit({
         patient: patient._id,
+        registrationNumber:patient.registrationNumber||null,
+        patientName:patient.name,
+        contactNumber:patient.contactNumber,
         reasonForVisit: visit.reasonForVisit || null,
         doctor: visit.doctor || null,
         department: visit.department || null,
         diagnosis: visit.diagnosis || null,
         treatment: visit.treatment || null,
         vitals: visit.vitals || null,
-        bookingNumber: visit.bookingNumber || null,
         bookingDate: visit.bookingDate || null,
       });
 
@@ -499,6 +501,58 @@ router.put(
     }
   }
 );
+// ... existing code ...
+
+// Update visit details
+
+
+// Update IPD admission details
+router.put(
+  "/admission/:id",
+  verifyToken,
+  checkPermission("write:patients"),
+  async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const { id } = req.params;
+      const { vitals, prescription, labTests } = req.body;
+
+      const admission = await IPDAdmission.findById(id).session(session);
+      if (!admission) {
+        throw new Error("IPD Admission not found");
+      }
+
+      // Update vitals
+      admission.vitals = {
+        ...admission.vitals,
+        ...vitals,
+      };
+
+      // Update prescription details
+      admission.diagnosis = prescription.diagnosis;
+      admission.treatment = prescription.treatment;
+      admission.medications = prescription.medications;
+      admission.additionalInstructions = prescription.additionalInstructions;
+
+      // Update lab tests
+      admission.labTests = labTests;
+
+      await admission.save({ session });
+
+      await session.commitTransaction();
+      res.json({ message: "IPD Admission updated successfully", admission });
+    } catch (error) {
+      await session.abortTransaction();
+      res.status(400).json({ error: error.message });
+    } finally {
+      session.endSession();
+    }
+  }
+);
+
+// ... remaining code ...
 
 router.post("/complexsearch", async (req, res) => {
   const { searchQuery, searchType, searchWhere } = req.body;
@@ -530,6 +584,24 @@ router.post("/complexsearch", async (req, res) => {
     res.json(patients);
   } catch (error) {
     res.status(500).json({ error: error.message });
+  }
+});
+router.post('/addLabReport', async (req, res) => {
+  try {
+    const { visitId, labReport } = req.body;
+
+    const visit = await Visit.findById(visitId);
+    if (!visit) {
+      return res.status(404).json({ message: 'Visit not found' });
+    }
+
+    visit.labReports.push(labReport);
+    await visit.save();
+
+    res.status(200).json({ message: 'Lab report added successfully', visit });
+  } catch (error) {
+    console.error('Error adding lab report:', error);
+    res.status(500).json({ message: 'Error adding lab report', error: error.message });
   }
 });
 

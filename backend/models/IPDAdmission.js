@@ -46,6 +46,7 @@ const ipdAdmissionSchema = new mongoose.Schema({
     start: { type: String },
     end: { type: String },
   },
+  status:{type:String,enum:["Admitted","Discharged"],default:"Admitted"},
   assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
   assignedRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
   assignedBed:{ type: mongoose.Schema.Types.ObjectId, ref: "Room.beds" },
@@ -55,7 +56,7 @@ const ipdAdmissionSchema = new mongoose.Schema({
     coverageType: String,
   },
   notes:{type:String},
-});
+},{timestamps:true});
 
 ipdAdmissionSchema.pre('save', async function(next) {
   if (!this.bookingNumber) {

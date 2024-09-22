@@ -52,6 +52,7 @@ const allLabTests = labCategories.flatMap(category =>
 
 export default function Doctors() {
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedPatientType, setSelectedPatientType] = useState(null);
   const [vitals, setVitals] = useState({
     temperature: "",
     heartRate: "",
@@ -94,6 +95,7 @@ export default function Doctors() {
         additionalInstructions: additionalInstructions || "",
     });
     setLabTests(labTests.length > 0 ? labTests.map(test => ({ name: test })) : [{ name: "" }]);
+    setSelectedPatientType(type);
     setSelectedVisitId(ID);
   };
 
@@ -162,7 +164,7 @@ export default function Doctors() {
     }
 
     try {
-      const response = await fetch(`${Backend_URL}/api/patients/visit/${selectedVisitId}`, {
+      const response = await fetch(`${Backend_URL}/api/patients/${selectedPatientType==="OPD"?"visit":"admission"}/${selectedVisitId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -54,16 +54,7 @@ import IPDRegDialog from '../components/custom/registration/IPDRegDialog'
 import { useSelector } from 'react-redux'
 
 // Sample patient data
-const patients = [
-  { id: 'P001', name: 'John Doe', mobile: '1234567890', gender: 'Male', doctor: 'Dr. Smith', lastVisit: '2023-06-15', frequency: 'Weekly', type: 'OPD', status: 'Active' },
-  { id: 'P002', name: 'Jane Smith', mobile: '9876543210', gender: 'Female', doctor: 'Dr. Johnson', lastVisit: '2023-06-14', frequency: 'Monthly', type: 'IPD', status: 'Admitted' },
-  { id: 'P003', name: 'Bob Wilson', mobile: '5555555555', gender: 'Male', doctor: 'Dr. Brown', lastVisit: '2023-06-13', frequency: 'Bi-weekly', type: 'OPD', status: 'Discharged' },
-  { id: 'P004', name: 'Alice Johnson', mobile: '1112223333', gender: 'Female', doctor: 'Dr. Davis', lastVisit: '2023-06-12', frequency: 'One-time', type: 'Emergency', status: 'Critical' },
-  { id: 'P005', name: 'Charlie Brown', mobile: '4444444444', gender: 'Male', doctor: 'Dr. Wilson', lastVisit: '2023-06-11', frequency: 'Monthly', type: 'IPD', status: 'Pending' },
-  { id: 'P006', name: 'Eva Green', mobile: '7777777777', gender: 'Female', doctor: 'Dr. Lee', lastVisit: '2023-06-10', frequency: 'Weekly', type: 'OPD', status: 'Active' },
-  { id: 'P007', name: 'David Miller', mobile: '8888888888', gender: 'Male', doctor: 'Dr. Taylor', lastVisit: '2023-06-09', frequency: 'One-time', type: 'Emergency', status: 'Discharged' },
-  { id: 'P008', name: 'Grace Davis', mobile: '9999999999', gender: 'Female', doctor: 'Dr. Anderson', lastVisit: '2023-06-08', frequency: 'Monthly', type: 'IPD', status: 'Admitted' },
-]
+
 
 const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
   const [open, setOpen] = useState(false)

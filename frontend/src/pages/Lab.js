@@ -83,10 +83,7 @@ const Lab = () => {
       alert("Booking date is required for all search types.");
       return;
     }
-    searchQuery.bookingDate = searchQuery.bookingDate
-      .split("-")
-      .reverse()
-      .join("-");
+   
     console.log(
       "Searching for patient with",
       searchType,
@@ -104,7 +101,10 @@ const Lab = () => {
           },
           credentials: "include",
           body: JSON.stringify({
-            searchQuery,
+            searchQuery:{...searchQuery, bookingDate: searchQuery.bookingDate
+              .split("-")
+              .reverse()
+              .join("-")},
             searchType,
             searchWhere,
           }),
@@ -132,13 +132,11 @@ const Lab = () => {
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-3xl font-bold mb-6">Laboratory Reports</h1>
-
-      <div className="flex flex-col md:flex-row gap-8 h-[calc(100vh-120px)]">
-        {/* Left side: Search UI and results */}
-        <div className="w-full md:w-1/3 flex flex-col">
-          <div className="space-y-4 mb-4">
+    <div className="container mx-auto p-4 flex h-screen">
+      <div className="flex flex-col md:flex-row gap-8 w-full h-full">
+        <div className="w-full md:w-1/3 flex flex-col h-full">
+          <div className="text-3xl font-bold mb-6">Laboratory Reports</div>
+          <div className="space-y-4 mb-4 max-w-md">
             {/* Search UI */}
             <RadioGroup
               defaultValue="opd"
@@ -157,39 +155,36 @@ const Lab = () => {
 
             <div className="flex flex-col space-y-2">
               <div className="flex items-center space-x-2">
-                <div className="w-1/3">
-                  <Select
-                    onValueChange={(value) => {
-                      setSearchType(value);
-                      setSearchQuery({ bookingDate: "" });
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Search type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="registration">
-                        Registration No.
-                      </SelectItem>
-                      <SelectItem value="name">
-                        Name And Booking Date
-                      </SelectItem>
-                      <SelectItem value="mobile">Mobile No.</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="w-2/3">
-                  <Input
-                    type="text"
-                    name={searchType}
-                    placeholder={`Enter ${searchType || "patient"} details`}
-                    value={searchQuery[searchType] || ""}
-                    onChange={handleSearchInputChange}
-                  />
-                </div>
+                <Select
+                  onValueChange={(value) => {
+                    setSearchType(value);
+                    setSearchQuery({ bookingDate: "" });
+                  }}
+                >
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Search type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="registration">
+                      Registration No.
+                    </SelectItem>
+                    <SelectItem value="name">
+                      Name And Booking Date
+                    </SelectItem>
+                    <SelectItem value="mobile">Mobile No.</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="text"
+                  name={searchType}
+                  placeholder={`Enter ${searchType || "patient"} details`}
+                  value={searchQuery[searchType] || ""}
+                  onChange={handleSearchInputChange}
+                  className="flex-grow"
+                />
               </div>
               <div className="flex items-center space-x-2">
-                <div className="w-1/3">
+                <div className="w-[140px]">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
@@ -216,19 +211,15 @@ const Lab = () => {
                     onChange={handleSearchInputChange}
                   />
                 </div>
-                <div className="w-2/3">
-                  <Label className="block mb-1">&nbsp;</Label>{" "}
-                  {/* This empty label ensures alignment */}
-                  <Button
-                    onClick={handlePatientSearch}
-                    className="w-full"
-                    disabled={
-                      !searchQuery[searchType] || !searchQuery.bookingDate
-                    }
-                  >
-                    Search
-                  </Button>
-                </div>
+                <Button
+                  onClick={handlePatientSearch}
+                  className="flex-grow"
+                  disabled={
+                    !searchQuery[searchType] || !searchQuery.bookingDate
+                  }
+                >
+                  Search
+                </Button>
               </div>
             </div>
 
@@ -242,9 +233,9 @@ const Lab = () => {
             />
           </div>
 
-          {/* Scrollable search results */}
+          {/* First ScrollArea */}
           <ScrollArea className="flex-grow">
-            <div className="pr-4"> {/* Add padding-right for scrollbar */}
+            <div className="pr-4">
               {/* Display patient lab tests if found */}
               {patientData && (
                 <div className="mb-4">
@@ -301,22 +292,25 @@ const Lab = () => {
           </ScrollArea>
         </div>
 
-        {/* Right side: Lab UI */}
-        <ScrollArea className="w-full md:w-2/3">
-          <div className="pr-4"> {/* Add padding-right for scrollbar */}
-            {selectedTest ? (
-              <CreateLabReport
-                category={selectedTest.category}
-                type={selectedTest.type}
-                onClose={() => setSelectedTest(null)}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-xl text-gray-500">Select a lab test to begin</p>
-              </div>
-            )}
-          </div>
-        </ScrollArea>
+        {/* Second ScrollArea */}
+        <div className="w-full md:w-2/3 h-full">
+          <ScrollArea className="h-full">
+            <div className="pr-4">
+              {selectedTest ? (
+                <CreateLabReport
+                  category={selectedTest.category}
+                  type={selectedTest.type}
+                  patientData={patientData}
+                  onClose={() => setSelectedTest(null)}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full">
+                  <p className="text-xl text-gray-500">Select a lab test to begin</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </div>
       </div>
     </div>
   );

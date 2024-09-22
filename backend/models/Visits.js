@@ -53,9 +53,12 @@ const visitSchema = new mongoose.Schema({
     policyNumber: String,
     coverageType: String,
   },
-  
-  
-});
+  labReports: [{
+    date: { type: Date},
+    name: { type: String, required: true },
+    report: { type: mongoose.Schema.Types.Mixed }
+  }],
+},{timestamps:true});
 visitSchema.pre('save', async function(next) {
     if (!this.bookingNumber) {
       const counter = await Counter.findOneAndUpdate(

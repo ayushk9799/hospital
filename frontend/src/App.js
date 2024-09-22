@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchPatients } from './redux/slices/patientSlice';
 import { fetchStaffMembers } from './redux/slices/staffSlice';
 import  CreateRoom  from './pages/CreateRoom';
+
 import { getDoctors } from './redux/slices/staffSlice';
 import VerticalNav from './components/custom/Navigations/VerticalNav';
 import HorizontalNav from './components/custom/Navigations/HorizontalNav';

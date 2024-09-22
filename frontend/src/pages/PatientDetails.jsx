@@ -9,6 +9,7 @@ import { Button } from "../components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { labReportFields } from '../assets/Data';
 
 export default function PatientDetails() {
   const { patientId } = useParams();
@@ -59,13 +60,14 @@ export default function PatientDetails() {
 
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-        <TabsList className="grid w-full grid-cols-6 mb-4">
+        <TabsList className="grid w-full grid-cols-7 mb-4">
           <TabsTrigger value="reason">Reason</TabsTrigger>
           <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
           <TabsTrigger value="treatment">Treatment</TabsTrigger>
           <TabsTrigger value="medications">Medications</TabsTrigger>
           <TabsTrigger value="labTests">Lab Tests</TabsTrigger>
           <TabsTrigger value="vitals">Vitals</TabsTrigger>
+          <TabsTrigger value="labReports">Lab Reports</TabsTrigger>
         </TabsList>
 
         <TabsContent value="reason">
@@ -165,6 +167,56 @@ export default function PatientDetails() {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="labReports">
+          <Card>
+            <CardHeader>
+              <CardTitle>Lab Reports</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {visitData.labReports && visitData.labReports.length > 0 ? (
+                visitData.labReports.map((report, index) => {
+                  const category = Object.keys(labReportFields).find(key => 
+                    labReportFields[key].hasOwnProperty(report.name)
+                  );
+                  const reportFields = category ? labReportFields[category][report.name] : [];
+                  
+                  return (
+                    <div key={index} className="mb-6">
+                      <h3 className="text-lg font-semibold mb-2">
+                        {report.name.replace(/-/g, ' ').toUpperCase()} 
+                        <span className="text-sm font-normal ml-2 text-gray-500">
+                          {report.date ? new Date(report.date).toLocaleDateString("en-IN") : ""}
+                        </span>
+                      </h3>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Test</TableHead>
+                            <TableHead>Result</TableHead>
+                            <TableHead>Unit</TableHead>
+                            <TableHead>Normal Range</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {reportFields.map((field) => (
+                            <TableRow key={field.name}>
+                              <TableCell className="font-medium">{field.label}</TableCell>
+                              <TableCell>{report.report[field.name] || 'N/A'}</TableCell>
+                              <TableCell>{field.unit}</TableCell>
+                              <TableCell>{field.normalRange}</TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  );
+                })
+              ) : (
+                <p>No lab reports available.</p>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
     );
   };
@@ -228,7 +280,7 @@ export default function PatientDetails() {
             className={`px-4 py-2 ${selectedVisit === item.date ? 'bg-primary text-primary-foreground' : ''}`}
             onClick={() => setSelectedVisit(item.date)}
           >
-            {new Date(item.date).toLocaleDateString()}
+            {item.date}
           </Button>
         ))}
       </div>
