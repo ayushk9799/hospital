@@ -3,6 +3,7 @@ import { PharmacyBill } from '../models/PharmacyBill.js';
 import { Payment } from '../models/Payment.js';
 import { Inventory } from '../models/Inventory.js';
 import { Supplier } from '../models/Supplier.js';
+import { Patient } from '../models/Patient.js';
 import mongoose from 'mongoose';
 
 const router = express.Router();
@@ -11,7 +12,14 @@ router.post('/create-sales-bill', async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
-        const { patient, patientInfo, buyerName, items, paymentMethod, totals } = req.body;
+        const { patientInfo, buyerName, items, paymentMethod, totals } = req.body;
+        let patient;
+        if(patientInfo.patientId && patientInfo.patientId !== ""){
+            let patientValue = await Patient.findById(patientInfo.patientId).select('name');
+            if(patientValue && patientValue.name === patientInfo.name){
+                patient = patientValue._id;
+            }
+        }
         
         // Create payment
         const payment = new Payment({

@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { Button } from "../../../ui/button"
-import { ChevronRight, BriefcaseMedicalIcon } from "lucide-react"
+import { ChevronRight, BriefcaseMedicalIcon, Eraser } from "lucide-react"
 import SalesTodayDialog from './SalesTodayDialog'
+import PatientListDialog from './PatientListDialog'
 
-export default function Component() {
+export default function Component({ onClearScreen, onPatientSelect }) {
   const [isSalesTodayOpen, setIsSalesTodayOpen] = useState(false)
+  const [isPatientListOpen, setIsPatientListOpen] = useState(false)
 
   return (
     <header className="flex items-center justify-between p-1 bg-gray-100 border-b">
@@ -24,11 +26,30 @@ export default function Component() {
         >
           Sales Today
         </Button>
-        <Button variant="default" size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs">
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs"
+          onClick={() => setIsPatientListOpen(true)}
+        >
           Patient List
+        </Button>
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="bg-red-600 hover:bg-red-700 text-white text-xs"
+          onClick={onClearScreen}
+        >
+          {/* <Eraser className="h-4 w-4 mr-1" /> */}
+          Clear Screen
         </Button>
       </div>
       <SalesTodayDialog isOpen={isSalesTodayOpen} setIsOpen={setIsSalesTodayOpen} />
+      <PatientListDialog 
+        isOpen={isPatientListOpen} 
+        setIsOpen={setIsPatientListOpen} 
+        onPatientSelect={onPatientSelect}
+      />
     </header>
   )
 }

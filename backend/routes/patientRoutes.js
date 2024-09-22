@@ -164,6 +164,7 @@ router.post("/search", async (req, res) => {
   }
 });
 router.get("/details", verifyToken, async (req, res) => {
+  console.log("details")
   try {
     const visits = await Visit.find()
       .populate(
@@ -462,35 +463,28 @@ router.put(
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-
     try {
       const { id } = req.params;
       const { vitals, prescription, labTests } = req.body;
-
-      const visit = await Visit.findById(id).session(session);
+      const visit = await Visit.findById(id).session(session).select("diagnosis treatment medications labTests additionalInstructions vitals");
       if (!visit) {
         throw new Error("Visit not found");
       }
-
       // Update vitals
       visit.vitals = {
         ...visit.vitals,
         ...vitals,
       };
-
       // Update prescription details
       visit.diagnosis = prescription.diagnosis;
       visit.treatment = prescription.treatment;
       visit.medications = prescription.medications;
       visit.additionalInstructions = prescription.additionalInstructions;
-
       // Update lab tests
       visit.labTests = labTests;
-
       await visit.save({ session });
-
       await session.commitTransaction();
-      res.json({ message: "Visit updated successfully", visit });
+      res.json(visit);
     } catch (error) {
       await session.abortTransaction();
       res.status(400).json({ error: error.message });

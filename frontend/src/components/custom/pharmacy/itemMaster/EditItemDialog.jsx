@@ -34,6 +34,25 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
     }
   }, [item]);
 
+  useEffect(() => {
+    if (updateInventoryItemStatus === "succeeded") {
+      toast({
+        title: "Item updated successfully",
+        description: "The item has been successfully updated in the inventory.",
+        variant: "default",
+      });
+      dispatch(setUpdateInventoryStatusIdle());
+      onClose();
+    } else if (updateInventoryItemStatus === "failed") {
+      toast({
+        title: "Update failed",
+        description: "There was an error updating the item. Please try again.",
+        variant: "destructive",
+      });
+      dispatch(setUpdateInventoryStatusIdle());
+    }
+  }, [updateInventoryItemStatus, dispatch, toast, onClose]);
+
   const handleEditItem = () => {
     const changedValues = {};
     if (name !== item.name) changedValues.name = name;
@@ -49,14 +68,11 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
         description: "No items were modified.",
         variant: "default",
       });
+      onClose();
     } else {
       dispatch(updateInventoryItem({ itemId: item._id, updateData: changedValues }));
-      onClose();
     }
   };
-
-
-
 
   const handleReset = () => {
     setName("");
