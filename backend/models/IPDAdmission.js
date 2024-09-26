@@ -29,6 +29,7 @@ const ipdAdmissionSchema = new mongoose.Schema({
   patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
   dateDischarged: { type: Date },
   reasonForAdmission: { type: String },
+  clinicalSummary: { type: String },
   diagnosis: { type: String, },
   treatment: { type: String,  },
   medications:[{name:String,duration:String,frequency:String}],

@@ -9,7 +9,7 @@ import {
   TableRow 
 } from "../components/ui/table"
 import { Input } from "../components/ui/input"
-import { Button } from "../components/ui/button"
+import { Button } from "../components/ui/button";
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -174,6 +174,10 @@ export default function Patients() {
   const PatientTable = ({ patients, type }) => {
     const navigate = useNavigate()
 
+    const handleDischarge = (patient) => {
+      navigate(`/patients/discharge/${patient._id}`, { state: { patient } })
+    }
+
     return (
       <Table>
         <TableHeader>
@@ -181,14 +185,15 @@ export default function Patients() {
             <TableHead>S.No</TableHead>
             <TableHead>Name</TableHead>
             <TableHead>Date</TableHead>
-            <TableHead>Time Slot</TableHead>
+            {type === 'OPD' && <TableHead>Time Slot</TableHead>}
             <TableHead>Mobile</TableHead>
             <TableHead>Gender</TableHead>
             <TableHead>Doctor</TableHead>
             {type === 'IPD' && (
               <>
-                <TableHead>Date of Admission</TableHead>
-                <TableHead>Date of Discharge</TableHead>
+              <TableHead>Room</TableHead>
+                <TableHead>Admit Date</TableHead>
+                <TableHead>Discharge Date</TableHead>
               </>
             )}
             <TableHead>Actions</TableHead>
@@ -208,12 +213,13 @@ export default function Patients() {
                 </Button>
               </TableCell>
               <TableCell>{patient.bookingDate}</TableCell>
-              <TableCell>{patient.timeSlot?.start} - {patient.timeSlot?.end}</TableCell>
+              {type === 'OPD' && <TableCell>{patient.timeSlot?.start} - {patient.timeSlot?.end}</TableCell>}
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
               <TableCell>{patient.doctor?.name || '--'}</TableCell>
               {type === 'IPD' && (
                 <>
+                <TableCell>{patient.assignedRoom?.roomNumber || '--'}</TableCell>
                   <TableCell>{patient.dateOfAdmission || '--'}</TableCell>
                   <TableCell>{patient.dateOfDischarge || '--'}</TableCell>
                 </>
@@ -231,6 +237,11 @@ export default function Patients() {
                     <DropdownMenuItem onClick={() => navigate(`/appointments/schedule/${patient.id}`)}>Schedule Appointment</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-red-600">Delete Patient</DropdownMenuItem>
+                    {type === 'IPD' && patient.status !== 'Discharged' && (
+                      <DropdownMenuItem onClick={() => handleDischarge(patient)}>
+                        Discharge Patient
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

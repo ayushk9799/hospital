@@ -34,7 +34,7 @@ const CreateLabReport = ({ category, type, patientData, onClose }) => {
 
   useEffect(() => {
     if (labReportFields[category] && labReportFields[category][type]) {
-      const existingReport = patientData?.labReports.find(
+      const existingReport = patientData?.labReports?.find(
         (report) => report.name === type
       );
       setFields(

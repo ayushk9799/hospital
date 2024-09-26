@@ -169,14 +169,14 @@ router.get("/details", verifyToken, async (req, res) => {
     const visits = await Visit.find()
       .populate(
         "patient",
-        "name dateOfBirth gender contactNumber email address bloodType"
+        "name dateOfBirth gender contactNumber email address bloodType age"
       )
       .populate("doctor", "name");
 
     const ipdAdmissions = await IPDAdmission.find()
       .populate(
         "patient",
-        "name dateOfBirth gender contactNumber email address bloodType"
+        "name dateOfBirth gender contactNumber email address bloodType age"
       )
       .populate("assignedDoctor", "name")
       .populate("assignedRoom", "roomNumber type");
@@ -185,6 +185,7 @@ router.get("/details", verifyToken, async (req, res) => {
       _id: visit._id,
       bookingNumber: visit.bookingNumber,
       patient: visit.patient,
+      
       bookingDate: visit.bookingDate,
       doctor: visit.doctor,
       reasonForVisit: visit.reasonForVisit,
@@ -205,6 +206,9 @@ router.get("/details", verifyToken, async (req, res) => {
       bookingDate: admission.bookingDate,
       doctor: admission.assignedDoctor,
       assignedRoom: admission.assignedRoom,
+      assignedBed:admission.assignedBed,
+      dateDischarged:admission.dateDischarged,
+      clinicalSummary:admission.clinicalSummary,
       diagnosis: admission.diagnosis,
       treatment: admission.treatment,
       medications: admission.medications,
