@@ -1,0 +1,479 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { Card, CardContent } from "../components/ui/card";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { User, ArrowLeft, Scale, Droplet, Pencil, Trash2, Plus, AlertCircle } from "lucide-react";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { fetchServices } from '../redux/slices/serviceSlice';
+import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
+import { createBill, setCreateBillStatusIdle } from '../redux/slices/BillingSlice';
+import { useToast } from '../hooks/use-toast';
+import { fetchDepartments } from '../redux/slices/departmentSlice';
+
+const Billings = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const selectedPatient = useSelector((state) => state.patients.selectedPatient);
+  const patientDetails = selectedPatient?.patient;
+  const { services, servicesStatus } = useSelector((state) => state.services);
+  const createBillStatus = useSelector((state) => state.bills.createBillStatus);
+  const { departments, status: departmentsStatus } = useSelector((state) => state.departments);
+  const [addedServices, setAddedServices] = useState([]);
+
+  const [newService, setNewService] = useState({
+    serviceName: '',
+    qty: '',
+    rate: '',
+    amt: '',
+    discount: '',
+    discountType: 'amount',
+    category: ''
+  });
+
+  const [serviceName, setServiceName] = useState("");
+
+  const [additionalDiscount, setAdditionalDiscount] = useState('');
+  const [additionalDiscountType, setAdditionalDiscountType] = useState('amount');
+  const [gst, setGst] = useState('');
+
+  const { toast } = useToast();
+
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedPhysician, setSelectedPhysician] = useState('');
+
+  const calculateTotals = useMemo(() => {
+    const subtotal = addedServices.reduce((sum, service) => sum + service.total, 0);
+    let discountValue = 0;
+
+    if (additionalDiscount !== '') {
+      if (additionalDiscountType === 'amount') {
+        discountValue = parseFloat(additionalDiscount);
+      } else {
+        discountValue = (parseFloat(additionalDiscount) / 100) * subtotal;
+      }
+    }
+
+    const discountedSubtotal = Math.max(subtotal - discountValue, 0);
+    const gstValue = gst ? (parseFloat(gst) / 100) * discountedSubtotal : 0;
+    const totalAmount = discountedSubtotal + gstValue;
+
+    return {
+      subtotal,
+      additionalDiscount: discountValue.toFixed(2),
+      gst: gstValue.toFixed(2),
+      totalAmount: totalAmount
+    };
+  }, [addedServices, additionalDiscount, additionalDiscountType, gst]);
+
+  useEffect(() => {
+    if (servicesStatus === 'idle') {
+      dispatch(fetchServices());
+    }
+  }, [dispatch, servicesStatus]);
+
+  useEffect(() => {
+    if (departmentsStatus === 'idle') {
+      dispatch(fetchDepartments());
+    }
+  }, [dispatch, departmentsStatus]);
+
+  useEffect(() => {
+    if (createBillStatus === 'succeeded') {
+      toast({ 
+        title: "Bill created successfully",
+        description: "The bill has been successfully created.",
+      });
+      dispatch(setCreateBillStatusIdle());
+    } else if (createBillStatus === 'failed') {
+      toast({
+        title: "Error creating bill",
+        description: "There was an error creating the bill. Please try again.",
+        variant: "destructive",
+      });
+      dispatch(setCreateBillStatusIdle());
+    }
+  }, [createBillStatus, dispatch, toast]);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setNewService(prev => ({ ...prev, [name]: value }));
+  };
+
+  useEffect(() => {
+    if (serviceName) {
+      setNewService(prev => ({ ...prev, serviceName }));
+    }
+  }, [serviceName]);
+
+  const handleAddService = (e) => {
+    e.preventDefault();
+
+    const discountValue = parseFloat(newService.discount) || 0;
+    const amountValue = parseFloat(newService.amt);
+    const qtyValue = parseFloat(newService.qty);
+    let discAmt, discPercentage;
+
+    if (newService.discountType === 'percentage') {
+      discAmt = (discountValue / 100) * amountValue;
+      discPercentage = discountValue;
+    } else {
+      discAmt = discountValue;
+      discPercentage = (discAmt / amountValue) * 100;
+    }
+
+    const newServiceWithDiscount = {
+      id: addedServices.length + 1,
+      service: newService.serviceName,
+      category: newService.category || "Not specified", // Use the category from newService
+      qty: qtyValue,
+      rate: amountValue / qtyValue,
+      amt: amountValue,
+      discAmt: discAmt,
+      discPercentage: discPercentage,
+      total: amountValue - discAmt
+    };
+    
+    setAddedServices(prev => [...prev, newServiceWithDiscount]);
+    setNewService({ serviceName: '', qty: '', rate: '', amt: '', discount: '', discountType: 'amount', category: '' });
+    setServiceName('');
+  };
+
+  const handleRemoveService = (id) => {
+    setAddedServices(prev => prev.filter(service => service.id !== id));
+  };
+
+  const handleServiceSuggestionSelect = (suggestion) => {
+    setNewService(prev => ({
+      ...prev,
+      serviceName: suggestion.name,
+      rate: suggestion.rate,
+      amt: suggestion.rate,
+      category: suggestion.category, // Add this line to include the category
+      qty: 1
+    }));
+  };
+
+  const handleAdditionalDiscountChange = (e) => {
+    const value = e.target.value;
+    setAdditionalDiscount(value);
+  };
+
+  const handleAdditionalDiscountTypeChange = (value) => {
+    setAdditionalDiscountType(value);
+  };
+
+  const handleGstChange = (e) => {
+    setGst(e.target.value);
+  };
+
+  const handleCreate = () => {
+    const data = {
+      services: addedServices.map(service => ({
+        name: service.service,
+        quantity: service.qty,
+        rate: service.rate,
+        discount: service.discAmt,
+        category: service.category
+      })),
+      patient: selectedPatient.patient._id,
+      patientType: selectedPatient.type,
+      patientInfo: {
+        name: selectedPatient.patient.name,
+        phone: selectedPatient.patient.contactNumber,
+      },
+      totals: {
+        totalAmount: calculateTotals.totalAmount,
+        subtotal: calculateTotals.subtotal,
+        gst: parseFloat(calculateTotals.gst),
+        additionalDiscount: parseFloat(calculateTotals.additionalDiscount),
+        amountPaid: calculateTotals.totalAmount // Assuming full amount is paid
+      },
+      department: selectedDepartment,
+      physician: selectedPhysician
+    };
+
+    console.log("Create bill data:", data);
+    dispatch(createBill(data));
+  };
+
+  const handleSaveToDraft = () => {
+    // Implement the save to draft functionality here
+    console.log("Save to Draft button clicked");
+  };
+
+  if (!selectedPatient) {
+    return <div>No patient selected</div>;
+  }
+
+  const handleEditService = (id) => {
+    const serviceToEdit = addedServices.find(service => service.id === id);
+    if (serviceToEdit) {
+      setNewService({
+        serviceName: serviceToEdit.service,
+        qty: serviceToEdit.qty.toString(),
+        rate: serviceToEdit.rate.toString(),
+        amt: serviceToEdit.amt.toString(),
+        discount: serviceToEdit.discAmt.toString(),
+        discountType: 'amount',
+        category: serviceToEdit.category
+      });
+      setServiceName(serviceToEdit.service);
+      handleRemoveService(id);
+    }
+  };
+
+  return (
+    <div className="w-full mx-auto p-4 space-y-2">
+      <div className="flex items-center cursor-pointer" onClick={() => navigate(-1)}>
+        <ArrowLeft className="mr-2" />
+        <h1 className="text-xl font-bold">Add Bill</h1>
+      </div>
+
+      <Card>
+        <CardContent className="flex items-center justify-between p-4">
+          <div className="flex items-center">
+            <Avatar className="h-12 w-12 mr-4">
+              <AvatarImage src="/placeholder.svg" alt={patientDetails?.name} />
+              <AvatarFallback>{patientDetails?.name?.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <h2 className="font-semibold">{patientDetails?.name} / {patientDetails?.gender}</h2>
+              <p className="text-sm text-gray-500">{patientDetails?.age} yrs / {patientDetails?.contactNumber}</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Scale className="text-gray-400" />
+            <User className="text-gray-400" />
+            <Droplet className="text-gray-400" />
+            <div className="text-sm">
+              <p>Registration ID {patientDetails?._id.slice(-6)}</p>
+              <p>On {new Date().toLocaleString()}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4 space-y-4">
+          <h3 className="font-semibold text-lg">Physician Details</h3>
+          <div className="grid grid-cols-2 gap-4 w-1/2">
+            <div>
+              <Label htmlFor="department">Department</Label>
+              <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                <SelectTrigger id="department">
+                  <SelectValue placeholder="Select Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((department) => (
+                    <SelectItem key={department._id} value={department._id}>
+                      {department.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="physician">Physician</Label>
+              <Select value={selectedPhysician} onValueChange={setSelectedPhysician}>
+                <SelectTrigger id="physician">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dr_mehta">Dr Mehta</SelectItem>
+                  <SelectItem value="dr_patel">Dr Patel</SelectItem>
+                  <SelectItem value="dr_shah">Dr Shah</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <form onSubmit={handleAddService} className="grid grid-cols-8 gap-4 items-end">
+            <div className="col-span-2">
+              <Label htmlFor="serviceName">Service Name</Label>
+              <SearchSuggestion 
+                suggestions={services}
+                placeholder="Enter service name"
+                value={serviceName}
+                setValue={setServiceName}
+                onSuggestionSelect={handleServiceSuggestionSelect}
+              />
+            </div>
+            <div>
+              <Label htmlFor="qty">Qty *</Label>
+              <Input type="number" id="qty" name="qty" placeholder="Qty" value={newService.qty} onChange={handleInputChange} required />
+            </div>
+            <div>
+              <Label htmlFor="rate">Rate</Label>
+              <Input type="number" id="rate" name="rate" placeholder="Rate" value={newService.rate} onChange={handleInputChange} />
+            </div>
+            <div>
+              <Label htmlFor="amt">Amt *</Label>
+              <Input type="number" id="amt" name="amt" placeholder="Amt" value={newService.amt} onChange={handleInputChange} required />
+            </div>
+            <div>
+              <Label htmlFor="discountType">Discount Type</Label>
+              <Select name="discountType" value={newService.discountType} onValueChange={(value) => handleInputChange({ target: { name: 'discountType', value } })}>
+                <SelectTrigger id="discountType">
+                  <SelectValue placeholder="Select" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="amount">Amount</SelectItem>
+                  <SelectItem value="percentage">Percentage</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="discount">Discount</Label>
+              <Input 
+                type="number" 
+                id="discount" 
+                name="discount" 
+                placeholder={newService.discountType === 'percentage' ? 'Discount %' : 'Discount ₹'} 
+                value={newService.discount} 
+                onChange={handleInputChange} 
+              />
+            </div>
+            <div className='flex items-center justify-center'>
+              <Button type="submit" variant="outline" size="sm" className="h-8 w-8 p-0 mr-2" >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button type="button" variant="outline" size="sm" className="h-8 w-8 p-0 mr-2" onClick={() => setNewService({ serviceName: '', qty: '', rate: '', amt: '', discount: '', discountType: 'amount' })}>
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4 min-h-[300px]">
+          <h3 className="font-semibold text-lg mb-2">Added Service</h3>
+          {addedServices.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">#</TableHead>
+                  <TableHead>Service</TableHead>
+                  <TableHead>Service Category</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Rate</TableHead>
+                  <TableHead>Amt</TableHead>
+                  <TableHead>Disc Amt</TableHead>
+                  <TableHead>Disc %</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {addedServices.map((service) => (
+                  <TableRow key={service.id}>
+                    <TableCell>{service.id}</TableCell>
+                    <TableCell>{service.service}</TableCell>
+                    <TableCell>{service.category}</TableCell>
+                    <TableCell>{service.qty}</TableCell>
+                    <TableCell>{service.rate.toFixed(2)}</TableCell>
+                    <TableCell>{service.amt.toFixed(2)}</TableCell>
+                    <TableCell>{service.discAmt.toFixed(2)}</TableCell>
+                    <TableCell>{service.discPercentage.toFixed(2)}%</TableCell>
+                    <TableCell>{service.total.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 mr-2" onClick={() => handleEditService(service.id)}>
+                        <span className="sr-only">Edit</span>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => handleRemoveService(service.id)}>
+                        <span className="sr-only">Remove</span>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
+              <AlertCircle className="w-12 h-12 mb-2" />
+              <p>No services added yet. Please add a service above.</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="p-4 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <Label htmlFor="paymentMethod">Payment Method</Label>
+            <Select id="paymentMethod">
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Select" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="cash">Cash</SelectItem>
+                <SelectItem value="card">Card</SelectItem>
+                <SelectItem value="upi">UPI</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Label htmlFor="additionalDiscountType">Additional Discount Type:</Label>
+            <Select
+              id="additionalDiscountType"
+              value={additionalDiscountType}
+              onValueChange={handleAdditionalDiscountTypeChange}
+            >
+              <SelectTrigger className="w-[100px]">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="amount">Amount</SelectItem>
+                <SelectItem value="percentage">Percentage</SelectItem>
+              </SelectContent>
+            </Select>
+            <Label htmlFor="additionalDiscount">Additional Discount:</Label>
+            <Input
+              id="additionalDiscount"
+              type="text"
+              placeholder={additionalDiscountType === 'amount' ? '0.00' : '0%'}
+              value={additionalDiscount}
+              onChange={handleAdditionalDiscountChange}
+              className="w-24"
+            />
+            <Label htmlFor="gst">GST (%):</Label>
+            <Input
+              id="gst"
+              type="text"
+              placeholder="0%"
+              value={gst}
+              onChange={handleGstChange}
+              className="w-24"
+            />
+            <div className="flex flex-col items-end">
+              <div className="flex items-center space-x-2">
+                <Label>Subtotal:</Label>
+                <span>₹{calculateTotals.subtotal.toFixed(2)}</span>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Label>Total Amount:</Label>
+                <span className="text-xl font-bold">₹{calculateTotals.totalAmount.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* New buttons */}
+      <div className="flex justify-end space-x-4 mt-4">
+        <Button variant="outline" onClick={handleSaveToDraft}>
+          Save to Draft
+        </Button>
+        <Button onClick={handleCreate}>Create Bill</Button>
+      </div>
+    </div>
+  );
+};
+
+export default Billings;

@@ -34,6 +34,8 @@ import CreateLabReport from './pages/CreateLabReport';
 import { setLoading } from './redux/slices/loaderSlice';
 import DischargeSummary from './pages/DischargeSummary';
 
+import Services from './pages/Services';
+import CreateServiceBill from './pages/CreateServiceBill';
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
@@ -87,6 +89,8 @@ const AppContent = () => {
             <Route path='/lab/blood-work/create' element={<CreateBloodWork />} />
             <Route path='/create-room' Component={CreateRoom} />
             <Route path="/patients/discharge/:patientId" element={<DischargeSummary />} />
+            <Route path='/services' Component={Services} />
+            <Route path='/billings/create-service-bill' Component={CreateServiceBill} />
           </Routes>
         </main>
       </div>

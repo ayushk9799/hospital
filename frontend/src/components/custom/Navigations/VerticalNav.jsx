@@ -44,7 +44,7 @@ const navItems = [
   { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy" },
   { name: "Doctors", icon: Stethoscope, path: "/doctors" },
   { name: "Nurses", icon: User, path: "/nurses" },
-  { name: "Inventory", icon: ClipboardList, path: "/inventory" },
+  { name: "Services", icon: ClipboardList, path: "/services" },
   { name: "Reports", icon: FileText, path: "/reports" },
   { name: "Analytics", icon: BarChart, path: "/analytics" },
   { name: "Settings", icon: Settings, path: "/settings" },

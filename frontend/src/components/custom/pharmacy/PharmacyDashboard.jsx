@@ -8,7 +8,7 @@ import { PieChart, Pie, Cell } from "recharts";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../../ui/dropdown-menu";
 import { convertFilterToDateRange, DateRangePicker, calculatePercentageChange } from "../../../assets/Data";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPharmacyDashboardData } from "../../../redux/slices/pharmacySlice";
+import { fetchPharmacyDashboardData, fetchItems } from "../../../redux/slices/pharmacySlice";
 import { startOfDay, endOfDay, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, format, isEqual } from 'date-fns';
 
 const PharmacyDashboard = () => {
@@ -16,7 +16,11 @@ const PharmacyDashboard = () => {
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const {dashboardData, dashboardDataStatus} = useSelector((state) => state.pharmacy);
+  const {dashboardData, dashboardDataStatus, items, itemsStatus} = useSelector((state) => state.pharmacy);
+
+  const itemsInStock = useMemo(() => {
+    return items.reduce((acc, curr) => acc + curr.quantity, 0);
+  }, [items]);
 
   const filteredData = useMemo(() => {
     if(dateFilter === "Custom") return {currentValue: dashboardData, previousValue: []};
@@ -104,8 +108,9 @@ const PharmacyDashboard = () => {
     if (dashboardDataStatus === "idle") {
       const initialDateRange = convertFilterToDateRange("Last 7 Days");
       fetchDashboardData(initialDateRange);
-    }
-  }, [dashboardDataStatus, dispatch]);
+    } 
+    if(itemsStatus === 'idle') dispatch(fetchItems());
+  }, [dashboardDataStatus, dispatch, itemsStatus]);
 
   const handleDateRangeSearch = () => {
     setDateFilter("Custom");
@@ -202,9 +207,9 @@ const PharmacyDashboard = () => {
               <Card className="bg-yellow-100">
                 <CardContent className="p-4">
                   <Package className="w-8 h-8 text-yellow-600 mb-2" />
-                  <p className="text-2xl font-bold text-yellow-600">1,890</p>
+                  <p className="text-2xl font-bold text-yellow-600">{itemsInStock.toLocaleString()}</p>
                   <p className="text-sm text-gray-600">Items in Stock</p>
-                  <p className="text-xs text-red-600 mt-1">-2% from last week</p>
+                  {/* <p className="text-xs text-red-600 mt-1">-2% from last week</p> */}
                 </CardContent>
               </Card>
             </div>

@@ -1,241 +1,278 @@
-
-import { Label } from "../components/ui/label"
+import React, { useEffect, useState } from 'react'
+import { useDispatch, useSelector } from 'react-redux'
+import { fetchBills } from '../redux/slices/BillingSlice'
+import { format, isToday, subDays, isWithinInterval, startOfDay, endOfDay, startOfWeek, parseISO, isBefore, subMonths } from 'date-fns'
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "../components/ui/table"
 import { Input } from "../components/ui/input"
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select"
-import { Textarea } from "../components/ui/textarea"
+import { Button } from "../components/ui/button"
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "../components/ui/dropdown-menu"
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardHeader, 
+  CardTitle 
+} from "../components/ui/card"
+import { Badge } from "../components/ui/badge"
+import { Search, FileDown, Filter, ChevronDown, Plus, FileX, Calendar as CalendarIcon, X } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import { DateRangePicker } from '../assets/Data'
+import ViewBillDialog from "../components/custom/billing/ViewBillDialog"; // Update the import path
 
-export default function Component() {
+const Billings = () => {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
+  const { bills, billsStatus } = useSelector((state) => state.bills)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [filterStatus, setFilterStatus] = useState('All')
+  const [dateFilter, setDateFilter] = useState('All')
+  const [dateRange, setDateRange] = useState({ from: null, to: null })
+  const [tempDateRange, setTempDateRange] = useState({ from: null, to: null })
+  const [selectedBill, setSelectedBill] = useState(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if(billsStatus === 'idle'){
+      dispatch(fetchBills())
+    }
+  }, [dispatch, billsStatus])
+
+  const getBillStatus = (bill) => {
+    if (bill.amountPaid === 0) return "Due"
+    if (bill.amountPaid < bill.totalAmount) return "Partially Paid"
+    return "Paid"
+  }
+
+  const filteredBills = bills.filter(bill => {
+    const nameMatch = bill.patientInfo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.patientInfo.phone.includes(searchTerm)
+    
+    let dateMatch = true
+    const billDate = new Date(bill.createdAt)
+    const today = new Date()
+
+    switch (dateFilter) {
+      case 'Today':
+        dateMatch = isWithinInterval(billDate, { start: startOfDay(today), end: endOfDay(today) })
+        break
+      case 'Yesterday':
+        dateMatch = isWithinInterval(billDate, { start: startOfDay(subDays(today, 1)), end: endOfDay(subDays(today, 1)) })
+        break
+      case 'This Week':
+        dateMatch = isWithinInterval(billDate, { start: startOfWeek(today), end: endOfDay(today) })
+        break
+      case 'Custom':
+        if (dateRange.from && dateRange.to) {
+          dateMatch = isWithinInterval(billDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })
+        }
+        break
+    }
+
+    const status = getBillStatus(bill)
+    let statusMatch = true
+    if (filterStatus !== 'All') {
+      statusMatch = status === filterStatus
+    }
+
+    return nameMatch && dateMatch && statusMatch
+  })
+
+  const getBadgeVariant = (status) => {
+    switch (status) {
+      case "Due":
+        return "destructive"
+      case "Partially Paid":
+        return "warning"
+      case "Paid":
+        return "success"
+      default:
+        return "secondary"
+    }
+  }
+
+  const getDueAmount = (bill) => {
+    return (bill.totalAmount - bill.amountPaid).toFixed(2)
+  }
+
+  const formatDateOrTime = (date) => {
+    const billDate = new Date(date);
+    if (isToday(billDate)) {
+      return format(billDate, 'h:mm a');
+    }
+    return format(billDate, 'dd/MM/yyyy h:mm a');
+  }
+
+  const handleDateRangeSearch = () => {
+    setDateRange(tempDateRange)
+    setDateFilter('Custom')
+  }
+
+  const handleDateRangeCancel = () => {
+    setTempDateRange({ from: null, to: null })
+    setDateFilter('All')
+  }
+
+  const handleViewBill = (bill) => {
+    setSelectedBill(bill);
+    setIsViewDialogOpen(true);
+  };
+
   return (
-    <div className="container mx-auto px-4 py-8 lg:px-8">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Personal Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="fullName">Full Name</Label>
-                <Input id="fullName" placeholder="John Doe" />
-              </div>
-              <div>
-                <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                <Input id="dateOfBirth" type="date" />
-              </div>
-              <div>
-                <Label htmlFor="gender">Gender</Label>
-                <Select id="gender">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="address">Address</Label>
-                <Textarea id="address" placeholder="123 Main St, Anytown USA" />
-              </div>
-              <div>
-                <Label htmlFor="phone">Phone</Label>
-                <Input id="phone" type="tel" placeholder="(123) 456-7890" />
-              </div>
-              <div>
-                <Label htmlFor="email">Email</Label>
-                <Input id="email" type="email" placeholder="john..example.com" />
-              </div>
-              <div>
-                <Label htmlFor="emergencyContact">Emergency Contact</Label>
-                <Input id="emergencyContact" placeholder="Jane Doe, (987) 654-3210" />
-              </div>
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Billing List</CardTitle>
+        <CardDescription>Manage and view billing information</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search bills..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 w-[300px]"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="ml-auto">
+                  <Filter className="mr-2 h-4 w-4" /> 
+                  {filterStatus === 'All' ? 'Filter' : filterStatus}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setFilterStatus('All')}>All</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setFilterStatus('Paid')}>Paid</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setFilterStatus('Due')}>Due</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setFilterStatus('Partially Paid')}>Partially Paid</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                  <CalendarIcon className="mr-2 h-4 w-4" /> 
+                  {dateFilter === 'All' ? 'All Time' : dateFilter}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-[200px]">
+                <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {dateFilter === 'Custom' && (
+              <DateRangePicker
+                from={tempDateRange.from}
+                to={tempDateRange.to}
+                onSelect={(range) => setTempDateRange(range)}
+                onSearch={handleDateRangeSearch}
+                onCancel={handleDateRangeCancel}
+              />
+            )}
           </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Medical Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="bloodType">Blood Type</Label>
-                <Input id="bloodType" placeholder="O-positive" />
-              </div>
-              <div>
-                <Label htmlFor="heightWeight">Height/Weight</Label>
-                <div className="flex items-center gap-2">
-                  <Input id="height" type="number" placeholder="Height (cm)" />
-                  <Input id="weight" type="number" placeholder="Weight (kg)" />
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="allergies">Allergies</Label>
-                <Textarea id="allergies" placeholder="Pollen, Penicillin, Latex" />
-              </div>
-              <div>
-                <Label htmlFor="conditions">Chronic Conditions</Label>
-                <Textarea id="conditions" placeholder="Diabetes, Hypertension, Asthma" />
-              </div>
-              <div>
-                <Label htmlFor="medications">Current Medications</Label>
-                <Textarea id="medications" placeholder="Metformin, Lisinopril, Albuterol" />
-              </div>
-              <div>
-                <Label htmlFor="vaccinations">Vaccination History</Label>
-                <Textarea id="vaccinations" placeholder="COVID-19, Influenza, Pneumococcal" />
-              </div>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Insurance Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="insuranceProvider">Insurance Provider</Label>
-                <Input id="insuranceProvider" placeholder="Blue Cross Blue Shield" />
-              </div>
-              <div>
-                <Label htmlFor="policyNumber">Policy Number</Label>
-                <Input id="policyNumber" placeholder="ABC12345" />
-              </div>
-              <div>
-                <Label htmlFor="coverageDetails">Coverage Details</Label>
-                <Textarea id="coverageDetails" placeholder="80/20 plan, $500 deductible, $25 copay" />
-              </div>
-            </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" onClick={() => navigate('/billings/create-service-bill')}>
+              <Plus className="mr-2 h-4 w-4" /> Create Bill
+            </Button>
+            <Button variant="outline">
+              <FileDown className="mr-2 h-4 w-4" /> Export
+            </Button>
           </div>
         </div>
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Medical History</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="pastSurgeries">Past Surgeries</Label>
-                <Textarea id="pastSurgeries" placeholder="Appendectomy, Knee Replacement" />
-              </div>
-              <div>
-                <Label htmlFor="pastHospitalizations">Previous Hospitalizations</Label>
-                <Textarea id="pastHospitalizations" placeholder="Pneumonia, Broken Arm" />
-              </div>
-              <div>
-                <Label htmlFor="familyHistory">Family Medical History</Label>
-                <Textarea id="familyHistory" placeholder="Diabetes, Heart Disease, Cancer" />
-              </div>
-            </div>
+        {filteredBills.length > 0 ? (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Bill ID</TableHead>
+                <TableHead>Patient Name</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Patient Type</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Due Amount</TableHead>
+                <TableHead>Total Amount</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredBills.map((bill) => (
+                <TableRow key={bill._id}>
+                  <TableCell>B{bill._id.slice(-6)}</TableCell>
+                  <TableCell>{bill.patientInfo.name}</TableCell>
+                  <TableCell>{bill.patientInfo.phone}</TableCell>
+                  <TableCell>{bill.patientType}</TableCell>
+                  <TableCell>{formatDateOrTime(bill.createdAt)}</TableCell>
+                  <TableCell>₹{getDueAmount(bill)}</TableCell>
+                  <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge variant={getBadgeVariant(getBillStatus(bill))}>
+                      {getBillStatus(bill)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleViewBill(bill)}>View Details</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => navigate(`/bills/${bill._id}/edit`)}>Edit Bill</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-red-600">Delete Bill</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-10">
+            <FileX className="h-16 w-16 text-gray-400 mb-4" />
+            <p className="text-xl font-semibold text-gray-600">No bills found</p>
+            <p className="text-gray-500 mt-2">There are no bills matching your search criteria.</p>
           </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Current Visit Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="admissionDate">Admission Date</Label>
-                <Input id="admissionDate" type="date" />
-              </div>
-              <div>
-                <Label htmlFor="reasonForVisit">Reason for Visit</Label>
-                <Input id="reasonForVisit" placeholder="Chest pain, Fever, Broken Arm" />
-              </div>
-              <div>
-                <Label htmlFor="assignedDoctors">Assigned Doctor(s)</Label>
-                <Input id="assignedDoctors" placeholder="Dr. Jane Smith, Dr. John Doe" />
-              </div>
-              <div>
-                <Label htmlFor="roomBed">Room/Bed Number</Label>
-                <Input id="roomBed" placeholder="Room 123, Bed 4" />
-              </div>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Vital Signs</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="bloodPressure">Blood Pressure</Label>
-                <Input id="bloodPressure" placeholder="120/80 mmHg" />
-              </div>
-              <div>
-                <Label htmlFor="heartRate">Heart Rate</Label>
-                <Input id="heartRate" placeholder="72 bpm" />
-              </div>
-              <div>
-                <Label htmlFor="temperature">Temperature</Label>
-                <Input id="temperature" placeholder="98.6 °F" />
-              </div>
-              <div>
-                <Label htmlFor="respiratoryRate">Respiratory Rate</Label>
-                <Input id="respiratoryRate" placeholder="16 breaths/min" />
-              </div>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Lab Results</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="testResults">Recent Test Results</Label>
-                <Textarea id="testResults" placeholder="CBC, Metabolic Panel, Lipid Panel" />
-              </div>
-              <div>
-                <Label htmlFor="imagingStudies">Imaging Studies</Label>
-                <Textarea id="imagingStudies" placeholder="Chest X-ray, MRI of Knee" />
-              </div>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Treatment Plan</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="diagnosis">Current Diagnosis</Label>
-                <Input id="diagnosis" placeholder="Pneumonia, Osteoarthritis" />
-              </div>
-              <div>
-                <Label htmlFor="medications">Prescribed Medications</Label>
-                <Textarea id="medications" placeholder="Amoxicillin, Ibuprofen, Metformin" />
-              </div>
-              <div>
-                <Label htmlFor="therapy">Therapy Schedules</Label>
-                <Textarea id="therapy" placeholder="Physical Therapy, Occupational Therapy" />
-              </div>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Billing Information</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="paymentMethod">Payment Method</Label>
-                <Input id="paymentMethod" placeholder="Visa, Mastercard, Cash" />
-              </div>
-              <div>
-                <Label htmlFor="billingHistory">Billing History</Label>
-                <Textarea id="billingHistory" placeholder="Deductible, Copays, Outstanding Balance" />
-              </div>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Appointments</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="upcomingAppointments">Upcoming Appointments</Label>
-                <Textarea id="upcomingAppointments" placeholder="Follow-up, Physical Therapy" />
-              </div>
-              <div>
-                <Label htmlFor="pastAppointments">Past Appointment History</Label>
-                <Textarea id="pastAppointments" placeholder="Checkup, Procedure, Consultation" />
-              </div>
-            </div>
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Notes</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="doctorNotes">Doctor's Notes</Label>
-                <Textarea id="doctorNotes" placeholder="Detailed notes about the patient's condition and treatment" />
-              </div>
-              <div>
-                <Label htmlFor="nurseNotes">Nurse's Notes</Label>
-                <Textarea id="nurseNotes" placeholder="Detailed notes about the patient's care and observations" />
-              </div>
-              <div>
-                <Label htmlFor="specialInstructions">Special Care Instructions</Label>
-                <Textarea id="specialInstructions" placeholder="Specific instructions for the patient's care" />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+        )}
+      </CardContent>
+      <ViewBillDialog
+        isOpen={isViewDialogOpen}
+        setIsOpen={setIsViewDialogOpen}
+        billData={selectedBill}
+      />
+    </Card>
   )
 }
+
+export default Billings
