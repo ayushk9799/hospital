@@ -1141,3 +1141,63 @@ export const convertTo12Hour=(time24)=> {
       ],
     },
   };
+
+  const ones = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+const tens = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+
+export function convertLessThanOneThousand(number) {
+  if (number === 0) {
+    return '';
+  }
+
+  let words = '';
+
+  if (number >= 100) {
+    words += ones[Math.floor(number / 100)] + ' Hundred ';
+    number %= 100;
+  }
+
+  if (number >= 20) {
+    words += tens[Math.floor(number / 10)] + ' ';
+    number %= 10;
+  } else if (number >= 10) {
+    words += teens[number - 10] + ' ';
+    return words.trim();
+  }
+
+  if (number > 0) {
+    words += ones[number] + ' ';
+  }
+
+  return words.trim();
+}
+
+export function numberToWords(number) {
+  if (number === 0) return 'Zero';
+
+  const crore = Math.floor(number / 10000000);
+  const lakh = Math.floor((number % 10000000) / 100000);
+  const thousand = Math.floor((number % 100000) / 1000);
+  const remainder = number % 1000;
+
+  let words = '';
+
+  if (crore > 0) {
+    words += convertLessThanOneThousand(crore) + ' Crore ';
+  }
+
+  if (lakh > 0) {
+    words += convertLessThanOneThousand(lakh) + ' Lakh ';
+  }
+
+  if (thousand > 0) {
+    words += convertLessThanOneThousand(thousand) + ' Thousand ';
+  }
+
+  if (remainder > 0) {
+    words += convertLessThanOneThousand(remainder);
+  }
+
+  return words.trim();
+}

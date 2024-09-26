@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
     color: '#95a5a6',
   },
 });
-const HeaderTemplate=()=>{
+export const HeaderTemplate=()=>{
   return(
     <>
       <View style={styles.header}>
