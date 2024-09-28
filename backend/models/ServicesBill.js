@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
+
 const servicesBillSchema = new mongoose.Schema({
   services: [{
     name : {type : String, required : true},
@@ -10,10 +11,9 @@ const servicesBillSchema = new mongoose.Schema({
   }],
   totalAmount : { type: Number, required : true},
   subtotal : { type: Number, required : true},
-  gst : { type: Number},
   additionalDiscount : { type: Number, default : 0 },
-  amountPaid : { type: Number, required : true},
-  payment : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }],
+  amountPaid : { type: Number, default : 0 },
+  payments : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }],
   patientType : {
     type : String,
     enum : ["OPD","IPD"],
@@ -37,5 +37,6 @@ const servicesBillSchema = new mongoose.Schema({
     phone : String
   }
 }, {timestamps : true});
+
 servicesBillSchema.plugin(hospitalPlugin);
 export const ServicesBill = mongoose.model("ServicesBill", servicesBillSchema);

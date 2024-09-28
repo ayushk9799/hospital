@@ -72,7 +72,8 @@ const ipdAdmissionSchema = new mongoose.Schema({
   },
   notes:{type:String},
   bills : {
-    pharmacy : [{type : mongoose.Schema.Types.ObjectId, ref : "pharmacyBill"}]
+    pharmacy : [{type : mongoose.Schema.Types.ObjectId, ref : "PharmacyBill"}],
+    services : [{type : mongoose.Schema.Types.ObjectId, ref : "ServicesBill"}]
   }
 },{timestamps:true});
 

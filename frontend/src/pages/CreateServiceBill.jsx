@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Card, CardContent } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { User, ArrowLeft, Scale, Droplet, Pencil, Trash2, Plus, AlertCircle } from "lucide-react";
+import { User, ArrowLeft, Scale, Droplet, Pencil, Trash2, Plus, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -11,40 +11,32 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { fetchServices } from '../redux/slices/serviceSlice';
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
-import { createBill, setCreateBillStatusIdle } from '../redux/slices/BillingSlice';
+import { createBill, setCreateBillStatusIdle, updateBill } from '../redux/slices/BillingSlice';
 import { useToast } from '../hooks/use-toast';
 import { fetchDepartments } from '../redux/slices/departmentSlice';
+import { setSelectedPatientForBill } from '../redux/slices/patientSlice';
 
-const Billings = () => {
+const CreateServiceBill = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { billId } = useParams();
+  const location = useLocation();
+  const { toast } = useToast();
+
   const selectedPatient = useSelector((state) => state.patients.selectedPatient);
   const patientDetails = selectedPatient?.patient;
   const { services, servicesStatus } = useSelector((state) => state.services);
   const createBillStatus = useSelector((state) => state.bills.createBillStatus);
+  const updateBillStatus = useSelector((state) => state.bills.updateBillStatus);
   const { departments, status: departmentsStatus } = useSelector((state) => state.departments);
   const [addedServices, setAddedServices] = useState([]);
-
-  const [newService, setNewService] = useState({
-    serviceName: '',
-    qty: '',
-    rate: '',
-    amt: '',
-    discount: '',
-    discountType: 'amount',
-    category: ''
-  });
-
+  const [newService, setNewService] = useState({ serviceName: '', qty: '', rate: '', amt: '', discount: '', discountType: 'amount', category: '' });
   const [serviceName, setServiceName] = useState("");
-
   const [additionalDiscount, setAdditionalDiscount] = useState('');
   const [additionalDiscountType, setAdditionalDiscountType] = useState('amount');
-  const [gst, setGst] = useState('');
-
-  const { toast } = useToast();
-
   const [selectedDepartment, setSelectedDepartment] = useState('');
   const [selectedPhysician, setSelectedPhysician] = useState('');
+  const [isEditing, setIsEditing] = useState(false);
 
   const calculateTotals = useMemo(() => {
     const subtotal = addedServices.reduce((sum, service) => sum + service.total, 0);
@@ -59,28 +51,42 @@ const Billings = () => {
     }
 
     const discountedSubtotal = Math.max(subtotal - discountValue, 0);
-    const gstValue = gst ? (parseFloat(gst) / 100) * discountedSubtotal : 0;
-    const totalAmount = discountedSubtotal + gstValue;
+    const totalAmount = discountedSubtotal;
 
     return {
       subtotal,
       additionalDiscount: discountValue.toFixed(2),
-      gst: gstValue.toFixed(2),
       totalAmount: totalAmount
     };
-  }, [addedServices, additionalDiscount, additionalDiscountType, gst]);
+  }, [addedServices, additionalDiscount, additionalDiscountType]);
 
   useEffect(() => {
-    if (servicesStatus === 'idle') {
-      dispatch(fetchServices());
-    }
-  }, [dispatch, servicesStatus]);
+    if (servicesStatus === 'idle') dispatch(fetchServices());
+    if (departmentsStatus === 'idle') dispatch(fetchDepartments());
+  }, [dispatch, servicesStatus, departmentsStatus]);
 
   useEffect(() => {
-    if (departmentsStatus === 'idle') {
-      dispatch(fetchDepartments());
+    if (billId && location.state?.billData) {
+      setIsEditing(true);
+      const billData = location.state.billData;
+      // Populate form with bill data
+      setAddedServices(billData.services.map((service, index) => ({
+        id: index + 1,
+        service: service.name,
+        category: service.category,
+        qty: service.quantity,
+        rate: service.rate,
+        amt: service.rate * service.quantity,
+        discAmt: service.discount,
+        discPercentage: (service.discount / (service.rate * service.quantity)) * 100,
+        total: (service.rate * service.quantity) - service.discount
+      })));
+      setSelectedDepartment(billData.department);
+      setSelectedPhysician(billData.physician);
+      setAdditionalDiscount(billData.additionalDiscount || '');
+      dispatch(setSelectedPatientForBill(billData.patient));
     }
-  }, [dispatch, departmentsStatus]);
+  }, [billId, location.state]);
 
   useEffect(() => {
     if (createBillStatus === 'succeeded') {
@@ -89,6 +95,7 @@ const Billings = () => {
         description: "The bill has been successfully created.",
       });
       dispatch(setCreateBillStatusIdle());
+      navigate('/billings');
     } else if (createBillStatus === 'failed') {
       toast({
         title: "Error creating bill",
@@ -97,7 +104,25 @@ const Billings = () => {
       });
       dispatch(setCreateBillStatusIdle());
     }
-  }, [createBillStatus, dispatch, toast]);
+  }, [createBillStatus, dispatch, toast, navigate]);
+
+  useEffect(() => {
+    if (updateBillStatus === 'succeeded') {
+      toast({ 
+        title: "Bill updated successfully",
+        description: "The bill has been successfully updated.",
+      });
+      dispatch(setCreateBillStatusIdle());
+      navigate('/billings');
+    } else if (updateBillStatus === 'failed') {
+      toast({
+        title: "Error updating bill",
+        description: "There was an error updating the bill. Please try again.",
+        variant: "destructive",
+      });
+      dispatch(setCreateBillStatusIdle());
+    }
+  }, [updateBillStatus, dispatch, toast, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -158,21 +183,16 @@ const Billings = () => {
     }));
   };
 
-  const handleAdditionalDiscountChange = (e) => {
-    const value = e.target.value;
-    setAdditionalDiscount(value);
-  };
-
-  const handleAdditionalDiscountTypeChange = (value) => {
-    setAdditionalDiscountType(value);
-  };
-
-  const handleGstChange = (e) => {
-    setGst(e.target.value);
-  };
-
+  // Create bill data sending to backend
   const handleCreate = () => {
-    const data = {
+    let additionalDiscountAmount = parseFloat(additionalDiscount) || 0;
+    
+    // Convert percentage to amount if necessary
+    if (additionalDiscountType === 'percentage') {
+      additionalDiscountAmount = (additionalDiscountAmount / 100) * calculateTotals.subtotal;
+    }
+
+    const billData = {
       services: addedServices.map(service => ({
         name: service.service,
         quantity: service.qty,
@@ -189,16 +209,18 @@ const Billings = () => {
       totals: {
         totalAmount: calculateTotals.totalAmount,
         subtotal: calculateTotals.subtotal,
-        gst: parseFloat(calculateTotals.gst),
-        additionalDiscount: parseFloat(calculateTotals.additionalDiscount),
-        amountPaid: calculateTotals.totalAmount // Assuming full amount is paid
+        additionalDiscount: additionalDiscountAmount
       },
       department: selectedDepartment,
-      physician: selectedPhysician
+      physician: selectedPhysician,
+      visitID: selectedPatient?._id
     };
 
-    console.log("Create bill data:", data);
-    dispatch(createBill(data));
+    if (isEditing) {
+      dispatch(updateBill({ billId, billData }));
+    } else {
+      dispatch(createBill(billData));
+    }
   };
 
   const handleSaveToDraft = () => {
@@ -227,11 +249,13 @@ const Billings = () => {
     }
   };
 
+  const isLoading = createBillStatus === 'loading' || updateBillStatus === 'loading';
+
   return (
-    <div className="w-full mx-auto p-4 space-y-2">
+    <div className="w-full mx-auto p-2 space-y-2">
       <div className="flex items-center cursor-pointer" onClick={() => navigate(-1)}>
         <ArrowLeft className="mr-2" />
-        <h1 className="text-xl font-bold">Add Bill</h1>
+        <h1 className="text-lg font-bold">{isEditing ? 'Edit Bill' : 'Add Bill'}</h1>
       </div>
 
       <Card>
@@ -375,11 +399,11 @@ const Billings = () => {
                     <TableCell>{service.service}</TableCell>
                     <TableCell>{service.category}</TableCell>
                     <TableCell>{service.qty}</TableCell>
-                    <TableCell>{service.rate.toFixed(2)}</TableCell>
-                    <TableCell>{service.amt.toFixed(2)}</TableCell>
-                    <TableCell>{service.discAmt.toFixed(2)}</TableCell>
+                    <TableCell>{service.rate.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                    <TableCell>{service.amt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                    <TableCell>{service.discAmt.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
                     <TableCell>{service.discPercentage.toFixed(2)}%</TableCell>
-                    <TableCell>{service.total.toFixed(2)}</TableCell>
+                    <TableCell>{service.total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
                     <TableCell className="text-right">
                       <Button variant="outline" size="sm" className="h-8 w-8 p-0 mr-2" onClick={() => handleEditService(service.id)}>
                         <span className="sr-only">Edit</span>
@@ -406,24 +430,11 @@ const Billings = () => {
       <Card>
         <CardContent className="p-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <Label htmlFor="paymentMethod">Payment Method</Label>
-            <Select id="paymentMethod">
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Select" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="cash">Cash</SelectItem>
-                <SelectItem value="card">Card</SelectItem>
-                <SelectItem value="upi">UPI</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="flex items-center space-x-4">
             <Label htmlFor="additionalDiscountType">Additional Discount Type:</Label>
             <Select
               id="additionalDiscountType"
               value={additionalDiscountType}
-              onValueChange={handleAdditionalDiscountTypeChange}
+              onValueChange={(value) => setAdditionalDiscountType(value)}
             >
               <SelectTrigger className="w-[100px]">
                 <SelectValue placeholder="Type" />
@@ -439,27 +450,18 @@ const Billings = () => {
               type="text"
               placeholder={additionalDiscountType === 'amount' ? '0.00' : '0%'}
               value={additionalDiscount}
-              onChange={handleAdditionalDiscountChange}
+              onChange={(e) => setAdditionalDiscount(e.target.value)}
               className="w-24"
             />
-            <Label htmlFor="gst">GST (%):</Label>
-            <Input
-              id="gst"
-              type="text"
-              placeholder="0%"
-              value={gst}
-              onChange={handleGstChange}
-              className="w-24"
-            />
-            <div className="flex flex-col items-end">
-              <div className="flex items-center space-x-2">
-                <Label>Subtotal:</Label>
-                <span>₹{calculateTotals.subtotal.toFixed(2)}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Label>Total Amount:</Label>
-                <span className="text-xl font-bold">₹{calculateTotals.totalAmount.toFixed(2)}</span>
-              </div>
+          </div>
+          <div className="flex flex-col items-end">
+            <div className="flex items-center space-x-2">
+              <Label>Subtotal:</Label>
+              <span>₹{calculateTotals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Label>Total Amount:</Label>
+              <span className="text-xl font-bold">₹{calculateTotals.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
             </div>
           </div>
         </CardContent>
@@ -467,13 +469,22 @@ const Billings = () => {
 
       {/* New buttons */}
       <div className="flex justify-end space-x-4 mt-4">
-        <Button variant="outline" onClick={handleSaveToDraft}>
+        <Button variant="outline" onClick={handleSaveToDraft} disabled={isLoading}>
           Save to Draft
         </Button>
-        <Button onClick={handleCreate}>Create Bill</Button>
+        <Button onClick={handleCreate} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {isEditing ? 'Updating...' : 'Creating...'}
+            </>
+          ) : (
+            isEditing ? 'Update Bill' : 'Create Bill'
+          )}
+        </Button>
       </div>
     </div>
   );
 };
 
-export default Billings;
+export default CreateServiceBill;

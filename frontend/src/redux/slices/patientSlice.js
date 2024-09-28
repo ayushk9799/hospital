@@ -56,6 +56,9 @@ const patientSlice = createSlice({
     setSelectedPatient: (state, action) => {
       state.selectedPatient = action.payload
     },
+    setSelectedPatientForBill: (state, action) => {  
+      state.selectedPatient = state.patientlist.find(patient => patient.patient._id === action.payload);
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -91,5 +94,5 @@ const patientSlice = createSlice({
   },
 });
 
-export const { setSelectedPatient } = patientSlice.actions
+export const { setSelectedPatient, setSelectedPatientForBill } = patientSlice.actions
 export default patientSlice.reducer;
