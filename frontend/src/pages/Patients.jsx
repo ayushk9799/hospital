@@ -1,127 +1,23 @@
-import React, { useState, useEffect } from 'react'
-import { format, subDays, isWithinInterval, startOfDay, endOfDay, startOfWeek, parseISO, isBefore, subMonths } from 'date-fns'
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
-} from "../components/ui/table"
+import React, { useState } from 'react'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
 import { Input } from "../components/ui/input"
 import { Button } from "../components/ui/button";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
-} from "../components/ui/dropdown-menu"
-import { Badge } from "../components/ui/badge"
-import { 
-  Card, 
-  CardContent, 
-  CardDescription, 
-  CardHeader, 
-  CardTitle 
-} from "../components/ui/card"
-import { 
-  Tabs, 
-  TabsContent, 
-  TabsList, 
-  TabsTrigger 
-} from "../components/ui/tabs"
-import { 
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover"
-import { Calendar } from "../components/ui/calendar"
-import { 
-  ChevronDown, 
-  Search, 
-  UserPlus, 
-  FileDown, 
-  Filter,
-  Calendar as CalendarIcon,
-  X
-} from 'lucide-react'
-import { cn } from "../lib/utils"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../components/ui/dropdown-menu"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs"
+import { ChevronDown, Search, UserPlus, FileDown, Filter,Calendar as CalendarIcon,X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import PatientRegistration from '../components/custom/registration/OPDRegDialog'
 import IPDRegDialog from '../components/custom/registration/IPDRegDialog'
-import { useSelector } from 'react-redux'
-
-// Sample patient data
-
-
-const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
-  const [open, setOpen] = useState(false)
-
-  const handleSearch = () => {
-    onSearch()
-    setOpen(false)
-  }
-
-  const handleCancel = () => {
-    onCancel()
-    setOpen(false)
-  }
-
-  const today = new Date()
-  const lastMonth = subMonths(today, 1)
-
-  return (
-    <div className={cn("grid gap-2")}>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            id="date"
-            variant={"outline"}
-            className={cn(
-              "w-[300px] justify-start text-left font-normal",
-              !from && "text-muted-foreground"
-            )}
-          >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {from ? (
-              to ? (
-                <>
-                  {format(from, "LLL dd, y")} - {format(to, "LLL dd, y")}
-                </>
-              ) : (
-                format(from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date range</span>
-            )}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            initialFocus
-            mode="range"
-            defaultMonth={lastMonth}
-            selected={{ from, to }}
-            onSelect={onSelect}
-            numberOfMonths={2}
-            disabled={(date) => isBefore(today, date)}
-            toDate={today}
-          />
-          <div className="flex justify-end gap-2 p-2">
-            <Button variant="outline" size="sm" onClick={handleCancel}>Cancel</Button>
-            <Button size="sm" onClick={handleSearch}>Search</Button>
-          </div>
-        </PopoverContent>
-      </Popover>
-    </div>
-  )
-}
+import { useSelector, useDispatch } from 'react-redux'
+import { DateRangePicker } from '../assets/Data'
+import { setSelectedPatient } from '../redux/slices/patientSlice'
 
 // Add this selector function at the top of your file, outside of the component
 
 export default function Patients() {
+  const dispatch = useDispatch()
+  const navigate = useNavigate()
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
   const [dateFilter, setDateFilter] = useState('All')
@@ -134,12 +30,6 @@ export default function Patients() {
 
   // Use the useSelector hook to get the patients from the Redux store
   const patients = useSelector((state) => state.patients.patientlist);
-  console.log(patients);
-  const doctors = useSelector((state) => state.staff.doctors);
-  const staff = useSelector((state) => state.staff.staffMembers);
-   console.log(patients);
-   console.log(doctors);
-   console.log(staff);
 
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
 
@@ -234,6 +124,7 @@ export default function Patients() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => navigate(`/patients/${patient.id}`)}>View Details</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate(`/patients/${patient.id}/edit`)}>Edit Patient</DropdownMenuItem>
+                    <DropdownMenuItem onClick={()=>createServiceBill(patient)}>Create Bill</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate(`/appointments/schedule/${patient.id}`)}>Schedule Appointment</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem className="text-red-600">Delete Patient</DropdownMenuItem>
@@ -260,6 +151,11 @@ export default function Patients() {
   const handleDateRangeCancel = () => {
     setTempDateRange({ from: null, to: null })
     setDateFilter('All')
+  }
+
+  const createServiceBill = (patient) => {
+    dispatch(setSelectedPatient(patient));
+    navigate('/billings/create-service-bill')
   }
 
   return (

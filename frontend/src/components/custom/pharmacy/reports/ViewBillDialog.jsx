@@ -76,7 +76,7 @@ export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
           ref={componentRef}
           className={isPrinting ? 'print-content' : ''}
         >
-          <PrintHeader />
+          <PrintHeader  />
           <div className="no-print">
             <DialogHeader className="flex flex-row items-center justify-between mr-7 pb-2">
               <div>

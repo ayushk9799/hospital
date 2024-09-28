@@ -1,6 +1,7 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 import { Backend_URL } from '../../assets/Data';
+import axios from 'axios';
 
 // Async thunk to create a bill
 export const createBill = createLoadingAsyncThunk(
@@ -51,17 +52,97 @@ export const fetchBills = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
-const billSlice = createSlice({
+// New async thunk to update a bill
+export const updateBill = createLoadingAsyncThunk(
+  'billing/updateBill',
+  async ({billId, billData}, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/billing/update-bill/${billId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(billData),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+// New async thunk to delete a bill
+export const deleteBill = createLoadingAsyncThunk(
+  'billing/deleteBill',
+  async (billId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/billing/delete-bill/${billId}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      return billId;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+export const addPayment = createLoadingAsyncThunk(
+  'bills/addPayment',
+  async ({ billId, payment }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/billing/${billId}/payments`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payment),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+const billingSlice = createSlice({
   name: 'bills',
   initialState: {
     bills: [],
     billsStatus: "idle",
     createBillStatus: "idle",
+    updateBillStatus: "idle",
     error: null,
   },
   reducers: {
     setCreateBillStatusIdle: (state) => {
       state.createBillStatus = "idle";
+      state.updateBillStatus = "idle";
     },
   },
   extraReducers: (builder) => {
@@ -72,7 +153,7 @@ const billSlice = createSlice({
       })
       .addCase(createBill.fulfilled, (state, action) => {
         state.createBillStatus = "succeeded";
-        state.bills.push(action.payload);
+        state.bills.unshift(action.payload);
       })
       .addCase(createBill.rejected, (state, action) => {
         state.createBillStatus = "failed";
@@ -89,12 +170,42 @@ const billSlice = createSlice({
       .addCase(fetchBills.rejected, (state, action) => {
         state.billsStatus = "failed";
         state.error = action.payload;
+      })
+      .addCase(updateBill.pending, (state) => {
+        state.updateBillStatus = "loading";
+        state.error = null;
+      })
+      .addCase(updateBill.fulfilled, (state, action) => {
+        state.updateBillStatus = "succeeded";
+        const index = state.bills.findIndex(bill => bill._id === action.payload._id);
+        if (index !== -1) {
+          state.bills[index] = action.payload;
+        }
+      })
+      .addCase(updateBill.rejected, (state, action) => {
+        state.updateBillStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(deleteBill.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(deleteBill.fulfilled, (state, action) => {
+        state.bills = state.bills.filter(bill => bill._id !== action.payload);
+      })
+      .addCase(deleteBill.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+      .addCase(addPayment.fulfilled, (state, action) => {
+        const index = state.bills.findIndex(bill => bill._id === action.payload._id);
+        if (index !== -1) {
+          state.bills[index] = action.payload;
+        }
       });
   },
 });
 
 export const { 
-  setCreateBillStatusIdle 
-} = billSlice.actions;
+  setCreateBillStatusIdle
+} = billingSlice.actions;
 
-export default billSlice.reducer;
+export default billingSlice.reducer;

@@ -91,6 +91,7 @@ const AppContent = () => {
             <Route path="/patients/discharge/:patientId" element={<DischargeSummary />} />
             <Route path='/services' Component={Services} />
             <Route path='/billings/create-service-bill' Component={CreateServiceBill} />
+            <Route path='/billings/edit/:billId' Component={CreateServiceBill} />
           </Routes>
         </main>
       </div>

@@ -2,31 +2,34 @@ import React, { useRef, useState } from "react";
 import { useReactToPrint } from 'react-to-print';
 import { Button } from "../../ui/button";
 import { format } from "date-fns";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../../ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
 import { Label } from "../../ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
 import { PrinterIcon } from "lucide-react";
-import { numberToWords } from "../../../assets/Data"; // Add this import
+import { numberToWords } from "../../../assets/Data";
 
 const PrintHeader = () => (
   <div className="hidden print:block mb-4">
-    <h1 className="text-2xl font-bold text-center">Your Hospital Name</h1>
-    <p className="text-center">123 Hospital Street, City, Country</p>
-    <p className="text-center">Phone: (123) 456-7890</p>
+    <div className="border-b border-black pb-2 mb-2">
+      <h1 className="text-[30px] text-center text-[#1a5f7a] font-tinos mb-2">KIDNEY STONE & UROLOGY CLINIC</h1>
+      <div className="flex items-center justify-center">
+        <div className="w-20 mr-4">
+          <img
+            src={require("../reports/Capture2.png")} // Update this path 
+            alt="Clinic Logo"
+            width={70}
+            height={70}
+          />
+        </div>
+        <div className="text-center">
+          <p className="text-xs text-[#333333]">Jail Road, Near Mahindra Showroom, Tilkamanjhi, Bhagalpur</p>
+          <p className="text-sm text-[#1a5f7a] tracking-widest mt-1">DR. RAJAN KUMAR SINHA</p>
+          <p className="text-xs text-[#333333]">M.B.B.S(Ranchi), MS(Gen.Surgery), MCh(Urology), Kolkata</p>
+          <p className="text-xs text-[#333333]">Consultant Urologist</p>
+          <p className="text-xs text-[#333333]">Mob : 9709993104</p>
+        </div>
+      </div>
+    </div>
   </div>
 );
 
@@ -56,7 +59,6 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
       @media print {
         @page {
           size: A4;
-          margin: 10mm;
         }
         body {
           print-color-adjust: exact;
@@ -71,6 +73,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
         .print-content {
           position: relative;
           min-height: 100vh;
+          padding: 10mm;
         }
       }
     `,
@@ -81,6 +84,11 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const services = billData.services || [];
   const totalAmountInWords = numberToWords(billData.totalAmount.toFixed(0) || 0);
 
+  const getBillStatus = (bill) => {
+    if (!bill) return 'N/A';
+    return bill.amountPaid === bill.totalAmount ? "Paid" : "Due";
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -89,30 +97,38 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
           className={isPrinting ? 'print-content' : ''}
         >
           <PrintHeader />
-          <div className="print:pb-10 print:bg-red-500"> {/* Add padding to the bottom */}
+          <div className="print:pb-10"> {/* Add padding to the bottom */}
             <div className="no-print">
               <DialogHeader>
                 <DialogTitle>Bill Details</DialogTitle>
                 <DialogDescription>Full details of the bill</DialogDescription>
               </DialogHeader>
             </div>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div>
-                  <Label className="text-right">Patient Name</Label>
-                  <p className="font-medium">{billData.patientInfo?.name || 'N/A'}</p>
+            <div className="grid gap-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Label className="w-1/3 font-semibold">Patient Name:</Label>
+                    <p className="w-2/3">{billData.patientInfo?.name || 'N/A'}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Label className="w-1/3 font-semibold">Bill Number:</Label>
+                    <p className="w-2/3">B{billData._id?.slice(-6) || 'N/A'}</p>
+                  </div>
                 </div>
-                <div>
-                  <Label className="text-right">Bill Number</Label>
-                  <p className="font-medium">B{billData._id?.slice(-6) || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className="text-right">Date and Time</Label>
-                  <p className="font-medium">{billData.createdAt ? format(new Date(billData.createdAt), "MMM dd, yyyy hh:mm a") : 'N/A'}</p>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <Label className="w-1/3 font-semibold">Date:</Label>
+                    <p className="w-2/3">{billData.createdAt ? format(new Date(billData.createdAt), "MMM dd, yyyy") : 'N/A'}</p>
+                  </div>
+                  <div className="flex items-center">
+                    <Label className="w-1/3 font-semibold">Time:</Label>
+                    <p className="w-2/3">{billData.createdAt ? format(new Date(billData.createdAt), "hh:mm a") : 'N/A'}</p>
+                  </div>
                 </div>
               </div>
               <div>
-                <h3 className="text-lg font-semibold mb-2">Bill Items</h3>
+                <h3 className="text-lg font-semibold mb-2 no-print">Bill Items</h3>
                 <Table className="border-2 border-gray-200">
                   <TableHeader>
                     <TableRow className="border-b border-gray-200 bg-gray-200">
@@ -150,11 +166,14 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                   <span className="font-semibold">Total in words: </span>{totalAmountInWords} Rupees Only
                 </div>
                 <div className="w-full text-left text-sm mt-1">
+                  <span className="font-semibold">Bill Status: </span>{getBillStatus(billData)}
+                </div>
+                <div className="w-full text-left text-sm mt-1">
                   <span className="font-semibold">Invoice By: </span>{billData.physician || 'N/A'}
                 </div>
               </div>
             </div>
-            <PrintFooter />
+            {/* <PrintFooter /> */}
           </div>
         </div>
         <DialogFooter>
