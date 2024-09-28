@@ -114,7 +114,6 @@ console.log(filteredPatients);
                 notes={booking.notes}
                 treatment={booking.treatment}
                 medications={booking.medications}
-                additionalInstructions={booking.additionalInstructions}
                 labTests={booking.labTests}
                 onSelect={onPatientSelect}
               />
@@ -148,7 +147,8 @@ console.log(filteredPatients);
                 bookingNumber={booking.bookingNumber}
                 patient={booking.patient}
                 bookingDate={booking.bookingDate}
-                reasonForVisit={booking.reasonForVisit}
+                clinicalSummary={booking.clinicalSummary}
+                notes={booking.notes}
                 type={booking.type}
                 vitals={booking.vitals}
                 diagnosis={booking.diagnosis}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ScrollArea } from "../components/ui/scroll-area";
 import AppointmentsQueue from "../components/custom/appointments/AppointmentsQueue";
 import AppointmentHeader from "../components/custom/appointments/AppointmentHeader";
@@ -9,8 +9,8 @@ export default function Doctors() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientType, setSelectedPatientType] = useState(null);
 
-  const handlePatientSelect = ({ ID, bookingNumber, patient, bookingDate,clinicalSummary,notes, type, vitals, diagnosis, treatment, medications, additionalInstructions, labTests }) => {
-    console.log("clinicalSummary",clinicalSummary);
+  const handlePatientSelect = ({ ID, bookingNumber, patient, bookingDate, clinicalSummary, notes, type, vitals, diagnosis, treatment, medications, additionalInstructions, labTests }) => {
+    console.log("Selected patient:", { ID, patient, type });
     setSelectedPatient({
       ID,
       bookingNumber,
@@ -27,7 +27,12 @@ export default function Doctors() {
     });
     setSelectedPatientType(type);
   };
-console.log(selectedPatient);
+
+  useEffect(() => {
+    console.log("Updated selectedPatient:", selectedPatient);
+    console.log("Updated selectedPatientType:", selectedPatientType);
+  }, [selectedPatient, selectedPatientType]);
+
   return (
     <div className="h-full w-full flex flex-col">
       <AppointmentHeader />

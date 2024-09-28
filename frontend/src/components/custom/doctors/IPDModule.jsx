@@ -61,8 +61,54 @@ export default function IPDModule({ patient }) {
       coverageType: "",
     },
   });
-console.log(patient);
-console.log(ipdAdmission);
+
+  // Add this useEffect to update the state when the patient prop changes
+  useEffect(() => {
+    setIpdAdmission({
+      bookingDate: patient.bookingDate,
+      bookingNumber: patient.bookingNumber,
+      patientName: patient.patient.name,
+      contactNumber: patient.patient.contactNumber,
+      registrationNumber: patient.patient._id,
+      patient: patient.patient._id,
+      diagnosis: patient.diagnosis || "",
+      notes: patient.notes || "",
+      clinicalSummary: patient.clinicalSummary,
+      treatment: patient.treatment || "",
+      medications: patient.medications.length > 0 ? patient.medications : [{name:"",frequency:"0-0-0",duration:""}],
+      labTests: patient.labTests.length > 0 ? patient.labTests.map((test) => ({ name: test })) : [{name:""}],
+      vitals: {
+        admission: {
+          bloodPressure: patient.vitals.admission.bloodPressure || "",
+          heartRate: patient.vitals.admission.heartRate || "",
+          temperature: patient.vitals.admission.temperature || "",
+          oxygenSaturation: patient.vitals.admission.oxygenSaturation || "",
+          respiratoryRate: patient.vitals.admission.respiratoryRate || "",
+          weight: patient.vitals.admission.weight || "",
+          height: patient.vitals.admission.height || "",
+        },
+        discharge: {
+          bloodPressure: patient.vitals.discharge.bloodPressure || "",
+          heartRate: patient.vitals.discharge.heartRate || "",
+          temperature: patient.vitals.discharge.temperature || "",
+          oxygenSaturation: patient.vitals.discharge.oxygenSaturation || "",
+          respiratoryRate: patient.vitals.discharge.respiratoryRate || "",
+        },
+        weight: patient.vitals.weight || "",
+        height: patient.vitals.height || "",
+      },
+      status: "Admitted",
+      assignedDoctor: "",
+      assignedRoom: "",
+      assignedBed: "",
+      insuranceDetails: {
+        provider: "",
+        policyNumber: "",
+        coverageType: "",
+      },
+    });
+  }, [patient]);
+
   const dispatch = useDispatch();
   const { toast } = useToast();
   const medicines = useSelector((state) => state.pharmacy.items);
