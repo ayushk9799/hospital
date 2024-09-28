@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "../../ui/button";
 import {
   Dialog,
@@ -8,97 +8,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../../ui/dialog";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Input } from "../../ui/input";
 import { Backend_URL } from "../../../assets/Data";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectItem,
-  SelectContent,
-} from "../../ui/select";
+import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent } from "../../ui/select";
 import { Textarea } from "../../ui/textarea";
-import { useDispatch } from 'react-redux';
 import { fetchPatients } from '../../../redux/slices/patientSlice';
 import { Label } from "../../ui/label";
-
-const initialFormData = {
-  name: "",
-  registrationNumber: "",
-  dateOfBirth: "",
-  age: "",
-  gender: "",
-  contactNumber: "",
-  email: "",
-  address: "",
-  bloodType: "",
-  patientType: "IPD",
-  
-  admission: {
-    reasonForAdmission: "",
-    department: "",
-    assignedDoctor: "",
-    assignedRoom:"",
-    assignedBed:"",
-    vitals:{
-      bloodPressure:"",
-      heartRate:"",
-      temperature:"",
-      weight:"",
-      height:"",
-      oxygenSaturation:"",
-      respiratoryRate:"",
-    },
-    bookingDate:new Date().toLocaleDateString('en-IN',{year:'numeric',month:'2-digit',day:'2-digit'}).split('/').reverse().join('-'),
-    timeSlot:{
-      start:"",
-      end:"",
-    },
-    insuranceDetails:{
-      provider:"",
-      policyNumber:"",
-    }
-  },
-}
+import { initialFormData, validateForm, formatSubmissionData } from "./ipdRegHelpers";
 
 const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
 const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 export default function IPDRegDialog({ open, onOpenChange }) {
-  // Assume these are coming from Redux
-  const departments = useSelector(state => state.departments.departments);
-  const rooms = useSelector(state => state.rooms.rooms);
-  const doctors = useSelector(state => state.staff.doctors);
-const dispatch = useDispatch();
-  const [formData, setFormData] = useState(initialFormData);
-    console.log(formData)
-  const [errors, setErrors] = useState({});
+  const dispatch = useDispatch();
+  const { departments, rooms, doctors } = useSelector(state => ({
+    departments: state.departments.departments,
+    rooms: state.rooms.rooms,
+    doctors: state.staff.doctors,
+  }));
 
+  const [formData, setFormData] = useState(initialFormData);
+  const [errors, setErrors] = useState({});
   const [startTime, setStartTime] = useState({ hour: '', minute: '', amPm: 'AM' });
   const [endTime, setEndTime] = useState({ hour: '', minute: '', amPm: 'AM' });
 
-  
-
-  const handleTimeChange = (field, type, value) => {
-    const timeState = field === 'start' ? startTime : endTime;
-    const setTimeState = field === 'start' ? setStartTime : setEndTime;
-
-    setTimeState({ ...timeState, [type]: value });
-
-    let newTime;
-    if (type === 'hour') newTime = `${value}:${timeState.minute} ${timeState.amPm}`;
-    else if (type === 'minute') newTime = `${timeState.hour}:${value} ${timeState.amPm}`;
-    else if (type === 'amPm') newTime = `${timeState.hour}:${timeState.minute} ${value}`;
-
-    handleInputChange({ target: { id: `admission.timeSlot.${field}`, value: newTime } });
-  };
-
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormData((prev) => {
+    setFormData(prev => {
       const keys = id.split(".");
-      let newState = { ...prev };
+      const newState = { ...prev };
       let current = newState;
       for (let i = 0; i < keys.length - 1; i++) {
         current[keys[i]] = { ...current[keys[i]] };
@@ -109,107 +48,47 @@ const dispatch = useDispatch();
     });
   };
 
-  const handleSelectChange = (id, value) =>
-    handleInputChange({ target: { id, value } });
-
-  const handleDobChange = (e) => {
-    const dateOfBirth = e.target.value;
-    setFormData({ ...formData, dateOfBirth });
-    if (dateOfBirth) {
-      const birthDate = new Date(dateOfBirth);
-      const calculatedAge = new Date().getFullYear() - birthDate.getFullYear();
-      setFormData((prev) => ({ ...prev, age: calculatedAge.toString() }));
-    } else {
-      setFormData((prev) => ({ ...prev, age: "" }));
-    }
-  };
-
-  const handleAgeChange = (e) => {
-    const age = e.target.value;
-    setFormData({ ...formData, age, dateOfBirth: "" });
-  };
-
-  const validateForm = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Full name is required";
-    if (!formData.dateOfBirth && !formData.age)
-      newErrors.age = "Date of birth or age is required";
-    if (!formData.gender) newErrors.gender = "Gender is required";
-    if (!formData.contactNumber) newErrors.contactNumber = "Phone number is required";
-    if (!formData.admission.assignedRoom) newErrors['admission.assignedRoom'] = "Room is required";
-    if (!formData.admission.assignedBed) newErrors['admission.assignedBed'] = "Bed is required";
-    if (!formData.admission.bookingDate) newErrors['admission.bookingDate'] = "Booking date is required";
-    if (!formData.admission.timeSlot.start) newErrors['admission.timeSlot.start'] = "Start time is required";
-    if (!formData.admission.timeSlot.end) newErrors['admission.timeSlot.end'] = "End time is required";
-    
-    
-    // Add more validations as needed
-   console.log(newErrors)
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+  const handleTimeChange = (field, type, value) => {
+    const timeState = field === 'start' ? startTime : endTime;
+    const setTimeState = field === 'start' ? setStartTime : setEndTime;
+    setTimeState({ ...timeState, [type]: value });
+    const newTime = `${timeState.hour}:${timeState.minute} ${timeState.amPm}`;
+    handleInputChange({ target: { id: `admission.timeSlot.${field}`, value: newTime } });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      const submissionData = {
-        ...formData,
-        age: parseInt(formData.age, 10),
-        patientType: 'IPD',
-        admission: {
-          ...formData.admission,
-          bookingDate:formData.admission.bookingDate.split('-').reverse().join('-'),
-          vitals: Object.fromEntries(
-            Object.entries(formData.admission.vitals || {}).map(([key, value]) =>
-              key === "bloodPressure"
-                ? [key, value]
-                : [key, parseFloat(value) || null]
-            )
-          ),
-        },
-      };
-
-      console.log("Submission data:", submissionData);
-
+    if (validateForm(formData, setErrors)) {
+      const submissionData = formatSubmissionData(formData);
+      console.log(submissionData);
       try {
         const response = await fetch(`${Backend_URL}/api/patients`, {
           method: "POST",
-          headers: { 
-            "Content-Type": "application/json",
-             // Assuming you store the token in localStorage
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(submissionData),
           credentials: "include",
         });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to register patient");
-        }
-
+        if (!response.ok) throw new Error("Failed to register patient");
         const result = await response.json();
         console.log("Patient registered successfully:", result);
         onOpenChange(false);
         dispatch(fetchPatients());
       } catch (error) {
         console.error("Error registering patient:", error);
-        // You might want to show an error message to the user here
       }
     }
   };
 
   const handleDialogClose = () => {
     onOpenChange(false);
-    setErrors({})
+    setErrors({});
     setFormData(initialFormData);
-  }
+  };
 
   const handleReset = () => {
     setFormData(initialFormData);
     setErrors({});
   };
-
-  
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
@@ -245,7 +124,7 @@ const dispatch = useDispatch();
                   id="dateOfBirth"
                   type="date"
                   value={formData.dateOfBirth}
-                  onChange={handleDobChange}
+                  onChange={handleInputChange}
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -254,11 +133,11 @@ const dispatch = useDispatch();
                   type="number"
                   placeholder="Age"
                   value={formData.age}
-                  onChange={handleAgeChange}
+                  onChange={handleInputChange}
                 />
                 <Select
                   id="gender"
-                  onValueChange={(value) => handleSelectChange('gender', value)}
+                  onValueChange={(value) => handleInputChange({ target: { id: 'gender', value } })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Gender" />
@@ -273,7 +152,7 @@ const dispatch = useDispatch();
               <div>
                 <Select
                   id="bloodType"
-                  onValueChange={(value) => handleSelectChange('bloodType', value)}
+                  onValueChange={(value) => handleInputChange({ target: { id: 'bloodType', value } })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Blood Group" />
@@ -432,7 +311,7 @@ const dispatch = useDispatch();
               <div>
                 <Select
                   id="admission.department"
-                  onValueChange={(value) => handleSelectChange('admission.department', value)}
+                  onValueChange={(value) => handleInputChange({ target: { id: 'admission.department', value } })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Department" />
@@ -447,7 +326,7 @@ const dispatch = useDispatch();
               </div>
               <Select
                 id="admission.assignedDoctor"
-                onValueChange={(value) => handleSelectChange('admission.assignedDoctor', value)}
+                onValueChange={(value) => handleInputChange({ target: { id: 'admission.assignedDoctor', value } })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Assigned Doctor" />
@@ -462,7 +341,7 @@ const dispatch = useDispatch();
                 <Select
                   id="admission.assignedRoom"
                   onValueChange={(value) => {
-                    handleSelectChange('admission.assignedRoom', value);
+                    handleInputChange({ target: { id: 'admission.assignedRoom', value } });
                     setFormData(prev => ({
                       ...prev,
                       admission: {
@@ -487,7 +366,7 @@ const dispatch = useDispatch();
                 </Select>
                 <Select
                   id="admission.assignedBed"
-                  onValueChange={(value) => handleSelectChange('admission.assignedBed', value)}
+                  onValueChange={(value) => handleInputChange({ target: { id: 'admission.assignedBed', value } })}
                   disabled={!formData.admission.assignedRoom}
                 >
                   <SelectTrigger>
@@ -506,15 +385,64 @@ const dispatch = useDispatch();
                   </SelectContent>
                 </Select>
               </div>
+             
+              
               <div>
                 <Textarea
-                  id="admission.reasonForAdmission"
-                  placeholder="Reason for Admission"
-                  value={formData.admission.reasonForAdmission}
-                  onChange={(e) => handleInputChange({ target: { id: 'admission.reasonForAdmission', value: e.target.value } })}
+                  id="admission.diagnosis"
+                  placeholder="Diagnosis"
+                  value={formData.admission.diagnosis}
+                  onChange={(e) => handleInputChange({ target: { id: 'admission.diagnosis', value: e.target.value } })}
                   className="h-[60px]"
                 />
-                {errors['admission.reasonForAdmission'] && <p className="text-red-500 text-xs mt-1">{errors['admission.reasonForAdmission']}</p>}
+                {errors['admission.diagnosis'] && <p className="text-red-500 text-xs mt-1">{errors['admission.diagnosis']}</p>}
+              </div>
+
+              {/* Admission Vitals */}
+              <h4 className="font-semibold text-sm mt-4">Admission Vitals</h4>
+              <div className="grid grid-cols-2 gap-2">
+                <Input 
+                  id="admission.vitals.admission.weight"
+                  placeholder="Weight"
+                  value={formData.admission.vitals.admission.weight}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  id="admission.vitals.admission.height"
+                  placeholder="Height"
+                  value={formData.admission.vitals.admission.height}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  id="admission.vitals.admission.bloodPressure"
+                  placeholder="Blood Pressure"
+                  value={formData.admission.vitals.admission.bloodPressure}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  id="admission.vitals.admission.heartRate"
+                  placeholder="Heart Rate"
+                  value={formData.admission.vitals.admission.heartRate}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  id="admission.vitals.admission.temperature"
+                  placeholder="Temperature"
+                  value={formData.admission.vitals.admission.temperature}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  id="admission.vitals.admission.oxygenSaturation"
+                  placeholder="Oxygen Saturation"
+                  value={formData.admission.vitals.admission.oxygenSaturation}
+                  onChange={handleInputChange}
+                />
+                <Input
+                  id="admission.vitals.admission.respiratoryRate"
+                  placeholder="Respiratory Rate"
+                  value={formData.admission.vitals.admission.respiratoryRate}
+                  onChange={handleInputChange}
+                />
               </div>
             </div>
           </div>

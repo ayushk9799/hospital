@@ -28,13 +28,18 @@ const ipdAdmissionSchema = new mongoose.Schema({
   registrationNumber:{type:String},
   patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
   dateDischarged: { type: Date },
-  reasonForAdmission: { type: String },
   clinicalSummary: { type: String },
   diagnosis: { type: String, },
   treatment: { type: String,  },
   medications:[{name:String,duration:String,frequency:String}],
   labTests:[String],
+  labReports: [{
+    date: { type: Date},
+    name: { type: String },
+    report: { type: mongoose.Schema.Types.Mixed }
+  }],
   vitals:{
+    admission:{ 
     bloodPressure:String,
     heartRate:Number,
     temperature:Number,
@@ -43,6 +48,15 @@ const ipdAdmissionSchema = new mongoose.Schema({
     oxygenSaturation:Number,
     respiratoryRate:Number,
   },
+  discharge:{
+    bloodPressure:String,
+    heartRate:Number,
+    temperature:Number,
+    oxygenSaturation:Number,
+    respiratoryRate:Number,
+  },
+ 
+},
   timeSlot:{
     start: { type: String },
     end: { type: String },

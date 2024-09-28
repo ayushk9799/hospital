@@ -7,14 +7,18 @@ import { Badge } from "../../ui/badge";
 import { SearchIcon } from 'lucide-react'
 import { Input } from "../../ui/input";
 
-const PatientEntry = ({ID, bookingNumber, patient, bookingDate, reasonForVisit, type, onSelect, vitals ,diagnosis,treatment,medications,additionalInstructions,labTests}) => {
+const PatientEntry = ({ID, bookingNumber, patient, bookingDate, type, clinicalSummary,notes, onSelect, vitals ,diagnosis,treatment,medications,additionalInstructions,labTests}) => {
   const truncateName = (name, maxLength = 15) => {
     return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
   };
+  if(ID === "66f7b32aa05dd4e2e78a2186"){
+    console.log(patient);
+    console.log(clinicalSummary);
+  }
   return (
     <div
       className="flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100"
-      onClick={() => onSelect({ID, bookingNumber, patient, bookingDate, reasonForVisit, type, vitals,diagnosis,treatment,medications,additionalInstructions,labTests })}
+      onClick={() => onSelect({ID, bookingNumber, patient, bookingDate,  type, clinicalSummary,notes, vitals,diagnosis,treatment,medications,labTests })}
     >
       <div className="flex items-center space-x-4">
         <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -50,7 +54,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
     booking.bookingNumber?.toString()?.includes(searchTerm)) &&
     (activeTab === "all" || booking.type.toLowerCase() === activeTab)
   );
-
+console.log(filteredPatients);
   return (
     <Card className="h-full flex flex-col">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-grow flex flex-col">
@@ -103,10 +107,11 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
                 bookingNumber={booking.bookingNumber}
                 patient={booking.patient}
                 bookingDate={booking.bookingDate}
-                reasonForVisit={booking.reasonForVisit}
                 type={booking.type}
                 vitals={booking.vitals}
                 diagnosis={booking.diagnosis}
+                clinicalSummary={booking.clinicalSummary}
+                notes={booking.notes}
                 treatment={booking.treatment}
                 medications={booking.medications}
                 additionalInstructions={booking.additionalInstructions}

@@ -20,7 +20,7 @@ export const fetchPatients = createAsyncThunk(
 
 export const savePrescription = createAsyncThunk(
   'patients/savePrescription',
-  async ({ selectedVisitId, vitals, prescription,selectedPatientType, labTests }) => {
+  async ({ selectedVisitId, vitals, prescription,selectedPatientType,clinicalSummary,notes, labTests }) => {
     const response = await fetch(
       `${Backend_URL}/api/patients/${selectedPatientType === "OPD" ? "visit" : "admission"}/${selectedVisitId}`,
       {
@@ -29,7 +29,7 @@ export const savePrescription = createAsyncThunk(
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({vitals,prescription,labTests}),
+        body: JSON.stringify({vitals,prescription,labTests,clinicalSummary,notes}),
       }
     );
 

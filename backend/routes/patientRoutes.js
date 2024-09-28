@@ -60,19 +60,7 @@ router.post(
         console.log(admissionRecord);
         patient.admissionDetails.push(admissionRecord._id);
 
-        // Update Room if assigned
-        // if (admission.assignedRoom) {
-        //   const room = await Room.findById(admission.assignedRoom).session(session);
-        //   if (!room) {
-        //     throw new Error('Assigned room not found');
-        //   }
-        //   if(room.currentOccupancy >= room.capacity){
-        //     throw new Error('Room is at full capacity');
-        //   }
-        //   room.currentOccupancy += 1;
-        //   room.currentPatients.push(patient._id);
-        //   await room.save({ session });
-        // }
+      
 
         if (admission.assignedRoom) {
           const room = await Room.findOneAndUpdate(
@@ -214,7 +202,7 @@ router.get("/details", verifyToken, async (req, res) => {
       medications: admission.medications,
       additionalInstructions: admission.additionalInstructions,
       labTests: admission.labTests,
-      reasonForAdmission: admission.reasonForAdmission,
+      notes: admission.notes,
       timeSlot: admission.timeSlot,
       vitals: admission.vitals,
       type: "IPD",
@@ -515,7 +503,7 @@ router.put(
 
     try {
       const { id } = req.params;
-      const { vitals, prescription, labTests } = req.body;
+      const { vitals, prescription, labTests,clinicalSummary,notes } = req.body;
 
       const admission = await IPDAdmission.findById(id).session(session);
       if (!admission) {
@@ -533,7 +521,8 @@ router.put(
       admission.treatment = prescription.treatment;
       admission.medications = prescription.medications;
       admission.additionalInstructions = prescription.additionalInstructions;
-
+      admission.clinicalSummary = clinicalSummary;
+      admission.notes = notes;
       // Update lab tests
       admission.labTests = labTests;
 
