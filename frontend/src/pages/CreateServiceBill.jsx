@@ -15,6 +15,7 @@ import { createBill, setCreateBillStatusIdle, updateBill } from '../redux/slices
 import { useToast } from '../hooks/use-toast';
 import { fetchDepartments } from '../redux/slices/departmentSlice';
 import { setSelectedPatientForBill } from '../redux/slices/patientSlice';
+import { fetchStaffMembers } from '../redux/slices/staffSlice';
 
 const CreateServiceBill = () => {
   const dispatch = useDispatch();
@@ -24,6 +25,7 @@ const CreateServiceBill = () => {
   const { toast } = useToast();
 
   const selectedPatient = useSelector((state) => state.patients.selectedPatient);
+  const { doctors, status: staffMembersStatus } = useSelector((state) => state.staff);
   const patientDetails = selectedPatient?.patient;
   const { services, servicesStatus } = useSelector((state) => state.services);
   const createBillStatus = useSelector((state) => state.bills.createBillStatus);
@@ -63,7 +65,8 @@ const CreateServiceBill = () => {
   useEffect(() => {
     if (servicesStatus === 'idle') dispatch(fetchServices());
     if (departmentsStatus === 'idle') dispatch(fetchDepartments());
-  }, [dispatch, servicesStatus, departmentsStatus]);
+    if (staffMembersStatus === 'idle') dispatch(fetchStaffMembers());
+  }, [dispatch, servicesStatus, departmentsStatus, staffMembersStatus]);
 
   useEffect(() => {
     if (billId && location.state?.billData) {
@@ -305,12 +308,14 @@ const CreateServiceBill = () => {
               <Label htmlFor="physician">Physician</Label>
               <Select value={selectedPhysician} onValueChange={setSelectedPhysician}>
                 <SelectTrigger id="physician">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select Physician" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="dr_mehta">Dr Mehta</SelectItem>
-                  <SelectItem value="dr_patel">Dr Patel</SelectItem>
-                  <SelectItem value="dr_shah">Dr Shah</SelectItem>
+                  {doctors.map((doctor) => (
+                    <SelectItem key={doctor.name} value={doctor.name}>
+                      {doctor.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

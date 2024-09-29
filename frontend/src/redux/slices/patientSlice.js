@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Backend_URL } from '../../assets/Data';
+import createLoadingAsyncThunk from './createLoadingAsyncThunk';
 
-export const fetchPatients = createAsyncThunk(
+export const fetchPatients = createLoadingAsyncThunk(
   'patients/fetchPatients',
   async () => {
     const response = await fetch(`${Backend_URL}/api/patients/details`, {

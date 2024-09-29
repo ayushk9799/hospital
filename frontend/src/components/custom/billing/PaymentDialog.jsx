@@ -73,7 +73,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
     setPaymentAmount(dueAmount.toFixed(2));
   };
 
-  if (!billData?.payments?.length) return null;
+  if (!billData) return null;
 
   // Add payment method options
   const paymentMethods = ["Cash", "UPI", "Card", "Bank Transfer", "Other"];
@@ -136,7 +136,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
         
         <div className="space-y-0">
           <h4 className="text-sm font-semibold">Recent Payments</h4>
-          {billData.payments && billData.payments.length > 0 ? (
+          {billData?.payments && billData?.payments?.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>

@@ -11,9 +11,15 @@ Font.register({
         { src: tinosBold, fontWeight: "bold" },
     ],
   });
+
+export const stylesFont = StyleSheet.create({
+  fontFamilyName : {
+    fontFamily: "Tinos",
+  }
+});
   
 
-const styles = StyleSheet.create({
+export const styles = StyleSheet.create({
   page: {
     fontFamily: 'Tinos',
     paddingHorizontal: 30,

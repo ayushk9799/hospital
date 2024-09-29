@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../ui/alert-dialog";
+import { Loader2 } from "lucide-react";
 
 export default function ItemsMaster() {
   const dispatch = useDispatch();
@@ -38,6 +39,7 @@ export default function ItemsMaster() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const types = ["All", ...new Set(items.map((item) => item.type))];
 
@@ -46,19 +48,6 @@ export default function ItemsMaster() {
       dispatch(fetchItems());
     }
   }, [itemsStatus, dispatch]);
-
-  useEffect(() => {
-    if (deleteInventoryItemStatus === "succeeded") {
-      toast({
-        title: "Item deleted successfully",
-        description: "The item has been successfully deleted from the inventory.",
-      });
-    }
-    return () => {
-      dispatch(setDeleteInventoryItemStatusIdle());
-    }
-  }, [deleteInventoryItemStatus, dispatch, toast]);
-
 
   const filteredItems = items
     .filter((item) =>
@@ -101,11 +90,27 @@ export default function ItemsMaster() {
   };
 
   const confirmDelete = () => {
-    dispatch(deleteInventoryItem(itemToDelete._id));
-    setIsDeleteDialogOpen(false);
-    setItemToDelete(null);
-    setDeleteConfirmation("");
-  }
+    dispatch(deleteInventoryItem(itemToDelete._id))
+      .unwrap()
+      .then(() => {
+        setDeleteConfirmation("");
+        toast({
+          title: "Item deleted successfully",
+          description: `${itemToDelete.name} has been removed from the inventory.`,
+          variant: "default",
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Failed to delete item",
+          description: error.message || "An error occurred while deleting the item.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsDeleteDialogOpen(false);
+      });
+  };
 
   const handleCloseEditItemDialog = () => {
     setIsEditItemDialogOpen(false);
@@ -263,9 +268,14 @@ export default function ItemsMaster() {
             <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deleteConfirmation !== itemToDelete?.name}
+              disabled={deleteConfirmation !== itemToDelete?.name || deleteInventoryItemStatus === "loading"}
             >
-              Delete
+              {deleteInventoryItemStatus === "loading" ? (<>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+              </>) : (
+              "Delete"
+            )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

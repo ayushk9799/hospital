@@ -6,8 +6,8 @@ import { Label } from "../../../ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../../ui/select"; // Import Select components
 import { useToast } from "../../../../hooks/use-toast";
 import { useDispatch, useSelector } from "react-redux";
-import { updateInventoryItem, setUpdateInventoryStatusIdle } from "../../../../redux/slices/pharmacySlice";
-
+import { updateInventoryItem } from "../../../../redux/slices/pharmacySlice";
+import { Loader2 } from 'lucide-react'
 export const typeOptions = ['Tablet', 'Capsule', 'Liquid', 'Injection', 'Syrup', 'Other'];
 
 export default function EditItemDialog({ isOpen, onClose, item }) {
@@ -34,24 +34,24 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
     }
   }, [item]);
 
-  useEffect(() => {
-    if (updateInventoryItemStatus === "succeeded") {
-      toast({
-        title: "Item updated successfully",
-        description: "The item has been successfully updated in the inventory.",
-        variant: "default",
-      });
-      dispatch(setUpdateInventoryStatusIdle());
-      onClose();
-    } else if (updateInventoryItemStatus === "failed") {
-      toast({
-        title: "Update failed",
-        description: "There was an error updating the item. Please try again.",
-        variant: "destructive",
-      });
-      dispatch(setUpdateInventoryStatusIdle());
-    }
-  }, [updateInventoryItemStatus, dispatch, toast, onClose]);
+  // useEffect(() => {
+  //   if (updateInventoryItemStatus === "succeeded") {
+  //     toast({
+  //       title: "Item updated successfully",
+  //       description: "The item has been successfully updated in the inventory.",
+  //       variant: "default",
+  //     });
+  //     dispatch(setUpdateInventoryStatusIdle());
+  //     onClose();
+  //   } else if (updateInventoryItemStatus === "failed") {
+  //     toast({
+  //       title: "Update failed",
+  //       description: "There was an error updating the item. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //     dispatch(setUpdateInventoryStatusIdle());
+  //   }
+  // }, [updateInventoryItemStatus, dispatch, toast, onClose]);
 
   const handleEditItem = () => {
     const changedValues = {};
@@ -70,7 +70,21 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
       });
       onClose();
     } else {
-      dispatch(updateInventoryItem({ itemId: item._id, updateData: changedValues }));
+      dispatch(updateInventoryItem({ itemId: item._id, updateData: changedValues })).unwrap().then(()=>{
+        toast({
+          title: "Item updated successfully",
+          description: "The item has been successfully updated in the inventory.",
+          variant: "default",
+        });
+      }).catch((error) => {
+        toast({
+          title: "Failed to update item",
+          description: error.message,
+          variant: "destructive",
+        });
+      }).finally(()=>{
+        onClose();
+      });
     }
   };
 
@@ -142,7 +156,16 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
           <DialogFooter className="mt-4">
             <Button type="button" size="sm" variant="outline" onClick={handleReset}>Reset</Button>
             <Button type="button" size="sm" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" size="sm">Save Changes</Button>
+            <Button type="submit" size="sm" disabled={updateInventoryItemStatus === "loading"}>
+              {updateInventoryItemStatus === "loading" ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+                "Save Changes"
+              )}  
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

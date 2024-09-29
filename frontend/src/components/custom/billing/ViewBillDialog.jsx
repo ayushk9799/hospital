@@ -7,26 +7,31 @@ import { Label } from "../../ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
 import { PrinterIcon } from "lucide-react";
 import { numberToWords } from "../../../assets/Data";
+import { stylesFont } from "../reports/LabReportPDF";
 
 const PrintHeader = () => (
   <div className="hidden print:block mb-4">
-    <div className="border-b border-black pb-2 mb-2">
-      <h1 className="text-[30px] text-center text-[#1a5f7a] font-tinos mb-2">KIDNEY STONE & UROLOGY CLINIC</h1>
-      <div className="flex items-center justify-center">
-        <div className="w-20 mr-4">
+    <div className="mb-2 border-b border-[#000000] pb-2">
+      <div>
+        <h1 className="text-4xl tracking-wide text-center text-[#1a5f7a]" style={stylesFont.fontFamilyName}>KIDNEY STONE & UROLOGY CLINIC</h1>
+      </div>
+      <div style={{ display: "flex", flexDirection: "row" }}>
+        <div style={{ marginLeft: 50 }}>
           <img
-            src={require("../reports/Capture2.png")} // Update this path 
+            src={require("../reports/Capture2.png")}
             alt="Clinic Logo"
-            width={70}
-            height={70}
+            className="w-[100px] h-[100px]"
           />
         </div>
-        <div className="text-center">
-          <p className="text-xs text-[#333333]">Jail Road, Near Mahindra Showroom, Tilkamanjhi, Bhagalpur</p>
-          <p className="text-sm text-[#1a5f7a] tracking-widest mt-1">DR. RAJAN KUMAR SINHA</p>
-          <p className="text-xs text-[#333333]">M.B.B.S(Ranchi), MS(Gen.Surgery), MCh(Urology), Kolkata</p>
-          <p className="text-xs text-[#333333]">Consultant Urologist</p>
-          <p className="text-xs text-[#333333]">Mob : 9709993104</p>
+        <div className="ml-8">
+          <p className="text-center text-[#333333]">
+            Jail Road, Near Mahindra Showroom, Tilkamanjhi, Bhagalpur
+          </p>
+          <h2 className="text-center text-[#1a5f7a] text-xl ">DR. RAJAN KUMAR SINHA</h2>
+          <p className="text-center text-[#333333]">
+            M.B.B.S(Ranchi), MS(Gen.Surgery), MCh(Urology), Kolkata
+          </p>
+          <p className="text-center text-[#333333]">Consultant Urologist, Mob : 9709993104</p>
         </div>
       </div>
     </div>

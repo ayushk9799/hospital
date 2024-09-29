@@ -22,6 +22,10 @@ export default function Settings() {
     navigate('/create-room');
   };
 
+  const handleHospitalInfo = () => {
+    navigate('/settings/hospital-info');
+  };
+
   const formatTestKey = (test) => {
     return test.toLowerCase().replace(/[()]/g, "").replace(/\s+/g, "-");
   };
@@ -97,6 +101,7 @@ export default function Settings() {
       <div className="space-x-4">
         <Button onClick={handleAddStaff}>Add Staff</Button>
         <Button onClick={handleCreateRoom}>Create Room</Button>
+        <Button onClick={handleHospitalInfo}>Hospital Info</Button>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button>Create Test Template</Button>

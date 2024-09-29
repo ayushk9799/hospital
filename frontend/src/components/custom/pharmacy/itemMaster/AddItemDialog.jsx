@@ -7,9 +7,14 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from ".
 import { typeOptions } from "./EditItemDialog";
 import { useDispatch } from "react-redux";
 import { createInventoryItem } from "../../../../redux/slices/pharmacySlice";
+import { useToast } from "../../../../hooks/use-toast";
+import { useSelector } from "react-redux";
 
 export default function AddItemDialog({ isOpen, onClose }) {
   const dispatch = useDispatch();
+  const { toast } = useToast();
+  const { createInventoryItemStatus } = useSelector((state) => state.pharmacy);
+  
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [quantity, setQuantity] = useState(""); // Changed from stock to quantity
@@ -17,8 +22,8 @@ export default function AddItemDialog({ isOpen, onClose }) {
   const [MRP, setMRP] = useState("");
   const [types, setTypes] = useState("");
   const [supplierName, setSupplierName] = useState("");
-  const [supplierPhone, setSupplierPhone] = useState(""); // New state for supplier phone
-  const [supplierAddress, setSupplierAddress] = useState(""); // New state for supplier address
+  const [supplierPhone, setSupplierPhone] = useState("");
+  const [supplierAddress, setSupplierAddress] = useState("");
 
   const handleAddItem = () => {
     const itemData = {
@@ -30,14 +35,25 @@ export default function AddItemDialog({ isOpen, onClose }) {
         MRP: parseFloat(MRP),
         type: types,
       },
-      supplierInfo: {
-        name: supplierName,
-        phone: supplierPhone,
-        address: supplierAddress
-      }
+      supplierInfo: { name: supplierName, phone: supplierPhone, address: supplierAddress }
     };
-    dispatch(createInventoryItem(itemData));
-    onClose();
+    dispatch(createInventoryItem(itemData)).unwrap()
+      .then(() => {
+        toast({
+          title: "Item added successfully",
+          description: "The new item has been added to the inventory.",
+          variant: "default",
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Failed to add item",
+          description: error.message || "There was an error adding the item. Please try again.",
+          variant: "destructive",
+        });
+      }).finally(() => {
+        onClose();
+      });
   };
 
   const handleReset = () => {
@@ -118,7 +134,9 @@ export default function AddItemDialog({ isOpen, onClose }) {
           <DialogFooter className="mt-4">
             <Button type="button" size="sm" variant="outline" onClick={handleReset}>Reset</Button>
             <Button type="button" size="sm" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" size="sm">Add Item</Button>
+            <Button type="submit" size="sm" disabled={createInventoryItemStatus === "loading"}>
+              {createInventoryItemStatus === "loading" ? "Adding..." : "Add Item"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>
