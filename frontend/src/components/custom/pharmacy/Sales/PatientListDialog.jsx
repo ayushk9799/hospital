@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../../ui/dialog"
 import { Input } from "../../../ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../ui/table"
-import { Search, X, RefreshCw } from 'lucide-react'
+import { Search, X, RefreshCw, Loader2 } from 'lucide-react'
 import { setSelectedPatient } from '../../../../redux/slices/patientSlice'
 import { fetchPatients } from '../../../../redux/slices/patientSlice'
 import { Button } from "../../../ui/button"
@@ -58,8 +58,17 @@ export default function PatientListDialog({ isOpen, setIsOpen, onPatientSelect }
             disabled={patientsStatus === 'loading'}
             className="flex items-center"
           >
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
+            {patientsStatus === 'loading' ? (
+              <>
+                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                Refreshing...
+              </>
+            ) : (
+              <>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </>
+            )}
           </Button>
         </div>
         <Table>

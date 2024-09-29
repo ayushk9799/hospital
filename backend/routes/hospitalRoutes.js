@@ -1,38 +1,83 @@
 import express from 'express';
 import { verifySuperAdmin } from '../middleware/SuperAdminMiddleWare.js';
 import { Hospital } from '../models/Hospital.js'; // Make sure to import the Hospital model
+import mongoose from 'mongoose';
 
 const router = express.Router();
 
 router.post('/create', verifySuperAdmin, async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        // Check if a hospital with the same hospitalID already exists
-        const existingHospital = await Hospital.findOne({ hospitalId: req.body.hospitalId });
+        const existingHospital = await Hospital.findOne({ hospitalId: req.body.hospitalId }).session(session);
         if (existingHospital) {
+            await session.abortTransaction();
+            session.endSession();
             return res.status(400).json({ message: 'A hospital with this ID already exists' });
         }
 
-        // If no existing hospital, create a new one
         const newHospital = new Hospital({
             ...req.body
         });
 
-        const savedHospital = await newHospital.save();
+        const savedHospital = await newHospital.save({ session });
 
-        // Set the cookie with the hospital ID
-        // res.cookie('hospitalId', savedHospital.hospitalID, {
-        //     httpOnly: true,
-        //     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
-        //     sameSite: 'strict',
-        //     maxAge: 24 * 60 * 60 * 1000 // 24 hours
-        // });
+        await session.commitTransaction();
+        session.endSession();
 
         res.status(201).json({
             message: 'Hospital created successfully',
             hospital: savedHospital
         });
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
         res.status(400).json({ message: error.message });
+    }
+});
+
+// New route to fetch hospital details
+router.get('/:hospitalId', async (req, res) => {
+    try {
+        const hospital = await Hospital.findOne({ hospitalId: req.params.hospitalId });
+        if (!hospital) {
+            return res.status(404).json({ message: 'Hospital not found' });
+        }
+        res.status(200).json(hospital);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching hospital details', error: error.message });
+    }
+});
+
+// New route to update hospital information
+router.post('/:hospitalId', async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        const hospital = await Hospital.findOne({ hospitalId: req.params.hospitalId }).session(session);
+        if (!hospital) {
+            await session.abortTransaction();
+            session.endSession();
+            return res.status(404).json({ message: 'Hospital not found' });
+        }
+
+        Object.assign(hospital, req.body);
+
+        const updatedHospital = await hospital.save({ session });
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.status(200).json({
+            message: 'Hospital updated successfully',
+            hospital: updatedHospital
+        });
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        res.status(400).json({ message: 'Error updating hospital', error: error.message });
     }
 });
 

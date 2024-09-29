@@ -28,12 +28,13 @@ import AddStaff from './pages/AddStaff';
 import { fetchDepartments } from "./redux/slices/departmentSlice";
 import { fetchRooms } from "./redux/slices/roomSlice";
 import { fetchUserData } from "./redux/slices/userSlice";
+import { fetchHospitalInfo } from "./redux/slices/HospitalSlice";
 import CreateBloodWork from './pages/CreateBloodWork'; // Add this import
 import Lab from './pages/Lab';
 import CreateLabReport from './pages/CreateLabReport';
 import { setLoading } from './redux/slices/loaderSlice';
 import DischargeSummary from './pages/DischargeSummary';
-
+import HospitalInfo from './pages/HospitalInfo';
 import Services from './pages/Services';
 import CreateServiceBill from './pages/CreateServiceBill';
 const AppContent = () => {
@@ -47,7 +48,8 @@ const AppContent = () => {
       dispatch(fetchStaffMembers()),
       dispatch(fetchDepartments()),
       dispatch(fetchUserData()),
-       dispatch(fetchRooms()),
+      dispatch(fetchRooms()),
+      dispatch(fetchHospitalInfo())
     ]).then(() => {
       dispatch(setLoading(false));
     });
@@ -92,6 +94,7 @@ const AppContent = () => {
             <Route path='/services' Component={Services} />
             <Route path='/billings/create-service-bill' Component={CreateServiceBill} />
             <Route path='/billings/edit/:billId' Component={CreateServiceBill} />
+            <Route path='/settings/hospital-info' Component={HospitalInfo} />
           </Routes>
         </main>
       </div>

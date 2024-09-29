@@ -13,12 +13,17 @@ export default function Settings() {
     navigate('/create-room');
   };
 
+  const handleHospitalInfo = () => {
+    navigate('/settings/hospital-info');
+  };
+
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-4">Settings</h1>
       <div className="space-x-4">
         <Button onClick={handleAddStaff}>Add Staff</Button>
         <Button onClick={handleCreateRoom}>Create Room</Button>
+        <Button onClick={handleHospitalInfo}>Hospital Info</Button>
       </div>
       {/* Other settings content */}
     </div>

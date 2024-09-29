@@ -33,6 +33,7 @@ export default function SalesMain({ clearTrigger, shouldOpenMedicineSuggDialog, 
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
   const [isMedicineSuggDialogOpen, setIsMedicineSuggDialogOpen] = useState(false);
 
+  // patient list modified for search suggestion
   const patientListModified = useMemo(() => {
     return patientlist.map(patient => ({
       _id : patient._id,
@@ -51,23 +52,6 @@ export default function SalesMain({ clearTrigger, shouldOpenMedicineSuggDialog, 
     if(salesBillsStatus === 'idle') dispatch(fetchSalesBills());
     if(patientsStatus === 'idle') dispatch(fetchPatients());
   }, [dispatch, itemsStatus, salesBillsStatus, patientsStatus]);
-
-  // feching initial data
-  useEffect(() => {
-    if (createSalesBillStatus === 'succeeded') {
-      toast({
-        title: 'Sales order created successfully!',
-      });
-      // Reset form or navigate away
-    } else if (createSalesBillStatus === 'failed') {
-      toast({
-        title: `Failed to create sales order: ${error}`,
-      });
-    }
-    return () => {
-      dispatch(setCreateSalesBillStatus('idle'));
-    }
-  }, [createSalesBillStatus, error]);
 
   const handlePaymentMethodChange = (value) => {
     setPaymentMethod(value);
@@ -183,7 +167,13 @@ export default function SalesMain({ clearTrigger, shouldOpenMedicineSuggDialog, 
       paymentMethod,
       buyerName
     };
-    dispatch(createSalesBill(patientInfo));
+    dispatch(createSalesBill(patientInfo)).unwrap().then(()=>{
+      toast({ title: "Sales order created successfully!"});
+    }).catch((error) => {
+      toast({title: "Failed to create sales order", description: error.message});
+    }).finally(()=>{
+      clearAllFields();
+    });
   };
 
   const handleAdditionalDiscountChange = (e) => {
@@ -415,7 +405,14 @@ export default function SalesMain({ clearTrigger, shouldOpenMedicineSuggDialog, 
               </div>
               <div className="grid grid-cols-2 gap-4 items-center">
                 <Button variant="outline" size="sm" onClick={handleSaveDraft}>Save Draft</Button>
-                <Button className="bg-green-500 hover:bg-green-600" size="sm" type="submit">Create Sales Order</Button>
+                <Button 
+                  className="bg-green-500 hover:bg-green-600" 
+                  size="sm" 
+                  type="submit"
+                  disabled={createSalesBillStatus === 'loading'}
+                >
+                  {createSalesBillStatus === 'loading' ? 'Creating...' : 'Create Sales Order'}
+                </Button>
               </div>
             </form>
           </CardContent>

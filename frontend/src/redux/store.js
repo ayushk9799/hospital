@@ -8,6 +8,7 @@ import pharmacyReducer from './slices/pharmacySlice';
 import loaderReducer from './slices/loaderSlice';
 import serviceReducer from './slices/serviceSlice';
 import billingReducer from './slices/BillingSlice';
+import hospitalReducer from './slices/HospitalSlice';
 export const store = configureStore({
   reducer: {
     patients: patientReducer,
@@ -18,6 +19,7 @@ export const store = configureStore({
     user:userReducer,
     loader:loaderReducer,
     services:serviceReducer,
-    bills:billingReducer
+    bills:billingReducer,
+    hospital:hospitalReducer
   },
 });
