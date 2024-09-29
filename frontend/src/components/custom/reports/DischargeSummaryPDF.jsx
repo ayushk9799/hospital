@@ -17,7 +17,7 @@ Font.register({
 const styles = StyleSheet.create({
   page: {
     fontFamily: 'Tinos',
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
     paddingTop: 10,
     backgroundColor: "white",
   },
@@ -30,16 +30,24 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 5,
-    
+    flexDirection: 'row',  // Add this line
+    alignItems: 'flex-start',  // Add this line
   },
   sectionTitle: {
     fontSize: 12,
     fontWeight: 'bold',
     color: '#34495e',
+    width:"25%"
+     // Add this line
+  },
+  sectionContent: {  // Add this new style
+    fontSize: 11,
+    color: '#2c3e50',
+    width: '75%',
+    marginLeft:5
   },
   row: {
     flexDirection: 'row',
-    
     
     justifyContent: "flex-start",
   },
@@ -58,7 +66,7 @@ const styles = StyleSheet.create({
   text: {
     fontSize: 11,
     
-    marginLeft:10
+    marginLeft:150
   },
   patientInfoSection: {
    
@@ -96,8 +104,8 @@ const ConditionalSection = ({ title, content }) => {
   if (!content) return null;
   return (
     <View style={styles.section}>
-      <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.text}>{content}</Text>
+      <Text style={styles.sectionTitle}>{title}:</Text>
+      <Text style={styles.sectionContent}>{content}</Text>
     </View>
   );
 };
@@ -177,22 +185,24 @@ const DischargeSummaryPDF = ({ formData, patient }) => {
         
         {hasComorbidities && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Comorbidities</Text>
-            {formData.comorbidities.map((c, index) => (
-              c.name && <Text key={index} style={styles.text}>{c.name}</Text>
-            ))}
+            <Text style={styles.sectionTitle}>Comorbidities:</Text>
+            <View style={styles.sectionContent}>
+              {formData.comorbidities.map((c, index) => (
+                c.name && <Text key={index}>{c.name}</Text>
+              ))}
+            </View>
           </View>
         )}
 
         {hasAdmissionVitals && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Admission Vitals</Text>
-            <Text style={styles.text}>
-              {formData.vitals.admission.bloodPressure && `BP: ${formData.vitals.admission.bloodPressure}, `}
-              {formData.vitals.admission.heartRate && `HR: ${formData.vitals.admission.heartRate}, `}
-              {formData.vitals.admission.temperature && `Temp: ${formData.vitals.admission.temperature}, `}
-              {formData.vitals.admission.oxygenSaturation && `SpO2: ${formData.vitals.admission.oxygenSaturation}, `}
-              {formData.vitals.admission.respiratoryRate && `RR: ${formData.vitals.admission.respiratoryRate}`}
+            <Text style={styles.sectionContent}>
+              {formData.vitals.admission.bloodPressure && `Blood Pressure: ${formData.vitals.admission.bloodPressure}, `}
+              {formData.vitals.admission.heartRate && `Heart Rate: ${formData.vitals.admission.heartRate}, `}
+              {formData.vitals.admission.temperature && `Temperature: ${formData.vitals.admission.temperature}, `}
+              {formData.vitals.admission.oxygenSaturation && `Oxygen Saturation: ${formData.vitals.admission.oxygenSaturation}, `}
+              {formData.vitals.admission.respiratoryRate && `Respiratory Rate: ${formData.vitals.admission.respiratoryRate}`}
             </Text>
           </View>
         )}
@@ -217,12 +227,12 @@ const DischargeSummaryPDF = ({ formData, patient }) => {
         {hasDischargeVitals && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Discharge Vitals</Text>
-            <Text style={styles.text}>
-              {formData.vitals.discharge.bloodPressure && `BP: ${formData.vitals.discharge.bloodPressure}, `}
-              {formData.vitals.discharge.heartRate && `HR: ${formData.vitals.discharge.heartRate}, `}
-              {formData.vitals.discharge.temperature && `Temp: ${formData.vitals.discharge.temperature}, `}
-              {formData.vitals.discharge.oxygenSaturation && `SpO2: ${formData.vitals.discharge.oxygenSaturation}, `}
-              {formData.vitals.discharge.respiratoryRate && `RR: ${formData.vitals.discharge.respiratoryRate}`}
+            <Text style={styles.sectionContent}>
+              {formData.vitals.discharge.bloodPressure && `Blood Pressure: ${formData.vitals.discharge.bloodPressure}, `}
+              {formData.vitals.discharge.heartRate && `Heart Rate: ${formData.vitals.discharge.heartRate}, `}
+              {formData.vitals.discharge.temperature && `Temperature: ${formData.vitals.discharge.temperature}, `}
+              {formData.vitals.discharge.oxygenSaturation && `Oxygen Saturation: ${formData.vitals.discharge.oxygenSaturation}, `}
+              {formData.vitals.discharge.respiratoryRate && `Respiratory Rate: ${formData.vitals.discharge.respiratoryRate}`}
             </Text>
           </View>
         )}

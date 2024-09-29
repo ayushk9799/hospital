@@ -74,7 +74,7 @@ export default function DischargeSummary() {
   const patient = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
   );
-  console.log(patient)
+  console.log(patient);
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   useEffect(() => {
@@ -165,11 +165,10 @@ export default function DischargeSummary() {
     contactNumber: "",
     address: "",
     roomNumber: "",
- 
   });
   useEffect(() => {
     if (patient) {
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
         admissionDate: patient.admissionDate || "",
         dateDischarged: patient.dateDischarged || "",
@@ -195,7 +194,9 @@ export default function DischargeSummary() {
           },
         },
         investigations: patient.investigations || [{ name: "", category: "" }],
-        medicineAdvice: patient.medicineAdvice || [{ name: "", dosage: "", duration: "" }],
+        medicineAdvice: patient.medicineAdvice || [
+          { name: "", dosage: "", duration: "" },
+        ],
         notes: patient.notes || "",
         comorbidities: patient.comorbidities || [],
       }));
@@ -207,7 +208,6 @@ export default function DischargeSummary() {
         contactNumber: patient.patient.contactNumber || "",
         address: patient.patient.address || "",
         roomNumber: patient.assignedRoom?.roomNumber || "",
-        
       });
     }
   }, [patient]);
@@ -643,7 +643,6 @@ export default function DischargeSummary() {
                 )}
               </div>
 
-                 
               <div>
                 <Label htmlFor="medicineAdvice">Medicine/Advice</Label>
                 <div className="space-y-2 mt-2">
