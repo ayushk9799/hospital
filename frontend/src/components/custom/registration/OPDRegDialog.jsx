@@ -1,17 +1,9 @@
 import React, { useState } from "react";
 import { Button } from "../../ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../../ui/dialog";
-import { useDispatch } from "react-redux";
-import { fetchPatients } from "../../../redux/slices/patientSlice";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from "../../ui/dialog";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPatients, registerPatient } from "../../../redux/slices/patientSlice";
 import { Textarea } from "../../ui/textarea";
-import { Backend_URL } from "../../../assets/Data";
 import PatientInfoForm from "./PatientInfoForm";
 import VisitDetailsForm from "./VisitDetailsForm";
 import VitalsForm from "./VitalsForm";
@@ -19,6 +11,8 @@ import InsuranceForm from "./InsuranceForm";
 import { Switch } from "../../ui/switch";
 import { Input } from "../../ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import { useToast } from "../../../hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const initialFormData = {
   name: "",
@@ -58,7 +52,10 @@ const initialFormData = {
 };
 
 export default function OPDRegDialog({ open, onOpenChange }) {
+  console.log('opd');
   const dispatch = useDispatch();
+  const { toast } = useToast();
+  const registerPatientStatus = useSelector((state) => state.patients.registerPatientStatus);
   
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
@@ -133,24 +130,25 @@ export default function OPDRegDialog({ open, onOpenChange }) {
             ),
           },
         };
-        console.log(submissionData);
-        try {
-          const response = await fetch(`${Backend_URL}/api/patients`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(submissionData),
-            credentials: "include",
+        dispatch(registerPatient(submissionData))
+          .unwrap()
+          .then(() => {
+            toast({
+              title: "Patient registered successfully",
+              description: "The new patient has been added.",
+              variant: "default",
+            });
+            dispatch(fetchPatients());
+          })
+          .catch((error) => {
+            toast({
+              title: "Failed to register patient",
+              description: error.message || "There was an error registering the patient. Please try again.",
+              variant: "destructive",
+            });
+          }).finally(() => {
+            onOpenChange(false);
           });
-
-          if (!response.ok) throw new Error("Network response was not ok");
-
-          const result = await response.json();
-          console.log("Patient registered successfully:", result);
-          onOpenChange(false);
-          dispatch(fetchPatients());
-        } catch (error) {
-          console.error("Error registering patient:", error);
-        }
       }
     }
   };
@@ -305,7 +303,16 @@ export default function OPDRegDialog({ open, onOpenChange }) {
                 >
                   Cancel
                 </Button>
-                <Button type="submit">Register</Button>
+                <Button type="submit" disabled={registerPatientStatus === "loading"}>
+                  {registerPatientStatus === "loading" ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Registering...
+                    </>
+                  ) : (
+                    "Register"
+                  )}
+                </Button>
               </DialogFooter>
             </>
           )}

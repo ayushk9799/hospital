@@ -50,7 +50,7 @@ router.post('/update-bill/:id', async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { services, totals, patientInfo, department, physician } = req.body;
+    const { services, totals, patientInfo } = req.body;
 
     const bill = await ServicesBill.findById(id).session(session);
     if (!bill) {
@@ -69,8 +69,6 @@ router.post('/update-bill/:id', async (req, res) => {
       bill.additionalDiscount = totals.additionalDiscount;
     }
     bill.patientInfo = patientInfo || bill.patientInfo;
-    bill.department = department || bill.department;
-    bill.physician = physician || bill.physician;
 
     await bill.save({ session });
 

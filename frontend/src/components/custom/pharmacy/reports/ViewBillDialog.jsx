@@ -21,6 +21,7 @@ import {
   TableRow,
 } from "../../../ui/table";
 import {  PrinterIcon } from "lucide-react";
+import PharmacyHeader from "../../../../utils/print/PharmacyHeader";
 
 // Update the PrintHeader component
 const PrintHeader = () => (
@@ -76,7 +77,9 @@ export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
           ref={componentRef}
           className={isPrinting ? 'print-content' : ''}
         >
-          <PrintHeader  />
+          <div className="hidden print:block mb-4">
+            <PharmacyHeader />
+          </div>
           <div className="no-print">
             <DialogHeader className="flex flex-row items-center justify-between mr-7 pb-2">
               <div>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
-import { fetchItems, deleteInventoryItem, setDeleteInventoryItemStatusIdle } from "../../../redux/slices/pharmacySlice";
+import { fetchItems, deleteInventoryItem } from "../../../redux/slices/pharmacySlice";
 import { Search, ChevronLeft, ChevronRight, Pencil, Trash, FileDown, Plus, ListFilter, PackageX } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { Input } from "../../ui/input";

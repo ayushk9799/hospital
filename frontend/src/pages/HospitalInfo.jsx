@@ -11,6 +11,7 @@ import {
   CardTitle,
   CardDescription,
 } from "../components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchHospitalInfo, updateHospitalInfo } from '../redux/slices/HospitalSlice';
 
@@ -28,6 +29,10 @@ const HospitalInfo = () => {
     doctorName: '',
     doctorInfo: '',
     hospitalId: '',
+    pharmacyName: '',
+    pharmacyAddress: '',
+    pharmacyContactNumber: '',
+    pharmacyLogo: '',
   });
 
   useEffect(() => {
@@ -72,118 +77,172 @@ const HospitalInfo = () => {
 
   return (
     <Card className="w-full mx-auto">
-      <CardHeader>
-        <CardTitle>Hospital Information Management</CardTitle>
-        <CardDescription>Enter or update your hospital's details</CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div>
+          <CardTitle>Hospital Information Management</CardTitle>
+          <CardDescription>Enter or update your hospital's details</CardDescription>
+        </div>
+        <Button 
+          onClick={handleSubmit} 
+          disabled={updateStatus === 'loading'}
+        >
+          {updateStatus === 'loading' ? 'Saving...' : 'Save'}
+        </Button>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="hospitalId">Hospital ID</Label>
-              <Input
-                id="hospitalId"
-                name="hospitalId"
-                value={formData.hospitalId}
-                onChange={handleChange}
-                placeholder="Enter hospital ID"
-                disabled
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="name">Hospital Name</Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleChange}
-                placeholder="Enter hospital name"
-                required
-              />
-            </div>
-          
-            <div className="space-y-2">
-              <Label htmlFor="contactNumber">Contact Number</Label>
-              <Input
-                id="contactNumber"
-                name="contactNumber"
-                value={formData.contactNumber}
-                onChange={handleChange}
-                placeholder="Enter contact number"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                placeholder="Enter email address"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="website">Website</Label>
-              <Input
-                id="website"
-                name="website"
-                type="url"
-                value={formData.website}
-                onChange={handleChange}
-                placeholder="Enter website URL"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="doctorName">Doctor Name</Label>
-              <Input
-                id="doctorName"
-                name="doctorName"
-                value={formData.doctorName}
-                onChange={handleChange}
-                placeholder="Enter doctor name"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="doctorInfo">Doctor Information</Label>
-              <Textarea
-                id="doctorInfo"
-                name="doctorInfo"
-                value={formData.doctorInfo}
-                onChange={handleChange}
-                placeholder="Enter doctor information"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="address">Address</Label>
-              <Textarea
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleChange}
-                placeholder="Enter hospital address"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="logo">Logo URL</Label>
-              <Input
-                id="logo"
-                name="logo"
-                value={formData.logo}
-                onChange={handleChange}
-                placeholder="Enter logo URL"
-              />
-            </div>
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => setFormData(hospitalInfo)}>Reset</Button>
-            <Button type="submit" disabled={updateStatus === 'loading'}>
-              {updateStatus === 'loading' ? 'Saving...' : 'Save'}
-            </Button>
-          </div>
+        <form className="space-y-6">
+          <Tabs defaultValue="hospital" className="w-full">
+            <TabsList className="grid w-[400px] grid-cols-2">
+              <TabsTrigger value="hospital">Hospital Information</TabsTrigger>
+              <TabsTrigger value="pharmacy">Pharmacy Information</TabsTrigger>
+            </TabsList>
+            <TabsContent value="hospital">
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="hospitalId">Hospital ID</Label>
+                  <Input
+                    id="hospitalId"
+                    name="hospitalId"
+                    value={formData.hospitalId}
+                    onChange={handleChange}
+                    placeholder="Enter hospital ID"
+                    disabled
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="name">Hospital Name</Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Enter hospital name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="contactNumber">Contact Number</Label>
+                  <Input
+                    id="contactNumber"
+                    name="contactNumber"
+                    value={formData.contactNumber}
+                    onChange={handleChange}
+                    placeholder="Enter contact number"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="Enter email address"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="website">Website</Label>
+                  <Input
+                    id="website"
+                    name="website"
+                    type="url"
+                    value={formData.website}
+                    onChange={handleChange}
+                    placeholder="Enter website URL"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="doctorName">Doctor Name</Label>
+                  <Input
+                    id="doctorName"
+                    name="doctorName"
+                    value={formData.doctorName}
+                    onChange={handleChange}
+                    placeholder="Enter doctor name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="doctorInfo">Doctor Information</Label>
+                  <Textarea
+                    id="doctorInfo"
+                    name="doctorInfo"
+                    value={formData.doctorInfo}
+                    onChange={handleChange}
+                    placeholder="Enter doctor information"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="address">Address</Label>
+                  <Textarea
+                    id="address"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder="Enter hospital address"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="logo">Logo URL</Label>
+                  <Input
+                    id="logo"
+                    name="logo"
+                    value={formData.logo}
+                    onChange={handleChange}
+                    placeholder="Enter logo URL"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+            <TabsContent value="pharmacy">
+              <div className="grid grid-cols-3 gap-4 mt-4">
+                <div className="space-y-2">
+                  <Label htmlFor="pharmacyName">Pharmacy Name</Label>
+                  <Input
+                    id="pharmacyName"
+                    name="pharmacyName"
+                    value={formData.pharmacyName}
+                    onChange={handleChange}
+                    placeholder="Enter pharmacy name"
+                  />
+                </div>
+               
+                <div className="space-y-2">
+                  <Label htmlFor="pharmacyContactNumber">Pharmacy Contact Number</Label>
+                  <Input
+                    id="pharmacyContactNumber"
+                    name="pharmacyContactNumber"
+                    value={formData.pharmacyContactNumber}
+                    onChange={handleChange}
+                    placeholder="Enter pharmacy contact number"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pharmacyLogo">Pharmacy Logo URL</Label>
+                  <Input
+                    id="pharmacyLogo"
+                    name="pharmacyLogo"
+                    value={formData.pharmacyLogo}
+                    onChange={handleChange}
+                    placeholder="Enter pharmacy logo URL"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pharmacyAddress">Pharmacy Address</Label>
+                  <Textarea
+                    id="pharmacyAddress"
+                    name="pharmacyAddress"
+                    value={formData.pharmacyAddress}
+                    onChange={handleChange}
+                    placeholder="Enter pharmacy address"
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </form>
       </CardContent>
     </Card>

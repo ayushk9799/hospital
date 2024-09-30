@@ -6,6 +6,7 @@ import { Label } from "../../ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../ui/select";
 import { useDispatch, useSelector } from "react-redux";
 import { updateService } from "../../../redux/slices/serviceSlice";
+import { useToast } from "../../../hooks/use-toast";
 
 const categoryOptions = ['Lab', 'General', 'Consultation', 'Other'];
 
@@ -15,6 +16,7 @@ export default function EditServiceDialog({ isOpen, onClose, service }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [rate, setRate] = useState("");
+  const { toast } = useToast();
 
   useEffect(() => {
     if (service) {
@@ -31,7 +33,25 @@ export default function EditServiceDialog({ isOpen, onClose, service }) {
       category,
       rate: parseFloat(rate),
     };
-    dispatch(updateService(updatedService));
+    dispatch(updateService(updatedService))
+      .unwrap()
+      .then(() => {
+        toast({
+          title: "Service updated successfully",
+          description: "The service has been updated.",
+          variant: "success",
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Failed to update service",
+          description: error.message || "There was an error updating the service. Please try again.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        onClose();
+      });
   };
 
   return (

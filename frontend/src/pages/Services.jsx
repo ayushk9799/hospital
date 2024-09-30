@@ -6,13 +6,7 @@ import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
 import { Search, Plus, ListFilter, FileDown, Pencil, Trash } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
-import { 
-  fetchServices, 
-  deleteService, 
-  setDeleteServiceStatusIdle, 
-  setCreateServiceStatusIdle, 
-  setUpdateServiceStatusIdle 
-} from '../redux/slices/serviceSlice';
+import { fetchServices, deleteService } from '../redux/slices/serviceSlice';
 import AddServiceDialog from '../components/custom/services/AddServiceDialog';
 import EditServiceDialog from '../components/custom/services/EditServiceDialog';
 import { useToast } from '../hooks/use-toast';
@@ -29,7 +23,7 @@ import {
 
 const Services = () => {
   const dispatch = useDispatch();
-  const { services, servicesStatus, deleteServiceStatus, createServiceStatus, updateServiceStatus } = useSelector((state) => state.services);
+  const { services, servicesStatus, deleteServiceStatus } = useSelector((state) => state.services);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -45,62 +39,6 @@ const Services = () => {
       dispatch(fetchServices());
     }
   }, [servicesStatus, dispatch]);
-
-  useEffect(() => {
-    if (deleteServiceStatus === "succeeded") {
-      toast({
-        title: "Service deleted successfully",
-        description: "The service has been successfully deleted.",
-      });
-    } else if (deleteServiceStatus === "failed") {
-      toast({
-        title: "Error deleting service",
-        description: "There was an error deleting the service. Please try again.",
-        variant: "destructive",
-      });
-    }
-    return () => {
-      dispatch(setDeleteServiceStatusIdle());
-    }
-  }, [deleteServiceStatus, dispatch, toast]);
-
-  useEffect(() => {
-    if (createServiceStatus === "succeeded") {
-      toast({
-        title: "Service added successfully",
-        description: "The new service has been successfully added.",
-      });
-      setIsAddServiceDialogOpen(false);
-    } else if (createServiceStatus === "failed") {
-      toast({
-        title: "Error adding service",
-        description: "There was an error adding the service. Please try again.",
-        variant: "destructive",
-      });
-    }
-    return () => {
-      dispatch(setCreateServiceStatusIdle());
-    }
-  }, [createServiceStatus, dispatch, toast]);
-
-  useEffect(() => {
-    if (updateServiceStatus === "succeeded") {
-      toast({
-        title: "Service updated successfully",
-        description: "The service has been successfully updated.",
-      });
-      setIsEditServiceDialogOpen(false);
-    } else if (updateServiceStatus === "failed") {
-      toast({
-        title: "Error updating service",
-        description: "There was an error updating the service. Please try again.",
-        variant: "destructive",
-      });
-    }
-    return () => {
-      dispatch(setUpdateServiceStatusIdle());
-    }
-  }, [updateServiceStatus, dispatch, toast]);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
@@ -121,11 +59,28 @@ const Services = () => {
   };
 
   const confirmDelete = () => {
-    dispatch(deleteService(serviceToDelete._id));
-    setIsDeleteDialogOpen(false);
-    setServiceToDelete(null);
-    setDeleteConfirmation("");
-  }
+    dispatch(deleteService(serviceToDelete._id))
+      .unwrap()
+      .then(() => {
+        toast({
+          title: "Service deleted successfully",
+          description: "The service has been removed.",
+          variant: "default",
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Failed to delete service",
+          description: error.message || "There was an error deleting the service. Please try again.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsDeleteDialogOpen(false);
+        setServiceToDelete(null);
+        setDeleteConfirmation("");
+      });
+  };
 
   const categories = ["All", ...new Set(services.map((service) => service.category))];
 
@@ -230,9 +185,9 @@ const Services = () => {
             <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deleteConfirmation !== serviceToDelete?.name}
+              disabled={deleteConfirmation !== serviceToDelete?.name || deleteServiceStatus === "loading"}
             >
-              Delete
+              {deleteServiceStatus === "loading" ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,6 +1,5 @@
 import { Backend_URL } from '../../assets/Data';
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import axios from 'axios';
 
 // Async thunks
 export const fetchStaffMembers = createAsyncThunk(

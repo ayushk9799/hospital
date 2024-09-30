@@ -6,6 +6,7 @@ import { Label } from "../../ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../ui/select";
 import { useDispatch, useSelector } from "react-redux";
 import { createService } from "../../../redux/slices/serviceSlice";
+import { useToast } from "../../../hooks/use-toast";
 
 const categoryOptions = ['Lab', 'General', 'Consultation', 'Other'];
 
@@ -15,6 +16,7 @@ export default function AddServiceDialog({ isOpen, onClose }) {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [rate, setRate] = useState("");
+  const { toast } = useToast();
 
   const handleAddService = () => {
     const serviceData = {
@@ -22,7 +24,24 @@ export default function AddServiceDialog({ isOpen, onClose }) {
       category,
       rate: parseFloat(rate),
     };
-    dispatch(createService(serviceData));
+    dispatch(createService(serviceData))
+      .unwrap()
+      .then(() => {
+        toast({
+          title: "Service added successfully",
+          description: "The new service has been added.",
+          variant: "default",
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Failed to add service",
+          description: error.message || "There was an error adding the service. Please try again.",
+          variant: "destructive",
+        });
+      }).finally(() => {
+        onClose();
+      });
   };
 
   const handleReset = () => {

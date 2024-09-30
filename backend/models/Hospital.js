@@ -7,13 +7,16 @@ const HospitalSchema = new mongoose.Schema({
   contactNumber: String,
   email: String,
   website: String,
-  // clinicName has been removed
   doctorName: String,
   doctorInfo: String,
   hospitalId: {
     type: String,
     required: true,
-  }
+  },
+  pharmacyName: String,
+  pharmacyAddress: String,
+  pharmacyContactNumber: String,
+  pharmacyLogo: String,
 });
 
 export const Hospital = mongoose.model('Hospital', HospitalSchema);

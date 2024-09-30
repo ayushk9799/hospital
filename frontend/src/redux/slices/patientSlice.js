@@ -2,21 +2,54 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Backend_URL } from '../../assets/Data';
 import createLoadingAsyncThunk from './createLoadingAsyncThunk';
 
+// Replace the existing fetchPatients thunk with this:
 export const fetchPatients = createLoadingAsyncThunk(
   'patients/fetchPatients',
-  async () => {
-    const response = await fetch(`${Backend_URL}/api/patients/details`, {
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include'
-    });
-    
-    if (response.status === 500) {
-      throw new Error('Server error: 500 Internals Server Error');
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/details`, {
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
     }
-    
-    const data = await response.json();
-    return data;
-  }
+  },
+  { useGlobalLoader: true }
+);
+
+// Add a new thunk for registering a patient
+export const registerPatient = createLoadingAsyncThunk(
+  'patients/registerPatient',
+  async (patientData, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patientData),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
 );
 
 export const savePrescription = createAsyncThunk(
@@ -51,6 +84,7 @@ const patientSlice = createSlice({
     selectedPatient: null,
     status: 'idle',
     prescriptionUpdateStatus: 'idle',
+    registerPatientStatus: 'idle',
     error: null,
   },
   reducers: {
@@ -91,6 +125,16 @@ const patientSlice = createSlice({
       .addCase(savePrescription.rejected, (state, action) => {
         state.prescriptionUpdateStatus = 'failed';
         state.error = action.error.message;
+      })
+      .addCase(registerPatient.pending, (state) => {
+        state.registerPatientStatus = 'loading';
+      })
+      .addCase(registerPatient.fulfilled, (state, action) => {
+        state.registerPatientStatus = 'succeeded';
+      })
+      .addCase(registerPatient.rejected, (state, action) => {
+        state.registerPatientStatus = 'failed';
+        state.error = action.payload;
       });
   },
 });

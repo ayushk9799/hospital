@@ -6,7 +6,6 @@ const servicesBillSchema = new mongoose.Schema({
     name : {type : String, required : true},
     quantity : {type : Number, default : 1},
     rate : Number,
-    discount : { type: Number, default : 0 },
     category : String
   }],
   totalAmount : { type: Number, required : true},
@@ -22,14 +21,6 @@ const servicesBillSchema = new mongoose.Schema({
   patient : {
     type : mongoose.Schema.Types.ObjectId,
     ref : "Patient",
-    required : true,
-  },
-  department : {
-    type : String,
-    required : true,
-  },
-  physician : {
-    type : String,
     required : true,
   },
   patientInfo : {

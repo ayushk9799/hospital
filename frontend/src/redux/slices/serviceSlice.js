@@ -108,17 +108,7 @@ const serviceSlice = createSlice({
     deleteServiceStatus: "idle",
     error: null,
   },
-  reducers: {
-    setDeleteServiceStatusIdle: (state) => {
-      state.deleteServiceStatus = "idle";
-    },
-    setCreateServiceStatusIdle: (state) => {
-      state.createServiceStatus = "idle";
-    },
-    setUpdateServiceStatusIdle: (state) => {
-      state.updateServiceStatus = "idle";
-    },
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(createService.pending, (state) => {
@@ -174,11 +164,5 @@ const serviceSlice = createSlice({
       });
   },
 });
-
-export const { 
-  setDeleteServiceStatusIdle, 
-  setCreateServiceStatusIdle, 
-  setUpdateServiceStatusIdle 
-} = serviceSlice.actions;
 
 export default serviceSlice.reducer;
