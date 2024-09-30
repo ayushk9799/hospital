@@ -575,9 +575,9 @@ router.post("/complexsearch", async (req, res) => {
 });
 router.post('/addLabReport', async (req, res) => {
   try {
-    const { visitId, labReport } = req.body;
-
-    const visit = await Visit.findById(visitId);
+    const { visitId, labReport,searchWhere } = req.body;
+const Model = searchWhere==="opd"?Visit:IPDAdmission;
+    const visit = await Model.findById(visitId);
     if (!visit) {
       return res.status(404).json({ message: 'Visit not found' });
     }

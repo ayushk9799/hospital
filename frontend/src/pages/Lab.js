@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import {
   Card,
@@ -36,14 +36,28 @@ import {
 } from "../components/ui/table";
 import CreateLabReport from "./CreateLabReport";
 import { ScrollArea } from "../components/ui/scroll-area";
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchTemplates } from '../redux/slices/templatesSlice';
+import TemplateLabReport from "./TemplateLabReport";
 
 const Lab = () => {
+  const dispatch = useDispatch();
+  const { labTestsTemplate, status, error } = useSelector((state) => state.templates);
+  console.log(labTestsTemplate);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("");
   const [searchQuery, setSearchQuery] = useState({ bookingDate: "" });
   const [searchWhere, setSearchWhere] = useState("opd");
   const [patientData, setPatientData] = useState(null);
   const [selectedTest, setSelectedTest] = useState(null);
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+
+  useEffect(() => {
+    if (status === 'idle') {
+      console.log("Fetching templates");
+      dispatch(fetchTemplates());
+    }
+  }, [status, dispatch]);
 
   const filteredCategories = labCategories.filter((category) =>
     category.types.some((type) =>
@@ -116,7 +130,7 @@ const Lab = () => {
       const data = await response.json();
       console.log("Patient search results:", data);
       if (data.length > 0) {
-        setPatientData(data[0]); // Set the first patient's data
+        setPatientData(data[0]); 
       } else {
         setPatientData(null);
         alert("No patients found");
@@ -128,7 +142,13 @@ const Lab = () => {
   };
 
   const handleTestSelection = (category, type) => {
+    setSelectedTemplate(null);
     setSelectedTest({ category, type });
+  };
+
+  const handleTemplateSelection = (template) => {
+    setSelectedTemplate(template);
+    setSelectedTest(null); // Clear any selected individual test
   };
 
   return (
@@ -260,6 +280,40 @@ const Lab = () => {
                 </div>
               )}
 
+              {/* Display labTestsTemplate */}
+              {status === 'succeeded' && labTestsTemplate && (
+                <div className="mb-4">
+                  <h2 className="text-2xl font-bold mb-4">Lab Test Templates</h2>
+                  <div className="space-y-4">
+                    {labTestsTemplate.map((template) => (
+                      <Card 
+                        key={template._id} 
+                        className="h-fit cursor-pointer hover:bg-gray-100 transition-colors duration-200"
+                        onClick={() => handleTemplateSelection(template)}
+                      >
+                        <CardHeader>
+                          <CardTitle className="transition-colors duration-200">
+                            {template.name.toUpperCase()}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <p className="text-sm text-gray-600 mb-2">
+                            Fields: {Object.keys(template.fields).length}
+                          </p>
+                          <ul className="list-disc list-inside space-y-1">
+                            {Object.entries(template.fields).map(([fieldName, fieldData]) => (
+                              <li key={fieldName} className="text-sm text-gray-700">
+                                {fieldData.label || fieldName}
+                              </li>
+                            ))}
+                          </ul>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Display filtered lab categories */}
               <div className="space-y-4">
                 {filteredCategories.map((category) => (
@@ -296,16 +350,24 @@ const Lab = () => {
         <div className="w-full md:w-2/3 h-full">
           <ScrollArea className="h-full">
             <div className="pr-4">
-              {selectedTest ? (
+              {selectedTemplate ? (
+                <TemplateLabReport
+                  template={selectedTemplate}
+                  patientData={patientData}
+                  onClose={() => setSelectedTemplate(null)}
+                  searchWhere={searchWhere}
+                />
+              ) : selectedTest ? (
                 <CreateLabReport
-                  category={selectedTest.category}
+                  category={selectedTest.category.replace(" ","-")}
                   type={selectedTest.type}
                   patientData={patientData}
                   onClose={() => setSelectedTest(null)}
+                  searchWhere={searchWhere}
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-xl text-gray-500">Select a lab test to begin</p>
+                  <p className="text-xl text-gray-500">Select a lab test or template to begin</p>
                 </div>
               )}
             </div>

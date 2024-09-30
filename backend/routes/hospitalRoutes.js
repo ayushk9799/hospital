@@ -2,6 +2,7 @@ import express from 'express';
 import { verifySuperAdmin } from '../middleware/SuperAdminMiddleWare.js';
 import { Hospital } from '../models/Hospital.js'; // Make sure to import the Hospital model
 import mongoose from 'mongoose';
+import { Template } from '../models/Template.js';
 
 const router = express.Router();
 
@@ -78,6 +79,51 @@ router.post('/:hospitalId', async (req, res) => {
         await session.abortTransaction();
         session.endSession();
         res.status(400).json({ message: 'Error updating hospital', error: error.message });
+    }
+});
+router.post('/template/create', async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        let template = await Template.findOne().session(session);
+        if (!template) {
+            template = new Template({
+                labTestsTemplate: req.body.labTestsTemplate || [],
+                headerTemplate: req.body.headerTemplate || {}
+            });
+            await template.save({ session });
+        } else {
+            if (req.body.labTestsTemplate) {
+                template.labTestsTemplate.push(req.body.labTestsTemplate);
+            }
+            if (req.body.headerTemplate) {
+                template.headerTemplate = req.body.headerTemplate; // Replace headerTemplate
+            }
+            await template.save({ session });
+        }
+
+        await session.commitTransaction();
+        session.endSession();
+
+        res.status(200).json(template);
+    } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+        res.status(400).json({ message: 'Error handling template', error: error.message });
+    }
+});
+
+// New route to get the template
+router.get('/template/read', async (req, res) => {
+    try {
+        const template = await Template.findOne();
+        if (!template) {
+            return res.status(404).json({ message: 'Template not found' });
+        }
+        res.status(200).json(template);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching template', error: error.message });
     }
 });
 

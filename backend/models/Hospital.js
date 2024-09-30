@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 const HospitalSchema = new mongoose.Schema({
   name: String,
@@ -13,7 +13,7 @@ const HospitalSchema = new mongoose.Schema({
   hospitalId: {
     type: String,
     required: true,
-  }
+  },
 });
 
-export const Hospital = mongoose.model('Hospital', HospitalSchema);
+export const Hospital = mongoose.model("Hospital", HospitalSchema);
