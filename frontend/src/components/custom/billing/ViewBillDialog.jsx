@@ -8,42 +8,40 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { PrinterIcon } from "lucide-react";
 import { numberToWords } from "../../../assets/Data";
 import { stylesFont } from "../reports/LabReportPDF";
+import { useSelector } from "react-redux";
+import HospitalHeader from "../../../utils/print/HospitalHeader";
+// const HospitalHeader = () => {
+//   const {hospitalInfo} = useSelector((state) => state.hospital);
+//   return (
+//   <div className="hidden print:block mb-4">
+//     <div className="mb-2 border-b border-[#000000] pb-2">
+//       <div>
+//         <h1 className="text-4xl tracking-wide text-center text-[#1a5f7a] text-capitalize" style={stylesFont.fontFamilyName}>{hospitalInfo?.name}</h1>
+//       </div>
+//       <div style={{ display: "flex", flexDirection: "row" }}>
+//         <div style={{ marginLeft: 50 }}>
+//           <img
+//             src={require("../reports/Capture2.png")}
+//             alt="Clinic Logo"
+//             className="w-[100px] h-[100px]"
+//           />
+//         </div>
+//         <div className="ml-8">
+//           <p className="text-center text-[#333333]">
+//             {hospitalInfo?.address}
+//           </p>
+//           <h2 className="text-center text-[#1a5f7a] text-xl ">{hospitalInfo?.doctorName}</h2>
+//           <p className="text-center text-[#333333]">
+//             {hospitalInfo?.doctorInfo}
+//           </p>
+//           <p className="text-center text-[#333333]">{hospitalInfo?.contactNumber}</p>
+//         </div>
+//       </div>
+//     </div>
+//   </div>
+// );
+// }
 
-const PrintHeader = () => (
-  <div className="hidden print:block mb-4">
-    <div className="mb-2 border-b border-[#000000] pb-2">
-      <div>
-        <h1 className="text-4xl tracking-wide text-center text-[#1a5f7a]" style={stylesFont.fontFamilyName}>KIDNEY STONE & UROLOGY CLINIC</h1>
-      </div>
-      <div style={{ display: "flex", flexDirection: "row" }}>
-        <div style={{ marginLeft: 50 }}>
-          <img
-            src={require("../reports/Capture2.png")}
-            alt="Clinic Logo"
-            className="w-[100px] h-[100px]"
-          />
-        </div>
-        <div className="ml-8">
-          <p className="text-center text-[#333333]">
-            Jail Road, Near Mahindra Showroom, Tilkamanjhi, Bhagalpur
-          </p>
-          <h2 className="text-center text-[#1a5f7a] text-xl ">DR. RAJAN KUMAR SINHA</h2>
-          <p className="text-center text-[#333333]">
-            M.B.B.S(Ranchi), MS(Gen.Surgery), MCh(Urology), Kolkata
-          </p>
-          <p className="text-center text-[#333333]">Consultant Urologist, Mob : 9709993104</p>
-        </div>
-      </div>
-    </div>
-  </div>
-);
-
-// Update the PrintFooter component
-const PrintFooter = () => (
-  <div className="hidden print:block print:fixed print:bottom-10 print:left-0 print:right-0 text-center text-sm">
-    <p>Mohan nagar near police station, gaya mob-12121</p>
-  </div>
-);
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const componentRef = useRef();
@@ -101,7 +99,9 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
           ref={componentRef}
           className={isPrinting ? 'print-content' : ''}
         >
-          <PrintHeader />
+          <div className="hidden print:block mb-4">
+            <HospitalHeader />
+          </div>
           <div className="print:pb-10"> {/* Add padding to the bottom */}
             <div className="no-print">
               <DialogHeader>
@@ -178,7 +178,6 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                 </div>
               </div>
             </div>
-            {/* <PrintFooter /> */}
           </div>
         </div>
         <DialogFooter>

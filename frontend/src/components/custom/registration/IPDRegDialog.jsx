@@ -16,12 +16,18 @@ import { Textarea } from "../../ui/textarea";
 import { fetchPatients } from '../../../redux/slices/patientSlice';
 import { Label } from "../../ui/label";
 import { initialFormData, validateForm, formatSubmissionData } from "./ipdRegHelpers";
+import { useToast } from "../../../hooks/use-toast";
+import { registerPatient } from '../../../redux/slices/patientSlice';
+import { Loader2 } from "lucide-react";
 
 const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
 const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
 
 export default function IPDRegDialog({ open, onOpenChange }) {
+  console.log('ipd');
   const dispatch = useDispatch();
+  const { toast } = useToast();
+  const registerPatientStatus = useSelector((state) => state.patients.registerPatientStatus);
   const { departments, rooms, doctors } = useSelector(state => ({
     departments: state.departments.departments,
     rooms: state.rooms.rooms,
@@ -61,21 +67,26 @@ export default function IPDRegDialog({ open, onOpenChange }) {
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
       console.log(submissionData);
-      try {
-        const response = await fetch(`${Backend_URL}/api/patients`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(submissionData),
-          credentials: "include",
+      dispatch(registerPatient(submissionData))
+        .unwrap()
+        .then(() => {
+          toast({
+            title: "Patient registered successfully",
+            description: "The new patient has been added.",
+            variant: "default",
+          });
+         
+          dispatch(fetchPatients());
+        })
+        .catch((error) => {
+          toast({
+            title: "Failed to register patient",
+            description: error.message || "There was an error registering the patient. Please try again.",
+            variant: "destructive",
+          });
+        }).finally(() => {
+          onOpenChange(false);
         });
-        if (!response.ok) throw new Error("Failed to register patient");
-        const result = await response.json();
-        console.log("Patient registered successfully:", result);
-        onOpenChange(false);
-        dispatch(fetchPatients());
-      } catch (error) {
-        console.error("Error registering patient:", error);
-      }
     }
   };
 
@@ -451,7 +462,16 @@ export default function IPDRegDialog({ open, onOpenChange }) {
             <Button type="button" variant="outline" onClick={handleReset}>
               Reset
             </Button>
-            <Button type="submit">Register Patient</Button>
+            <Button type="submit" disabled={registerPatientStatus === "loading"}>
+              {registerPatientStatus === "loading" ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Registering...
+                </>
+              ) : (
+                "Register Patient"
+              )}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

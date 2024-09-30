@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../../ui/dialog";
 import { Input } from "../../../ui/input";
 import { Button } from "../../../ui/button";
@@ -14,44 +14,13 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
   const dispatch = useDispatch();
   const { updateInventoryItemStatus } = useSelector((state) => state.pharmacy);
   const { toast } = useToast();
-  const [name, setName] = useState("");
-  const [price, setPrice] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
-  const [MRP, setMRP] = useState("");
-  const [types, setTypes] = useState("");
-  const [supplierName, setSupplierName] = useState("");
-
-  useEffect(() => {
-    if (item) {
-      setName(item.name);
-      setPrice(item.CP);
-      setQuantity(item.quantity);
-      setExpiryDate(new Date(item.expiryDate).toISOString().slice(0, 7)); // Format as YYYY-MM
-      setMRP(item.MRP);
-      setTypes(item.type);
-      setSupplierName(item?.supplier?.name || "");
-    }
-  }, [item]);
-
-  // useEffect(() => {
-  //   if (updateInventoryItemStatus === "succeeded") {
-  //     toast({
-  //       title: "Item updated successfully",
-  //       description: "The item has been successfully updated in the inventory.",
-  //       variant: "default",
-  //     });
-  //     dispatch(setUpdateInventoryStatusIdle());
-  //     onClose();
-  //   } else if (updateInventoryItemStatus === "failed") {
-  //     toast({
-  //       title: "Update failed",
-  //       description: "There was an error updating the item. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //     dispatch(setUpdateInventoryStatusIdle());
-  //   }
-  // }, [updateInventoryItemStatus, dispatch, toast, onClose]);
+  const [name, setName] = useState(item?.name || "");
+  const [price, setPrice] = useState(item?.CP || "");
+  const [quantity, setQuantity] = useState(item?.quantity || "");
+  const [expiryDate, setExpiryDate] = useState(item?.expiryDate ? new Date(item.expiryDate).toISOString().slice(0, 7) : "");
+  const [MRP, setMRP] = useState(item?.MRP || "");
+  const [types, setTypes] = useState(item?.type || "");
+  const [supplierName, setSupplierName] = useState(item?.supplier?.name || "");
 
   const handleEditItem = () => {
     const changedValues = {};
@@ -63,25 +32,12 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
     if (types !== item.type) changedValues.type = types;
 
     if (Object.keys(changedValues).length === 0) {
-      toast({
-        title: "No changes made",
-        description: "No items were modified.",
-        variant: "default",
-      });
-      onClose();
+      toast({title: "No changes made", description: "No items were modified.", variant: "default",});
     } else {
       dispatch(updateInventoryItem({ itemId: item._id, updateData: changedValues })).unwrap().then(()=>{
-        toast({
-          title: "Item updated successfully",
-          description: "The item has been successfully updated in the inventory.",
-          variant: "default",
-        });
+        toast({ title: "Item updated successfully", description: "The item has been successfully updated.", variant: "default",});
       }).catch((error) => {
-        toast({
-          title: "Failed to update item",
-          description: error.message,
-          variant: "destructive",
-        });
+        toast({title: "Failed to update item", description: error.message, variant: "destructive",});
       }).finally(()=>{
         onClose();
       });
@@ -150,7 +106,7 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
             </div>
             <div>
               <Label htmlFor="supplierName">Supplier Name</Label>
-              <Input id="supplierName" placeholder="Supplier Name" readOnly value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
+              <Input disabled id="supplierName" placeholder="Supplier Name" readOnly value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
             </div>
           </div>
           <DialogFooter className="mt-4">

@@ -10,6 +10,7 @@ const paymentSchema = new mongoose.Schema({
   type : {type : String, enum : ['Income','Expense']},
   status : {type : String, enum : ['due','paid'], default : 'due'},
   description: { type: String, maxlength: 500 },
+  createdBy : {type : mongoose.Schema.Types.ObjectId, ref : 'Staff'},
 }, {timestamps : true});
 
 paymentSchema.plugin(hospitalPlugin)

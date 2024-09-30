@@ -12,6 +12,7 @@ import IPDRegDialog from '../components/custom/registration/IPDRegDialog'
 import { useSelector, useDispatch } from 'react-redux'
 import { DateRangePicker } from '../assets/Data'
 import { setSelectedPatient } from '../redux/slices/patientSlice'
+import { startOfDay, endOfDay, subDays, isWithinInterval, parse } from 'date-fns'
 
 // Add this selector function at the top of your file, outside of the component
 
@@ -36,27 +37,30 @@ export default function Patients() {
   const filteredPatients = patients.filter(patient => {
     const nameMatch = patient.patient.name.toLowerCase().includes(searchTerm.toLowerCase())
     
-    
     let dateMatch = true
-    const visitDate = patient.bookingDate;
+    // Parse the date string in the format "DD-MM-YYYY"
+    const visitDate = parse(patient.bookingDate, 'dd-MM-yyyy', new Date())
     const today = new Date()
 
-    // switch (dateFilter) {
-    //   case 'Today':
-    //     dateMatch = isWithinInterval(visitDate, { start: startOfDay(today), end: endOfDay(today) })
-    //     break
-    //   case 'Yesterday':
-    //     dateMatch = isWithinInterval(visitDate, { start: startOfDay(subDays(today, 1)), end: endOfDay(subDays(today, 1)) })
-    //     break
-    //   case 'LastWeek':
-    //     dateMatch = isWithinInterval(visitDate, { start: startOfWeek(subDays(today, 7)), end: endOfDay(today) })
-    //     break
-    //   case 'Custom':
-    //     if (dateRange.from && dateRange.to) {
-    //       dateMatch = isWithinInterval(visitDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })
-    //     }
-    //     break
-    // }
+    switch (dateFilter) {
+      case 'Today':
+        dateMatch = isWithinInterval(visitDate, { start: startOfDay(today), end: endOfDay(today) })
+        break
+      case 'Yesterday':
+        dateMatch = isWithinInterval(visitDate, { start: startOfDay(subDays(today, 1)), end: endOfDay(subDays(today, 1)) })
+        break
+      case 'This Week':
+        dateMatch = isWithinInterval(visitDate, { start: startOfDay(subDays(today, 7)), end: endOfDay(today) })
+        break
+      case 'Custom':
+        if (dateRange.from && dateRange.to) {
+          dateMatch = isWithinInterval(visitDate, { start: startOfDay(dateRange.from), end: endOfDay(dateRange.to) })
+        }
+        break
+      case 'All':
+      default:
+        dateMatch = true
+    }
 
     return nameMatch && dateMatch
   })
@@ -126,13 +130,13 @@ export default function Patients() {
                     <DropdownMenuItem onClick={() => navigate(`/patients/${patient.id}/edit`)}>Edit Patient</DropdownMenuItem>
                     <DropdownMenuItem onClick={()=>createServiceBill(patient)}>Create Bill</DropdownMenuItem>
                     <DropdownMenuItem onClick={() => navigate(`/appointments/schedule/${patient.id}`)}>Schedule Appointment</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600">Delete Patient</DropdownMenuItem>
                     {type === 'IPD' && patient.status !== 'Discharged' && (
                       <DropdownMenuItem onClick={() => handleDischarge(patient)}>
                         Discharge Patient
                       </DropdownMenuItem>
                     )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600">Delete Patient</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>

@@ -13,8 +13,15 @@ import { Textarea } from "../components/ui/textarea";
 import { Checkbox } from "../components/ui/checkbox";
 import { Plus, X } from "lucide-react";
 import { Backend_URL } from "../assets/Data";
-import {useSelector} from 'react-redux'
+import { useToast } from "../hooks/use-toast";
+import { Loader2 } from "lucide-react";
+import { useDispatch, useSelector } from 'react-redux';
+import { createStaffMember } from '../redux/slices/staffSlice';
+
 export default function AddStaff() {
+  const { toast } = useToast();
+  const dispatch = useDispatch();
+  const { status, error } = useSelector((state) => state.staff);
   const departments=useSelector((state)=>state.departments.departments);
   console.log(departments)
   const [formData, setFormData] = useState({});
@@ -143,21 +150,18 @@ export default function AddStaff() {
     e.preventDefault();
     if (validateForm()) {
       try {
-        const response = await fetch(`${Backend_URL}/api/staff`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          // Replace with your actual auth token
-          },
-          credentials:'include',
-          body: JSON.stringify(formData)
+        await dispatch(createStaffMember(formData)).unwrap();
+        toast({
+          title: "Success",
+          description: "Staff member has been added successfully.",
         });
-        
-        console.log("Staff created successfully:", response.data);
-        // Handle successful creation (e.g., show success message, redirect, etc.)
+        handleReset();
       } catch (error) {
-        console.error("Error creating staff:", error.response?.data?.error || error.message);
-        // Handle error (e.g., show error message to user)
+        toast({
+          title: "Error",
+          description: error || "Failed to add staff member. Please try again.",
+          variant: "destructive",
+        });
       }
     }
   };
@@ -463,7 +467,16 @@ console.log(formData)
           <Button type="button" variant="outline" onClick={handleReset}>
             Reset
           </Button>
-          <Button type="submit">Add Staff Member</Button>
+          <Button type="submit" disabled={status === 'loading'}>
+            {status === 'loading' ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Adding...
+              </>
+            ) : (
+              'Add Staff Member'
+            )}
+          </Button>
         </div>
       </form>
     </div>
