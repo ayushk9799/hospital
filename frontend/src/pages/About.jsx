@@ -12,6 +12,10 @@ export default function AboutPage() {
     navigate('/', { state: { scrollToFeatures: true } });
   };
 
+  const handleContactClick = () => {
+    navigate('/contact', { state: { scrollToContact: true } });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <header className="px-4 lg:px-6 h-16 flex items-center bg-white shadow-sm">
@@ -112,7 +116,7 @@ export default function AboutPage() {
                 </p>
               </div>
               <div className="w-full max-w-sm space-y-2">
-                <Button className="w-full bg-blue-600 text-white hover:bg-blue-700">
+                <Button className="w-full bg-blue-600 text-white hover:bg-blue-700" onClick={handleContactClick}>
                   <Mail className="mr-2 h-4 w-4" /> Contact Us
                 </Button>
               </div>

@@ -1,3 +1,4 @@
+import React, { useEffect, useRef } from 'react';
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
@@ -6,9 +7,18 @@ import { Link } from "react-router-dom"
 import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin } from "lucide-react"
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
 import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 
 export default function ContactPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const contactFormRef = useRef(null);
+
+  useEffect(() => {
+    if (location.state?.scrollToContact && contactFormRef.current) {
+      contactFormRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [location]);
 
   const handleFeaturesClick = (e) => {
     e.preventDefault();
@@ -64,7 +74,7 @@ export default function ContactPage() {
                     <div className="space-y-4">
                       <div className="flex items-center space-x-4">
                         <Phone className="h-6 w-6 text-blue-600" />
-                        <span>+1 (555) 123-4567</span>
+                        <span>+91 9097849090</span>
                       </div>
                       <div className="flex items-center space-x-4">
                         <Mail className="h-6 w-6 text-blue-600" />
@@ -72,7 +82,9 @@ export default function ContactPage() {
                       </div>
                       <div className="flex items-center space-x-4">
                         <MapPin className="h-6 w-6 text-blue-600" />
-                        <span>123 Healthcare Ave, Medical City, MC 12345</span>
+                        <span>Thousand Ways Private Limited<br />
+                            Dariyapur, Bodh Gaya,
+                            Bihar 824237, India</span>
                       </div>
                     </div>
                   </CardContent>
@@ -95,45 +107,45 @@ export default function ContactPage() {
                   </div>
                 </div>
               </div>
-              <div className="space-y-4">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Get in Touch</h2>
+              <div className="space-y-4" ref={contactFormRef}>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Contact Us</h2>
                 <p className="text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Fill out the form below and we'll get back to you as soon as possible.
+                  We appreciate your interest. Please complete the form below, and a member of our team will respond promptly.
                 </p>
                 <form className="space-y-4">
                   <div className="space-y-2">
                     <label htmlFor="name" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Name
+                      Full Name
                     </label>
                     <Input
                       id="name"
-                      placeholder="Enter your name"
+                      placeholder="Enter your full name"
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Email
+                    <label htmlFor="mobile" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                      Contact Number
                     </label>
                     <Input
-                      id="email"
-                      placeholder="Enter your email"
+                      id="mobile"
+                      placeholder="Enter your contact number"
                       required
-                      type="email"
+                      type="tel"
                     />
                   </div>
                   <div className="space-y-2">
                     <label htmlFor="message" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                      Message
+                      Inquiry
                     </label>
                     <Textarea
                       id="message"
-                      placeholder="Enter your message"
+                      placeholder="Please provide details about your inquiry"
                       required
                     />
                   </div>
                   <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700">
-                    Send Message
+                    Submit Inquiry
                   </Button>
                 </form>
               </div>
