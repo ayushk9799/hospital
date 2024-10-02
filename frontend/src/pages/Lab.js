@@ -115,10 +115,7 @@ const Lab = () => {
           },
           credentials: "include",
           body: JSON.stringify({
-            searchQuery:{...searchQuery, bookingDate: searchQuery.bookingDate
-              .split("-")
-              .reverse()
-              .join("-")},
+            searchQuery:{...searchQuery, bookingDate: searchQuery.bookingDate},
             searchType,
             searchWhere,
           }),

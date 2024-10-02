@@ -48,4 +48,14 @@ router.get('/empty', async (req, res) => {
   }
 });
 
+// Delete all rooms
+router.delete('/all', async (req, res) => {
+  try {
+    await Room.deleteMany({});
+    res.status(200).json({ message: 'All rooms have been deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

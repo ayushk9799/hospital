@@ -120,7 +120,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
           age: parseInt(formData.age, 10),
           visit: {
             ...formData.visit,
-            bookingDate:formData.visit.bookingDate.split('-').reverse().join('-'),
+            bookingDate:formData.visit.bookingDate,
             vitals: Object.fromEntries(
               Object.entries(formData.visit.vitals).map(([key, value]) =>
                 key === "bloodPressure"
