@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../../ui/dialog";
 import { Input } from "../../../ui/input";
 import { Button } from "../../../ui/button";
@@ -21,6 +21,18 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
   const [MRP, setMRP] = useState(item?.MRP || "");
   const [types, setTypes] = useState(item?.type || "");
   const [supplierName, setSupplierName] = useState(item?.supplier?.name || "");
+
+  useEffect(() => {
+    if (item) {
+      setName(item.name || "");
+      setPrice(item.CP || "");
+      setQuantity(item.quantity || "");
+      setExpiryDate(item.expiryDate ? new Date(item.expiryDate).toISOString().slice(0, 7) : "");
+      setMRP(item.MRP || "");
+      setTypes(item.type || "");
+      setSupplierName(item.supplier?.name || "");
+    }
+  }, [item]);
 
   const handleEditItem = () => {
     const changedValues = {};
