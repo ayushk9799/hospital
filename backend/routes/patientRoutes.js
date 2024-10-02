@@ -233,7 +233,7 @@ router.delete(
 
     
 
-      const result = await IPDAdmission.deleteMany({hospital:"66d14f82e2ccda17847abf6b"});
+      const result = await Visit.deleteMany();
 
       if (result.deletedCount === 0) {
         return res.status(404).json({ message: "No matching admissions found" });
@@ -441,7 +441,11 @@ router.post(
         diagnosis: visit.diagnosis || null,
         treatment: visit.treatment || null,
         vitals: visit.vitals || null,
-        bookingDate: visit.bookingDate || null,
+        bookingDate: visit.bookingDate || new Date().toLocaleDateString("en-In",{
+          year:"numeric",
+          month:"2-digit",
+          day:"2-digit"
+      }).split("/").reverse().join("-"),
       });
 
       await newVisit.save({ session });

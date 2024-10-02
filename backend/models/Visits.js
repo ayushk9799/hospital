@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import {hospitalPlugin} from '../plugins/hospitalPlugin.js'
 const CounterSchema = new mongoose.Schema({
-    date: { type: String },
+    date: { type: Date },
     seq: { type: Number, default: 0 }
   });
   CounterSchema.plugin(hospitalPlugin);
@@ -17,7 +17,7 @@ function formatDate(date) {
   }
 const visitSchema = new mongoose.Schema({
 
-    bookingDate: { type: String, default: function() {return formatDate(new Date())} },
+    bookingDate: { type: Date },
   bookingNumber: { type: Number },
   patientName:{type:String},
   contactNumber:{type:String},
@@ -63,16 +63,20 @@ const visitSchema = new mongoose.Schema({
     report: { type: mongoose.Schema.Types.Mixed }
   }],
 },{timestamps:true});
+
+
 visitSchema.pre('save', async function(next) {
-    if (!this.bookingNumber) {
-      const counter = await Counter.findOneAndUpdate(
-        { date: this.bookingDate?this.bookingDate:formatDate(new Date()) },
-        { $inc: { seq: 1 } },
-        { new: true, upsert: true,setDefaultsOnInsert: true }
-      );
-      this.bookingNumber = counter.seq;
-    }
-    next();
-  });
+  if (!this.bookingNumber) {
+    
+    const counter = await Counter.findOneAndUpdate(
+      { date: this.bookingDate },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true, setDefaultsOnInsert: true }
+    );
+    this.bookingNumber = counter.seq;
+  }
+ 
+  next();
+});
 visitSchema.plugin(hospitalPlugin)
 export const Visit = mongoose.model("visit", visitSchema);
