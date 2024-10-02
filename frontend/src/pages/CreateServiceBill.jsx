@@ -15,6 +15,8 @@ import { SearchSuggestion } from "../components/custom/registration/CustomSearch
 import { createBill, setCreateBillStatusIdle, updateBill } from '../redux/slices/BillingSlice';
 import { useToast } from '../hooks/use-toast';
 import { setSelectedPatientForBill } from '../redux/slices/patientSlice';
+import { CalendarDays, Phone, Mail, MapPin } from 'lucide-react';
+import { Badge } from "../components/ui/badge";
 
 const CreateServiceBill = () => {
   const dispatch = useDispatch();
@@ -212,6 +214,14 @@ const CreateServiceBill = () => {
     console.log("Save to Draft button clicked");
   };
 
+  const handleReset = () => {
+    setAddedServices([]);
+    setNewService({ serviceName: '', quantity: '', rate: '', total: '', category: '' });
+    setServiceName('');
+    setAdditionalDiscount('');
+    setAdditionalDiscountType('amount');
+  };
+
   if (!selectedPatient) {
     return <div>No patient selected</div>;
   }
@@ -244,28 +254,45 @@ const CreateServiceBill = () => {
         <CardContent className="flex items-center justify-between p-4">
           <div className="flex items-center">
             <Avatar className="h-12 w-12 mr-4">
-              <AvatarImage src="/placeholder.svg" alt={patientDetails?.name} />
+              <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${patientDetails?.name}`} alt={patientDetails?.name} />
               <AvatarFallback>{patientDetails?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="font-semibold">{patientDetails?.name} / {patientDetails?.gender}</h2>
-              <p className="text-sm text-gray-500">{patientDetails?.age} yrs / {patientDetails?.contactNumber}</p>
+              <h2 className="font-semibold">{patientDetails?.name}</h2>
+              <div className="flex gap-2 mt-1">
+                <Badge variant="outline">{patientDetails?.gender}</Badge>
+                <Badge variant="outline">{patientDetails?.age} yrs</Badge>
+                {patientDetails?.bloodGroup && <Badge variant="outline">{patientDetails.bloodGroup}</Badge>}
+              </div>
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Scale className="text-gray-400" />
-            <User className="text-gray-400" />
-            <Droplet className="text-gray-400" />
-            <div className="text-sm">
-              <p>Registration ID {patientDetails?._id.slice(-6)}</p>
-              <p>On {new Date().toLocaleString()}</p>
+          <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 text-gray-400" />
+              <span>{selectedPatient?.bookingDate || 'N/A'}</span>
             </div>
+            <div className="flex items-center gap-2">
+              <Phone className="w-4 h-4 text-gray-400" />
+              <span>{patientDetails?.contactNumber}</span>
+            </div>
+            {selectedPatient?.registrationNumber && (
+              <div className="flex items-center gap-2">
+                <Mail className="w-4 h-4 text-gray-400" />
+                <span>Reg:{selectedPatient?.registrationNumber}</span>
+              </div>
+            )}
+            {patientDetails?.address && (
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-gray-400" />
+                <span>{patientDetails.address}</span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
 
       <Card>
-        <CardContent className="p-4 min-h-[300px]">
+        <CardContent className="p-4 min-h-[430px]">
         
         <form onSubmit={handleAddService} className="grid grid-cols-6 gap-4 items-end mb-4">
             <div className="col-span-2">
@@ -388,6 +415,9 @@ const CreateServiceBill = () => {
 
       {/* New buttons */}
       <div className="flex justify-end space-x-4 mt-4">
+        <Button variant="outline" onClick={handleReset} disabled={isLoading}>
+          Reset
+        </Button>
         <Button variant="outline" onClick={handleSaveToDraft} disabled={isLoading}>
           Save to Draft
         </Button>

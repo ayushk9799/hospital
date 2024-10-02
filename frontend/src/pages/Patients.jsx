@@ -127,7 +127,7 @@ export default function Patients() {
     const handleDischarge = (patient) => {
       navigate(`/patients/discharge/${patient._id}`, { state: { patient } });
     };
-
+console.log(patients.map(patient=>patient.bookingDate))
     return (
       <Table>
         <TableHeader>
@@ -162,7 +162,7 @@ export default function Patients() {
                   {patient.patient.name}
                 </Button>
               </TableCell>
-              <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell>
+               <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell> 
               {type === "OPD" && (
                 <TableCell>
                   {patient.timeSlot?.start} - {patient.timeSlot?.end}

@@ -35,12 +35,14 @@ const userSlice = createSlice({
     userData: null,
     status: 'idle',
     error: null,
+    isAuthenticated: false, // Added isAuthenticated to the initial state
   },
   reducers: {
     clearUserData: (state) => {
       state.userData = null;
       state.status = 'idle';
       state.error = null;
+      state.isAuthenticated = false; // Set isAuthenticated to false when clearing user data
     },
   },
   extraReducers: (builder) => {
@@ -51,10 +53,12 @@ const userSlice = createSlice({
       .addCase(fetchUserData.fulfilled, (state, action) => {
         state.status = 'succeeded';
         state.userData = action.payload;
+        state.isAuthenticated = true; // Set isAuthenticated to true when user data is successfully fetched
       })
       .addCase(fetchUserData.rejected, (state, action) => {
         state.status = 'failed';
         state.error = action.payload;
+        state.isAuthenticated = false; // Set isAuthenticated to false when fetching user data fails
       });
   },
 });

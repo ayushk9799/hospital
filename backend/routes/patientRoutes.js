@@ -167,7 +167,7 @@ router.get("/details", verifyToken, async (req, res) => {
       _id: visit._id,
       bookingNumber: visit.bookingNumber,
       patient: visit.patient,
-      
+      registrationNumber : visit.registrationNumber,
       bookingDate: visit.bookingDate,
       doctor: visit.doctor,
       reasonForVisit: visit.reasonForVisit,
@@ -185,6 +185,7 @@ router.get("/details", verifyToken, async (req, res) => {
       _id: admission._id,
       bookingNumber: admission.bookingNumber,
       patient: admission.patient,
+      registrationNumber : admission.registrationNumber,
       bookingDate: admission.bookingDate,
       doctor: admission.assignedDoctor,
       assignedRoom: admission.assignedRoom,
@@ -233,7 +234,7 @@ router.delete(
 
     
 
-      const result = await Visit.deleteMany();
+      const result = await IPDAdmission.deleteMany();
 
       if (result.deletedCount === 0) {
         return res.status(404).json({ message: "No matching admissions found" });

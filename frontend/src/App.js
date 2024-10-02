@@ -7,6 +7,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { fetchPatients } from './redux/slices/patientSlice';
 import { fetchStaffMembers } from './redux/slices/staffSlice';
 import  CreateRoom  from './pages/CreateRoom';
+import Home from './pages/Home';
 
 import { getDoctors } from './redux/slices/staffSlice';
 import VerticalNav from './components/custom/Navigations/VerticalNav';
@@ -41,37 +42,42 @@ const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
   const isLoading = useSelector((state) => state.loader.isLoading);
-
+  const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
   useEffect(() => {
+   if(isAuthenticated){
     Promise.all([
       dispatch(fetchPatients()),
       dispatch(fetchStaffMembers()),
       dispatch(fetchDepartments()),
-      dispatch(fetchUserData()),
       dispatch(fetchRooms()),
+      dispatch(fetchUserData()),
       dispatch(fetchHospitalInfo())
     ]).then(() => {
       dispatch(setLoading(false));
     });
-  }, [dispatch]); 
+   }
+   else{
+    dispatch(setLoading(false));
+   }
+  }, [dispatch,isAuthenticated]); 
 
   return (
     <div className="flex flex-col relative">
       {isLoading && <div className="youtube-loader"></div>}
-      <HorizontalNav
+      {isAuthenticated ?  <HorizontalNav
         isCollapsed={isCollapsed}
         setIsCollapsed={setIsCollapsed}
-      />
+      /> : null}
       <div className="flex">
-        <VerticalNav isCollapsed={isCollapsed} />
+        {isAuthenticated ? <VerticalNav isCollapsed={isCollapsed} /> : null}
         <main
           className={`${
             isCollapsed ? "ml-16" : "ml-56"
           } pl-4 pr-4 w-full h-full bg-gray-50`}
         >
           <Routes>
-            <Route path='/' Component={Dashboard} />
-            <Route path='/dashboard' Component={Dashboard} />
+           {isAuthenticated ? <Route path='/' Component={Dashboard} /> : <Route path='/' Component={Home} />}
+            {/* <Route path='/dashboard' Component={Dashboard} /> */}
             <Route path='/billings' Component={Billings} />
             <Route path='/patients' Component={Patients} />
             <Route path='/patients/:patientId' Component={PatientDetails} />

@@ -2,6 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Staff } from '../models/Staff.js';
+import { identifyHospitalFromBody } from '../middleware/hospitalMiddleware.js';
 import {checkPermission,verifyToken} from '../middleware/authMiddleware.js'
 import { verifySuperAdmin } from '../middleware/SuperAdminMiddleWare.js';
 const router = express.Router();
@@ -34,12 +35,11 @@ router.post('/register', async (req, res) => {
   
     jwt.sign(payload, "secretkey",  (err, token) => {
       if (err) throw err;
-    //   res.cookie("jwtaccesstoken", token, {
-    //     maxAge: 6 * 30 * 24 * 60 * 60 * 1000,
-    //   });
-    //    res.redirect("http://localhost:3000/completeProfile")
-   
-    res.json({token})
+      // res.cookie("jwtaccesstoken", token, {
+      //   maxAge: 6 * 30 * 24 * 60 * 60 * 1000,
+      // });
+      //  res.redirect("http://localhost:3000/completeProfile")
+   res.json({token})
     });
   } catch (error) {
     console.error(error.message);
@@ -47,7 +47,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login',identifyHospitalFromBody, async (req, res) => {
   try {
     const { username, password } = req.body;
 
@@ -62,15 +62,19 @@ router.post('/login', async (req, res) => {
     }
 
     // Create and return JWT token
-    const payload = { _id:user._id};
+    const payload = { _id:user._id };
     jwt.sign(payload, "secretkey", (err, token) => {
       if (err) throw err;
-    //   res.cookie("jwtaccesstoken", token, {
-    //     maxAge: 6 * 30 * 24 * 60 * 60 * 1000,
-    //   });
-    //   res.redirect("http://localhost:3000/dashboard");
-
-    res.json({token})
+      res.cookie("jwtaccesstoken", token, {
+        maxAge: 6 * 30 * 24 * 60 * 60 * 1000,
+      });
+      // Add new cookie for hospitalId
+      res.cookie("hospitalId", req.body.hospitalId, {
+        maxAge: 6 * 30 * 24 * 60 * 60 * 1000,
+      });
+     
+      
+      res.json({login:"success"});
     });
   } catch (error) {
     console.error(error.message);

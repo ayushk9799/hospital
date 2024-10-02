@@ -17,6 +17,8 @@ const HospitalSchema = new mongoose.Schema({
   pharmacyAddress: String,
   pharmacyContactNumber: String,
   pharmacyLogo: String,
+  pharmacyExpiryThreshold: Number,
+  pharmacyExpiryThresholdUnit: String,
 });
 
 export const Hospital = mongoose.model("Hospital", HospitalSchema);
