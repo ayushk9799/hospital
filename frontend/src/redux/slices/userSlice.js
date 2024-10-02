@@ -42,7 +42,7 @@ const userSlice = createSlice({
       state.userData = null;
       state.status = 'idle';
       state.error = null;
-      state.isAuthenticated = false; // Set isAuthenticated to false when clearing user data
+      state.isAuthenticated = false; 
     },
   },
   extraReducers: (builder) => {

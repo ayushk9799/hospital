@@ -82,4 +82,18 @@ router.post('/login',identifyHospitalFromBody, async (req, res) => {
   }
 });
 
+// Add this route after the login route
+router.post('/logout', (req, res) => {
+  try {
+    // Clear the cookies
+    res.clearCookie('jwtaccesstoken');
+    res.clearCookie('hospitalId');
+    
+    res.status(200).json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send('Server error');
+  }
+});
+
 export default router;
