@@ -66,7 +66,7 @@ export const formatSubmissionData = (formData) => ({
   patientType: 'IPD',
   admission: {
     ...formData.admission,
-    bookingDate: formData.admission.bookingDate.split('-').reverse().join('-'),
+    bookingDate: formData.admission.bookingDate,
     vitals: {
       admission: Object.fromEntries(
         Object.entries(formData.admission.vitals.admission || {}).map(([key, value]) =>

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import {hospitalPlugin} from '../plugins/hospitalPlugin.js'
 const CounterSchema = new mongoose.Schema({
-  date: { type: String },
+  date: { type: Date },
   seq: { type: Number, default: 0 }
 });
 CounterSchema.plugin(hospitalPlugin);
@@ -21,7 +21,7 @@ function formatDate(date,number) {
 }
 
 const ipdAdmissionSchema = new mongoose.Schema({
-  bookingDate: { type: String, default: function() { return formatDate(new Date(),1) } },
+  bookingDate: { type: Date },
   bookingNumber: { type: Number },
   patientName:{type:String},
   contactNumber:{type:String},
@@ -79,8 +79,9 @@ const ipdAdmissionSchema = new mongoose.Schema({
 
 ipdAdmissionSchema.pre('save', async function(next) {
   if (!this.bookingNumber) {
+    
     const counter = await Counter.findOneAndUpdate(
-      { date: this.bookingDate?this.bookingDate:formatDate(new Date()) },
+      { date: this.bookingDate },
       { $inc: { seq: 1 } },
       { new: true, upsert: true, setDefaultsOnInsert: true }
     );

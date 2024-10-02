@@ -1,56 +1,54 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card } from "../components/ui/card";
-import { Textarea } from "../components/ui/textarea";
-import { PlusCircle, X } from "lucide-react";
 import { Calendar } from "../components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "../components/ui/popover";
-import { format } from "date-fns";
-import { labReportFields } from "../assets/Data";
+import { format, parse } from "date-fns";
 import { Backend_URL } from "../assets/Data";
 import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
+import { Textarea } from "../components/ui/textarea";
 
-const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) => {
-  const navigate = useNavigate();
+const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const [fields, setFields] = useState([]);
-  const [newField, setNewField] = useState({
-    name: "",
-    label: "",
-    unit: "",
-    value: "",
-    normalRange: "",
-  });
   const [reportDate, setReportDate] = useState(new Date());
-  const [generatedDate, setGeneratedDate] = useState(null);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
- 
+
   useEffect(() => {
-    if (labReportFields[category] && labReportFields[category][type]) {
-      const existingReport = patientData?.labReports?.find(
-        (report) => report.name === type
-      );
-      setFields(
-        labReportFields[category][type].map((field) => ({
-          ...field,
-          value: Number(existingReport?.report?.[field.name]) || "",
-          unit: field.unit || "",
-          normalRange: field.normalRange || "",
-        }))
-      );
-      if (existingReport?.date) {
-        setGeneratedDate(new Date(existingReport.date));
-        setReportDate(new Date(existingReport.date));
+    if (template && template.fields) {
+      let matchingReport = null;
+      if (patientData && patientData.labReports) {
+        matchingReport = patientData.labReports.find(
+          (report) => report.name.toLowerCase() === template.name.toLowerCase()
+        );
+      }
+
+      if (matchingReport) {
+        setFields(
+          Object.entries(template.fields).map(([name, field]) => ({
+            name,
+            ...field,
+            value: matchingReport.report[name] || "",
+          }))
+        );
+      } else {
+        // Initialize fields with empty values when no matching report is found
+        setFields(
+          Object.entries(template.fields).map(([name, field]) => ({
+            name,
+            ...field,
+            value: "",
+          }))
+        );
       }
     }
-  }, [category, type, patientData]);
+  }, [template, patientData]);
 
   const handleInputChange = (e, fieldName) => {
     const { value } = e.target;
@@ -63,9 +61,8 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(reportDate);
     const labReportData = {
-      name: `${type}`,
+      name: template.name,
       date: format(reportDate, "yyyy-MM-dd"),
       report: fields.reduce((acc, field) => {
         acc[field.name] = field.value;
@@ -91,39 +88,21 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
         throw new Error("Failed to add lab report");
       }
 
-
       const result = await response.json();
       console.log("Lab Report added successfully:", result);
       alert("Lab Report added successfully");
-      onClose(); // Close the lab report form
+      onClose();
     } catch (error) {
       console.error("Error adding lab report:", error);
       alert("Error adding lab report");
     }
   };
 
-  const handleAddField = () => {
-    if (newField.name && newField.label && newField.unit) {
-      setFields([...fields, { ...newField, value: "" }]);
-      setNewField({
-        name: "",
-        label: "",
-        unit: "",
-        value: "",
-        normalRange: "",
-      });
-    }
-  };
-
-  const handleRemoveField = (fieldName) => {
-    setFields(fields.filter((field) => field.name !== fieldName));
-  };
-
   const generatePDF = () => {
     return (
       <LabReportPDF
         reportData={{
-          name: type,
+          name: template.name,
           date: reportDate,
           report: fields.reduce((acc, field) => {
             acc[field.label] = {
@@ -164,16 +143,11 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       <h1 className="text-3xl font-bold mb-6 text-center">
-        Create {type.replace(/-/g, " ")} Report
+        Create {template.name} Report
       </h1>
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-between items-center mb-4">
-            {generatedDate && (
-              <div className="text-sm text-gray-500">
-                Generated on: {format(generatedDate, "PPP")}
-              </div>
-            )}
             <Popover>
               <PopoverTrigger asChild>
                 <Button variant="outline">{format(reportDate, "PPP")}</Button>
@@ -190,45 +164,41 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fields.map((field) => (
-              <div key={field.name} className={field.name === "findings" || field.name === "impression" ? "col-span-2" : ""}>
+              <div 
+                key={field.name} 
+                className={`flex flex-col ${
+                  field.label.toLowerCase() === "findings" || field.label.toLowerCase() === "impressions" 
+                    ? "md:col-span-2" 
+                    : ""
+                }`}
+              >
                 <Label htmlFor={field.name} className="mb-1">
                   {field.label}
                 </Label>
-                {field.name === "findings" || field.name === "impression" ? (
+                {field.label.toLowerCase() === "findings" || field.label.toLowerCase() === "impressions" ? (
                   <Textarea
                     id={field.name}
                     name={field.name}
                     value={field.value}
                     onChange={(e) => handleInputChange(e, field.name)}
-                    className="h-32 w-full"
+                    className="w-full"
+                    rows={4}
                   />
                 ) : (
                   <div className="flex items-center">
                     <Input
-                      type={field.unit ? "number" : "text"}
+                      type={field?.unit ? "number" : "text"}
                       id={field.name}
                       name={field.name}
                       value={field.value}
                       onChange={(e) => handleInputChange(e, field.name)}
                       className="mr-2"
-                      step={field.unit ? "0.01" : undefined}
+                      step="0.01"
                     />
-                    {field?.unit && (
+                    {field.unit && (
                       <span className="text-sm text-gray-500 w-16">
-                        {field?.unit}
+                        {field.unit}
                       </span>
-                    )}
-                    {!labReportFields[category][type].some(
-                      (f) => f.name === field.name
-                    ) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveField(field.name)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
                     )}
                   </div>
                 )}
@@ -239,43 +209,6 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
                 )}
               </div>
             ))}
-          </div>
-
-          <div className="border-t pt-4">
-            <h2 className="text-lg font-semibold mb-2">Add Custom Field</h2>
-            <div className="flex flex-wrap space-x-2 space-y-2">
-              <Input
-                placeholder="Field Name"
-                value={newField.name}
-                onChange={(e) =>
-                  setNewField({ ...newField, name: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Label"
-                value={newField.label}
-                onChange={(e) =>
-                  setNewField({ ...newField, label: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Unit"
-                value={newField.unit}
-                onChange={(e) =>
-                  setNewField({ ...newField, unit: e.target.value })
-                }
-              />
-              <Input
-                placeholder="Normal Range"
-                value={newField.normalRange}
-                onChange={(e) =>
-                  setNewField({ ...newField, normalRange: e.target.value })
-                }
-              />
-              <Button type="button" onClick={handleAddField}>
-                <PlusCircle className="h-4 w-4 mr-2" /> Add
-              </Button>
-            </div>
           </div>
 
           <div className="flex justify-center space-x-4">
@@ -296,4 +229,4 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
   );
 };
 
-export default CreateLabReport;
+export default TemplateLabReport;

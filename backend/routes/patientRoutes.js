@@ -63,28 +63,22 @@ router.post(
       
 
         if (admission.assignedRoom) {
-          const room = await Room.findOneAndUpdate(
-            { _id: admission.assignedRoom,
-              'beds':{
-                $elemMatch:{
-                  _id:admission.assignedBed,
-                }
-              }
-             },
-            {
-              $inc: { currentOccupancy: 1 },
-              $set: {
-                "beds.$.status": "Occupied",
-                "beds.$.currentPatient": patient._id,
-              },
-            },
-            { new: true, session, runValidators: true }
-          );
-          if(!room){
-            throw new Error('Room or bed not available')
+          const room = await Room.findById(admission.assignedRoom).session(session);
+          if (!room) {
+            throw new Error('Room not found');
           }
-       
-          
+
+          const bedIndex = room.beds.findIndex(bed => bed._id.toString() === admission.assignedBed.toString());
+          if (bedIndex === -1 || room.beds[bedIndex].status !== 'Available') {
+            throw new Error('Bed not available');
+          }
+
+          room.beds[bedIndex].status = 'Occupied';
+          room.beds[bedIndex].currentPatient = patient._id;
+          room.currentOccupancy += 1;
+
+          // This will trigger the pre-save hook
+          await room.save({ session });
         }
       }
       await admissionRecord.save({ session });
@@ -214,8 +208,8 @@ router.get("/details", verifyToken, async (req, res) => {
     // Sort the combined data
     const sortedData = combinedData.sort((a, b) => {
       // Convert date strings to Date objects for comparison
-      const dateA = new Date(a.bookingDate.split("-").reverse().join("-"));
-      const dateB = new Date(b.bookingDate.split("-").reverse().join("-"));
+      const dateA = a.bookingDate
+      const dateB = b.bookingDate
 
       // Compare dates first (descending order)
       if (dateB > dateA) return 1;
@@ -230,6 +224,31 @@ router.get("/details", verifyToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+router.delete(
+  "/admissions",
+  
+  async (req, res) => {
+    try {
+      
+
+    
+
+      const result = await IPDAdmission.deleteMany();
+
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ message: "No matching admissions found" });
+      }
+
+      res.json({
+        message: `${result.deletedCount} admission(s) deleted successfully`,
+        deletedCount: result.deletedCount,
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+);
 // Get a specific patient by ID (All authenticated staff)
 router.get("/:id", verifyToken, async (req, res) => {
   try {
@@ -576,9 +595,9 @@ router.post("/complexsearch", async (req, res) => {
 });
 router.post('/addLabReport', async (req, res) => {
   try {
-    const { visitId, labReport } = req.body;
-
-    const visit = await Visit.findById(visitId);
+    const { visitId, labReport,searchWhere } = req.body;
+const Model = searchWhere==="opd"?Visit:IPDAdmission;
+    const visit = await Model.findById(visitId);
     if (!visit) {
       return res.status(404).json({ message: 'Visit not found' });
     }

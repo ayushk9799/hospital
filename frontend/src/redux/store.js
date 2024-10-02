@@ -9,6 +9,8 @@ import loaderReducer from './slices/loaderSlice';
 import serviceReducer from './slices/serviceSlice';
 import billingReducer from './slices/BillingSlice';
 import hospitalReducer from './slices/HospitalSlice';
+import templatesReducer from './slices/templatesSlice';
+
 export const store = configureStore({
   reducer: {
     patients: patientReducer,
@@ -20,6 +22,7 @@ export const store = configureStore({
     loader:loaderReducer,
     services:serviceReducer,
     bills:billingReducer,
-    hospital:hospitalReducer
+    hospital:hospitalReducer,
+    templates: templatesReducer
   },
 });

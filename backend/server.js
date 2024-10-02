@@ -33,7 +33,7 @@ app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '../frontend/build')));
-app.options("*", cors({ origin: process.env.FRONTEND_URL, credentials: true }));
+ app.options("*", cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
 // Connect to MongoDB
 mongoose.connect('mongodb+srv://ayushkumarsanu6969:fk7f7SRyMjd6B84V@cluster0.ajyh7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0' || 'mongodb://localhost:27017/hospital_management')
@@ -45,8 +45,8 @@ mongoose.connect('mongodb+srv://ayushkumarsanu6969:fk7f7SRyMjd6B84V@cluster0.ajy
 // API routes
 app.use('/api/hospitals', hospitalRoutes);
 app.use('/api/superadmin', superAdminRoutes);
-app.use('/api', identifyHospital);
 app.use('/api/auth', authRoutes);
+app.use('/api', identifyHospital);
 app.use('/api/patients', patientRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/inventory', inventoryRoutes);

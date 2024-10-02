@@ -44,7 +44,8 @@ roomSchema.pre('save', function(next) {
   } else if (occupiedBeds === totalBeds) {
     this.status = 'Occupied';
   }
-
+  console.log("rooms")
+  console.log(this.status)
   next();
 });
 

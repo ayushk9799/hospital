@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../../ui/button";
 import {
   Dialog,
@@ -11,24 +11,40 @@ import {
 import { useSelector, useDispatch } from "react-redux";
 import { Input } from "../../ui/input";
 import { Backend_URL } from "../../../assets/Data";
-import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent } from "../../ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "../../ui/select";
 import { Textarea } from "../../ui/textarea";
-import { fetchPatients } from '../../../redux/slices/patientSlice';
+import { fetchPatients, registerPatient } from "../../../redux/slices/patientSlice";
+import { fetchRooms } from "../../../redux/slices/roomSlice";
 import { Label } from "../../ui/label";
-import { initialFormData, validateForm, formatSubmissionData } from "./ipdRegHelpers";
+import {
+  initialFormData,
+  validateForm,
+  formatSubmissionData,
+} from "./ipdRegHelpers";
 import { useToast } from "../../../hooks/use-toast";
-import { registerPatient } from '../../../redux/slices/patientSlice';
 import { Loader2 } from "lucide-react";
 
-const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
-const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'));
+const hours = Array.from({ length: 12 }, (_, i) =>
+  String(i + 1).padStart(2, "0")
+);
+const minutes = Array.from({ length: 60 }, (_, i) =>
+  String(i).padStart(2, "0")
+);
 
 export default function IPDRegDialog({ open, onOpenChange }) {
-  console.log('ipd');
+  console.log("ipd");
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const registerPatientStatus = useSelector((state) => state.patients.registerPatientStatus);
-  const { departments, rooms, doctors } = useSelector(state => ({
+  const registerPatientStatus = useSelector(
+    (state) => state.patients.registerPatientStatus
+  );
+  const { departments, rooms, doctors } = useSelector((state) => ({
     departments: state.departments.departments,
     rooms: state.rooms.rooms,
     doctors: state.staff.doctors,
@@ -36,12 +52,23 @@ export default function IPDRegDialog({ open, onOpenChange }) {
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
-  const [startTime, setStartTime] = useState({ hour: '', minute: '', amPm: 'AM' });
-  const [endTime, setEndTime] = useState({ hour: '', minute: '', amPm: 'AM' });
+  const [startTime, setStartTime] = useState({
+    hour: "",
+    minute: "",
+    amPm: "AM",
+  });
+  const [endTime, setEndTime] = useState({ hour: "", minute: "", amPm: "AM" });
+
+  useEffect(() => {
+    if (open) {
+      dispatch(fetchRooms());
+      
+    }
+  }, [open, dispatch]);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormData(prev => {
+    setFormData((prev) => {
       const keys = id.split(".");
       const newState = { ...prev };
       let current = newState;
@@ -55,11 +82,13 @@ export default function IPDRegDialog({ open, onOpenChange }) {
   };
 
   const handleTimeChange = (field, type, value) => {
-    const timeState = field === 'start' ? startTime : endTime;
-    const setTimeState = field === 'start' ? setStartTime : setEndTime;
+    const timeState = field === "start" ? startTime : endTime;
+    const setTimeState = field === "start" ? setStartTime : setEndTime;
     setTimeState({ ...timeState, [type]: value });
     const newTime = `${timeState.hour}:${timeState.minute} ${timeState.amPm}`;
-    handleInputChange({ target: { id: `admission.timeSlot.${field}`, value: newTime } });
+    handleInputChange({
+      target: { id: `admission.timeSlot.${field}`, value: newTime },
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -75,16 +104,20 @@ export default function IPDRegDialog({ open, onOpenChange }) {
             description: "The new patient has been added.",
             variant: "default",
           });
-         
+
           dispatch(fetchPatients());
+          dispatch(fetchRooms());
         })
         .catch((error) => {
           toast({
             title: "Failed to register patient",
-            description: error.message || "There was an error registering the patient. Please try again.",
+            description:
+              error.message ||
+              "There was an error registering the patient. Please try again.",
             variant: "destructive",
           });
-        }).finally(() => {
+        })
+        .finally(() => {
           onOpenChange(false);
         });
     }
@@ -122,7 +155,9 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   value={formData.name}
                   onChange={handleInputChange}
                 />
-                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+                {errors.name && (
+                  <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <Input
@@ -148,7 +183,9 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                 />
                 <Select
                   id="gender"
-                  onValueChange={(value) => handleInputChange({ target: { id: 'gender', value } })}
+                  onValueChange={(value) =>
+                    handleInputChange({ target: { id: "gender", value } })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Gender" />
@@ -163,22 +200,37 @@ export default function IPDRegDialog({ open, onOpenChange }) {
               <div>
                 <Select
                   id="bloodType"
-                  onValueChange={(value) => handleInputChange({ target: { id: 'bloodType', value } })}
+                  onValueChange={(value) =>
+                    handleInputChange({ target: { id: "bloodType", value } })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Blood Group" />
                   </SelectTrigger>
                   <SelectContent>
-                    {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(type => (
-                      <SelectItem key={type} value={type}>{type}</SelectItem>
-                    ))}
+                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                      (type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
-                {errors.bloodType && <p className="text-red-500 text-xs mt-1">{errors.bloodType}</p>}
+                {errors.bloodType && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.bloodType}
+                  </p>
+                )}
               </div>
               {/* Move booking date and time slot here */}
               <div className="flex items-center space-x-2">
-                <label htmlFor="admission.bookingDate" className="text-sm font-medium w-24">Booking Date:</label>
+                <label
+                  htmlFor="admission.bookingDate"
+                  className="text-sm font-medium w-24"
+                >
+                  Booking Date:
+                </label>
                 <Input
                   id="admission.bookingDate"
                   type="date"
@@ -188,33 +240,55 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   className="flex-grow"
                 />
               </div>
-              {errors['admission.bookingDate'] && 
-                <p className="text-red-500 text-xs mt-1">{errors['admission.bookingDate']}</p>}
+              {errors["admission.bookingDate"] && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors["admission.bookingDate"]}
+                </p>
+              )}
 
               <div className="grid grid-cols-4 items-center mb-2">
                 <Label>Start Time:</Label>
                 <div className="flex space-x-2 col-span-3">
-                  <Select value={startTime.hour} onValueChange={(value) => handleTimeChange('start', 'hour', value)}>
+                  <Select
+                    value={startTime.hour}
+                    onValueChange={(value) =>
+                      handleTimeChange("start", "hour", value)
+                    }
+                  >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue placeholder="HH" />
                     </SelectTrigger>
                     <SelectContent>
-                      {hours.map(hour => (
-                        <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                      {hours.map((hour) => (
+                        <SelectItem key={hour} value={hour}>
+                          {hour}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={startTime.minute} onValueChange={(value) => handleTimeChange('start', 'minute', value)}>
+                  <Select
+                    value={startTime.minute}
+                    onValueChange={(value) =>
+                      handleTimeChange("start", "minute", value)
+                    }
+                  >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue placeholder="MM" />
                     </SelectTrigger>
                     <SelectContent>
-                      {minutes.map(minute => (
-                        <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                      {minutes.map((minute) => (
+                        <SelectItem key={minute} value={minute}>
+                          {minute}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={startTime.amPm} onValueChange={(value) => handleTimeChange('start', 'amPm', value)}>
+                  <Select
+                    value={startTime.amPm}
+                    onValueChange={(value) =>
+                      handleTimeChange("start", "amPm", value)
+                    }
+                  >
                     <SelectTrigger className="w-[60px]">
                       <SelectValue />
                     </SelectTrigger>
@@ -225,33 +299,55 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   </Select>
                 </div>
               </div>
-              {errors['admission.timeSlot.start'] && 
-                <p className="text-red-500 text-xs mt-1">{errors['admission.timeSlot.start']}</p>}
+              {errors["admission.timeSlot.start"] && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors["admission.timeSlot.start"]}
+                </p>
+              )}
 
               <div className="grid grid-cols-4 items-center gap-2 mb-2">
                 <Label>End Time:</Label>
                 <div className="flex space-x-2 col-span-3">
-                  <Select value={endTime.hour} onValueChange={(value) => handleTimeChange('end', 'hour', value)}>
+                  <Select
+                    value={endTime.hour}
+                    onValueChange={(value) =>
+                      handleTimeChange("end", "hour", value)
+                    }
+                  >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue placeholder="HH" />
                     </SelectTrigger>
                     <SelectContent>
-                      {hours.map(hour => (
-                        <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                      {hours.map((hour) => (
+                        <SelectItem key={hour} value={hour}>
+                          {hour}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={endTime.minute} onValueChange={(value) => handleTimeChange('end', 'minute', value)}>
+                  <Select
+                    value={endTime.minute}
+                    onValueChange={(value) =>
+                      handleTimeChange("end", "minute", value)
+                    }
+                  >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue placeholder="MM" />
                     </SelectTrigger>
                     <SelectContent>
-                      {minutes.map(minute => (
-                        <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                      {minutes.map((minute) => (
+                        <SelectItem key={minute} value={minute}>
+                          {minute}
+                        </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <Select value={endTime.amPm} onValueChange={(value) => handleTimeChange('end', 'amPm', value)}>
+                  <Select
+                    value={endTime.amPm}
+                    onValueChange={(value) =>
+                      handleTimeChange("end", "amPm", value)
+                    }
+                  >
                     <SelectTrigger className="w-[60px]">
                       <SelectValue />
                     </SelectTrigger>
@@ -262,8 +358,11 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   </Select>
                 </div>
               </div>
-              {errors['admission.timeSlot.end'] && 
-                <p className="text-red-500 text-xs mt-1">{errors['admission.timeSlot.end']}</p>}
+              {errors["admission.timeSlot.end"] && (
+                <p className="text-red-500 text-xs mt-1">
+                  {errors["admission.timeSlot.end"]}
+                </p>
+              )}
             </div>
 
             {/* Contact Information */}
@@ -277,7 +376,11 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   value={formData.contactNumber}
                   onChange={handleInputChange}
                 />
-                {errors.contactNumber && <p className="text-red-500 text-xs mt-1">{errors.contactNumber}</p>}
+                {errors.contactNumber && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors.contactNumber}
+                  </p>
+                )}
               </div>
               <Input
                 id="email"
@@ -301,8 +404,11 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   value={formData.admission.insuranceDetails.provider}
                   onChange={handleInputChange}
                 />
-                {errors['admission.insuranceDetails.provider'] && 
-                  <p className="text-red-500 text-xs mt-1">{errors['admission.insuranceDetails.provider']}</p>}
+                {errors["admission.insuranceDetails.provider"] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors["admission.insuranceDetails.provider"]}
+                  </p>
+                )}
               </div>
               <div>
                 <Input
@@ -311,8 +417,11 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   value={formData.admission.insuranceDetails.policyNumber}
                   onChange={handleInputChange}
                 />
-                {errors['admission.insuranceDetails.policyNumber'] && 
-                  <p className="text-red-500 text-xs mt-1">{errors['admission.insuranceDetails.policyNumber']}</p>}
+                {errors["admission.insuranceDetails.policyNumber"] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors["admission.insuranceDetails.policyNumber"]}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -322,29 +431,45 @@ export default function IPDRegDialog({ open, onOpenChange }) {
               <div>
                 <Select
                   id="admission.department"
-                  onValueChange={(value) => handleInputChange({ target: { id: 'admission.department', value } })}
+                  onValueChange={(value) =>
+                    handleInputChange({
+                      target: { id: "admission.department", value },
+                    })
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Department" />
                   </SelectTrigger>
                   <SelectContent>
-                    {departments.map(dept => (
-                      <SelectItem key={dept._id} value={dept._id}>{dept.name}</SelectItem>
+                    {departments.map((dept) => (
+                      <SelectItem key={dept._id} value={dept._id}>
+                        {dept.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                {errors['admission.department'] && <p className="text-red-500 text-xs mt-1">{errors['admission.department']}</p>}
+                {errors["admission.department"] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors["admission.department"]}
+                  </p>
+                )}
               </div>
               <Select
                 id="admission.assignedDoctor"
-                onValueChange={(value) => handleInputChange({ target: { id: 'admission.assignedDoctor', value } })}
+                onValueChange={(value) =>
+                  handleInputChange({
+                    target: { id: "admission.assignedDoctor", value },
+                  })
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Assigned Doctor" />
                 </SelectTrigger>
                 <SelectContent>
-                  {doctors.map(doctor => (
-                    <SelectItem key={doctor._id} value={doctor._id}>{doctor.name}</SelectItem>
+                  {doctors.map((doctor) => (
+                    <SelectItem key={doctor._id} value={doctor._id}>
+                      {doctor.name}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -352,13 +477,15 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                 <Select
                   id="admission.assignedRoom"
                   onValueChange={(value) => {
-                    handleInputChange({ target: { id: 'admission.assignedRoom', value } });
-                    setFormData(prev => ({
+                    handleInputChange({
+                      target: { id: "admission.assignedRoom", value },
+                    });
+                    setFormData((prev) => ({
                       ...prev,
                       admission: {
                         ...prev.admission,
-                        assignedBed: ''
-                      }
+                        assignedBed: "",
+                      },
                     }));
                   }}
                 >
@@ -367,8 +494,8 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   </SelectTrigger>
                   <SelectContent>
                     {rooms
-                      .filter(room => room.status !== 'Occupied')
-                      .map(room => (
+                      .filter((room) => room.status !== "Occupied")
+                      .map((room) => (
                         <SelectItem key={room._id} value={room._id}>
                           {room.roomNumber} - {room.type}
                         </SelectItem>
@@ -377,7 +504,11 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                 </Select>
                 <Select
                   id="admission.assignedBed"
-                  onValueChange={(value) => handleInputChange({ target: { id: 'admission.assignedBed', value } })}
+                  onValueChange={(value) =>
+                    handleInputChange({
+                      target: { id: "admission.assignedBed", value },
+                    })
+                  }
                   disabled={!formData.admission.assignedRoom}
                 >
                   <SelectTrigger>
@@ -386,9 +517,11 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   <SelectContent>
                     {formData.admission.assignedRoom &&
                       rooms
-                        .find(room => room._id === formData.admission.assignedRoom)
-                        ?.beds.filter(bed => bed.status !== 'Occupied')
-                        .map(bed => (
+                        .find(
+                          (room) => room._id === formData.admission.assignedRoom
+                        )
+                        ?.beds.filter((bed) => bed.status !== "Occupied")
+                        .map((bed) => (
                           <SelectItem key={bed._id} value={bed._id}>
                             {bed.bedNumber}
                           </SelectItem>
@@ -396,23 +529,33 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   </SelectContent>
                 </Select>
               </div>
-             
-              
+
               <div>
                 <Textarea
                   id="admission.diagnosis"
                   placeholder="Diagnosis"
                   value={formData.admission.diagnosis}
-                  onChange={(e) => handleInputChange({ target: { id: 'admission.diagnosis', value: e.target.value } })}
+                  onChange={(e) =>
+                    handleInputChange({
+                      target: {
+                        id: "admission.diagnosis",
+                        value: e.target.value,
+                      },
+                    })
+                  }
                   className="h-[60px]"
                 />
-                {errors['admission.diagnosis'] && <p className="text-red-500 text-xs mt-1">{errors['admission.diagnosis']}</p>}
+                {errors["admission.diagnosis"] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {errors["admission.diagnosis"]}
+                  </p>
+                )}
               </div>
 
               {/* Admission Vitals */}
               <h4 className="font-semibold text-sm mt-4">Admission Vitals</h4>
               <div className="grid grid-cols-2 gap-2">
-                <Input 
+                <Input
                   id="admission.vitals.admission.weight"
                   placeholder="Weight"
                   value={formData.admission.vitals.admission.weight}
@@ -462,7 +605,10 @@ export default function IPDRegDialog({ open, onOpenChange }) {
             <Button type="button" variant="outline" onClick={handleReset}>
               Reset
             </Button>
-            <Button type="submit" disabled={registerPatientStatus === "loading"}>
+            <Button
+              type="submit"
+              disabled={registerPatientStatus === "loading"}
+            >
               {registerPatientStatus === "loading" ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
