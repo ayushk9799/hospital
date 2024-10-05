@@ -1,18 +1,42 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "../../ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from "../../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../ui/dialog";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchPatients, registerPatient } from "../../../redux/slices/patientSlice";
+import {
+  fetchPatients,
+  registerPatient,
+} from "../../../redux/slices/patientSlice";
 import { Textarea } from "../../ui/textarea";
 import PatientInfoForm from "./PatientInfoForm";
 import VisitDetailsForm from "./VisitDetailsForm";
 import VitalsForm from "./VitalsForm";
 import InsuranceForm from "./InsuranceForm";
+import { Backend_URL } from "../../../assets/Data";
 import { Switch } from "../../ui/switch";
 import { Input } from "../../ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import { useToast } from "../../../hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../ui/tooltip";
+import { Label } from "../../ui/label";
 
 const initialFormData = {
   name: "",
@@ -36,10 +60,18 @@ const initialFormData = {
       oxygenSaturation: "",
       respiratoryRate: "",
     },
-    bookingDate: new Date().toLocaleDateString("en-IN",{day:"2-digit",month:"2-digit",year:"numeric"}).split('/').reverse().join('-'),
+    bookingDate: new Date()
+      .toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      })
+      .split("/")
+      .reverse()
+      .join("-"),
     timeSlot: {
-      start:"",
-      end:"",
+      start: "",
+      end: "",
     },
     department: "",
     doctor: "",
@@ -48,22 +80,25 @@ const initialFormData = {
       policyNumber: "",
     },
   },
- 
 };
 
+const initialErrors = {};
+
 export default function OPDRegDialog({ open, onOpenChange }) {
-  console.log('opd');
+  console.log("opd");
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const registerPatientStatus = useSelector((state) => state.patients.registerPatientStatus);
-  
+  const registerPatientStatus = useSelector(
+    (state) => state.patients.registerPatientStatus
+  );
+
   const [formData, setFormData] = useState(initialFormData);
-  const [errors, setErrors] = useState({});
+  const [errors, setErrors] = useState(initialErrors);
   const [isOldPatient, setIsOldPatient] = useState(false);
-  const [searchType, setSearchType] = useState('');
+  const [searchType, setSearchType] = useState("");
   const [searchQuery, setSearchQuery] = useState({});
 
-  const handleInputChange = (e) => {
+  const handleInputChange = useCallback((e) => {
     const { id, value } = e.target;
     setFormData((prev) => {
       const keys = id.split(".");
@@ -76,10 +111,10 @@ export default function OPDRegDialog({ open, onOpenChange }) {
       current[keys[keys.length - 1]] = value;
       return newState;
     });
-  };
+  }, []);
 
-  const handleSelectChange = (id, value) =>
-    handleInputChange({ target: { id, value } });
+  const handleSelectChange = useCallback((id, value) =>
+    handleInputChange({ target: { id, value } }), [handleInputChange]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -94,21 +129,89 @@ export default function OPDRegDialog({ open, onOpenChange }) {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSearchInputChange = (e) => {
+  const handleSearchInputChange = useCallback((e) => {
     const { name, value } = e.target;
-    setSearchQuery(prev => ({ ...prev, [name]: value }));
-  };
+    setSearchQuery((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     if (isOldPatient) {
-      if (searchType === 'name' && (!searchQuery.name || !searchQuery.bookingDate)) {
-        alert("Please provide both name and booking date for name-based search.");
+      if (
+        searchType === "name" &&
+        (!searchQuery.name || !searchQuery.bookingDate)
+      ) {
+        toast({
+          title: "Invalid Search",
+          description:
+            "Please provide both name and booking date for name-based search.",
+          variant: "destructive",
+        });
         return;
       }
-      console.log("Searching for patient with", searchType, searchQuery);
-      // You would typically make an API call here to search for the patient
-      // and then populate the form with the returned data
+      if (!searchQuery.bookingDate) {
+        toast({
+          title: "Invalid Search",
+          description: "Booking date is required for all search types.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${Backend_URL}/api/patients/complexsearch`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify({
+              searchQuery: {
+                ...searchQuery,
+                bookingDate: searchQuery.bookingDate,
+              },
+              searchType,
+              searchWhere: formData.patientType.toLowerCase(),
+            }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error("Failed to fetch patient data");
+        }
+        const data = await response.json();
+        if (data.length > 0) {
+          setFormData({
+            ...initialFormData,
+            ...data[0],
+            name: data[0].patientName,
+            age: data[0].patient.age,
+            gender: data[0].patient.gender,
+            bloodType: data[0].patient.bloodType,
+            address: data[0].patient.address,
+          });
+          toast({
+            title: "Patient Found",
+            description: "Patient information has been loaded.",
+            variant: "default",
+          });
+          setIsOldPatient(false);
+        } else {
+          toast({
+            title: "Patient Not Found",
+            description: "No matching patient records found.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error searching for patient:", error);
+        toast({
+          title: "Search Error",
+          description: "An error occurred while searching for the patient.",
+          variant: "destructive",
+        });
+      }
     } else {
       // Existing new patient registration logic
       if (validateForm()) {
@@ -120,7 +223,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
           age: parseInt(formData.age, 10),
           visit: {
             ...formData.visit,
-            bookingDate:formData.visit.bookingDate,
+            bookingDate: formData.visit.bookingDate,
             vitals: Object.fromEntries(
               Object.entries(formData.visit.vitals).map(([key, value]) =>
                 key === "bloodPressure"
@@ -143,34 +246,55 @@ export default function OPDRegDialog({ open, onOpenChange }) {
           .catch((error) => {
             toast({
               title: "Failed to register patient",
-              description: error.message || "There was an error registering the patient. Please try again.",
+              description:
+                error.message ||
+                "There was an error registering the patient. Please try again.",
               variant: "destructive",
             });
-          }).finally(() => {
+          })
+          .finally(() => {
             onOpenChange(false);
           });
       }
     }
-  };
+  }, [isOldPatient, searchType, searchQuery, formData, validateForm, dispatch, toast, onOpenChange]);
 
-  const handleReset = () => {
+  const handleReset = useCallback(() => {
     setFormData(initialFormData);
     setErrors({});
-  };
+  }, []);
 
-  const handleDialogClose = () => {
+  const handleDialogClose = useCallback(() => {
     setIsOldPatient(false);
     onOpenChange(false);
-    setFormData(initialFormData)
-  };
+    setFormData(initialFormData);
+  }, [onOpenChange]);
+
+  useEffect(() => {
+    if (!open) {
+      setFormData(initialFormData);
+      setErrors(initialErrors);
+      setIsOldPatient(false);
+      setSearchType("");
+      setSearchQuery({});
+    }
+  }, [open]);
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className={isOldPatient?"max-w-[800px] max-h-[80vh] overflow-y-auto":"max-w-[1200px] max-h-[80vh] overflow-y-auto"}>
+      <DialogContent
+        className={
+          isOldPatient
+            ? "max-w-[800px] max-h-[80vh] overflow-y-auto"
+            : "max-w-[1200px] max-h-[80vh] overflow-y-auto"
+        }
+      >
         <DialogHeader>
           <DialogTitle>Patient Registration</DialogTitle>
           <DialogDescription>
-            {isOldPatient ? "Search for existing patient" : "Register new patient"}
+            {isOldPatient
+              ? "Search for existing patient"
+              : "Register new patient"}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
@@ -185,64 +309,66 @@ export default function OPDRegDialog({ open, onOpenChange }) {
             </div>
 
             {isOldPatient && (
-              <div className="flex flex-col space-y-4">
-                <div className="flex items-center space-x-4">
-                  <div className="w-1/2">
-                    <Select onValueChange={(value) => {
-                      setSearchType(value);
-                      setSearchQuery({});
-                    }}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select search type" />
+              <div className="space-y-4 mb-4 max-w-md">
+                <div className="flex flex-col space-y-2">
+                  <div className="flex items-center space-x-2">
+                    <Select
+                      onValueChange={(value) => {
+                        setSearchType(value);
+                        setSearchQuery({ bookingDate: "" });
+                      }}
+                    >
+                      <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Search type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="registration">Registration Number</SelectItem>
-                        <SelectItem value="name">Patient Name</SelectItem>
-                        <SelectItem value="mobile">Mobile Number</SelectItem>
+                        <SelectItem value="registration">
+                          Registration No.
+                        </SelectItem>
+                        <SelectItem value="name">
+                          Name And Booking Date
+                        </SelectItem>
+                        <SelectItem value="mobile">Mobile No.</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="w-1/2">
                     <Input
                       type="text"
                       name={searchType}
-                      placeholder={`Enter ${searchType || 'search'} value`}
-                      value={searchQuery[searchType] || ''}
+                      placeholder={`Enter ${searchType || "patient"} details`}
+                      value={searchQuery[searchType] || ""}
                       onChange={handleSearchInputChange}
+                      className="flex-grow"
                     />
                   </div>
-                </div>
-                {searchType === 'name' && (
-                  <div className="flex items-center space-x-4">
-                    <div className="w-1/2">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-[140px] relative">
                       <Input
                         id="bookingDate"
                         name="bookingDate"
                         type="date"
-                        value={searchQuery.bookingDate || ''}
+                        value={searchQuery.bookingDate || ""}
                         onChange={handleSearchInputChange}
+                        className="peer pl-2 pt-2 pb-2 block w-full border-gray-300 rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder=" "
                       />
-                    </div>
-                    <div className="w-1/2 self-end">
-                      <Button 
-                        type="submit" 
-                        className="w-full"
-                        disabled={!searchQuery.name || !searchQuery.bookingDate}
+                      <Label
+                        htmlFor="bookingDate"
+                        className="absolute text-xs text-gray-500 duration-300 transform -translate-y-1/2 scale-75 top-1/2 z-10 origin-[0] left-2 peer-placeholder-shown:scale-100 peer-focus:scale-75 peer-focus:-translate-y-4 peer-focus:top-2"
                       >
-                        Search
-                      </Button>
+                        Visit Date
+                      </Label>
                     </div>
+                    <Button
+                      onClick={handleSubmit}
+                      className="flex-grow"
+                      disabled={
+                        !searchQuery[searchType] || !searchQuery.bookingDate
+                      }
+                    >
+                      Search
+                    </Button>
                   </div>
-                )}
-                {searchType !== 'name' && (
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={!searchQuery[searchType]}
-                  >
-                    Search
-                  </Button>
-                )}
+                </div>
               </div>
             )}
           </div>
@@ -261,6 +387,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
                     formData={formData}
                     handleInputChange={handleInputChange}
                     handleSelectChange={handleSelectChange}
+                    errors={errors}
                   />
                 </div>
                 <div className="flex flex-col gap-4">
@@ -284,12 +411,14 @@ export default function OPDRegDialog({ open, onOpenChange }) {
                 <VitalsForm
                   formData={formData}
                   handleSelectChange={handleSelectChange}
+                  errors={errors}
                 />
-                </div>
-                <div className="grid grid-cols-2 gap-4 mt-4">
+              </div>
+              <div className="grid grid-cols-2 gap-4 mt-4">
                 <InsuranceForm
                   formData={formData.visit}
                   handleSelectChange={handleSelectChange}
+                  errors={errors}
                 />
               </div>
               <DialogFooter className="mt-4">
@@ -303,7 +432,10 @@ export default function OPDRegDialog({ open, onOpenChange }) {
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={registerPatientStatus === "loading"}>
+                <Button
+                  type="submit"
+                  disabled={registerPatientStatus === "loading"}
+                >
                   {registerPatientStatus === "loading" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />

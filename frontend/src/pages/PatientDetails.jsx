@@ -59,6 +59,8 @@ export default function PatientDetails() {
 
     if (!visitData) return null;
 
+    const isIPD = 'admissionDate' in visitData;
+
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground mb-4">
@@ -156,50 +158,133 @@ export default function PatientDetails() {
               <CardTitle>Vitals</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <VitalItem
-                  icon={<Activity className="h-8 w-8 text-blue-500" />}
-                  label="Blood Pressure"
-                  value={visitData.vitals?.bloodPressure}
-                  unit="mmHg"
-                />
-                <VitalItem
-                  icon={<Heart className="h-8 w-8 text-red-500" />}
-                  label="Heart Rate"
-                  value={visitData.vitals?.heartRate}
-                  unit="bpm"
-                />
-                <VitalItem
-                  icon={<Thermometer className="h-8 w-8 text-orange-500" />}
-                  label="Temperature"
-                  value={visitData.vitals?.temperature}
-                  unit="°C"
-                />
-                <VitalItem
-                  icon={<Scale className="h-8 w-8 text-green-500" />}
-                  label="Weight"
-                  value={visitData.vitals?.weight}
-                  unit="kg"
-                />
-                <VitalItem
-                  icon={<Ruler className="h-8 w-8 text-purple-500" />}
-                  label="Height"
-                  value={visitData.vitals?.height}
-                  unit="cm"
-                />
-                <VitalItem
-                  icon={<Droplet className="h-8 w-8 text-cyan-500" />}
-                  label="Oxygen Saturation"
-                  value={visitData.vitals?.oxygenSaturation}
-                  unit="%"
-                />
-                <VitalItem
-                  icon={<Wind className="h-8 w-8 text-teal-500" />}
-                  label="Respiration Rate"
-                  value={visitData.vitals?.respiratoryRate}
-                  unit="breaths/min"
-                />
-              </div>
+              {isIPD ? (
+                <div>
+                  <h4 className="font-semibold mb-2">Admission Vitals</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+                    <VitalItem
+                      icon={<Activity className="h-8 w-8 text-blue-500" />}
+                      label="Blood Pressure"
+                      value={visitData.vitals?.admission?.bloodPressure}
+                      unit="mmHg"
+                    />
+                    <VitalItem
+                      icon={<Heart className="h-8 w-8 text-red-500" />}
+                      label="Heart Rate"
+                      value={visitData.vitals?.admission?.heartRate}
+                      unit="bpm"
+                    />
+                    <VitalItem
+                      icon={<Thermometer className="h-8 w-8 text-orange-500" />}
+                      label="Temperature"
+                      value={visitData.vitals?.admission?.temperature}
+                      unit="°C"
+                    />
+                    <VitalItem
+                      icon={<Scale className="h-8 w-8 text-green-500" />}
+                      label="Weight"
+                      value={visitData.vitals?.admission?.weight}
+                      unit="kg"
+                    />
+                    <VitalItem
+                      icon={<Ruler className="h-8 w-8 text-purple-500" />}
+                      label="Height"
+                      value={visitData.vitals?.admission?.height}
+                      unit="cm"
+                    />
+                    <VitalItem
+                      icon={<Droplet className="h-8 w-8 text-cyan-500" />}
+                      label="Oxygen Saturation"
+                      value={visitData.vitals?.admission?.oxygenSaturation}
+                      unit="%"
+                    />
+                    <VitalItem
+                      icon={<Wind className="h-8 w-8 text-teal-500" />}
+                      label="Respiration Rate"
+                      value={visitData.vitals?.admission?.respiratoryRate}
+                      unit="breaths/min"
+                    />
+                  </div>
+                  <h4 className="font-semibold mb-2">Discharge Vitals</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    <VitalItem
+                      icon={<Activity className="h-8 w-8 text-blue-500" />}
+                      label="Blood Pressure"
+                      value={visitData.vitals?.discharge?.bloodPressure}
+                      unit="mmHg"
+                    />
+                    <VitalItem
+                      icon={<Heart className="h-8 w-8 text-red-500" />}
+                      label="Heart Rate"
+                      value={visitData.vitals?.discharge?.heartRate}
+                      unit="bpm"
+                    />
+                    <VitalItem
+                      icon={<Thermometer className="h-8 w-8 text-orange-500" />}
+                      label="Temperature"
+                      value={visitData.vitals?.discharge?.temperature}
+                      unit="°C"
+                    />
+                    <VitalItem
+                      icon={<Droplet className="h-8 w-8 text-cyan-500" />}
+                      label="Oxygen Saturation"
+                      value={visitData.vitals?.discharge?.oxygenSaturation}
+                      unit="%"
+                    />
+                    <VitalItem
+                      icon={<Wind className="h-8 w-8 text-teal-500" />}
+                      label="Respiration Rate"
+                      value={visitData.vitals?.discharge?.respiratoryRate}
+                      unit="breaths/min"
+                    />
+                  </div>
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  <VitalItem
+                    icon={<Activity className="h-8 w-8 text-blue-500" />}
+                    label="Blood Pressure"
+                    value={visitData.vitals?.bloodPressure}
+                    unit="mmHg"
+                  />
+                  <VitalItem
+                    icon={<Heart className="h-8 w-8 text-red-500" />}
+                    label="Heart Rate"
+                    value={visitData.vitals?.heartRate}
+                    unit="bpm"
+                  />
+                  <VitalItem
+                    icon={<Thermometer className="h-8 w-8 text-orange-500" />}
+                    label="Temperature"
+                    value={visitData.vitals?.temperature}
+                    unit="°C"
+                  />
+                  <VitalItem
+                    icon={<Scale className="h-8 w-8 text-green-500" />}
+                    label="Weight"
+                    value={visitData.vitals?.weight}
+                    unit="kg"
+                  />
+                  <VitalItem
+                    icon={<Ruler className="h-8 w-8 text-purple-500" />}
+                    label="Height"
+                    value={visitData.vitals?.height}
+                    unit="cm"
+                  />
+                  <VitalItem
+                    icon={<Droplet className="h-8 w-8 text-cyan-500" />}
+                    label="Oxygen Saturation"
+                    value={visitData.vitals?.oxygenSaturation}
+                    unit="%"
+                  />
+                  <VitalItem
+                    icon={<Wind className="h-8 w-8 text-teal-500" />}
+                    label="Respiration Rate"
+                    value={visitData.vitals?.respiratoryRate}
+                    unit="breaths/min"
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -210,43 +295,36 @@ export default function PatientDetails() {
             </CardHeader>
             <CardContent>
               {visitData.labReports && visitData.labReports.length > 0 ? (
-                visitData.labReports.map((report, index) => {
-                  const category = Object.keys(labReportFields).find(key => 
-                    labReportFields[key].hasOwnProperty(report.name)
-                  );
-                  const reportFields = category ? labReportFields[category][report.name] : [];
-                  
-                  return (
-                    <div key={index} className="mb-6">
-                      <h3 className="text-lg font-semibold mb-2">
-                        {report.name.replace(/-/g, ' ').toUpperCase()} 
-                        <span className="text-sm font-normal ml-2 text-gray-500">
-                          {report.date ? new Date(report.date).toLocaleDateString("en-IN") : ""}
-                        </span>
-                      </h3>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Test</TableHead>
-                            <TableHead>Result</TableHead>
-                            <TableHead>Unit</TableHead>
-                            <TableHead>Normal Range</TableHead>
+                visitData.labReports.map((report, index) => (
+                  <div key={index} className="mb-6">
+                    <h3 className="text-lg font-semibold mb-2">
+                      {report.name}
+                      <span className="text-sm font-normal ml-2 text-gray-500">
+                        {report.date ? new Date(report.date).toLocaleDateString("en-IN") : ""}
+                      </span>
+                    </h3>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Test</TableHead>
+                          <TableHead>Result</TableHead>
+                          <TableHead>Unit</TableHead>
+                          <TableHead>Normal Range</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {Object.entries(report.report).map(([key, data]) => (
+                          <TableRow key={key}>
+                            <TableCell className="font-medium">{data.label}</TableCell>
+                            <TableCell>{data.value}</TableCell>
+                            <TableCell>{data.unit}</TableCell>
+                            <TableCell>{data.normalRange}</TableCell>
                           </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {reportFields.map((field) => (
-                            <TableRow key={field.name}>
-                              <TableCell className="font-medium">{field.label}</TableCell>
-                              <TableCell>{report.report[field.name] || 'N/A'}</TableCell>
-                              <TableCell>{field.unit}</TableCell>
-                              <TableCell>{field.normalRange}</TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  );
-                })
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ))
               ) : (
                 <p>No lab reports available.</p>
               )}

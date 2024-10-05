@@ -1,115 +1,174 @@
-import React from "react";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
-import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent } from "../../ui/select";
+import React, { useCallback, useState } from "react";
+import MemoizedInput from "./MemoizedInput";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "../../ui/select";
 
-export default function PatientInfoForm({ formData, handleInputChange, handleSelectChange, errors }) {
-  const handleDobChange = (e) => {
-    const dateOfBirth = e.target.value;
-    const age = dateOfBirth
-      ? new Date().getFullYear() - new Date(dateOfBirth).getFullYear()
-      : "";
-    handleInputChange({ target: { id: "dateOfBirth", value: dateOfBirth } });
-    handleInputChange({ target: { id: "age", value: age.toString() } });
-  };
+// Updated FloatingLabelSelect component
+const FloatingLabelSelect = ({ id, label, value, onValueChange, error, children }) => {
+  const [isFocused, setIsFocused] = useState(false);
 
-  const handleAgeChange = (e) => {
-    const age = e.target.value;
-    handleInputChange({ target: { id: "age", value: age } });
-    handleInputChange({ target: { id: "dateOfBirth", value: "" } });
-  };
+  return (
+    <div className="relative">
+      <Select 
+        id={id} 
+        value={value} 
+        onValueChange={(newValue) => {
+          onValueChange(newValue);
+          setIsFocused(false);
+        }}
+        onOpenChange={(open) => setIsFocused(open)}
+      >
+        <SelectTrigger 
+          className={`peer px-3 py-2 w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+            error && !value && !isFocused ? "border-red-500" : "border-gray-300"
+          }`}
+        >
+          <SelectValue placeholder=" " />
+        </SelectTrigger>
+        <SelectContent>
+          {children}
+        </SelectContent>
+      </Select>
+      <label
+        htmlFor={id}
+        className={`absolute text-xs duration-300 transform -translate-y-1/2 left-3
+          peer-placeholder-shown:text-sm peer-placeholder-shown:top-1/2
+          peer-focus:text-xs peer-focus:top-0 peer-focus:-translate-y-1/2
+          ${value || isFocused ? 'top-0 -translate-y-1/2 text-xs' : 'top-1/2'}
+          ${error && !value && !isFocused ? "text-red-500" : "text-gray-500"}
+          bg-white px-1`}
+      >
+        {label}
+        {error && !value && !isFocused && <span className="text-red-500 ml-1">*Required</span>}
+      </label>
+    </div>
+  );
+};
+
+export default function PatientInfoForm({
+  formData,
+  handleInputChange,
+  handleSelectChange,
+  errors,
+}) {
+  const handleDobChange = useCallback(
+    (e) => {
+      const dateOfBirth = e.target.value;
+      const age = dateOfBirth
+        ? new Date().getFullYear() - new Date(dateOfBirth).getFullYear()
+        : "";
+      handleInputChange({ target: { id: "dateOfBirth", value: dateOfBirth } });
+      handleInputChange({ target: { id: "age", value: age.toString() } });
+    },
+    [handleInputChange]
+  );
+
+  const handleAgeChange = useCallback(
+    (e) => {
+      const age = e.target.value;
+      handleInputChange({ target: { id: "age", value: age } });
+      handleInputChange({ target: { id: "dateOfBirth", value: "" } });
+    },
+    [handleInputChange]
+  );
 
   return (
     <>
-      <Input
+    <MemoizedInput
         id="name"
-        placeholder="Full Name"
+        label="Full Name"
         value={formData.name}
         onChange={handleInputChange}
+        error={errors.name}
       />
-      {errors.name && <span className="text-red-500 text-sm">{errors.name}</span>}
 
-      <Input
+      <MemoizedInput
         id="registrationNumber"
-        placeholder="Registration Number"
+        label="Registration Number"
         value={formData.registrationNumber}
         onChange={handleInputChange}
+        error={errors.registrationNumber}
       />
-      {errors.registrationNumber && <span className="text-red-500 text-sm">{errors.registrationNumber}</span>}
+    
      
-      <div className="flex flex-col gap-2  -mt-6">
+
+      <div className="flex flex-col gap-2">
+        
         <div className="flex items-end gap-4">
-          <div className="flex-grow">
-            <Label htmlFor="dateOfBirth">Date of Birth</Label>
-            <Input
+          <div className="flex-grow relative">
+            <MemoizedInput
               id="dateOfBirth"
+              label="Date of Birth"
               type="date"
-              placeholder="Date of Birth"
               value={formData.dateOfBirth}
               onChange={handleDobChange}
+              
             />
           </div>
-          <div className="w-20">
-            <Label htmlFor="age">Age</Label>
-            <Input
+          <div className="w-20 relative">
+            <MemoizedInput
               id="age"
+              label="Age"
               type="number"
-              placeholder="Age"
               value={formData.age}
               onChange={handleAgeChange}
+              error={errors.age}
             />
           </div>
         </div>
-        {(errors.dateOfBirth || errors.age) && <span className="text-red-500 text-sm">{errors.dateOfBirth || errors.age}</span>}
+       
       </div>
 
-      <Select
+      <FloatingLabelSelect
         id="gender"
+        label="Gender"
+        value={formData.gender}
         onValueChange={(value) => handleSelectChange("gender", value)}
+        error={errors.gender}
       >
-        <SelectTrigger>
-          <SelectValue placeholder="Gender" />
-        </SelectTrigger>
-        <SelectContent>
-          {["Male", "Female", "Other"].map((gender) => (
-            <SelectItem key={gender} value={gender}>{gender}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {errors.gender && <span className="text-red-500 text-sm">{errors.gender}</span>}
+        {["Male", "Female", "Other"].map((gender) => (
+          <SelectItem key={gender} value={gender}>
+            {gender}
+          </SelectItem>
+        ))}
+      </FloatingLabelSelect>
 
-      <Input
+      <MemoizedInput
         id="contactNumber"
+        label="Contact Number"
         type="tel"
-        placeholder="Contact Number"
         value={formData.contactNumber}
         onChange={handleInputChange}
+        error={errors.contactNumber}
       />
-      {errors.contactNumber && <span className="text-red-500 text-sm">{errors.contactNumber}</span>}
 
-      <Input
+      <MemoizedInput
         id="email"
+        label="Email"
         type="email"
-        placeholder="Email"
         value={formData.email}
         onChange={handleInputChange}
+        error={errors.email}
       />
-      {errors.email && <span className="text-red-500 text-sm">{errors.email}</span>}
 
-      <Select
+      <FloatingLabelSelect
         id="bloodType"
+        label="Blood Type"
+        value={formData.bloodType}
         onValueChange={(value) => handleSelectChange("bloodType", value)}
+        error={errors.bloodType}
       >
-        <SelectTrigger>
-          <SelectValue placeholder="Blood Type" />
-        </SelectTrigger>
-        <SelectContent>
-          {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type) => (
-            <SelectItem key={type} value={type}>{type}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      {errors.bloodType && <span className="text-red-500 text-sm">{errors.bloodType}</span>}
+        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type) => (
+          <SelectItem key={type} value={type}>
+            {type}
+          </SelectItem>
+        ))}
+      </FloatingLabelSelect>
     </>
   );
 }

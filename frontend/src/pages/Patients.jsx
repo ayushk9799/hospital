@@ -73,17 +73,18 @@ export default function Patients() {
 
   // Use the useSelector hook to get the patients from the Redux store
   const patients = useSelector((state) => state.patients.patientlist);
-
+console.log(patients)
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
 
   const filteredPatients = patients.filter((patient) => {
-    const nameMatch = patient.patient.name
+    const nameMatch = patient.patient?.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
 
     let dateMatch = true;
     // Parse the date string in the format "DD-MM-YYYY"
-    const visitDate = parse(patient.bookingDate, "dd-MM-yyyy", new Date());
+    const visitDate = patient.bookingDate
+    console.log(visitDate)
     const today = new Date();
 
     switch (dateFilter) {

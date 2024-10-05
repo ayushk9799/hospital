@@ -63,6 +63,7 @@ const ipdAdmissionSchema = new mongoose.Schema({
   },
   status:{type:String,enum:["Admitted","Discharged"],default:"Admitted"},
   assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
+  department:{type:String},
   assignedRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
   assignedBed:{ type: mongoose.Schema.Types.ObjectId, ref: "Room.beds" },
   insuranceDetails: {
