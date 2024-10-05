@@ -1,21 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { 
-  Calendar, 
-  UserIcon, 
-  ChartLine, 
-  Users, 
-  Activity, 
-  CalendarIcon, 
-  AlertCircle 
-} from "lucide-react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  CardDescription, 
-  CardTitle 
-} from "../components/ui/card";
+import { Calendar, UserIcon, ChartLine, Activity, CalendarIcon, AlertCircle } from "lucide-react";
+import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "../components/ui/card";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
@@ -36,10 +22,7 @@ import {
   DropdownMenuSeparator, 
   DropdownMenuTrigger 
 } from "../components/ui/dropdown-menu";
-import { 
-  DateRangePicker, 
-  convertFilterToDateRange 
-} from "../assets/Data";
+import { DateRangePicker, convertFilterToDateRange } from "../assets/Data";
 import { fetchDashboardData } from "../redux/slices/dashboardSlice";
 import { 
   startOfDay, 
@@ -115,13 +98,14 @@ const Dashboard = () => {
     
     if (!Array.isArray(filteredData.currentValue)) {
       console.error("filteredData.currentValue is not an array:", filteredData.currentValue);
-      return { totalRevenue: 0, totalPrescriptions: 0, paymentMethods: {} };
+      return { totalRevenue: 0, totalPatients: 0, totalAppointments: 0, paymentMethods: {} };
     }
     
     const totals = filteredData.currentValue.reduce((acc, curr) => {
       console.log("Current item in reduce:", curr);
       acc.totalRevenue += curr.revenue || 0;
-      acc.totalPrescriptions += curr.count || 0;
+      acc.totalPatients += curr.uniquePatientCount || 0;
+      acc.totalAppointments += curr.totalAppointments || 0;
       
       // Combine payment methods from services and pharmacy
       const allPaymentMethods = [
@@ -136,7 +120,7 @@ const Dashboard = () => {
       });
       
       return acc;
-    }, { totalRevenue: 0, totalPrescriptions: 0, paymentMethods: {} });
+    }, { totalRevenue: 0, totalPatients: 0, totalAppointments: 0, paymentMethods: {} });
     
     console.log("Calculated totals:", totals);
     return totals;
@@ -233,12 +217,11 @@ const Dashboard = () => {
     dispatch(fetchDashboardData(ISO_time));
   };
 
-  // Modify the calculatePercentageChange function to handle both total revenue, service, and pharmacy collections
   const calculatePercentageChanges = useMemo(() => {
     if (filteredData.currentValue && filteredData.previousValue) {
-      const calculateChange = (currentKey, previousKey) => {
-        const currentValue = filteredData.currentValue.reduce((sum, day) => sum + ((day[currentKey] && day[currentKey].revenue) || 0), 0);
-        const previousValue = filteredData.previousValue.reduce((sum, day) => sum + ((day[previousKey] && day[previousKey].revenue) || 0), 0);
+      const calculateChange = (key) => {
+        const currentValue = filteredData.currentValue.reduce((sum, day) => sum + (day[key] || 0), 0);
+        const previousValue = filteredData.previousValue.reduce((sum, day) => sum + (day[key] || 0), 0);
         
         if (previousValue === 0) return 100; // If previous value was 0, consider it as 100% increase
         
@@ -247,12 +230,20 @@ const Dashboard = () => {
       };
 
       return {
-        totalRevenue: calculateChange('revenue', 'revenue'),
-        serviceCollection: calculateChange('services', 'services'),
-        pharmacyCollection: calculateChange('pharmacy', 'pharmacy')
+        totalRevenue: calculateChange('revenue'),
+        serviceCollection: calculateChange('services.revenue'),
+        pharmacyCollection: calculateChange('pharmacy.revenue'),
+        totalPatients: calculateChange('uniquePatientCount'),
+        totalAppointments: calculateChange('totalAppointments')
       };
     }
-    return { totalRevenue: null, serviceCollection: null, pharmacyCollection: null };
+    return { 
+      totalRevenue: null, 
+      serviceCollection: null, 
+      pharmacyCollection: null,
+      totalPatients: null,
+      totalAppointments: null
+    };
   }, [filteredData]);
 
   const getComparisonText = () => {
@@ -411,8 +402,13 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <UserIcon className="w-10 h-10 text-pink-600" />
-                    <p className="text-2xl font-bold text-pink-600">{dashboardTotals.totalPrescriptions}</p>
+                    <p className="text-2xl font-bold text-pink-600">{dashboardTotals.totalPatients}</p>
                     <p className="text-sm text-gray-600">Total Patients</p>
+                    {calculatePercentageChanges.totalPatients !== null && dateFilter !== "Custom" && dateFilter !== "All" && (
+                      <p className={`text-xs ${calculatePercentageChanges.totalPatients >= 0 ? 'text-green-600' : 'text-red-600'} mt-1`}>
+                        {calculatePercentageChanges.totalPatients >= 0 ? '+' : ''}{calculatePercentageChanges.totalPatients}% {getComparisonText()}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -422,11 +418,13 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Calendar className="w-10 h-10 text-orange-600" />
-                    <p className="text-2xl font-bold text-orange-600">45</p>
-                    <p className="text-sm text-gray-600">Today Appointment</p>
-                    <p className="text-xs text-green-600 mt-1">
-                      +15% from last month
-                    </p>
+                    <p className="text-2xl font-bold text-orange-600">{dashboardTotals.totalAppointments}</p>
+                    <p className="text-sm text-gray-600">Total Appointments</p>
+                    {calculatePercentageChanges.totalAppointments !== null && dateFilter !== "Custom" && dateFilter !== "All" && (
+                      <p className={`text-xs ${calculatePercentageChanges.totalAppointments >= 0 ? 'text-green-600' : 'text-red-600'} mt-1`}>
+                        {calculatePercentageChanges.totalAppointments >= 0 ? '+' : ''}{calculatePercentageChanges.totalAppointments}% {getComparisonText()}
+                      </p>
+                    )}
                   </div>
                 </div>
               </CardContent>
