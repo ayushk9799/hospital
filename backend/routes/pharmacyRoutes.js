@@ -6,14 +6,16 @@ import { Supplier } from '../models/Supplier.js';
 import {Visit} from '../models/Visits.js';
 import {IPDAdmission} from '../models/IPDAdmission.js';
 import mongoose from 'mongoose';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/create-sales-bill', async (req, res) => {
+router.post('/create-sales-bill', verifyToken, async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
     try {
         const { patientInfo, billInfo, buyerName, items, paymentMethod, totals } = req.body;
+        const user = req.user;
         let patient;
         if(billInfo && billInfo._id && billInfo._id !== ""){
             const modal = billInfo.type === 'OPD' ? Visit : IPDAdmission;
@@ -22,25 +24,31 @@ router.post('/create-sales-bill', async (req, res) => {
                 patient = patientValue;
             }
         }
-        
-        // Create payment
-        const payment = new Payment({
-            amount: totals.totalAmount,
-            paymentMethod : paymentMethod === 'Due' ? undefined : paymentMethod,
-            paymentFrom: 'pharmacy',
-            type: 'Income',
-            status: paymentMethod === 'Due' ? 'due' : 'paid',
-        });
-        await payment.save({ session });
-
         // Create pharmacy bill
         const newPharmacyBill = new PharmacyBill({
             patientInfo,
             buyerName,
             items,
-            ...totals,
-            payment: payment._id,
+            createdBy : user._id,
+            ...totals
         });
+
+        if(paymentMethod === 'Due'){
+            newPharmacyBill.amountPaid = 0;
+        } else {
+             // Create payment
+            const payment = new Payment({
+                amount: totals.totalAmount,
+                paymentMethod,
+                paymentType: {name : 'Pharmacy', id : newPharmacyBill._id},
+                type: 'Income',
+                createdBy : user._id
+            });
+            await payment.save({ session });
+            newPharmacyBill.payment = payment._id;
+            newPharmacyBill.amountPaid = totals.totalAmount;
+        }
+        
         if(patient) {
             patient.bills.pharmacy.push(newPharmacyBill._id);
             newPharmacyBill.patient = patient._id;
@@ -67,6 +75,7 @@ router.post('/create-sales-bill', async (req, res) => {
         res.status(201).json(populatedBill);
     } catch (error) {
         await session.abortTransaction();
+        console.log(error);
         res.status(500).json({ error: error.message });
     } finally {
         session.endSession();
@@ -194,7 +203,7 @@ router.get('/dashboard-data', async (req, res) => {
             return res.status(400).json({ error: 'Both startDate and endDate are required' });
         }
 
-        const salesBills = await PharmacyBill.aggregate([
+        const salesBills = await PharmacyBill.hospitalAwareAggregate([
             {
                 $match: {
                     createdAt: {

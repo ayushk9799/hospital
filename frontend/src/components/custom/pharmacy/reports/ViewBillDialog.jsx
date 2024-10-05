@@ -3,34 +3,11 @@ import { useRef, useState } from "react";
 import { useReactToPrint } from 'react-to-print';
 import { Button } from "../../../ui/button";
 import { format } from "date-fns";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "../../../ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../../../ui/dialog";
 import { Label } from "../../../ui/label";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../../../ui/table";
-import {  PrinterIcon } from "lucide-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../ui/table";
+import { PrinterIcon } from "lucide-react";
 import PharmacyHeader from "../../../../utils/print/PharmacyHeader";
-
-// Update the PrintHeader component
-const PrintHeader = () => (
-  <div className="hidden print:block mb-4">
-    <h1 className="text-2xl font-bold text-center">Your Pharmacy Name</h1>
-    <p className="text-center">123 Pharmacy Street, City, Country</p>
-    <p className="text-center">Phone: (123) 456-7890</p>
-  </div>
-);
 
 export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
   const componentRef = useRef();
@@ -86,7 +63,7 @@ export default function ViewBillDialog({ isOpen, setIsOpen, billData }) {
                 <DialogTitle>Bill Details</DialogTitle>
                 <DialogDescription>Full details of the bill</DialogDescription>
               </div>
-              <Badge status={billData.payment.status} />
+              <Badge status={billData.amountPaid === billData.totalAmount ? "Paid" : "Due"} />
             </DialogHeader>
           </div>
           <div className="grid gap-2 py-0">

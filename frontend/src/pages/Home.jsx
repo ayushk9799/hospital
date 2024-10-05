@@ -3,13 +3,14 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { CardContent, Card } from "../components/ui/card";
 import { Link } from 'react-router-dom';
-import { ShieldCheck, Users, BarChart, Pill } from "lucide-react";
+import { ShieldCheck, Users, BarChart, Pill, Loader2 } from "lucide-react";
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
 import { useLocation } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { Backend_URL } from '../assets/Data';
-import { useDispatch } from 'react-redux';
-import { fetchUserData } from '../redux/slices/userSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchUserData, loginUser } from '../redux/slices/userSlice';
+import { useToast } from '../hooks/use-toast';
 
 export default function LandingPage() {
   const dispatch = useDispatch();
@@ -21,6 +22,10 @@ export default function LandingPage() {
     username: '', // Changed from email to username
     password: '',
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const loginStatus = useSelector((state) => state.user.loginStatus);
+  const loginError = useSelector((state) => state.user.loginError);
+  const { toast } = useToast();
 
   useEffect(() => {
     if (location.state?.scrollToFeatures && featuresRef.current) {
@@ -44,36 +49,28 @@ export default function LandingPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.hospitalId && formData.username && formData.password) {
+      setIsLoading(true);
       try {
-        const response = await fetch(`${Backend_URL}/api/auth/login`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: "include",
-          body: JSON.stringify(formData),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.message || 'Login failed');
-        }
-
+        await dispatch(loginUser(formData)).unwrap();
         console.log('Login successful');
-        
-        // Fetch user data after successful login
-         dispatch(fetchUserData());
-        
-      
-          // User data fetched successfully
-          navigate('/');
-      
+        await dispatch(fetchUserData());
+        navigate('/');
       } catch (error) {
-        console.error('Login error:', error.message);
-        alert('Login failed. Please check your credentials and try again.');
+        console.error('Login error:', error);
+        toast({
+          title: "Login failed",
+          description: "Please check your credentials and try again.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
       }
     } else {
-      alert('Please fill in all fields');
+      toast({
+        title: "Incomplete form",
+        description: "Please fill in all fields.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -175,7 +172,22 @@ export default function LandingPage() {
                         onChange={handleInputChange}
                       />
                     </div>
-                    <Button className="w-full bg-blue-600 text-white hover:bg-blue-700" type="submit">Login</Button>
+                    <Button 
+                      className="w-full bg-blue-600 text-white hover:bg-blue-700" 
+                      type="submit"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        </>
+                      ) : (
+                        'Login'
+                      )}
+                    </Button>
+                    {loginStatus === 'failed' && (
+                      <p className="text-red-500 text-sm">{loginError}</p>
+                    )}
                   </form>
                 </CardContent>
               </Card>

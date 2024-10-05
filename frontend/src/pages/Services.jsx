@@ -65,7 +65,7 @@ const Services = () => {
         toast({
           title: "Service deleted successfully",
           description: "The service has been removed.",
-          variant: "default",
+          variant: "success",
         });
       })
       .catch((error) => {

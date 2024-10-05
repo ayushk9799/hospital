@@ -239,7 +239,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
             toast({
               title: "Patient registered successfully",
               description: "The new patient has been added.",
-              variant: "default",
+              variant: "success",
             });
             dispatch(fetchPatients());
           })

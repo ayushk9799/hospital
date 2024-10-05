@@ -196,8 +196,8 @@ const PharmacyAllBills = () => {
                 </TableCell>
                 <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
                 <TableCell>
-                  <Badge variant={bill?.payment?.status === "paid" ? "success" : "destructive"}>
-                    {bill?.payment?.status === "paid" ? "Paid" : "Due"}
+                  <Badge variant={bill?.amountPaid === bill?.totalAmount ? "success" : "destructive"}>
+                    {bill?.amountPaid === bill?.totalAmount ? "Paid" : "Due"}
                   </Badge>
                 </TableCell>
                 <TableCell>{bill?.payment?.paymentMethod || "__"}</TableCell>

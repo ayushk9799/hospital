@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchItems, createSalesBill, setCreateSalesBillStatus, fetchSalesBills } from "../../../../redux/slices/pharmacySlice";
+import { fetchItems, createSalesBill, fetchSalesBills } from "../../../../redux/slices/pharmacySlice";
 import { fetchPatients, setSelectedPatient } from "../../../../redux/slices/patientSlice";
 import { Button } from "../../../ui/button";
 import { ScrollArea } from "../../../ui/scroll-area";
@@ -168,12 +168,11 @@ export default function SalesMain({ clearTrigger, shouldOpenMedicineSuggDialog, 
       buyerName
     };
     dispatch(createSalesBill(patientInfo)).unwrap().then(()=>{
-      toast({ title: "Sales order created successfully!"});
-    }).catch((error) => {
-      toast({title: "Failed to create sales order", description: error.message});
-    }).finally(()=>{
       clearAllFields();
-    });
+      toast({ title: "Sales order created successfully!", variant : "success", description : "You can print the bill by clicking on recent bills"});
+    }).catch((error) => {
+      toast({title: "Failed to create sales order", description: error.message, variant : "destructive", });
+    })
   };
 
   const handleAdditionalDiscountChange = (e) => {
@@ -284,7 +283,7 @@ export default function SalesMain({ clearTrigger, shouldOpenMedicineSuggDialog, 
                           <Input type="number" name="discount" value={newItem.discount} onChange={handleNewItemChange} placeholder="0" className="h-7 text-sm w-20" />
                         </TableCell>
                         <TableCell className='w-20'>
-                          {newItem.quantity && newItem.mrp ? `₹${newItem.total.toFixed(2)}` : "₹0.00"}
+                          {newItem.quantity && newItem.mrp ? `₹${newItem.total.toLocaleString()}` : "₹0.00"}
                         </TableCell>
                         <TableCell>
                           <Button type="submit" size="icon" variant="outline" className="h-7 w-7 mr-1" >

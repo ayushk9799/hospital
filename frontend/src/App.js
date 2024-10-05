@@ -9,7 +9,6 @@ import { fetchStaffMembers } from './redux/slices/staffSlice';
 import  CreateRoom  from './pages/CreateRoom';
 import Home from './pages/Home';
 
-import { getDoctors } from './redux/slices/staffSlice';
 import VerticalNav from './components/custom/Navigations/VerticalNav';
 import HorizontalNav from './components/custom/Navigations/HorizontalNav';
 import Dashboard from './pages/Dashboard';
@@ -38,6 +37,9 @@ import DischargeSummary from './pages/DischargeSummary';
 import HospitalInfo from './pages/HospitalInfo';
 import Services from './pages/Services';
 import CreateServiceBill from './pages/CreateServiceBill';
+import AboutPage from './pages/About';
+import ContactPage from './pages/ContactUs';
+
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
@@ -80,43 +82,51 @@ const AppContent = () => {
   return (
     <div className="flex flex-col relative">
       {isLoading && <div className="youtube-loader"></div>}
-      {isAuthenticated ? <HorizontalNav
-        isCollapsed={isCollapsed}
-        setIsCollapsed={setIsCollapsed}
-      /> : null}
+      {isAuthenticated && (
+        <HorizontalNav
+          isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
+        />
+      )}
       <div className="flex">
-        {isAuthenticated ? <VerticalNav isCollapsed={isCollapsed} /> : null}
+        {isAuthenticated && <VerticalNav isCollapsed={isCollapsed} />}
         <main
           className={`${
-            isCollapsed ? "ml-16" : "ml-56"
+            isAuthenticated ? (isCollapsed ? "ml-16" : "ml-56") : ""
           } pl-4 pr-4 w-full h-full bg-gray-50`}
         >
           <Routes>
-           {isAuthenticated ? <Route path='/' Component={Dashboard} /> : <Route path='/' Component={Home} />}
-            {/* <Route path='/dashboard' Component={Dashboard} /> */}
-            <Route path='/billings' Component={Billings} />
-            <Route path='/patients' Component={Patients} />
-            <Route path='/patients/:patientId' Component={PatientDetails} />
-            <Route path='/appointments' Component={Appointments} />
-            <Route path='/doctors' Component={Doctors} />
-            <Route path='/rooms' Component={Rooms} />
-            <Route path='/reports' Component={Reports} />
-            <Route path='/settings' Component={Settings} />
-            <Route path='/staff/:staffId' Component={StaffProfile} />
-            <Route path='/analytics' Component={Analytics} />
-            <Route path='/pharmacy' element={<Navigate to="/pharmacy/dashboard" replace />} />
-            <Route path='/pharmacy/:tab' Component={Pharmacy} />
-            <Route path='/pharmacy/all-bills' Component={PharmacyAllBills} />
-            <Route path='/addstaff' Component={AddStaff} />
-            <Route path='/lab' element={<Lab />} />
-            <Route path='/lab/create/:category/:type' element={<CreateLabReport />} />
-            <Route path='/lab/blood-work/create' element={<CreateBloodWork />} />
-            <Route path='/create-room' Component={CreateRoom} />
-            <Route path="/patients/discharge/:patientId" element={<DischargeSummary />} />
-            <Route path='/services' Component={Services} />
-            <Route path='/billings/create-service-bill' Component={CreateServiceBill} />
-            <Route path='/billings/edit/:billId' Component={CreateServiceBill} />
-            <Route path='/settings/hospital-info' Component={HospitalInfo} />
+            <Route path="/" element={isAuthenticated ? <Dashboard /> : <Home />} />
+            <Route path="/about" element={<AboutPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+
+            {isAuthenticated && (
+              <>
+                <Route path="/billings" element={<Billings />} />
+                <Route path="/patients" element={<Patients />} />
+                <Route path="/patients/:patientId" element={<PatientDetails />} />
+                <Route path="/appointments" element={<Appointments />} />
+                <Route path="/doctors" element={<Doctors />} />
+                <Route path="/rooms" element={<Rooms />} />
+                <Route path="/reports" element={<Reports />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/staff/:staffId" element={<StaffProfile />} />
+                <Route path="/analytics" element={<Analytics />} />
+                <Route path="/pharmacy" element={<Navigate to="/pharmacy/dashboard" replace />} />
+                <Route path="/pharmacy/:tab" element={<Pharmacy />} />
+                <Route path="/pharmacy/all-bills" element={<PharmacyAllBills />} />
+                <Route path="/addstaff" element={<AddStaff />} />
+                <Route path="/lab" element={<Lab />} />
+                <Route path="/lab/create/:category/:type" element={<CreateLabReport />} />
+                <Route path="/lab/blood-work/create" element={<CreateBloodWork />} />
+                <Route path="/create-room" element={<CreateRoom />} />
+                <Route path="/patients/discharge/:patientId" element={<DischargeSummary />} />
+                <Route path="/services" element={<Services />} />
+                <Route path="/billings/create-service-bill" element={<CreateServiceBill />} />
+                <Route path="/billings/edit/:billId" element={<CreateServiceBill />} />
+                <Route path="/settings/hospital-info" element={<HospitalInfo />} />
+              </>
+            )}
           </Routes>
         </main>
       </div>

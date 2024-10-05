@@ -56,7 +56,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
           <Menu className="h-4 w-4" />
         </Button>
         <ColorfulLogo className="h-6 w-6" />
-        <span className="ml-2 text-lg font-bold text-gray-800">HMS</span>
+        <span className="ml-2 text-lg font-bold text-gray-800">The Hospital</span>
       </div>
       <div className="flex items-center">
         <Input type="search" placeholder="Search..." className="w-56 h-8 text-sm" />

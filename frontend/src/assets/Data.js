@@ -84,48 +84,43 @@ export const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
   
 export const convertFilterToDateRange = (filter) => {
     const today = new Date();
+    let from, to;
+  
     switch (filter) {
       case "Today":
-        return {
-          from: startOfDay(today),
-          to: endOfDay(today)
-        };
+        from = new Date(today.setHours(0, 0, 0, 0));
+        to = new Date(today.setHours(23, 59, 59, 999));
+        break;
       case "Yesterday":
-        const yesterday = subDays(today, 1);
-        return {
-          from: startOfDay(yesterday),
-          to: endOfDay(yesterday)
-        };
+        from = new Date(today.setDate(today.getDate() - 1));
+        from.setHours(0, 0, 0, 0);
+        to = new Date(from);
+        to.setHours(23, 59, 59, 999);
+        break;
       case "This Week":
-        return {
-          from: startOfWeek(today),
-          to: endOfWeek(today)
-        };
+        from = new Date(today.setDate(today.getDate() - today.getDay()));
+        from.setHours(0, 0, 0, 0);
+        to = new Date(today.setDate(from.getDate() + 6));
+        to.setHours(23, 59, 59, 999);
+        break;
       case "This Month":
-        return {
-          from: startOfMonth(today),
-          to: endOfMonth(today)
-        };
+        from = new Date(today.getFullYear(), today.getMonth(), 1);
+        to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        to.setHours(23, 59, 59, 999);
+        break;
       case "Last 7 Days":
-        return {
-          from: startOfDay(subDays(today, 6)),
-          to: endOfDay(today)
-        };
-      case 'This Week Fetched':
-        return {
-          from: startOfWeek(subWeeks(today, 1)),
-          to: endOfWeek(today)
-        };
-      case "This Month Fetched":
-        return {
-          from: startOfMonth(subMonths(today, 1)),
-          to: endOfMonth(today)
-        };
-      case "All":
-        return { from: null, to: null };
+        from = new Date(today.setDate(today.getDate() - 6));
+        from.setHours(0, 0, 0, 0);
+        to = new Date();
+        to.setHours(23, 59, 59, 999);
+        break;
       default:
-        return { from: null, to: null };
+        from = new Date(today.setDate(today.getDate() - 30));
+        to = new Date();
     }
+  
+    console.log("Converted date range:", { from, to }); // Add this log
+    return { from, to };
   };
 
 export const calculatePercentageChange = (current, previous) => {

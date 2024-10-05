@@ -26,6 +26,11 @@ const servicesBillSchema = new mongoose.Schema({
   patientInfo : {
     name : String,
     phone : String
+  },
+  createdBy : {
+    type : mongoose.Schema.Types.ObjectId,
+    ref : "Staff",
+    required : true,
   }
 }, {timestamps : true});
 

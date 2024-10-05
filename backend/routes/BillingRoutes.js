@@ -5,21 +5,23 @@ import { ServicesBill } from '../models/ServicesBill.js';
 import { IPDAdmission } from '../models/IPDAdmission.js';
 import { Visit } from '../models/Visits.js';
 import { Payment } from '../models/Payment.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Create a new bill of services
-router.post('/create-bill', async (req, res) => {
+router.post('/create-bill', verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { services, patient, patientType, totals, patientInfo, department, physician, visitID } = req.body;
+    const { services, patient, patientType, totals, patientInfo, department, visitID } = req.body;
+    const user = req.user;
     if (!services || !Array.isArray(services)) {
       throw new Error('Invalid services data');
     }
 
-    const bill = { ...totals, patientType, patient, services, patientInfo, department, physician };
+    const bill = { ...totals, patientType, patient, services, patientInfo, department, createdBy : user._id };
     const newBill = new ServicesBill(bill);
 
     if (visitID) {
@@ -191,13 +193,15 @@ router.delete('/delete-bill/:id', async (req, res) => {
   }
 });
 
-// Add a new payment to a bill
-router.post('/:id/payments', async (req, res) => {
+// Add a new payment to a service bill
+router.post('/:id/payments', verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const { amount, paymentMethod } = req.body;
+    const user = req.user;
+    console.log('user', user);
     const bill = await ServicesBill.findById(req.params.id).populate('payments').session(session);
     if (!bill) {
       throw new Error('Bill not found');
@@ -212,9 +216,9 @@ router.post('/:id/payments', async (req, res) => {
     const payment = new Payment({
       amount: paymentAmount,
       paymentMethod,
-      paymentFor: {name : 'Services', id : bill._id},
+      paymentType: {name : 'Services', id : bill._id},
       type: 'Income',
-      status: 'paid'
+      createdBy : user._id
     });
     await payment.save({ session });
     bill.payments.push(payment._id);

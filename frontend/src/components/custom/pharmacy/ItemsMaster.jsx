@@ -97,7 +97,7 @@ export default function ItemsMaster() {
         toast({
           title: "Item deleted successfully",
           description: `${itemToDelete.name} has been removed from the inventory.`,
-          variant: "default",
+          variant: "success",
         });
       })
       .catch((error) => {

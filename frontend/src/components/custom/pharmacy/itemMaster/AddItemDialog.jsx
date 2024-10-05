@@ -42,7 +42,7 @@ export default function AddItemDialog({ isOpen, onClose }) {
         toast({
           title: "Item added successfully",
           description: "The new item has been added to the inventory.",
-          variant: "default",
+          variant: "success",
         });
       })
       .catch((error) => {

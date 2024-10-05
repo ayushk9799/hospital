@@ -118,10 +118,10 @@ const PharmacyReports = () => {
           </Card>
         </div>
         <Tabs defaultValue="expiring">
-          <TabsList className="grid w-full grid-cols-4 mb-4">
+          <TabsList className="grid w-1/3 grid-cols-3 mb-4">
             <TabsTrigger value="expiring">Expiring Items</TabsTrigger>
             <TabsTrigger value="lowstock">Low Stock</TabsTrigger>
-            <TabsTrigger value="topselling">Top Selling</TabsTrigger>
+            {/* <TabsTrigger value="topselling">Top Selling</TabsTrigger> */}
             <TabsTrigger value="bills">Recent Bills</TabsTrigger>
           </TabsList>
           <TabsContent value="expiring">
@@ -206,7 +206,7 @@ const PharmacyReports = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="topselling">
+          {/* <TabsContent value="topselling">
             <Card>
               <CardHeader>
                 <CardTitle>Top 5 Most Sold Items</CardTitle>
@@ -238,7 +238,7 @@ const PharmacyReports = () => {
                 </Table>
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent> */}
           <TabsContent value="bills">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
