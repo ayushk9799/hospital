@@ -38,6 +38,7 @@ import {
   Filter,
   Calendar as CalendarIcon,
   X,
+  UserX,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
@@ -73,17 +74,18 @@ export default function Patients() {
 
   // Use the useSelector hook to get the patients from the Redux store
   const patients = useSelector((state) => state.patients.patientlist);
-
+console.log(patients)
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
 
   const filteredPatients = patients.filter((patient) => {
-    const nameMatch = patient.patient.name
+    const nameMatch = patient.patient?.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
 
     let dateMatch = true;
     // Parse the date string in the format "DD-MM-YYYY"
-    const visitDate = parse(patient.bookingDate, "dd-MM-yyyy", new Date());
+    const visitDate = patient.bookingDate
+    console.log(visitDate)
     const today = new Date();
 
     switch (dateFilter) {
@@ -127,7 +129,16 @@ export default function Patients() {
     const handleDischarge = (patient) => {
       navigate(`/patients/discharge/${patient._id}`, { state: { patient } });
     };
-console.log(patients.map(patient=>patient.bookingDate))
+    if (patients.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <UserX className="h-16 w-16 text-gray-400 mb-4" />
+          <p className="text-xl font-semibold text-gray-600">No patients found</p>
+          <p className="text-gray-500">Try adjusting your search or filters</p>
+        </div>
+      );
+    }
+
     return (
       <Table>
         <TableHeader>
@@ -398,9 +409,9 @@ console.log(patients.map(patient=>patient.bookingDate))
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline">
+                {/* <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" /> Export
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>

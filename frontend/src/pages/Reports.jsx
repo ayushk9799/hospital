@@ -1,24 +1,18 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { 
-  Users, 
   UserPlus, 
-  Briefcase, 
-  Calendar, 
   Search, 
-  Filter,
-  FileText,
   MoreHorizontal,
   Mail,
   Phone,
   Clock,
-  ArrowLeft // Add this import
+  AlertCircle // Add this import
 } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Input } from "../components/ui/input"
 import { Button } from "../components/ui/button"
-import { Badge } from "../components/ui/badge"
-import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar"
+import { Avatar, AvatarFallback } from "../components/ui/avatar"
 import { 
   Select, 
   SelectContent, 
@@ -59,58 +53,12 @@ export default function Reports() {
     (filterRole === 'All' || staff.roles.includes(filterRole.toLowerCase()))
   )
 
-  const totalStaff = staffMembers.length
-
   const handleStaffClick = (staff) => {
     navigate(`/staff/${staff._id}`, { state: { staffData: staff } });
   };
 
   return (
     <div className="container mx-auto p-2 space-y-2">
-      <div className="flex items-center space-x-2">
-        <ArrowLeft className="h-6 w-6 cursor-pointer" onClick={() => navigate(-1)} />
-        <h1 className="text-xl font-bold">Staff Management Dashboard</h1>
-      </div>
-
-      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Staff</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalStaff}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Staff</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{activeStaff}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Staff on Leave</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{onLeaveStaff}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Departments</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{departments.length}</div>
-          </CardContent>
-        </Card>
-      </div> */}
-
       <Card>
         <CardHeader>
           <CardTitle>Staff List</CardTitle>
@@ -141,7 +89,7 @@ export default function Reports() {
               </Select>
               <Select onValueChange={setFilterRole} defaultValue="All">
                 <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Role" />
+                  <SelectValue placeholder="Role" /> 
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All">All Roles</SelectItem>
@@ -153,84 +101,100 @@ export default function Reports() {
               </Select>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline">
-                <FileText className="mr-2 h-4 w-4" /> Export
+              <Button variant="outline" onClick={() => navigate('/addstaff')}>
+                <UserPlus className="mr-2 h-4 w-4" /> Add Staff
               </Button>
+              {/* <Button variant="outline">
+                <FileText className="mr-2 h-4 w-4" /> Export
+              </Button> */}
             </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Department</TableHead>
-                
-                <TableHead>Shift</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStaff.map((staff) => (
-                <TableRow key={staff.id}>
-                  <TableCell className="font-medium">
-                    <div 
-                      className="flex items-center space-x-2 "
-                    >
-                      <Avatar>
-                        <AvatarFallback>{staff.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                      </Avatar>
-                      <span 
-                        onClick={() => handleStaffClick(staff)} 
-                        className='cursor-pointer hover:underline'
-                      >
-                        {staff.name}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{staff.roles.join(',')}</TableCell>
-                  <TableCell>{staff.department.join(',')}</TableCell>
-                  {/* <TableCell>
-                    <Badge variant={staff.status === 'Active' ? 'default' : 'secondary'}>
-                      {staff.status}
-                    </Badge>
-                  </TableCell> */}
-                  <TableCell>{staff.shift?.type}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <span className="sr-only">Open menu</span>
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => window.location.href = `mailto:${staff.email}`}>
-                          <Mail className="mr-2 h-4 w-4" />
-                          <span>Email</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => window.location.href = `tel:${staff.contactNumber}`}>
-                          <Phone className="mr-2 h-4 w-4" />
-                          <span>Call</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => navigate(`/schedule/${staff._id}`)}>
-                          <Clock className="mr-2 h-4 w-4" />
-                          <span>View Schedule</span>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/staff/${staff._id}`)}>
-                          View Profile
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate(`/edit/${staff._id}`)}>
-                          Edit Details
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+          {filteredStaff.length > 0 ? (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead>Department</TableHead>
+                  
+                  <TableHead>Shift</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredStaff.map((staff) => (
+                  <TableRow key={staff._id}>
+                    <TableCell className="font-medium">
+                      <div 
+                        className="flex items-center space-x-2 "
+                      >
+                        <Avatar>
+                          <AvatarFallback>
+                            {staff.name.split(' ')
+                              .filter((n, i, arr) => i === 0 || i === arr.length - 1)
+                              .map(n => n[0].toUpperCase())
+                              .join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span 
+                          onClick={() => handleStaffClick(staff)} 
+                          className='cursor-pointer hover:underline capitalize'
+                        >
+                          {staff.name}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{staff.roles.join(',')}</TableCell>
+                    <TableCell>{staff.department.join(',')}</TableCell>
+                    {/* <TableCell>
+                      <Badge variant={staff.status === 'Active' ? 'default' : 'secondary'}>
+                        {staff.status}
+                      </Badge>
+                    </TableCell> */}
+                    <TableCell>{staff.shift?.type}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Open menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => window.location.href = `mailto:${staff.email}`}>
+                            <Mail className="mr-2 h-4 w-4" />
+                            <span>Email</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => window.location.href = `tel:${staff.contactNumber}`}>
+                            <Phone className="mr-2 h-4 w-4" />
+                            <span>Call</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => navigate(`/schedule/${staff._id}`)}>
+                            <Clock className="mr-2 h-4 w-4" />
+                            <span>View Schedule</span>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/staff/${staff._id}`)}>
+                            View Profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/edit/${staff._id}`)}>
+                            Edit Details
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <AlertCircle className="h-10 w-10 text-muted-foreground mb-4" />
+              <p className="text-lg font-medium">No staff members found</p>
+              <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filter criteria</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

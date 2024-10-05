@@ -16,7 +16,7 @@ export const hospitalPlugin = (schema) => {
   };
 
   // Apply setHospitalCondition to all query middlewares
-  ['find', 'findOne', 'update', 'findOneAndUpdate'].forEach(method => {
+  ['find', 'findOne', 'update', 'findOneAndUpdate', 'delete', 'deleteMany'].forEach(method => {
     schema.pre(method, setHospitalCondition);
   });
 

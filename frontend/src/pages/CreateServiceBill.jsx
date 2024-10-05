@@ -84,6 +84,7 @@ const CreateServiceBill = () => {
   useEffect(() => {
     if (createBillStatus === 'succeeded') {
       toast({ 
+        variant: "success",
         title: "Bill created successfully",
         description: "The bill has been successfully created.",
       });
@@ -102,6 +103,7 @@ const CreateServiceBill = () => {
   useEffect(() => {
     if (updateBillStatus === 'succeeded') {
       toast({ 
+        variant: "success",
         title: "Bill updated successfully",
         description: "The bill has been successfully updated.",
       });

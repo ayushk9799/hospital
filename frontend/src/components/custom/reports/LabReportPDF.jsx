@@ -98,7 +98,31 @@ export const styles = StyleSheet.create({
     fontSize: 10,
     color: '#95a5a6',
   },
+  patientDetails: {
+    flexDirection: 'row',
+    marginTop: 10,
+    marginBottom: 10,
+  },
+  patientColumn: {
+    flex: 1,
+    paddingHorizontal: 5,
+  },
+  patientInfo: {
+    flexDirection: 'row',
+    marginBottom: 5,
+  },
+  patientLabel: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#34495e',
+    marginRight: 5,
+  },
+  patientValue: {
+    fontSize: 10,
+    color: '#2c3e50',
+  },
 });
+
 export const HeaderTemplate=()=>{
   return(
     <>
@@ -129,13 +153,52 @@ export const HeaderTemplate=()=>{
     </>
   )
 }   
+
+const PatientDetailsTemplate = ({ patientData, reportData }) => {
+  return (
+    <View style={styles.patientDetails}>
+      <View style={styles.patientColumn}>
+        <View style={styles.patientInfo}>
+          <Text style={styles.patientLabel}>Name:</Text>
+          <Text style={styles.patientValue}>{patientData.patientName}</Text>
+        </View>
+        <View style={styles.patientInfo}>
+          <Text style={styles.patientLabel}>Age:</Text>
+          <Text style={styles.patientValue}>{patientData.age}</Text>
+        </View>
+      </View>
+      <View style={styles.patientColumn}>
+        <View style={styles.patientInfo}>
+          <Text style={styles.patientLabel}>Gender:</Text>
+          <Text style={styles.patientValue}>{patientData.patient.gender}</Text>
+        </View>
+        <View style={styles.patientInfo}>
+          <Text style={styles.patientLabel}>Reg No:</Text>
+          <Text style={styles.patientValue}>{patientData.registrationNumber}</Text>
+        </View>
+      </View>
+      <View style={styles.patientColumn}>
+        <View style={styles.patientInfo}>
+          <Text style={styles.patientLabel}>Contact:</Text>
+          <Text style={styles.patientValue}>{patientData.contactNumber}</Text>
+        </View>
+        <View style={styles.patientInfo}>
+          <Text style={styles.patientLabel}>Date:</Text>
+          <Text style={styles.patientValue}>{format(reportData.date, 'dd/MM/yyyy')}</Text>
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const LabReportPDF = ({ reportData, patientData }) => {
   const reportEntries = Object.entries(reportData.report);
 
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-       <HeaderTemplate/>
+        <HeaderTemplate />
+        <PatientDetailsTemplate patientData={patientData} reportData={reportData} />
         
         <View style={styles.reportContainer}>
           {reportEntries.map(([key, value]) => (

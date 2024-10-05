@@ -8,6 +8,7 @@ import {
   FileDown,
   Eye,
   Calendar as CalendarIcon,
+  FileX
 } from "lucide-react";
 import {
   Card,
@@ -170,76 +171,86 @@ const PharmacyAllBills = () => {
               />
             )}
           </div>
-          <Button variant="outline">
+          {/* <Button variant="outline">
             <FileDown className="mr-2 h-4 w-4" /> Export
-          </Button>
+          </Button> */}
         </div>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Bill No</TableHead>
-              <TableHead>Customer</TableHead>
-              <TableHead>Date & Time</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Method</TableHead>
-              <TableHead>Action</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {paginatedBills.map((bill) => (
-              <TableRow key={bill._id}>
-                <TableCell>{`#B${bill._id.slice(-6)}`}</TableCell>
-                <TableCell className='capitalize'>{bill.patientInfo.name}</TableCell>
-                <TableCell>
-                  {format(new Date(bill.createdAt), "MMM dd, hh:mm a")}
-                </TableCell>
-                <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
-                <TableCell>
-                  <Badge variant={bill?.amountPaid === bill?.totalAmount ? "success" : "destructive"}>
-                    {bill?.amountPaid === bill?.totalAmount ? "Paid" : "Due"}
-                  </Badge>
-                </TableCell>
-                <TableCell>{bill?.payment?.paymentMethod || "__"}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleViewBill(bill)}
-                  >
-                    <Eye className="h-3 w-3 mr-2" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div className="flex justify-between items-center mt-3">
-          <p className="text-sm text-muted-foreground">
-            Showing {Math.min((currentPage - 1) * billsPerPage + 1, filteredBills.length)} to{" "}
-            {Math.min(currentPage * billsPerPage, filteredBills.length)} of {filteredBills.length} bills
-          </p>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange("prev")}
-              disabled={currentPage === 1}
-            >
-              <ChevronLeft className="h-4 w-4" />
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handlePageChange("next")}
-              disabled={currentPage === totalPages}
-            >
-              Next
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+        {filteredBills.length > 0 ? (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bill No</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Date & Time</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedBills.map((bill) => (
+                  <TableRow key={bill._id}>
+                    <TableCell>{`#B${bill._id.slice(-6)}`}</TableCell>
+                    <TableCell className='capitalize'>{bill.patientInfo.name}</TableCell>
+                    <TableCell>
+                      {format(new Date(bill.createdAt), "MMM dd, hh:mm a")}
+                    </TableCell>
+                    <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
+                    <TableCell>
+                      <Badge variant={bill?.amountPaid === bill?.totalAmount ? "success" : "destructive"}>
+                        {bill?.amountPaid === bill?.totalAmount ? "Paid" : "Due"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{bill?.payment?.paymentMethod || "__"}</TableCell>
+                    <TableCell>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleViewBill(bill)}
+                      >
+                        <Eye className="h-3 w-3 mr-2" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <div className="flex justify-between items-center mt-3">
+              <p className="text-sm text-muted-foreground">
+                Showing {Math.min((currentPage - 1) * billsPerPage + 1, filteredBills.length)} to{" "}
+                {Math.min(currentPage * billsPerPage, filteredBills.length)} of {filteredBills.length} bills
+              </p>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange("prev")}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePageChange("next")}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center justify-center py-12">
+            <FileX className="h-16 w-16 text-muted-foreground mb-4" />
+            <p className="text-lg font-medium text-muted-foreground">No bills found</p>
+            <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filter criteria</p>
           </div>
-        </div>
+        )}
       </CardContent>
       <ViewBillDialog
         isOpen={isViewDialogOpen}

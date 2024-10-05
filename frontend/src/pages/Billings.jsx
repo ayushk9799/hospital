@@ -241,9 +241,9 @@ const Billings = () => {
             <Button variant="outline" onClick={() => navigate('/billings/create-service-bill')}>
               <Plus className="mr-2 h-4 w-4" /> Create Bill
             </Button>
-            <Button variant="outline">
+            {/* <Button variant="outline">
               <FileDown className="mr-2 h-4 w-4" /> Export
-            </Button>
+            </Button> */}
           </div>
         </div>
         {filteredBills.length > 0 ? (

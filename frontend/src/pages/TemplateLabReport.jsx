@@ -33,7 +33,9 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
         setFields(
           Object.entries(template.fields).map(([name, field]) => ({
             name,
-            ...field,
+            label: field.label,
+            unit: field.unit,
+            normalRange: field.normalRange,
             value: matchingReport.report[name] || "",
           }))
         );
@@ -42,7 +44,9 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
         setFields(
           Object.entries(template.fields).map(([name, field]) => ({
             name,
-            ...field,
+            label: field.label,
+            unit: field.unit,
+            normalRange: field.normalRange,
             value: "",
           }))
         );
@@ -65,11 +69,15 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
       name: template.name,
       date: format(reportDate, "yyyy-MM-dd"),
       report: fields.reduce((acc, field) => {
-        acc[field.name] = field.value;
+        acc[field.name] = {
+          value: field.value,
+          label: field.label,
+          unit: field.unit,
+          normalRange: field.normalRange
+        };
         return acc;
       }, {}),
     };
-    console.log(labReportData);
     try {
       const response = await fetch(`${Backend_URL}/api/patients/addLabReport`, {
         method: "POST",

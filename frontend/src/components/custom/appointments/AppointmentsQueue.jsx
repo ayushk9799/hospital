@@ -6,19 +6,19 @@ import { Card } from "../../ui/card";
 import { Badge } from "../../ui/badge";
 import { SearchIcon } from 'lucide-react'
 import { Input } from "../../ui/input";
+import { format } from "date-fns";
 
-const PatientEntry = ({ID, bookingNumber, patient, bookingDate, type, clinicalSummary,notes, onSelect, vitals ,diagnosis,treatment,medications,additionalInstructions,labTests}) => {
+const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, onSelect, vitals, diagnosis, treatment, medications, additionalInstructions, labTests, isSelected }) => {
   const truncateName = (name, maxLength = 15) => {
     return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
   };
-  if(ID === "66f7b32aa05dd4e2e78a2186"){
-    console.log(patient);
-    console.log(clinicalSummary);
-  }
+
   return (
     <div
-      className="flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100"
-      onClick={() => onSelect({ID, bookingNumber, patient, bookingDate,  type, clinicalSummary,notes, vitals,diagnosis,treatment,medications,labTests })}
+      className={`flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100 ${
+        isSelected ? 'border-2 border-green-400 bg-green-50' : ''
+      }`}
+      onClick={() => onSelect({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, vitals, diagnosis, treatment, medications, labTests })}
     >
       <div className="flex items-center space-x-4">
         <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -30,7 +30,7 @@ const PatientEntry = ({ID, bookingNumber, patient, bookingDate, type, clinicalSu
         </div>
       </div>
       <div className="text-right">
-        <p className="text-sm font-semibold">{bookingDate}</p>
+        <p className="text-sm font-semibold">{format(bookingDate, 'dd-MM-yyyy')}</p>
         <Badge variant="outline">{type}</Badge>
       </div>
     </div>
@@ -40,6 +40,7 @@ const PatientEntry = ({ID, bookingNumber, patient, bookingDate, type, clinicalSu
 const AppointmentsQueue = ({ onPatientSelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
   const dispatch = useDispatch();
   const { patientlist, status } = useSelector((state) => state.patients);
 
@@ -54,7 +55,12 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
     booking.bookingNumber?.toString()?.includes(searchTerm)) &&
     (activeTab === "all" || booking.type.toLowerCase() === activeTab)
   );
-console.log(filteredPatients);
+
+  const handlePatientSelect = (patient) => {
+    setSelectedPatientId(patient.ID);
+    onPatientSelect(patient);
+  };
+
   return (
     <Card className="h-full flex flex-col">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full flex-grow flex flex-col">
@@ -115,7 +121,8 @@ console.log(filteredPatients);
                 treatment={booking.treatment}
                 medications={booking.medications}
                 labTests={booking.labTests}
-                onSelect={onPatientSelect}
+                onSelect={handlePatientSelect}
+                isSelected={selectedPatientId === booking._id}
               />
             ))}
           </TabsContent>
@@ -135,7 +142,8 @@ console.log(filteredPatients);
                 medications={booking.medications}
                 additionalInstructions={booking.additionalInstructions}
                 labTests={booking.labTests}
-                onSelect={onPatientSelect}
+                onSelect={handlePatientSelect}
+                isSelected={selectedPatientId === booking._id}
               />
             ))}
           </TabsContent>
@@ -156,7 +164,8 @@ console.log(filteredPatients);
                 medications={booking.medications}
                 additionalInstructions={booking.additionalInstructions}
                 labTests={booking.labTests}
-                onSelect={onPatientSelect}
+                onSelect={handlePatientSelect}
+                isSelected={selectedPatientId === booking._id}
               />
             ))}
           </TabsContent>

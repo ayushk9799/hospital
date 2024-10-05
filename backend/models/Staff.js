@@ -35,6 +35,7 @@ const staffSchema = new mongoose.Schema({
   yearsOfExperience: Number,
   currentPatients: [{ type: mongoose.Schema.Types.ObjectId, ref: "Patient" }],
   email: { type: String, unique: true, sparse: true },
+  contactNumber: { type: String }, // Add this new field
   address: {
     type: String,
   },
@@ -81,7 +82,6 @@ const staffSchema = new mongoose.Schema({
       year: Number,
     },
   ],
-  // schedule: [scheduleSchema],
 });
 
 staffSchema.plugin(hospitalPlugin);

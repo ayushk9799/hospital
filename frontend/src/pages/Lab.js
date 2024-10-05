@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useToast } from "../hooks/use-toast"; // Make sure this path is correct
 import {
   Card,
   CardHeader,
@@ -36,13 +37,23 @@ import {
 } from "../components/ui/table";
 import CreateLabReport from "./CreateLabReport";
 import { ScrollArea } from "../components/ui/scroll-area";
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchTemplates } from '../redux/slices/templatesSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTemplates } from "../redux/slices/templatesSlice";
 import TemplateLabReport from "./TemplateLabReport";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../components/ui/dialog";
 
 const Lab = () => {
   const dispatch = useDispatch();
-  const { labTestsTemplate, status, error } = useSelector((state) => state.templates);
+  const { toast } = useToast();
+  const { labTestsTemplate, status, error } = useSelector(
+    (state) => state.templates
+  );
   console.log(labTestsTemplate);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("");
@@ -51,9 +62,11 @@ const Lab = () => {
   const [patientData, setPatientData] = useState(null);
   const [selectedTest, setSelectedTest] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [patients, setPatients] = useState([]);
+  const [isPatientSelectionOpen, setIsPatientSelectionOpen] = useState(false);
 
   useEffect(() => {
-    if (status === 'idle') {
+    if (status === "idle") {
       console.log("Fetching templates");
       dispatch(fetchTemplates());
     }
@@ -71,7 +84,7 @@ const Lab = () => {
     const regex = new RegExp(`(${term})`, "gi");
     return text.split(regex).map((part, index) =>
       regex.test(part) ? (
-        <span key={index} className="text-blue-500" >
+        <span key={index} className="text-blue-500">
           {part}
         </span>
       ) : (
@@ -90,14 +103,23 @@ const Lab = () => {
       searchType === "name" &&
       (!searchQuery.name || !searchQuery.bookingDate)
     ) {
-      alert("Please provide both name and booking date for name-based search.");
+      toast({
+        title: "Error",
+        description:
+          "Please provide both name and booking date for name-based search.",
+        variant: "destructive",
+      });
       return;
     }
     if (!searchQuery.bookingDate) {
-      alert("Booking date is required for all search types.");
+      toast({
+        title: "Error",
+        description: "Booking date is required for all search types.",
+        variant: "destructive",
+      });
       return;
     }
-   
+
     console.log(
       "Searching for patient with",
       searchType,
@@ -115,7 +137,10 @@ const Lab = () => {
           },
           credentials: "include",
           body: JSON.stringify({
-            searchQuery:{...searchQuery, bookingDate: searchQuery.bookingDate},
+            searchQuery: {
+              ...searchQuery,
+              bookingDate: searchQuery.bookingDate,
+            },
             searchType,
             searchWhere,
           }),
@@ -127,14 +152,29 @@ const Lab = () => {
       const data = await response.json();
       console.log("Patient search results:", data);
       if (data.length > 0) {
-        setPatientData(data[0]); 
+        setPatients(data);
+        if (data.length === 1) {
+          setPatientData(data[0]);
+        } else {
+          setIsPatientSelectionOpen(true);
+        }
       } else {
+        setPatients([]);
         setPatientData(null);
-        alert("No patients found");
+        toast({
+          title: "No patients found",
+          description:
+            "No patient details found with the provided information.",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error searching for patient:", error);
-      alert("Error searching for patient");
+      toast({
+        title: "Error",
+        description: "An error occurred while searching for the patient.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -146,6 +186,11 @@ const Lab = () => {
   const handleTemplateSelection = (template) => {
     setSelectedTemplate(template);
     setSelectedTest(null); // Clear any selected individual test
+  };
+
+  const handlePatientSelection = (patient) => {
+    setPatientData(patient);
+    setIsPatientSelectionOpen(false);
   };
 
   return (
@@ -185,9 +230,7 @@ const Lab = () => {
                     <SelectItem value="registration">
                       Registration No.
                     </SelectItem>
-                    <SelectItem value="name">
-                      Name And Booking Date
-                    </SelectItem>
+                    <SelectItem value="name">Name And Booking Date</SelectItem>
                     <SelectItem value="mobile">Mobile No.</SelectItem>
                   </SelectContent>
                 </Select>
@@ -259,6 +302,9 @@ const Lab = () => {
                   <h2 className="text-2xl font-bold mb-4">
                     Lab Tests for {patientData.patientName}
                   </h2>
+                  <p className="text-gray-600 mb-2">
+                    Contact: {patientData.contactMNumber}
+                  </p>
                   {patientData.labTests && patientData.labTests.length > 0 ? (
                     <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
                       <ul className="list-disc list-inside space-y-2">
@@ -278,13 +324,15 @@ const Lab = () => {
               )}
 
               {/* Display labTestsTemplate */}
-              {status === 'succeeded' && labTestsTemplate && (
+              {status === "succeeded" && labTestsTemplate && (
                 <div className="mb-4">
-                  <h2 className="text-2xl font-bold mb-4">Lab Test Templates</h2>
+                  <h2 className="text-2xl font-bold mb-4">
+                    Lab Test Templates
+                  </h2>
                   <div className="space-y-4">
                     {labTestsTemplate.map((template) => (
-                      <Card 
-                        key={template._id} 
+                      <Card
+                        key={template._id}
                         className="h-fit cursor-pointer hover:bg-gray-100 transition-colors duration-200"
                         onClick={() => handleTemplateSelection(template)}
                       >
@@ -298,11 +346,16 @@ const Lab = () => {
                             Fields: {Object.keys(template.fields).length}
                           </p>
                           <ul className="list-disc list-inside space-y-1">
-                            {Object.entries(template.fields).map(([fieldName, fieldData]) => (
-                              <li key={fieldName} className="text-sm text-gray-700">
-                                {fieldData.label || fieldName}
-                              </li>
-                            ))}
+                            {Object.entries(template.fields).map(
+                              ([fieldName, fieldData]) => (
+                                <li
+                                  key={fieldName}
+                                  className="text-sm text-gray-700"
+                                >
+                                  {fieldData.label || fieldName}
+                                </li>
+                              )
+                            )}
                           </ul>
                         </CardContent>
                       </Card>
@@ -329,7 +382,15 @@ const Lab = () => {
                           <li
                             key={type}
                             className="hover:text-blue-500 transition-colors duration-200 cursor-pointer"
-                            onClick={() => handleTestSelection(category.name.toLowerCase(), type.toLowerCase().replace(/[()]/g, "").replace(/\s+/g, "-"))}
+                            onClick={() =>
+                              handleTestSelection(
+                                category.name.toLowerCase(),
+                                type
+                                  .toLowerCase()
+                                  .replace(/[()]/g, "")
+                                  .replace(/\s+/g, "-")
+                              )
+                            }
                           >
                             {highlightMatch(type, searchTerm)}
                           </li>
@@ -356,7 +417,7 @@ const Lab = () => {
                 />
               ) : selectedTest ? (
                 <CreateLabReport
-                  category={selectedTest.category.replace(" ","-")}
+                  category={selectedTest.category.replace(" ", "-")}
                   type={selectedTest.type}
                   patientData={patientData}
                   onClose={() => setSelectedTest(null)}
@@ -364,13 +425,47 @@ const Lab = () => {
                 />
               ) : (
                 <div className="flex items-center justify-center h-full">
-                  <p className="text-xl text-gray-500">Select a lab test or template to begin</p>
+                  <p className="text-xl text-gray-500">
+                    Select a lab test or template to begin
+                  </p>
                 </div>
               )}
             </div>
           </ScrollArea>
         </div>
       </div>
+
+      {/* Add this Dialog component for patient selection */}
+      <Dialog
+        open={isPatientSelectionOpen}
+        onOpenChange={setIsPatientSelectionOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Select a Patient</DialogTitle>
+            <DialogDescription>
+              Multiple patients found. Please select one:
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4">
+            {patients.map((patient) => (
+              <div
+                key={patient._id}
+                className="p-2 hover:bg-gray-100 cursor-pointer"
+                onClick={() => handlePatientSelection(patient)}
+              >
+                <p className="font-semibold">{patient.patientName}</p>
+                <p className="text-sm text-gray-600">
+                  Contact: {patient.contactNumber}
+                </p>
+                <p className="text-sm text-gray-600">
+                  Registration No: {patient.registrationNumber}
+                </p>
+              </div>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -91,8 +91,15 @@ export default function StaffMonthlyCalendar() {
         </div>
         <CardDescription>Staff attendance and work summary for the month</CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className="grid grid-cols-7 gap-2">
+      <CardContent className="relative">
+        <div className="absolute inset-0 bg-white/20 backdrop-blur-[1px] z-10 flex items-center justify-center">
+          <div className="text-center bg-white/70 p-6 rounded-lg shadow-lg">
+            <h2 className="text-3xl font-bold text-gray-800 mb-2">Coming Soon</h2>
+            <p className="text-lg text-gray-600">We're working on something exciting!</p>
+            <div className="mt-4 w-16 h-1 bg-blue-400 mx-auto rounded-full"></div>
+          </div>
+        </div>
+        <div className="grid grid-cols-7 gap-2 opacity-40">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
             <div key={day} className="text-center font-semibold">
               {day}

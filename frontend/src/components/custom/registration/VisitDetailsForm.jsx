@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
@@ -16,10 +16,12 @@ const hours = Array.from({ length: 12 }, (_, i) =>
 const minutes = Array.from({ length: 60 }, (_, i) =>
   String(i).padStart(2, "0")
 );
+
 export default function VisitDetailsForm({
   formData,
   handleSelectChange,
   handleInputChange,
+  errors,
 }) {
   const doctors = useSelector((state) => state.staff.doctors);
   const departments = useSelector((state) => state.departments.departments);
@@ -34,87 +36,103 @@ export default function VisitDetailsForm({
     return { hour: String(hour).padStart(2, "0"), minute, amPm };
   };
 
-  const handleTimeChange = (field, type, value) => {
-    if (field === "start") {
-      setStartTime({ ...startTime, [type]: value });
-    } else {
-      setEndTime({ ...endTime, [type]: value });
-    }
-
-    console.log(startTime, endTime);
-    let newTime;
-    if (field === "start") {
-      if (type === "hour")
-        newTime = `${value}:${startTime.minute} ${startTime.amPm}`;
-      else if (type === "minute")
-        newTime = `${startTime.hour}:${value} ${startTime.amPm}`;
-      else if (type === "amPm")
-        newTime = `${startTime.hour}:${startTime.minute} ${value}`;
-    } else {
-      if (type === "hour")
-        newTime = `${endTime.hour}:${endTime.minute} ${value}`;
-      else if (type === "minute")
-        newTime = `${endTime.hour}:${value} ${endTime.amPm}`;
-      else if (type === "amPm")
-        newTime = `${endTime.hour}:${endTime.minute} ${value}`;
-    }
-
-    handleInputChange({
-      target: { id: `visit.timeSlot.${field}`, value: newTime },
-    });
-  };
-
   const [startTime, setStartTime] = useState(
     formatTime(formData.visit.timeSlot.start)
   );
   const [endTime, setEndTime] = useState(
     formatTime(formData.visit.timeSlot.end)
   );
-  console.log(startTime, endTime);
-  console.log(formData.visit.timeSlot.start, formData.visit.timeSlot.end);
+
+  useEffect(() => {
+    setStartTime(formatTime(formData.visit.timeSlot.start));
+    setEndTime(formatTime(formData.visit.timeSlot.end));
+  }, [formData.visit.timeSlot.start, formData.visit.timeSlot.end]);
+
+  const handleTimeChange = useCallback((field, type, value) => {
+    const updateTime = (prevTime) => {
+      const newTime = { ...prevTime, [type]: value };
+      let timeString;
+      if (type === "hour")
+        timeString = `${value}:${newTime.minute} ${newTime.amPm}`;
+      else if (type === "minute")
+        timeString = `${newTime.hour}:${value} ${newTime.amPm}`;
+      else if (type === "amPm")
+        timeString = `${newTime.hour}:${newTime.minute} ${value}`;
+
+      handleInputChange({
+        target: { id: `visit.timeSlot.${field}`, value: timeString },
+      });
+      return newTime;
+    };
+
+    if (field === "start") {
+      setStartTime(updateTime);
+    } else {
+      setEndTime(updateTime);
+    }
+  }, [handleInputChange]);
+
   return (
     <>
-      <Select
-        id="visit.department"
-        onValueChange={(value) => handleSelectChange("visit.department", value)}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Department" />
-        </SelectTrigger>
-        <SelectContent>
-          {departments.map((department) => (
-            <SelectItem key={department._id} value={department._id}>
-              {department.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="relative">
+        <Select
+          id="visit.department"
+          onValueChange={(value) =>
+            handleSelectChange("visit.department", value)
+          }
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Department" />
+          </SelectTrigger>
+          <SelectContent>
+            {departments.map((department) => (
+              <SelectItem key={department._id} value={department._id}>
+                {department.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Select
-        id="visit.doctor"
-        onValueChange={(value) => handleSelectChange("visit.doctor", value)}
-      >
-        <SelectTrigger>
-          <SelectValue placeholder="Assigned Doctor" />
-        </SelectTrigger>
-        <SelectContent>
-          {doctors.map((doctor) => (
-            <SelectItem key={doctor._id} value={doctor._id}>
-              Dr. {doctor.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <div className="relative">
+        <Select
+          id="visit.doctor"
+          onValueChange={(value) => handleSelectChange("visit.doctor", value)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Assigned Doctor" />
+          </SelectTrigger>
+          <SelectContent>
+            {doctors.map((doctor) => (
+              <SelectItem key={doctor._id} value={doctor._id}>
+                Dr. {doctor.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <div className="grid grid-cols-[120px_1fr] items-center gap-2 mb-2">
-        <Label htmlFor="visit.bookingDate">Booking Date:</Label>
+      <div className="relative col-span-1">
         <Input
           type="date"
           id="visit.bookingDate"
           value={formData.visit.bookingDate}
           onChange={handleInputChange}
-          className="w-full"
+          className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+            errors["visit.bookingDate"] ? "border-red-500" : "border-gray-300"
+          }`}
         />
+        <Label
+          htmlFor="visit.bookingDate"
+          className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
+            errors["visit.bookingDate"] ? "text-red-500" : "text-gray-500"
+          }`}
+        >
+          Booking Date{" "}
+          {errors["visit.bookingDate"] && (
+            <span className="text-red-500 ml-1">*Required</span>
+          )}
+        </Label>
       </div>
 
       <div className="grid grid-cols-4 items-center mb-2">

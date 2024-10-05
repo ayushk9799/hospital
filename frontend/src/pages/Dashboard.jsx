@@ -43,12 +43,13 @@ import { PieChart, Pie, Cell, Label } from "recharts";
 const Dashboard = () => {
   const dispatch = useDispatch();
   const { dashboardData, dashboardDataStatus } = useSelector((state) => state.dashboard);
+  const {patientlist} = useSelector((state) => state.patients);
   const [dateFilter, setDateFilter] = useState("Today");
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [selectedDateRange, setSelectedDateRange] = useState({ from: null, to: null });
 
+
   const filteredData = useMemo(() => {
-    console.log("dashboardData:", dashboardData);
     
     if (typeof dashboardData !== 'object' || dashboardData === null) {
       console.error("dashboardData is not an object:", dashboardData);
@@ -147,13 +148,13 @@ const Dashboard = () => {
           const index = weekData.findIndex(d => isSameDay(d.date, dayDate));
           if (index !== -1) {
             weekData[index].revenue = day.revenue || 0;
-            weekData[index].patients = day.count || 0;
+            weekData[index].patients = day.totalAppointments || 0;
           }
         }
       });
     }
     
-    console.log("Weekly performance data:", weekData);
+    // console.log("Weekly performance data:", weekData);
     return weekData;
   }, [dashboardData]);
 
@@ -522,7 +523,7 @@ const Dashboard = () => {
         {/* Upcoming Patients */}
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Patients</CardTitle>
+            <CardTitle>IPD Patients</CardTitle>
             <CardDescription>Latest admitted patients</CardDescription>
           </CardHeader>
           <CardContent>

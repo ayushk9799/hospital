@@ -159,7 +159,8 @@ export default function OPDModule({ patient }) {
       })).unwrap();
 
       toast({
-        title: "Success",
+        variant: "success",
+        title: "Added Successfully!",
         description: "Prescription, vitals, and lab tests saved successfully!",
       });
     } catch (error) {

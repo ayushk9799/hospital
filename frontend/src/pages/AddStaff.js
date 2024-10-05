@@ -2,29 +2,22 @@ import React, { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectItem,
-  SelectContent,
-} from "../components/ui/select";
+import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent,} from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { Checkbox } from "../components/ui/checkbox";
 import { Plus, X } from "lucide-react";
-import { Backend_URL } from "../assets/Data";
 import { useToast } from "../hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
 import { createStaffMember } from '../redux/slices/staffSlice';
-
+import { useNavigate } from 'react-router-dom';
 export default function AddStaff() {
   const { toast } = useToast();
   const dispatch = useDispatch();
+  const navigate=useNavigate();
   const { status, error } = useSelector((state) => state.staff);
   const departments=useSelector((state)=>state.departments.departments);
-  console.log(departments)
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({ roles: [] });
 
   const [errors, setErrors] = useState({});
   const [newQualification, setNewQualification] = useState("");
@@ -141,7 +134,8 @@ export default function AddStaff() {
       if (!formData.username) newErrors.username = "Username is required for admin";
       if (!formData.password) newErrors.password = "Password is required for admin";
     }
-    if (formData.roles.length === 0) newErrors.roles = "At least one role is required";
+    // Check if roles exist and have a length greater than 0
+    if (!formData.roles || formData.roles.length === 0) newErrors.roles = "At least one role is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -152,10 +146,12 @@ export default function AddStaff() {
       try {
         await dispatch(createStaffMember(formData)).unwrap();
         toast({
-          title: "Success",
+          variant : "success",
+          title: "Staff Added",
           description: "Staff member has been added successfully.",
         });
         handleReset();
+        navigate('/reports')
       } catch (error) {
         toast({
           title: "Error",
@@ -170,11 +166,10 @@ export default function AddStaff() {
     setFormData({});
     setErrors({});
   };
-console.log(formData)
   return (
-    <div className="max-w-[1200px] mx-auto p-6">
-      <h2 className="text-2xl font-bold mb-4">Add New Staff Member</h2>
-      <p className="text-gray-600 mb-6">Fill in the details of the new staff member</p>
+    <div className="max-w-[1200px] mx-auto p-4">
+      <h2 className="text-xl font-bold mb-0">Add New Staff Member</h2>
+      <p className="text-gray-600 mb-4">Fill in the details of the new staff member</p>
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-4 gap-4">
           <div className="grid grid-cols-3 col-span-3 gap-4">
@@ -221,6 +216,15 @@ console.log(formData)
                 id="employeeID"
                 placeholder="EMP001"
                 value={formData.employeeID}
+                onChange={handleInputChange}
+              />
+            </div>
+            <div>
+              <Label htmlFor="contactNumber">Contact Number</Label>
+              <Input
+                id="contactNumber"
+                placeholder="+91 9876543210"
+                value={formData.contactNumber}
                 onChange={handleInputChange}
               />
             </div>
@@ -296,23 +300,25 @@ console.log(formData)
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="shift.hours.start">Shift Start Time</Label>
-              <Input
-                id="shift.hours.start"
-                type="time"
-                value={formData?.shift?.hours?.start}
-                onChange={handleInputChange}
-              />
-            </div>
-            <div>
-              <Label htmlFor="shift.hours.end">Shift End Time</Label>
-              <Input
-                id="shift.hours.end"
-                type="time"
-                value={formData?.shift?.hours?.end}
-                onChange={handleInputChange}
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <Label htmlFor="shift.hours.start">Start Time</Label>
+                <Input
+                  id="shift.hours.start"
+                  type="time"
+                  value={formData?.shift?.hours?.start}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div>
+                <Label htmlFor="shift.hours.end">End Time</Label>
+                <Input
+                  id="shift.hours.end"
+                  type="time"
+                  value={formData?.shift?.hours?.end}
+                  onChange={handleInputChange}
+                />
+              </div>
             </div>
             <div>
               <Label htmlFor="salary">Salary</Label>
@@ -474,7 +480,7 @@ console.log(formData)
                 Adding...
               </>
             ) : (
-              'Add Staff Member'
+              'Add Staff'
             )}
           </Button>
         </div>

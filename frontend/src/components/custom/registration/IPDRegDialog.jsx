@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "../../ui/button";
 import {
   Dialog,
@@ -21,7 +21,6 @@ import {
 import { Textarea } from "../../ui/textarea";
 import { fetchPatients, registerPatient } from "../../../redux/slices/patientSlice";
 import { fetchRooms } from "../../../redux/slices/roomSlice";
-import { Label } from "../../ui/label";
 import {
   initialFormData,
   validateForm,
@@ -29,21 +28,15 @@ import {
 } from "./ipdRegHelpers";
 import { useToast } from "../../../hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import MemoizedInput from "./MemoizedInput";
 
-const hours = Array.from({ length: 12 }, (_, i) =>
-  String(i + 1).padStart(2, "0")
-);
-const minutes = Array.from({ length: 60 }, (_, i) =>
-  String(i).padStart(2, "0")
-);
+const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, "0"));
+const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, "0"));
 
 export default function IPDRegDialog({ open, onOpenChange }) {
-  console.log("ipd");
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const registerPatientStatus = useSelector(
-    (state) => state.patients.registerPatientStatus
-  );
+  const registerPatientStatus = useSelector((state) => state.patients.registerPatientStatus);
   const { departments, rooms, doctors } = useSelector((state) => ({
     departments: state.departments.departments,
     rooms: state.rooms.rooms,
@@ -52,17 +45,12 @@ export default function IPDRegDialog({ open, onOpenChange }) {
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
-  const [startTime, setStartTime] = useState({
-    hour: "",
-    minute: "",
-    amPm: "AM",
-  });
+  const [startTime, setStartTime] = useState({ hour: "", minute: "", amPm: "AM" });
   const [endTime, setEndTime] = useState({ hour: "", minute: "", amPm: "AM" });
 
   useEffect(() => {
     if (open) {
       dispatch(fetchRooms());
-      
     }
   }, [open, dispatch]);
 
@@ -91,11 +79,31 @@ export default function IPDRegDialog({ open, onOpenChange }) {
     });
   };
 
+  const handleDobChange = useCallback(
+    (e) => {
+      const dateOfBirth = e.target.value;
+      const age = dateOfBirth
+        ? new Date().getFullYear() - new Date(dateOfBirth).getFullYear()
+        : "";
+      handleInputChange({ target: { id: "dateOfBirth", value: dateOfBirth } });
+      handleInputChange({ target: { id: "age", value: age.toString() } });
+    },
+    [handleInputChange]
+  );
+
+  const handleAgeChange = useCallback(
+    (e) => {
+      const age = e.target.value;
+      handleInputChange({ target: { id: "age", value: age } });
+      handleInputChange({ target: { id: "dateOfBirth", value: "" } });
+    },
+    [handleInputChange]
+  );
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
-      console.log(submissionData);
       dispatch(registerPatient(submissionData))
         .unwrap()
         .then(() => {
@@ -104,16 +112,13 @@ export default function IPDRegDialog({ open, onOpenChange }) {
             description: "The new patient has been added.",
             variant: "success",
           });
-
           dispatch(fetchPatients());
           dispatch(fetchRooms());
         })
         .catch((error) => {
           toast({
             title: "Failed to register patient",
-            description:
-              error.message ||
-              "There was an error registering the patient. Please try again.",
+            description: error.message || "There was an error registering the patient. Please try again.",
             variant: "destructive",
           });
         })
@@ -148,112 +153,83 @@ export default function IPDRegDialog({ open, onOpenChange }) {
             {/* Personal Information */}
             <div className="space-y-2">
               <h3 className="font-semibold text-sm">Personal Information</h3>
-              <div>
-                <Input
-                  id="name"
-                  placeholder="Full Name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                />
-                {errors.name && (
-                  <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-                )}
+              <MemoizedInput
+                id="name"
+                label="Full Name"
+                value={formData.name}
+                onChange={handleInputChange}
+                error={errors.name}
+              />
+              <MemoizedInput
+                id="registrationNumber"
+                label="Registration Number"
+                value={formData.registrationNumber}
+                onChange={handleInputChange}
+              />
+              <div className="flex items-end gap-4">
+                <div className="flex-grow relative">
+                  <MemoizedInput
+                    id="dateOfBirth"
+                    label="Date of Birth"
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={handleDobChange}
+                  />
+                </div>
+                <div className="w-20 relative">
+                  <MemoizedInput
+                    id="age"
+                    label="Age"
+                    type="number"
+                    value={formData.age}
+                    onChange={handleAgeChange}
+                    error={errors.age}
+                  />
+                </div>
               </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  id="registrationNumber"
-                  placeholder="Registration Number"
-                  value={formData.registrationNumber}
-                  onChange={handleInputChange}
-                />
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  value={formData.dateOfBirth}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-2">
-                <Input
-                  id="age"
-                  type="number"
-                  placeholder="Age"
-                  value={formData.age}
-                  onChange={handleInputChange}
-                />
-                <Select
-                  id="gender"
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { id: "gender", value } })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Select
-                  id="bloodType"
-                  onValueChange={(value) =>
-                    handleInputChange({ target: { id: "bloodType", value } })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Blood Group" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
-                      (type) => (
-                        <SelectItem key={type} value={type}>
-                          {type}
-                        </SelectItem>
-                      )
-                    )}
-                  </SelectContent>
-                </Select>
-                {errors.bloodType && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.bloodType}
-                  </p>
-                )}
-              </div>
-              {/* Move booking date and time slot here */}
-              <div className="flex items-center space-x-2">
-                <label
-                  htmlFor="admission.bookingDate"
-                  className="text-sm font-medium w-24"
-                >
-                  Booking Date:
-                </label>
-                <Input
-                  id="admission.bookingDate"
-                  type="date"
-                  placeholder="Booking Date"
-                  value={formData.admission.bookingDate}
-                  onChange={handleInputChange}
-                  className="flex-grow"
-                />
-              </div>
-              {errors["admission.bookingDate"] && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors["admission.bookingDate"]}
-                </p>
-              )}
-
+              <Select
+                id="gender"
+                onValueChange={(value) => handleInputChange({ target: { id: "gender", value } })}
+              >
+                <SelectTrigger className={errors.gender ? "border-red-500" : ""}>
+                  <SelectValue placeholder="Gender" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Male">Male</SelectItem>
+                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Other">Other</SelectItem>
+                </SelectContent>
+              </Select>
+              {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>}
+              <Select
+                id="bloodType"
+                onValueChange={(value) => handleInputChange({ target: { id: "bloodType", value } })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Blood Group" />
+                </SelectTrigger>
+                <SelectContent>
+                  {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <MemoizedInput
+                id="admission.bookingDate"
+                label="Booking Date"
+                type="date"
+                value={formData.admission.bookingDate}
+                onChange={handleInputChange}
+                error={errors["admission.bookingDate"]}
+              />
               <div className="grid grid-cols-4 items-center mb-2">
-                <Label>Start Time:</Label>
+                <label className="text-sm">Start Time:</label>
                 <div className="flex space-x-2 col-span-3">
                   <Select
                     value={startTime.hour}
-                    onValueChange={(value) =>
-                      handleTimeChange("start", "hour", value)
-                    }
+                    onValueChange={(value) => handleTimeChange("start", "hour", value)}
                   >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue placeholder="HH" />
@@ -268,9 +244,7 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   </Select>
                   <Select
                     value={startTime.minute}
-                    onValueChange={(value) =>
-                      handleTimeChange("start", "minute", value)
-                    }
+                    onValueChange={(value) => handleTimeChange("start", "minute", value)}
                   >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue placeholder="MM" />
@@ -285,9 +259,7 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   </Select>
                   <Select
                     value={startTime.amPm}
-                    onValueChange={(value) =>
-                      handleTimeChange("start", "amPm", value)
-                    }
+                    onValueChange={(value) => handleTimeChange("start", "amPm", value)}
                   >
                     <SelectTrigger className="w-[60px]">
                       <SelectValue />
@@ -300,19 +272,14 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                 </div>
               </div>
               {errors["admission.timeSlot.start"] && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors["admission.timeSlot.start"]}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors["admission.timeSlot.start"]}</p>
               )}
-
               <div className="grid grid-cols-4 items-center gap-2 mb-2">
-                <Label>End Time:</Label>
+                <label className="text-sm">End Time:</label>
                 <div className="flex space-x-2 col-span-3">
                   <Select
                     value={endTime.hour}
-                    onValueChange={(value) =>
-                      handleTimeChange("end", "hour", value)
-                    }
+                    onValueChange={(value) => handleTimeChange("end", "hour", value)}
                   >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue placeholder="HH" />
@@ -327,9 +294,7 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   </Select>
                   <Select
                     value={endTime.minute}
-                    onValueChange={(value) =>
-                      handleTimeChange("end", "minute", value)
-                    }
+                    onValueChange={(value) => handleTimeChange("end", "minute", value)}
                   >
                     <SelectTrigger className="w-[70px]">
                       <SelectValue placeholder="MM" />
@@ -344,9 +309,7 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   </Select>
                   <Select
                     value={endTime.amPm}
-                    onValueChange={(value) =>
-                      handleTimeChange("end", "amPm", value)
-                    }
+                    onValueChange={(value) => handleTimeChange("end", "amPm", value)}
                   >
                     <SelectTrigger className="w-[60px]">
                       <SelectValue />
@@ -359,33 +322,25 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                 </div>
               </div>
               {errors["admission.timeSlot.end"] && (
-                <p className="text-red-500 text-xs mt-1">
-                  {errors["admission.timeSlot.end"]}
-                </p>
+                <p className="text-red-500 text-xs mt-1">{errors["admission.timeSlot.end"]}</p>
               )}
             </div>
 
             {/* Contact Information */}
             <div className="space-y-2">
               <h3 className="font-semibold text-sm">Contact Information</h3>
-              <div>
-                <Input
-                  id="contactNumber"
-                  type="tel"
-                  placeholder="Phone"
-                  value={formData.contactNumber}
-                  onChange={handleInputChange}
-                />
-                {errors.contactNumber && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors.contactNumber}
-                  </p>
-                )}
-              </div>
-              <Input
+              <MemoizedInput
+                id="contactNumber"
+                label="Phone"
+                type="tel"
+                value={formData.contactNumber}
+                onChange={handleInputChange}
+                error={errors.contactNumber}
+              />
+              <MemoizedInput
                 id="email"
+                label="Email"
                 type="email"
-                placeholder="Email"
                 value={formData.email}
                 onChange={handleInputChange}
               />
@@ -396,64 +351,44 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                 onChange={handleInputChange}
                 className="h-[80px]"
               />
-              {/* Move insurance details here */}
-              <div>
-                <Input
-                  id="admission.insuranceDetails.provider"
-                  placeholder="Insurance Provider"
-                  value={formData.admission.insuranceDetails.provider}
-                  onChange={handleInputChange}
-                />
-                {errors["admission.insuranceDetails.provider"] && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors["admission.insuranceDetails.provider"]}
-                  </p>
-                )}
-              </div>
-              <div>
-                <Input
-                  id="admission.insuranceDetails.policyNumber"
-                  placeholder="Policy Number"
-                  value={formData.admission.insuranceDetails.policyNumber}
-                  onChange={handleInputChange}
-                />
-                {errors["admission.insuranceDetails.policyNumber"] && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors["admission.insuranceDetails.policyNumber"]}
-                  </p>
-                )}
-              </div>
+              <MemoizedInput
+                id="admission.insuranceDetails.provider"
+                label="Insurance Provider"
+                value={formData.admission.insuranceDetails.provider}
+                onChange={handleInputChange}
+              />
+              <MemoizedInput
+                id="admission.insuranceDetails.policyNumber"
+                label="Policy Number"
+                value={formData.admission.insuranceDetails.policyNumber}
+                onChange={handleInputChange}
+              />
             </div>
 
             {/* Admission Details */}
             <div className="space-y-2">
               <h3 className="font-semibold text-sm">Admission Details</h3>
-              <div>
-                <Select
-                  id="admission.department"
-                  onValueChange={(value) =>
-                    handleInputChange({
-                      target: { id: "admission.department", value },
-                    })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept._id} value={dept._id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {errors["admission.department"] && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {errors["admission.department"]}
-                  </p>
-                )}
-              </div>
+              <Select
+                id="admission.department"
+                onValueChange={(value) =>
+                  handleInputChange({
+                    target: { id: "admission.department", value },
+                  })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((dept) => (
+                    <SelectItem key={dept._id} value={dept._id}>
+                      {dept.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors['admission.department'] && <p className="text-red-500 text-xs mt-1">{errors['admission.department']}</p>}
+
               <Select
                 id="admission.assignedDoctor"
                 onValueChange={(value) =>
@@ -473,6 +408,8 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   ))}
                 </SelectContent>
               </Select>
+              {errors['admission.assignedDoctor'] && <p className="text-red-500 text-xs mt-1">{errors['admission.assignedDoctor']}</p>}
+
               <div className="grid grid-cols-2 gap-2">
                 <Select
                   id="admission.assignedRoom"
@@ -489,7 +426,7 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                     }));
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className={errors['admission.assignedRoom'] ? "border-red-500" : ""}>
                     <SelectValue placeholder="Room" />
                   </SelectTrigger>
                   <SelectContent>

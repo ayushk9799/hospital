@@ -5,6 +5,7 @@ import {
   Info,
   HotelIcon,
   BedIcon,
+  Plus,
 } from "lucide-react";
 import {
   Card,
@@ -41,6 +42,7 @@ import {
   DialogTrigger,
 } from "../components/ui/dialog";
 import { ScrollArea } from "../components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
 
 // Updated sample room data without duplicates
 import { useSelector } from "react-redux";
@@ -50,6 +52,7 @@ export default function RoomManagementDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterType, setFilterType] = useState("All");
   const [filterStatus, setFilterStatus] = useState("All");
+  const navigate = useNavigate();
 
   const filteredRooms = rooms.filter(
     (room) =>
@@ -177,53 +180,64 @@ export default function RoomManagementDashboard() {
               </Select>
             </div>
             <div className="flex items-center space-x-2">
-              <Button variant="outline">
-                <FileText className="mr-2 h-4 w-4" /> Export
+              <Button variant="outline" onClick={() => navigate("/create-room")}>
+                <Plus className="mr-2 h-4 w-4" /> Add Room
               </Button>
+              {/* <Button variant="outline">
+                <FileText className="mr-2 h-4 w-4" /> Export
+              </Button> */}
             </div>
           </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Room Number</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Beds</TableHead>
-                <TableHead>Current Occupancy</TableHead>
-                <TableHead>Action</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredRooms.map((room) => (
-                <TableRow key={room._id}>
-                  <TableCell>{room.roomNumber}</TableCell>
-                  <TableCell>{room.type}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        room.status === "Occupied"
-                          ? "default"
-                          : room.status === "Partially Available"
-                          ? "warning"
-                          : room.status === "Under Maintenance"
-                          ? "warning"
-                          : "outline"
-                      }
-                      className={room.status === "Available" ? "bg-green-100 text-green-800 border-green-500" : ""}
-                    >
-                      {room.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{room.capacity}</TableCell>
-                  <TableCell>
-                    {room.currentOccupancy}
-                    {/* <BedDetailsDialog room={room} /> */}
-                  </TableCell>
-                  <BedDetailsDialog room={room} />
+          {rooms.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12">
+              <HotelIcon className="h-12 w-12 text-gray-400 mb-4" />
+              <p className="text-xl font-semibold text-gray-600">No rooms available</p>
+              <p className="text-gray-500">There are currently no rooms in the system.</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Room Number</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Beds</TableHead>
+                  <TableHead>Current Occupancy</TableHead>
+                  <TableHead>Action</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredRooms.map((room) => (
+                  <TableRow key={room._id}>
+                    <TableCell>{room.roomNumber}</TableCell>
+                    <TableCell>{room.type}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          room.status === "Occupied"
+                            ? "default"
+                            : room.status === "Partially Available"
+                            ? "warning"
+                            : room.status === "Under Maintenance"
+                            ? "warning"
+                            : "outline"
+                        }
+                        className={room.status === "Available" ? "bg-green-100 text-green-800 border-green-500" : ""}
+                      >
+                        {room.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{room.capacity}</TableCell>
+                    <TableCell>
+                      {room.currentOccupancy}
+                      {/* <BedDetailsDialog room={room} /> */}
+                    </TableCell>
+                    <BedDetailsDialog room={room} />
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
     </div>

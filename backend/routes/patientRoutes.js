@@ -179,6 +179,7 @@ router.get("/details", verifyToken, async (req, res) => {
       timeSlot: visit.timeSlot,
       additionalInstructions: visit.additionalInstructions,
       type: "OPD",
+      createdAt:visit.createdAt
     }));
 
     const processedAdmissions = ipdAdmissions.map((admission) => ({
@@ -201,6 +202,7 @@ router.get("/details", verifyToken, async (req, res) => {
       timeSlot: admission.timeSlot,
       vitals: admission.vitals,
       type: "IPD",
+      createdAt:admission.createdAt
     }));
 
     const combinedData = [...processedVisits, ...processedAdmissions];
@@ -230,11 +232,7 @@ router.delete(
   
   async (req, res) => {
     try {
-      
-
-    
-
-      const result = await IPDAdmission.deleteMany();
+      const result = await Visit.deleteMany();
 
       if (result.deletedCount === 0) {
         return res.status(404).json({ message: "No matching admissions found" });
@@ -586,10 +584,10 @@ router.post("/complexsearch", async (req, res) => {
         return res.status(400).json({ error: "Invalid search type" });
     }
   console.log(query);
-    const patients = await Model.find(query);
+    const patients = await Model.find(query).populate("patient","age gender bloodType address");
 
     if (patients.length === 0) {
-      return res.status(404).json({ error: "Patient not found" });
+      return res.status(200).json({ message: "Patient not found" });
     }
 
     res.json(patients);
