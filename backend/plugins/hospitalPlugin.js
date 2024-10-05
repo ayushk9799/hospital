@@ -40,4 +40,14 @@ export const hospitalPlugin = (schema) => {
     }
     next();
   });
+
+  // Add a static method to the schema for hospital-aware aggregation
+  schema.statics.hospitalAwareAggregate = function(pipeline) {
+    const hospitalId = mongoose.connection.hospital;
+    if (hospitalId) {
+      // Add a $match stage at the beginning of the pipeline to filter by hospital
+      pipeline.unshift({ $match: { hospital: hospitalId } });
+    }
+    return this.aggregate(pipeline);
+  };
 };

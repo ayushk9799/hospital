@@ -1,6 +1,6 @@
 import "./App.css";
-import React, { useEffect,useState } from "react";
-import { Route, BrowserRouter as Router, Routes,Navigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Route, BrowserRouter as Router, Routes, Navigate } from "react-router-dom";
 import { Provider } from 'react-redux';
 import { store } from './redux/store';
 import { useDispatch, useSelector } from 'react-redux';
@@ -9,7 +9,6 @@ import { fetchStaffMembers } from './redux/slices/staffSlice';
 import  CreateRoom  from './pages/CreateRoom';
 import Home from './pages/Home';
 
-import { getDoctors } from './redux/slices/staffSlice';
 import VerticalNav from './components/custom/Navigations/VerticalNav';
 import HorizontalNav from './components/custom/Navigations/HorizontalNav';
 import Dashboard from './pages/Dashboard';
@@ -46,24 +45,39 @@ const AppContent = () => {
   const dispatch = useDispatch();
   const isLoading = useSelector((state) => state.loader.isLoading);
   const isAuthenticated = useSelector((state) => state.user.isAuthenticated);
+  const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
-   if(isAuthenticated){
-    Promise.all([
-      dispatch(fetchPatients()),
-      dispatch(fetchStaffMembers()),
-      dispatch(fetchDepartments()),
-      dispatch(fetchRooms()),
-      dispatch(fetchUserData()),
-      dispatch(fetchHospitalInfo())
-    ]).then(() => {
-      dispatch(setLoading(false));
-    });
-   }
-   else{
-    dispatch(setLoading(false));
-   }
-  }, [dispatch,isAuthenticated]); 
+    dispatch(setLoading(true));
+    dispatch(fetchUserData())
+      .then(() => {
+        if (isAuthenticated) {
+          return Promise.all([
+            dispatch(fetchPatients()),
+            dispatch(fetchStaffMembers()),
+            dispatch(fetchDepartments()),
+            dispatch(fetchRooms()),
+            dispatch(fetchHospitalInfo())
+          ]);
+        }
+      })
+      .finally(() => {
+        dispatch(setLoading(false));
+        setIsInitializing(false);
+      });
+  }, [dispatch,isAuthenticated]);
+
+  if (isInitializing) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="relative">
+          <div className="w-24 h-24 rounded-full border-8 border-blue-200"></div>
+          <div className="absolute top-0 left-0 w-24 h-24 rounded-full border-t-8 border-blue-500 animate-spin"></div>
+          <div className="absolute top-0 left-0 w-24 h-24 rounded-full border-8 border-transparent animate-pulse"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col relative">

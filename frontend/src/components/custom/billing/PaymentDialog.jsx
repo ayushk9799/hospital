@@ -51,9 +51,9 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
       .unwrap()
       .then(() => {
         toast({
-          title: "Payment added",
+          title: "Payment added successfully",
           description: `Payment of ₹${paymentAmount} has been added successfully.`,
-          variant: "default",
+          variant: "success",
         });
         setIsOpen(false);
       })

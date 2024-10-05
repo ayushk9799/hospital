@@ -137,7 +137,7 @@ const Billings = () => {
         toast({
           title: "Bill deleted",
           description: `Bill of ${billToDelete.patientInfo.name} has been successfully deleted.`,
-          variant: "default",
+          variant: "success",
         });
       })
       .catch((error) => {

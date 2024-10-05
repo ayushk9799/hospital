@@ -44,10 +44,10 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
     if (types !== item.type) changedValues.type = types;
 
     if (Object.keys(changedValues).length === 0) {
-      toast({title: "No changes made", description: "No items were modified.", variant: "default",});
+      toast({title: "No changes made", description: "No items were modified.", variant: "success",});
     } else {
       dispatch(updateInventoryItem({ itemId: item._id, updateData: changedValues })).unwrap().then(()=>{
-        toast({ title: "Item updated successfully", description: "The item has been successfully updated.", variant: "default",});
+        toast({ title: "Item updated successfully", description: "The item has been successfully updated.", variant: "success",});
       }).catch((error) => {
         toast({title: "Failed to update item", description: error.message, variant: "destructive",});
       }).finally(()=>{

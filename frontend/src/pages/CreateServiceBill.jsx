@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Card, CardContent } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { User, ArrowLeft, Scale, Droplet, Pencil, Trash2, Plus, AlertCircle, Loader2 } from "lucide-react";
+import { ArrowLeft, Pencil, Trash2, Plus, AlertCircle, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -17,7 +17,7 @@ import { useToast } from '../hooks/use-toast';
 import { setSelectedPatientForBill } from '../redux/slices/patientSlice';
 import { CalendarDays, Phone, Mail, MapPin } from 'lucide-react';
 import { Badge } from "../components/ui/badge";
-
+import { format } from 'date-fns';
 const CreateServiceBill = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -173,6 +173,15 @@ const CreateServiceBill = () => {
 
   // Create bill data sending to backend
   const handleCreate = () => {
+    if (addedServices.length === 0) {
+      toast({
+        title: "No services added",
+        description: "Please add at least one service before creating the bill.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     let additionalDiscountAmount = parseFloat(additionalDiscount) || 0;
     
     // Convert percentage to amount if necessary
@@ -269,7 +278,7 @@ const CreateServiceBill = () => {
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-gray-400" />
-              <span>{selectedPatient?.bookingDate || 'N/A'}</span>
+              <span>{selectedPatient?.bookingDate ? format(selectedPatient?.bookingDate, 'MMM dd, hh:mm a') : 'N/A'}</span>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-gray-400" />

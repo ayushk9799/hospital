@@ -16,7 +16,9 @@ const PharmacyBillSchema = new mongoose.Schema({
   }],
   totalAmount: { type: Number},
   subtotal: { type: Number},
+  amountPaid : { type: Number},
   payment: { type: mongoose.Schema.Types.ObjectId, ref: 'Payment' },
+  createdBy : {type : mongoose.Schema.Types.ObjectId,ref : "Staff",required : true},
 }, { timestamps: true });
 
 PharmacyBillSchema.plugin(hospitalPlugin);

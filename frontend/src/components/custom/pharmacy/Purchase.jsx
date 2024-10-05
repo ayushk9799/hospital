@@ -12,9 +12,10 @@ import { Plus, Pencil, Trash, Package, CheckCircle } from 'lucide-react';
 import { useDispatch, useSelector } from 'react-redux';
 import { createOrder, setCreateOrderStatus, fetchSuppliers, fetchSupplierDetails, clearSelectedSupplier } from '../../../redux/slices/pharmacySlice';
 import { SearchSuggestion } from "../registration/CustomSearchSuggestion";
-
+import { useToast } from "../../../hooks/use-toast";
 export default function Purchase() {
   const dispatch = useDispatch();
+  const { toast } = useToast();
   const [supplierInfo, setSupplierInfo] = useState({ name: "", phone: "", email: "", address: "",});
   const [items, setItems] = useState([]);
   const [newItem, setNewItem] = useState({id : '', name: '', type: '', quantity: '', MRP: '', discount: '', expiryDate: ''});
@@ -78,7 +79,7 @@ export default function Purchase() {
 
   const addItem = () => {
     if (!newItem.name || !newItem.quantity || !newItem.MRP) {
-      alert('Please fill in at least the item name, quantity, and MRP.');
+      toast({title: "Please fill in at least the item name, quantity, and MRP.", variant: "destructive",});
       return;
     }
 

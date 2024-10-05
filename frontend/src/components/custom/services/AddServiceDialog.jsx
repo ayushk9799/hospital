@@ -30,7 +30,7 @@ export default function AddServiceDialog({ isOpen, onClose }) {
         toast({
           title: "Service added successfully",
           description: "The new service has been added.",
-          variant: "default",
+          variant: "success",
         });
       })
       .catch((error) => {

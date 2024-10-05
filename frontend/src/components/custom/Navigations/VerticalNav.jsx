@@ -37,22 +37,17 @@ const labReportTypes = [
 
 const navItems = [
   { name: "Dashboard", icon: Home, path: "/" },
-  { name: "Billings", icon: ReceiptText, path: "/billings" },
   { name: "Patients", icon: Users, path: "/patients" },
-  { name: "Rooms", icon: Bed, path: "/rooms" },
-  { name: "Appointments", icon: Calendar, path: "/appointments" },
-  { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy" },
+  { name: "Billings", icon: ReceiptText, path: "/billings" },
   { name: "Doctors", icon: Stethoscope, path: "/doctors" },
-  { name: "Nurses", icon: User, path: "/nurses" },
+  { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy" },
+  { name: "Lab", icon: TestTube, path: "/lab" },
+  { name: "Rooms", icon: Bed, path: "/rooms" },
+  // { name: "Appointments", icon: Calendar, path: "/appointments" },
   { name: "Services", icon: ClipboardList, path: "/services" },
   { name: "Reports", icon: FileText, path: "/reports" },
-  { name: "Analytics", icon: BarChart, path: "/analytics" },
+  // { name: "Analytics", icon: BarChart, path: "/analytics" },
   { name: "Settings", icon: Settings, path: "/settings" },
-  {
-    name: "Lab",
-    icon: TestTube,
-    path: "/lab",
-  },
 ];
 
 export const ColorfulLogo = ({ className }) => (

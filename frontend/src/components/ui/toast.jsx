@@ -1,5 +1,6 @@
 import * as React from "react"
-import { Cross2Icon } from "@radix-ui/react-icons"
+import { Cross2Icon, CheckCircledIcon, ExclamationTriangleIcon } from "@radix-ui/react-icons"
+import { CircleCheckBig } from "lucide-react"
 import * as ToastPrimitives from "@radix-ui/react-toast"
 import { cva } from "class-variance-authority";
 
@@ -25,7 +26,8 @@ const toastVariants = cva(
       variant: {
         default: "border bg-background text-foreground",
         destructive:
-          "destructive group border-destructive bg-destructive text-destructive-foreground",
+          "destructive group border-destructive bg-destructive text-destructive-foreground font-Roboto",
+        success: "border-green-500 bg-[#28a745] text-white font-Roboto",
       },
     },
     defaultVariants: {
@@ -39,7 +41,13 @@ const Toast = React.forwardRef(({ className, variant, ...props }, ref) => {
     (<ToastPrimitives.Root
       ref={ref}
       className={cn(toastVariants({ variant }), className)}
-      {...props} />)
+      {...props}>
+      <div className="flex items-center">
+        {variant === 'success' && <CircleCheckBig className="h-6 w-6 mr-2 flex-shrink-0" />}
+        {variant === 'destructive' && <ExclamationTriangleIcon className="h-6 w-6 mr-2 flex-shrink-0" />}
+        <div>{props.children}</div>
+      </div>
+    </ToastPrimitives.Root>)
   );
 })
 Toast.displayName = ToastPrimitives.Root.displayName

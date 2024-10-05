@@ -10,7 +10,7 @@ import serviceReducer from './slices/serviceSlice';
 import billingReducer from './slices/BillingSlice';
 import hospitalReducer from './slices/HospitalSlice';
 import templatesReducer from './slices/templatesSlice';
-
+import dashboardReducer from './slices/dashboardSlice';
 export const store = configureStore({
   reducer: {
     patients: patientReducer,
@@ -23,6 +23,7 @@ export const store = configureStore({
     services:serviceReducer,
     bills:billingReducer,
     hospital:hospitalReducer,
-    templates: templatesReducer
+    templates: templatesReducer,
+    dashboard: dashboardReducer
   },
 });

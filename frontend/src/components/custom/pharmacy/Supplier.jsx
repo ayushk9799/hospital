@@ -48,11 +48,6 @@ const Supplier = () => {
     setIsOrderDialogOpen(true);
   };
 
-  const handleCloseOrderDialog = () => {
-    setIsOrderDialogOpen(false);
-    setSelectedOrder(null);
-  };
-
   const filteredSuppliers = suppliers.filter(supplier =>
     supplier.name.toLowerCase().includes(searchTerm.toLowerCase())
   );

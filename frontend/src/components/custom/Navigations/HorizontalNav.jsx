@@ -1,7 +1,7 @@
 import React from "react";
 import { ChevronDown, LogOut, Bell, User, Menu } from "lucide-react";
 import { Input } from "../../ui/input";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { Button } from "../../ui/button";
 import {
   DropdownMenu,
@@ -13,13 +13,37 @@ import {
 } from "../../ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar"
 import { ColorfulLogo } from "./VerticalNav";
+import { clearUserData } from "../../../redux/slices/userSlice";
+import { Backend_URL } from "../../../assets/Data";
+import { useNavigate } from "react-router-dom";
 
 // Remove the labReportTypes and handleCreateLabReport function
 
 const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
-
   const user = useSelector((state) => state.user.userData);
-  console.log(user)
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        // Clear user data from Redux store
+        dispatch(clearUserData());
+        // Redirect to login page
+        navigate('/');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Error during logout:', error);
+    }
+  };
+
   return (
     <header className="flex items-center justify-between px-4 py-2 bg-white shadow z-50 sticky top-0">
       <div className="flex items-center">
@@ -32,7 +56,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
           <Menu className="h-4 w-4" />
         </Button>
         <ColorfulLogo className="h-6 w-6" />
-        <span className="ml-2 text-lg font-bold text-gray-800">HMS</span>
+        <span className="ml-2 text-lg font-bold text-gray-800">The Hospital</span>
       </div>
       <div className="flex items-center">
         <Input type="search" placeholder="Search..." className="w-56 h-8 text-sm" />
@@ -58,7 +82,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
             <DropdownMenuItem>Profile</DropdownMenuItem>
             <DropdownMenuItem>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />
               <span>Log out</span>
             </DropdownMenuItem>

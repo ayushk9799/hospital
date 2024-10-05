@@ -119,7 +119,7 @@ export default function OrderDetailsDialog({ order, isOpen, setIsOpen }) {
                     </TableHeader>
                     <TableBody>
                       <TableRow>
-                        <TableCell className="text-sm py-1">{order.payment._id.slice(-5)}</TableCell>
+                        <TableCell className="text-sm py-1">{order?.payment?._id.slice(-5)}</TableCell>
                         <TableCell className="text-sm py-1 text-right">₹{order.payment.amount.toFixed(2).toLocaleString()}</TableCell>
                         <TableCell className="text-sm py-1">{formatDate(order.payment.createdAt)}</TableCell>
                       </TableRow>
