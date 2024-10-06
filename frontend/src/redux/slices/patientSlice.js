@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createSelector } from '@reduxjs/toolkit';
 import { Backend_URL } from '../../assets/Data';
 import createLoadingAsyncThunk from './createLoadingAsyncThunk';
 
@@ -76,17 +76,45 @@ export const savePrescription = createAsyncThunk(
   }
 );
 
+// Add this new thunk for fetching patient details
+export const fetchPatientDetails = createLoadingAsyncThunk(
+  'patients/fetchPatientDetails',
+  async (patientId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/${patientId}`, {
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+const initialState = {
+  patientlist: [],
+  patientsStatus: 'idle',
+  selectedPatient: null,
+  status: 'idle',
+  prescriptionUpdateStatus: 'idle',
+  registerPatientStatus: 'idle',
+  patientDetails: null,
+  patientDetailsStatus: 'idle',
+  error: null,
+};
+
 const patientSlice = createSlice({
   name: 'patients',
-  initialState: {
-    patientlist: [],
-    patientsStatus: 'idle',
-    selectedPatient: null,
-    status: 'idle',
-    prescriptionUpdateStatus: 'idle',
-    registerPatientStatus: 'idle',
-    error: null,
-  },
+  initialState,
   reducers: {
     setSelectedPatient: (state, action) => {
       state.selectedPatient = action.payload
@@ -135,9 +163,24 @@ const patientSlice = createSlice({
       .addCase(registerPatient.rejected, (state, action) => {
         state.registerPatientStatus = 'failed';
         state.error = action.payload;
+      })
+      .addCase(fetchPatientDetails.pending, (state) => {
+        state.patientDetailsStatus = 'loading';
+      })
+      .addCase(fetchPatientDetails.fulfilled, (state, action) => {
+        state.patientDetailsStatus = 'succeeded';
+        state.patientDetails = action.payload;
+      })
+      .addCase(fetchPatientDetails.rejected, (state, action) => {
+        state.patientDetailsStatus = 'failed';
+        state.patientDetails = null; // Reset to null on error
       });
   },
 });
 
 export const { setSelectedPatient, setSelectedPatientForBill } = patientSlice.actions
+export const selectPatientDetails = createSelector(
+  [(state) => state.patients.selectedPatient, (state) => state.patients.patientDetailsStatus],
+  (selectedPatient, status) => ({ patientData: selectedPatient, status })
+);
 export default patientSlice.reducer;

@@ -34,7 +34,6 @@ import {
   ChevronDown,
   Search,
   UserPlus,
-  FileDown,
   Filter,
   Calendar as CalendarIcon,
   X,
@@ -51,11 +50,7 @@ import {
   endOfDay,
   subDays,
   isWithinInterval,
-  parse,
 } from "date-fns";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../components/ui/dialog";
-import { Label } from "../components/ui/label";
-import { Calendar } from "../components/ui/calendar";
 import { format } from "date-fns";
 
 // Add this selector function at the top of your file, outside of the component
@@ -74,7 +69,7 @@ export default function Patients() {
 
   // Use the useSelector hook to get the patients from the Redux store
   const patients = useSelector((state) => state.patients.patientlist);
-console.log(patients)
+  const {bills} = useSelector((state) => state.bills);
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
 
   const filteredPatients = patients.filter((patient) => {
@@ -122,6 +117,21 @@ console.log(patients)
 
     return nameMatch && dateMatch;
   });
+
+  const handleExistingBills = (patient) => {
+    const billID = patient.bills.services[0];
+    dispatch(setSelectedPatient(patient));
+    const bill = bills.find((bill) => bill._id === billID);
+    navigate(`/billings/edit/${billID}`, { state: { billData: bill } });
+    // console.log('click');
+  }
+
+  const createServiceBill = (patient) => {
+    dispatch(setSelectedPatient(patient));
+    navigate("/billings/create-service-bill");
+  };
+
+ 
 
   const PatientTable = ({ patients, type }) => {
     const navigate = useNavigate();
@@ -204,28 +214,31 @@ console.log(patients)
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() => navigate(`/patients/${patient.id}`)}
+                      onClick={() => navigate(`/patients/${patient.patient._id}`)}
                     >
                       View Details
                     </DropdownMenuItem>
-                    <DropdownMenuItem
+                    {/* <DropdownMenuItem
                       onClick={() => navigate(`/patients/${patient.id}/edit`)}
                     >
                       Edit Patient
+                    </DropdownMenuItem> */}
+                    <DropdownMenuItem onClick={() => handleExistingBills(patient)}>
+                      Existing Bill
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => createServiceBill(patient)}
                     >
-                      Create Bill
+                      Create New Bill
                     </DropdownMenuItem>
-                    <DropdownMenuItem
+                    {/* <DropdownMenuItem
                       onClick={() =>
                         navigate(`/appointments/schedule/${patient.id}`)
                       }
                     >
                       Schedule Appointment
-                    </DropdownMenuItem>
-                    {type === "IPD" && (
+                    </DropdownMenuItem> */}
+                    {type === "IPD" && patient.status !== "Discharged" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
                       >
@@ -256,10 +269,7 @@ console.log(patients)
     setDateFilter("All");
   };
 
-  const createServiceBill = (patient) => {
-    dispatch(setSelectedPatient(patient));
-    navigate("/billings/create-service-bill");
-  };
+  
 
   return (
     <Card className="w-full">

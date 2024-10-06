@@ -3,22 +3,21 @@ import { Patient } from "../models/Patient.js";
 import { Room } from "../models/Room.js";
 import { Visit } from "../models/Visits.js";
 import { IPDAdmission } from "../models/IPDAdmission.js";
+import { ServicesBill } from "../models/ServicesBill.js";
+import {Service} from "../models/Services.js";
 import { checkPermission, verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 
 const router = express.Router();
 
 // Create a new patient (All authenticated staff)
-router.post(
-  "/",
-  verifyToken,
-  checkPermission("write:patients"),
-  async (req, res) => {
+router.post("/",verifyToken,checkPermission("write:patients"),async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
       const { patientType, visit, admission, ...patientData } = req.body;
+      const user = req.user;
 
       if (!patientType || !["OPD", "IPD"].includes(patientType)) {
         throw new Error("Invalid or missing patient type");
@@ -26,10 +25,35 @@ router.post(
 
       // Create patient
       const patient = new Patient({ ...patientData, patientType });
-      console.log(patient);
       await patient.save({ session });
 
       let admissionRecord;
+
+      let consultationFee = await Service.findOne({ name: 'Consultation Fee' }).session(session);
+
+      if (!consultationFee) {
+        // throw new Error("Consultation Fee service not found");
+        consultationFee = new Service({ name: 'Consultation Fee', rate: 500, category: 'General' });
+        await consultationFee.save({ session });
+      }
+
+      // Create a bill for the patient
+      const bill = new ServicesBill({
+        services: [{
+          name: consultationFee.name,
+          quantity: 1,
+          rate: consultationFee.rate,
+          category: consultationFee.category
+        }],
+        patient: patient._id,
+        patientInfo: {
+          name: patient.name,
+          phone: patient?.contactNumber,
+        },
+        totalAmount: consultationFee.rate,
+        subtotal: consultationFee.rate,
+        createdBy: user._id
+      });
 
       if (patientType === "OPD") {
         if (!visit) {
@@ -45,6 +69,9 @@ router.post(
           patient: patient._id,
         });
         patient.visits.push(admissionRecord._id);
+        bill.patientType = "OPD";
+        admissionRecord.bills.services.push(bill._id);
+       
       } else if (patientType === "IPD") {
         if (!admission) {
           throw new Error("Admission details are required for IPD patients");
@@ -57,11 +84,9 @@ router.post(
           contactNumber:patient.contactNumber,
           patient: patient._id,
         });
-        console.log(admissionRecord);
         patient.admissionDetails.push(admissionRecord._id);
-
-      
-
+        bill.patientType = "IPD";
+        admissionRecord.bills.services.push(bill._id);
         if (admission.assignedRoom) {
           const room = await Room.findById(admission.assignedRoom).session(session);
           if (!room) {
@@ -77,11 +102,16 @@ router.post(
           room.beds[bedIndex].currentPatient = patient._id;
           room.currentOccupancy += 1;
 
+          bill.services.push({name : "Room Charge", quantity : 1, rate : room.ratePerDay, category : "Room Rent"});
+          bill.totalAmount += room.ratePerDay;
+          bill.subtotal += room.ratePerDay;
+
           // This will trigger the pre-save hook
           await room.save({ session });
         }
       }
       await admissionRecord.save({ session });
+      await bill.save({ session });
 
       // Add admission reference to patient
       await patient.save({ session });
@@ -146,7 +176,7 @@ router.post("/search", async (req, res) => {
   }
 });
 router.get("/details", verifyToken, async (req, res) => {
-  console.log("details")
+  // console.log("details")
   try {
     const visits = await Visit.find()
       .populate(
@@ -179,7 +209,8 @@ router.get("/details", verifyToken, async (req, res) => {
       timeSlot: visit.timeSlot,
       additionalInstructions: visit.additionalInstructions,
       type: "OPD",
-      createdAt:visit.createdAt
+      createdAt:visit.createdAt,
+      bills:visit.bills
     }));
 
     const processedAdmissions = ipdAdmissions.map((admission) => ({
@@ -208,7 +239,8 @@ router.get("/details", verifyToken, async (req, res) => {
       timeSlot: admission.timeSlot,
       vitals: admission.vitals,
       type: "IPD",
-      createdAt:admission.createdAt
+      createdAt:admission.createdAt,
+      bills:admission.bills
     }));
 
     const combinedData = [...processedVisits, ...processedAdmissions];

@@ -242,6 +242,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
               variant: "success",
             });
             dispatch(fetchPatients());
+            onOpenChange(false);
           })
           .catch((error) => {
             toast({
@@ -252,9 +253,6 @@ export default function OPDRegDialog({ open, onOpenChange }) {
               variant: "destructive",
             });
           })
-          .finally(() => {
-            onOpenChange(false);
-          });
       }
     }
   }, [isOldPatient, searchType, searchQuery, formData, validateForm, dispatch, toast, onOpenChange]);

@@ -17,7 +17,7 @@ import {
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
-import { Progress } from "../components/ui/progress";
+// import { Progress } from "../components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -66,17 +66,17 @@ export default function RoomManagementDashboard() {
       (filterStatus === "All" || room.status === filterStatus)
   );
 
-  const totalRooms = rooms.length;
-  const occupiedRooms = rooms.filter(
-    (room) =>
-      room.status === "Fully Occupied" || room.status === "Partially Occupied"
-  ).length;
-  const availableRooms = rooms.filter(
-    (room) => room.status === "Available"
-  ).length;
-  const maintenanceRooms = rooms.filter(
-    (room) => room.status === "Under Maintenance"
-  ).length;
+  // const totalRooms = rooms.length;
+  // const occupiedRooms = rooms.filter(
+  //   (room) =>
+  //     room.status === "Fully Occupied" || room.status === "Partially Occupied"
+  // ).length;
+  // const availableRooms = rooms.filter(
+  //   (room) => room.status === "Available"
+  // ).length;
+  // const maintenanceRooms = rooms.filter(
+  //   (room) => room.status === "Under Maintenance"
+  // ).length;
 
   const BedDetailsDialog = ({ room }) => (
     <Dialog>
@@ -188,11 +188,15 @@ export default function RoomManagementDashboard() {
               </Button> */}
             </div>
           </div>
-          {rooms.length === 0 ? (
+          {filteredRooms.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12">
               <HotelIcon className="h-12 w-12 text-gray-400 mb-4" />
-              <p className="text-xl font-semibold text-gray-600">No rooms available</p>
-              <p className="text-gray-500">There are currently no rooms in the system.</p>
+              <p className="text-xl font-semibold text-gray-600">No rooms found</p>
+              <p className="text-gray-500">
+                {rooms.length === 0
+                  ? "There are currently no rooms in the system."
+                  : "No rooms match your current search or filter criteria."}
+              </p>
             </div>
           ) : (
             <Table>
@@ -202,6 +206,7 @@ export default function RoomManagementDashboard() {
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Beds</TableHead>
+                  <TableHead>Daily Rate</TableHead>
                   <TableHead>Current Occupancy</TableHead>
                   <TableHead>Action</TableHead>
                 </TableRow>
@@ -228,10 +233,8 @@ export default function RoomManagementDashboard() {
                       </Badge>
                     </TableCell>
                     <TableCell>{room.capacity}</TableCell>
-                    <TableCell>
-                      {room.currentOccupancy}
-                      {/* <BedDetailsDialog room={room} /> */}
-                    </TableCell>
+                    <TableCell>₹{room?.ratePerDay || 'N/A'}</TableCell>
+                    <TableCell>{room.currentOccupancy}</TableCell>
                     <BedDetailsDialog room={room} />
                   </TableRow>
                 ))}
