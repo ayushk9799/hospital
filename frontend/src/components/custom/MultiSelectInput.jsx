@@ -23,7 +23,7 @@ const MultiSelectInput = forwardRef(({ suggestions = [], placeholder, selectedVa
   };
  console.log(selectedValues)
   const handleSuggestionClick = (suggestion) => {
-    if (!selectedValues.some(val => val.name === suggestion.name)) {
+    if (!selectedValues?.some(val => val.name === suggestion.name)) {
       const newSelectedValues = [...selectedValues, suggestion];
       setSelectedValues(newSelectedValues);
       if (onSuggestionSelect) {

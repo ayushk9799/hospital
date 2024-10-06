@@ -29,22 +29,21 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   section: {
-    marginBottom: 5,
-    flexDirection: 'row',  // Add this line
-    alignItems: 'flex-start',  // Add this line
+    marginBottom: 3,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
   },
   sectionTitle: {
-    fontSize: 12,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#34495e',
-    width:"25%"
-     // Add this line
+    width: "20%",
   },
-  sectionContent: {  // Add this new style
-    fontSize: 11,
+  sectionContent: {
+    fontSize: 9,
     color: '#2c3e50',
-    width: '75%',
-    marginLeft:5
+    width: '80%',
+    marginLeft: 5,
   },
   row: {
     flexDirection: 'row',
@@ -82,6 +81,35 @@ const styles = StyleSheet.create({
     flexBasis: '33%',
     marginBottom:3
   },
+  investigationsSection: {
+    marginBottom: 5,
+  },
+  investigationContainer: {
+    marginLeft: 5, // Indent the entire investigation
+    marginBottom: 5,
+  },
+  investigationTitle: {
+    fontSize: 9,
+    
+    marginBottom: 2,
+  },
+  investigationRow: {
+    flexDirection: 'row',
+    fontSize: 9,
+    marginBottom: 1,
+    
+  },
+  investigationCell1: {
+    width: '60%', // Reduced from 25% to 20%
+  },
+  investigationCell2: {   
+    width: '20%'
+  }
+ ,
+  columnContainer: {
+    width: '49%', // Reduced from 50% to 49%
+    paddingRight: 2, // Added small padding
+  },
 });
 
 const TruncatedText = ({ children, style }) => (
@@ -115,13 +143,113 @@ const hasValidData = (obj) => {
   return Object.values(obj).some(value => value !== null && value !== '' && value !== undefined);
 };
 
+const InvestigationDisplay = ({ investigation }) => {
+  const { name, date, report } = investigation;
+
+  const formatLabel = (label) => {
+    if (!label) return '';
+    const regex = /^\([^)]+\)|^(?:\S+\s?){1,3}/;
+    const match = label.match(regex);
+    return match ? match[0].trim() : label;
+  };
+
+  const reportEntries = Object.entries(report).filter(([_, testData]) => testData.value);
+  const halfLength = Math.ceil(reportEntries.length / 2);
+
+  return (
+    <View style={[styles.investigationContainer]}>
+      <View>
+        <Text style={styles.investigationTitle}>
+          {name.toUpperCase()} {' '}
+          ({format(new Date(date), 'dd-MM-yyyy')})
+        </Text>
+        
+      </View>
+      
+      <View style={{ flexDirection: 'row' }}>
+        <View style={{ width: '50%' }}>
+          {reportEntries.slice(0, halfLength).map(([testName, testData]) => (
+            testData.value && (
+              <View key={testName} style={[styles.investigationRow, { marginLeft: 5 }]}>
+                <View style={[styles.investigationCell1]}>
+                  <Text>
+                    {formatLabel(testData.label) || testName}
+                  </Text>
+                  </View>
+                    <View style={[styles.investigationCell2]}>
+                      <Text>{testData.value}</Text>
+                    </View>
+                    {testData.unit && (
+                      <View style={[styles.investigationCell2]}>
+                        <Text>{testData.unit}</Text>
+                      </View>
+                    )}
+                  </View>)))}
+                  
+                  </View> 
+                
+             
+            
+        
+        <View style={{ width: '50%' }}>
+          {reportEntries.slice(halfLength).map(([testName, testData]) => (
+            testData.value && (
+              <View key={testName} style={[styles.investigationRow, { marginLeft: 5 }]}>
+               <View style={[styles.investigationCell1]}>
+                  <Text>
+                    {formatLabel(testData.label) || testName}
+                  </Text>
+                  </View>
+                    <View style={[styles.investigationCell2]}>
+                      <Text>{testData.value}</Text>
+                    </View>
+                    {testData.unit && (
+                      <View style={[styles.investigationCell2]}>
+                        <Text>{testData.unit}</Text>
+                      </View>
+                    )}
+              </View>
+            )
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+};
+
 const DischargeSummaryPDF = ({ formData, patient }) => {
-    console.log(formData)
+  console.log(formData)
   const hasComorbidities = formData.comorbidities && formData.comorbidities.some(c => c.name);
   const hasInvestigations = formData.investigations && formData.investigations.some(i => i.name || i.category);
   const hasMedicineAdvice = formData.medicineAdvice && formData.medicineAdvice.some(m => m.name || m.dosage || m.duration);
   const hasAdmissionVitals = formData.vitals && hasValidData(formData.vitals.admission);
   const hasDischargeVitals = formData.vitals && hasValidData(formData.vitals.discharge);
+
+  const comorbiditiesString = formData.comorbidities?.filter(c => c.name)
+    .map(c => c.name)
+    .join(', ');
+
+  const renderComorbidities = () => {
+  
+    return (
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Comorbidities:</Text>
+        <Text style={styles.sectionContent}>{comorbiditiesString}</Text>
+      </View>
+    );
+  };
+
+  const appendComorbidities = (content,type) => {
+    if (!hasComorbidities ||formData.comorbidityHandling === 'separate') {
+      return content;
+    }
+    if(type===formData.comorbidityHandling){
+      return `${content}${content ? ', ' : ''} ${comorbiditiesString}`;
+    }
+    else{
+      return content;
+    }
+  };
 
   return (
     <Document>
@@ -179,20 +307,17 @@ const DischargeSummaryPDF = ({ formData, patient }) => {
             </View>
           </View>
         </View>
-
-        <ConditionalSection title="Diagnosis" content={formData.diagnosis} />
-        <ConditionalSection title="Clinical Summary" content={formData.clinicalSummary} />
+  
+        <ConditionalSection 
+          title="Diagnosis" 
+          content={appendComorbidities(formData.diagnosis,"diagnosis")} 
+        />
+        <ConditionalSection 
+          title="Clinical Summary" 
+          content={appendComorbidities(formData.clinicalSummary,"clinical_summary")} 
+        />
         
-        {hasComorbidities && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Comorbidities:</Text>
-            <View style={styles.sectionContent}>
-              {formData.comorbidities.map((c, index) => (
-                c.name && <Text key={index}>{c.name}</Text>
-              ))}
-            </View>
-          </View>
-        )}
+        {formData.comorbidityHandling==="separate" && renderComorbidities()}
 
         {hasAdmissionVitals && (
           <View style={styles.section}>
@@ -209,16 +334,15 @@ const DischargeSummaryPDF = ({ formData, patient }) => {
 
         <ConditionalSection title="Condition on Admission" content={formData.conditionOnAdmission} />
 
-        {hasInvestigations && (
+        {formData.investigations && formData.investigations.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Investigations</Text>
-            {formData.investigations.map((inv, index) => (
-              (inv.name || inv.category) && (
-                <Text key={index} style={styles.text}>
-                  {inv.name}{inv.category && ` (${inv.category})`}
-                </Text>
-              )
-            ))}
+            <View> <Text style={styles.sectionTitle}>Investigations</Text></View>
+           
+            <View style={[styles.investigationsSection, {marginLeft: 10,marginTop:15}]}>
+              {formData.investigations.map((investigation, index) => (
+                <InvestigationDisplay key={index} investigation={investigation} />
+              ))}
+            </View>
           </View>
         )}
 

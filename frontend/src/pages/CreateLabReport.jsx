@@ -18,7 +18,7 @@ import { Backend_URL } from "../assets/Data";
 import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 
-const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) => {
+const CreateLabReport = ({ category, type, patientData, onClose, searchWhere }) => {
   const navigate = useNavigate();
   const [fields, setFields] = useState([]);
   const [newField, setNewField] = useState({
@@ -31,26 +31,63 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
   const [reportDate, setReportDate] = useState(new Date());
   const [generatedDate, setGeneratedDate] = useState(null);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
- 
+  const [allReports, setAllReports] = useState([]);
+
   useEffect(() => {
     if (labReportFields[category] && labReportFields[category][type]) {
-      const existingReport = patientData?.labReports?.find(
+      const relevantReports = patientData?.labReports?.filter(
         (report) => report.name === type
-      );
-      setFields(
-        labReportFields[category][type].map((field) => ({
-          ...field,
-          value: Number(existingReport?.report?.[field.name]) || "",
-          unit: field.unit || "",
-          normalRange: field.normalRange || "",
-        }))
-      );
-      if (existingReport?.date) {
-        setGeneratedDate(new Date(existingReport.date));
-        setReportDate(new Date(existingReport.date));
+      ) || [];
+      setAllReports(relevantReports);
+
+      if (relevantReports.length > 0) {
+        loadReportForDate(relevantReports, new Date());
+      } else {
+        setReportDate(new Date());
+        setGeneratedDate(null);
+        resetForm();
       }
     }
   }, [category, type, patientData]);
+
+  const loadReportForDate = (reports, date) => {
+    const selectedReport = reports.find(
+      (report) => new Date(report.date).toDateString() === date.toDateString()
+    );
+
+    if (selectedReport) {
+      setReportDate(new Date(selectedReport.date));
+      setGeneratedDate(new Date(selectedReport.date));
+      loadReportData(selectedReport);
+    } else {
+      setReportDate(date);
+      setGeneratedDate(null);
+      resetForm();
+    }
+  };
+
+  const loadReportData = (report) => {
+    setFields(
+      labReportFields[category][type].map((field) => ({
+        ...field,
+        value: Number(report?.report?.[field.name]?.value) || "",
+        unit: field.unit || "",
+        normalRange: field.normalRange || "",
+      }))
+    );
+  };
+
+  const resetForm = () => {
+    console.log("form reset ")
+    setFields(
+      labReportFields[category][type].map((field) => ({
+        ...field,
+        value: "",
+        unit: field.unit || "",
+        normalRange: field.normalRange || "",
+      }))
+    );
+  };
 
   const handleInputChange = (e, fieldName) => {
     const { value } = e.target;
@@ -68,7 +105,12 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
       name: `${type}`,
       date: format(reportDate, "yyyy-MM-dd"),
       report: fields.reduce((acc, field) => {
-        acc[field.name] = field.value;
+        acc[field.name] = {
+          value: field.value,
+          label: field.label,
+          unit: field.unit,
+          normalRange: field.normalRange
+        };
         return acc;
       }, {}),
     };
@@ -90,7 +132,6 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
       if (!response.ok) {
         throw new Error("Failed to add lab report");
       }
-
 
       const result = await response.json();
       console.log("Lab Report added successfully:", result);
@@ -161,6 +202,10 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
     );
   }
 
+  const handleDateChange = (date) => {
+    loadReportForDate(allReports, date);
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       <h1 className="text-3xl font-bold mb-6 text-center">
@@ -182,7 +227,7 @@ const CreateLabReport = ({ category, type, patientData, onClose,searchWhere }) =
                 <Calendar
                   mode="single"
                   selected={reportDate}
-                  onSelect={setReportDate}
+                  onSelect={handleDateChange}
                   initialFocus
                 />
               </PopoverContent>

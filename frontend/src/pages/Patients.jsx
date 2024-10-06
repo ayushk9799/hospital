@@ -135,7 +135,7 @@ console.log(patients.map(patient=>patient.bookingDate))
           <TableRow>
             <TableHead>S.No</TableHead>
             <TableHead>Name</TableHead>
-            <TableHead>Date</TableHead>
+            {type === "OPD" && <TableHead>Date</TableHead>}
             {type === "OPD" && <TableHead>Time Slot</TableHead>}
             <TableHead>Mobile</TableHead>
             <TableHead>Gender</TableHead>
@@ -163,7 +163,7 @@ console.log(patients.map(patient=>patient.bookingDate))
                   {patient.patient.name}
                 </Button>
               </TableCell>
-               <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell> 
+              {type === "OPD" && <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell>} 
               {type === "OPD" && (
                 <TableCell>
                   {patient.timeSlot?.start} - {patient.timeSlot?.end}
@@ -177,7 +177,7 @@ console.log(patients.map(patient=>patient.bookingDate))
                   <TableCell>
                     {patient.assignedRoom?.roomNumber || "--"}
                   </TableCell>
-                  <TableCell>{patient.dateOfAdmission || "--"}</TableCell>
+                  <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell>
                   <TableCell>{patient.dateOfDischarge || "--"}</TableCell>
                 </>
               )}

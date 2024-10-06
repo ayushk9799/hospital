@@ -192,8 +192,13 @@ router.get("/details", verifyToken, async (req, res) => {
       assignedBed:admission.assignedBed,
       dateDischarged:admission.dateDischarged,
       clinicalSummary:admission.clinicalSummary,
+      comorbidities:admission.comorbidities,
       diagnosis: admission.diagnosis,
+      labReports:admission.labReports,
       treatment: admission.treatment,
+      conditionOnAdmission:admission.conditionOnAdmission,
+      conditionOnDischarge:admission.conditionOnDischarge,
+      comorbidities:admission.comorbidities,
       medications: admission.medications,
       additionalInstructions: admission.additionalInstructions,
       labTests: admission.labTests,
@@ -527,7 +532,7 @@ router.put(
 
     try {
       const { id } = req.params;
-      const { vitals, prescription, labTests,clinicalSummary,notes } = req.body;
+      const { vitals, prescription, labTests,clinicalSummary,notes ,comorbidities,conditionOnAdmission,conditionOnDischarge} = req.body;
 
       const admission = await IPDAdmission.findById(id).session(session);
       if (!admission) {
@@ -546,6 +551,9 @@ router.put(
       admission.medications = prescription.medications;
       admission.additionalInstructions = prescription.additionalInstructions;
       admission.clinicalSummary = clinicalSummary;
+      admission.comorbidities = comorbidities;
+      admission.conditionOnAdmission = conditionOnAdmission;
+      admission.conditionOnDischarge = conditionOnDischarge;
       admission.notes = notes;
       // Update lab tests
       admission.labTests = labTests;
@@ -599,20 +607,41 @@ router.post("/complexsearch", async (req, res) => {
 });
 router.post('/addLabReport', async (req, res) => {
   try {
-    const { visitId, labReport,searchWhere } = req.body;
-const Model = searchWhere==="opd"?Visit:IPDAdmission;
+    const { visitId, labReport, searchWhere } = req.body;
+    const Model = searchWhere === "opd" ? Visit : IPDAdmission;
+    
     const visit = await Model.findById(visitId);
     if (!visit) {
       return res.status(404).json({ message: 'Visit not found' });
     }
 
-    visit.labReports.push(labReport);
+    // Check if a report with the same name and date already exists
+    const existingReportIndex = visit.labReports.findIndex(
+      report => report.name === labReport.name && report.date.toISOString().split("T")[0] === labReport.date
+    );
+console.log(existingReportIndex);
+
+    if (existingReportIndex !== -1) {
+      // Update existing report
+      visit.labReports[existingReportIndex] = {
+        ...visit.labReports[existingReportIndex],
+        ...labReport
+      };
+    } else {
+      // Add new report
+      
+      visit.labReports.push(labReport);
+    }
+
     await visit.save();
 
-    res.status(200).json({ message: 'Lab report added successfully', visit });
+    res.status(200).json({ 
+      message: existingReportIndex !== -1 ? 'Lab report updated successfully' : 'Lab report added successfully', 
+      visit 
+    });
   } catch (error) {
-    console.error('Error adding lab report:', error);
-    res.status(500).json({ message: 'Error adding lab report', error: error.message });
+    console.error('Error adding/updating lab report:', error);
+    res.status(500).json({ message: 'Error adding/updating lab report', error: error.message });
   }
 });
 

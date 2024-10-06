@@ -1,15 +1,14 @@
 import React, { useState } from 'react'
 import { Button } from "../../ui/button"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select"
-import { Calendar as CalendarIcon, ChevronLeft, ChevronRight, PlusCircle } from "lucide-react"
-import { Calendar } from "../../ui/calendar"
-import { format } from 'date-fns'
-import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover"
-import AddEventModal from './AddEventModal'
+import { CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
+import { format, addDays, subDays } from 'date-fns'
 
 const AppointmentHeader = () => {
   const [date, setDate] = useState(new Date())
-  const [isAddEventModalOpen, setIsAddEventModalOpen] = useState(false)
+
+  const handleDateChange = (direction) => {
+    setDate(prevDate => direction === 'prev' ? subDays(prevDate, 1) : addDays(prevDate, 1))
+  }
 
   return (
     <header className="bg-white text-gray-800 px-4 py-2 flex justify-between items-center shadow-sm border-b border-gray-200 h-[50px]">
@@ -18,42 +17,29 @@ const AppointmentHeader = () => {
         <h1 className="text-base font-semibold">Appointment List</h1>
       </div>
       <div className="flex items-center space-x-2">
-        <Button variant="ghost" size="xs" className="text-gray-600 hover:bg-gray-100" onClick={() => setDate(prev => new Date(prev.setDate(prev.getDate() - 1)))}>
-          <ChevronLeft className="h-3 w-3" />
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="text-gray-600 hover:bg-gray-100" 
+          onClick={() => handleDateChange('prev')}
+          disabled={format(date, 'yyyy-MM-dd') === format(subDays(new Date(), 1), 'yyyy-MM-dd')}
+        >
+          <ChevronLeft className="h-4 w-4" />
         </Button>
-        <Popover>
-          <PopoverTrigger asChild>
-            <Button variant="ghost" className="text-base font-semibold">
-              {format(date, 'EEEE, MMM d')}
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-auto p-0">
-            <Calendar
-              mode="single"
-              selected={date}
-              onSelect={setDate}
-              initialFocus
-            />
-          </PopoverContent>
-        </Popover>
-        <Button variant="ghost" size="xs" className="text-gray-600 hover:bg-gray-100" onClick={() => setDate(prev => new Date(prev.setDate(prev.getDate() + 1)))}>
-          <ChevronRight className="h-3 w-3" />
-        </Button>
-      </div>
-      <div className="flex space-x-2">
-        <Select>
-          <SelectTrigger className="w-[160px] h-8 text-sm bg-gray-50 text-gray-800 border-gray-200 focus:ring-blue-500">
-            <SelectValue placeholder="All Dr. Yogesh Bala..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Dr. Yogesh Bala...</SelectItem>
-          </SelectContent>
-        </Select>
-        <Button variant="outline" size="xs" className="h-8 px-5" onClick={() => setIsAddEventModalOpen(true)}>
-          <PlusCircle className="mr-2 h-4 w-4" /> Add Event
+        <span className="text-base font-semibold min-w-[80px] text-center">
+          {format(date, 'MMM d')}
+        </span>
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="text-gray-600 hover:bg-gray-100" 
+          onClick={() => handleDateChange('next')}
+          disabled={format(date, 'yyyy-MM-dd') === format(addDays(new Date(), 1), 'yyyy-MM-dd')}
+        >
+          <ChevronRight className="h-4 w-4" />
         </Button>
       </div>
-      <AddEventModal isOpen={isAddEventModalOpen} onClose={() => setIsAddEventModalOpen(false)} />
+      <div className="w-[100px]"></div>
     </header>
   )
 }

@@ -59,7 +59,8 @@ export default function PatientDetails() {
 
     if (!visitData) return null;
 
-    const isIPD = 'admissionDate' in visitData;
+    const isIPD = selectedItem.type === 'admission'?true:false;
+    console.log(isIPD)
 
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -298,7 +299,7 @@ export default function PatientDetails() {
                 visitData.labReports.map((report, index) => (
                   <div key={index} className="mb-6">
                     <h3 className="text-lg font-semibold mb-2">
-                      {report.name}
+                      {report.name.replaceAll("-", " ").toUpperCase()}
                       <span className="text-sm font-normal ml-2 text-gray-500">
                         {report.date ? new Date(report.date).toLocaleDateString("en-IN") : ""}
                       </span>
@@ -313,14 +314,16 @@ export default function PatientDetails() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {Object.entries(report.report).map(([key, data]) => (
-                          <TableRow key={key}>
-                            <TableCell className="font-medium">{data.label}</TableCell>
-                            <TableCell>{data.value}</TableCell>
-                            <TableCell>{data.unit}</TableCell>
-                            <TableCell>{data.normalRange}</TableCell>
-                          </TableRow>
-                        ))}
+                        {Object.entries(report.report)
+                          .filter(([_, data]) => data.value !== null && data.value !== "")
+                          .map(([key, data]) => (
+                            <TableRow key={key}>
+                              <TableCell className="font-medium">{data.label}</TableCell>
+                              <TableCell>{data.value}</TableCell>
+                              <TableCell>{data.unit}</TableCell>
+                              <TableCell>{data.normalRange}</TableCell>
+                            </TableRow>
+                          ))}
                       </TableBody>
                     </Table>
                   </div>

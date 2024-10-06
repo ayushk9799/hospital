@@ -160,31 +160,31 @@ const PatientDetailsTemplate = ({ patientData, reportData }) => {
       <View style={styles.patientColumn}>
         <View style={styles.patientInfo}>
           <Text style={styles.patientLabel}>Name:</Text>
-          <Text style={styles.patientValue}>{patientData.patientName}</Text>
+          <Text style={styles.patientValue}>{patientData?.patientName}</Text>
         </View>
         <View style={styles.patientInfo}>
           <Text style={styles.patientLabel}>Age:</Text>
-          <Text style={styles.patientValue}>{patientData.age}</Text>
+          <Text style={styles.patientValue}>{patientData?.patient?.age}</Text>
         </View>
       </View>
       <View style={styles.patientColumn}>
         <View style={styles.patientInfo}>
           <Text style={styles.patientLabel}>Gender:</Text>
-          <Text style={styles.patientValue}>{patientData.patient.gender}</Text>
+          <Text style={styles.patientValue}>{patientData?.patient?.gender}</Text>
         </View>
         <View style={styles.patientInfo}>
           <Text style={styles.patientLabel}>Reg No:</Text>
-          <Text style={styles.patientValue}>{patientData.registrationNumber}</Text>
+          <Text style={styles.patientValue}>{patientData?.registrationNumber}</Text>
         </View>
       </View>
       <View style={styles.patientColumn}>
         <View style={styles.patientInfo}>
           <Text style={styles.patientLabel}>Contact:</Text>
-          <Text style={styles.patientValue}>{patientData.contactNumber}</Text>
+          <Text style={styles.patientValue}>{patientData?.contactNumber}</Text>
         </View>
         <View style={styles.patientInfo}>
           <Text style={styles.patientLabel}>Date:</Text>
-          <Text style={styles.patientValue}>{format(reportData.date, 'dd/MM/yyyy')}</Text>
+          <Text style={styles.patientValue}>{format(reportData?.date, 'dd/MM/yyyy')}</Text>
         </View>
       </View>
     </View>

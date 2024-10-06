@@ -82,40 +82,6 @@ export default function DischargeSummary() {
       dispatch(fetchItems());
     }
   }, [dispatch, itemsStatus]);
-  // const [formData, setFormData] = useState({
-  //   admissionDate: patient?.admissionDate || "",
-  //   dateDischarged: patient?.dateDischarged || "",
-  //   diagnosis: patient?.diagnosis || "",
-  //   clinicalSummary: patient?.clinicalSummary || "",
-  //   treatment: patient?.treatment || "",
-  //   conditionOnAdmission: patient?.conditionOnAdmission || "",
-  //   conditionOnDischarge: patient?.conditionOnDischarge || "",
-  //   investigations: patient?.investigations || [{ name: "", category: "" }],
-  //   medicineAdvice: patient?.medicineAdvice || [
-  //     { name: "", dosage: "", duration: "" },
-  //   ],
-  //   notes: patient?.notes || "",
-  //   comorbidities: patient?.comorbidities || [],
-  //   comorbidityHandling: "separate",
-  //   selectedTest: "",
-  //   selectedCategory: "",
-  //   vitals: {
-  //     admission: {
-  //       bloodPressure: "",
-  //       heartRate: "",
-  //       temperature: "",
-  //       oxygenSaturation: "",
-  //       respiratoryRate: "",
-  //     },
-  //     discharge: {
-  //       bloodPressure: "",
-  //       heartRate: "",
-  //       temperature: "",
-  //       oxygenSaturation: "",
-  //       respiratoryRate: "",
-  //     },
-  //   },
-  // });
 
   const [formData, setFormData] = useState({
     admissionDate: "",
@@ -128,7 +94,7 @@ export default function DischargeSummary() {
     investigations: [{ name: "", category: "" }],
     medicineAdvice: [{ name: "", dosage: "", duration: "" }],
     notes: "",
-    comorbidities: [],
+    comorbidities: [{name:""}],
     comorbidityHandling: "separate",
     selectedTest: "",
     selectedCategory: "",
@@ -170,7 +136,7 @@ export default function DischargeSummary() {
     if (patient) {
       setFormData((prevData) => ({
         ...prevData,
-        admissionDate: patient.admissionDate || "",
+        admissionDate: patient.bookingDate ? new Date(patient.bookingDate).toISOString().split('T')[0] : "",
         dateDischarged: patient.dateDischarged || "",
         diagnosis: patient.diagnosis || "",
         clinicalSummary: patient.clinicalSummary || "",
@@ -193,12 +159,12 @@ export default function DischargeSummary() {
             respiratoryRate: patient.vitals?.discharge?.respiratoryRate || "",
           },
         },
-        investigations: patient.investigations || [{ name: "", category: "" }],
+        investigations: patient.labReports || [{ name: "", category: "" }],
         medicineAdvice: patient.medicineAdvice || [
           { name: "", dosage: "", duration: "" },
         ],
         notes: patient.notes || "",
-        comorbidities: patient.comorbidities || [],
+        comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [{name:""}],
       }));
 
       setPatientInfo({
@@ -211,6 +177,8 @@ export default function DischargeSummary() {
       });
     }
   }, [patient]);
+
+  const [selectedReport, setSelectedReport] = useState(null);
 
   const handlePatientInfoChange = (e) => {
     const { name, value } = e.target;
@@ -273,14 +241,13 @@ export default function DischargeSummary() {
     }));
   };
 
-  const handleOpenLabReport = (investigation) => {
-    console.log(investigation);
-    setSelectedInvestigation(investigation);
+  const handleOpenLabReport = (report) => {
+    setSelectedReport(report);
     setIsLabReportOpen(true);
   };
 
   const handleCloseLabReport = () => {
-    setSelectedInvestigation(null);
+    setSelectedReport(null);
     setIsLabReportOpen(false);
   };
 
@@ -589,43 +556,29 @@ export default function DischargeSummary() {
               <div>
                 <Label htmlFor="investigations">Investigations</Label>
                 <div className="space-y-2 mt-2">
-                  {formData.investigations?.map((inv, index) => (
+                  {patient.labReports?.map((report, index) => (
                     <div key={index} className="flex items-center space-x-2">
-                      <SearchSuggestion
-                        suggestions={labCategories.flatMap((category) =>
-                          category.types.map((type) => ({
-                            name: type,
-                            category: category.name,
-                          }))
-                        )}
-                        placeholder="Select or type investigation name"
-                        value={inv.name}
-                        setValue={(suggestion) =>
-                          handleInvestigationChange(index, "name", suggestion)
-                        }
-                        onSuggestionSelect={(suggestion) =>
-                          handleInvestigationChange(index, "name", suggestion)
-                        }
-                      />
+                      <div className="w-1/2 flex items-center space-x-2">
+                        <Input
+                          value={report.name.toUpperCase()}
+                          readOnly
+                          className="flex-grow"
+                        />
+                        <span className="text-sm text-gray-500">
+                          {new Date(report.date).toLocaleDateString()}
+                        </span>
+                      </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleOpenLabReport(inv)}
-                        aria-label="Open Lab Report Form"
+                        onClick={() => handleOpenLabReport(report)}
+                        aria-label="Open Lab Report"
                       >
                         <ChevronRight className="h-5 w-5" />
                       </Button>
                     </div>
                   ))}
-                  <Button
-                    type="button"
-                    onClick={handleAddInvestigation}
-                    variant="outline"
-                    size="sm"
-                  >
-                    Add Investigation
-                  </Button>
                 </div>
               </div>
 
@@ -720,12 +673,12 @@ export default function DischargeSummary() {
       </Card>
 
       {/* Lab Report Modal */}
-      {isLabReportOpen && selectedInvestigation && (
+      {isLabReportOpen && selectedReport && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 p-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-semibold">
-                Create Lab Report for {selectedInvestigation.name}
+                Lab Report: {selectedReport.name}
               </h2>
               <Button
                 onClick={handleCloseLabReport}
@@ -735,20 +688,34 @@ export default function DischargeSummary() {
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <CreateLabReport
-              category={selectedInvestigation.category.toLowerCase()}
-              type={selectedInvestigation.name
-                .toLowerCase()
-                .replace(/[()]/g, "")
-                .replace(/\s+/g, "-")}
-              patientData={patient}
-              onClose={handleCloseLabReport}
-            />
+            <table className="w-full border-collapse">
+              <thead>
+                <tr className="bg-gray-100">
+                  <th className="border p-2 text-left">Test</th>
+                  <th className="border p-2 text-left">Result</th>
+                  <th className="border p-2 text-left">Unit</th>
+                  <th className="border p-2 text-left">Normal Range</th>
+                </tr>
+              </thead>
+              <tbody>
+                {Object.entries(selectedReport.report).map(([key, value]) => {
+                  // Skip rendering if value is null or an empty string
+                  if (value.value === null || value.value === "") return null;
+                  
+                  return (
+                    <tr key={key} className="border-b">
+                      <td className="border p-2 font-semibold">{value.label}</td>
+                      <td className="border p-2">{value.value}</td>
+                      <td className="border p-2">{value.unit}</td>
+                      <td className="border p-2">{value.normalRange}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
-
-      {/* PDF Preview Modal */}
       {isPdfPreviewOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg w-11/12 h-5/6 p-4">

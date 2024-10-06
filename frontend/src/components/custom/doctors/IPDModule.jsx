@@ -10,13 +10,48 @@ import { savePrescription } from "../../../redux/slices/patientSlice";
 import { useToast } from "../../../hooks/use-toast";
 import { fetchItems } from "../../../redux/slices/pharmacySlice";
 import { labCategories } from "../../../assets/Data";
+import { Badge } from "../../ui/badge";
+import { X } from "lucide-react";
+import MultiSelectInput from "../MultiSelectInput";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 
 // Add this at the top of the file, outside the component
 const allLabTests = labCategories.flatMap((category) =>
   category.types.map((type) => ({ name: type }))
 );
 
+const comorbiditiesList = [
+  "Hypertension",
+  "Diabetes mellitus",
+  "Obesity",
+  "COPD",
+  "Asthma",
+  "Coronary artery disease",
+  "Congestive heart failure",
+  "Chronic kidney disease",
+  "Osteoarthritis",
+  "Rheumatoid arthritis",
+  "Depression",
+  "Anxiety disorders",
+  "Hypothyroidism",
+  "Hyperlipidemia",
+  "GERD",
+  "Sleep apnea",
+  "Osteoporosis",
+  "Chronic liver disease",
+  "Anemia",
+  "Atrial fibrillation",
+].map((name) => ({ name }));
+
 export default function IPDModule({ patient }) {
+
+  console.log(patient)
   const [ipdAdmission, setIpdAdmission] = useState({
     bookingDate: patient.bookingDate,
     bookingNumber: patient.bookingNumber,
@@ -27,7 +62,10 @@ export default function IPDModule({ patient }) {
     diagnosis: patient.diagnosis ||"",
     notes: patient.notes || "",
     clinicalSummary: patient.clinicalSummary,
-
+    comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [],
+    comorbidityHandling: "separate",
+    conditionOnAdmission: patient.conditionOnAdmission || "",
+    conditionOnDischarge: patient.conditionOnDischarge || "",
     treatment: patient.treatment || "",
     medications: patient.medications.length > 0 ? patient.medications : [{name:"",frequency:"0-0-0",duration:""}],
     labTests: patient.labTests.length > 0 ? patient.labTests.map((test) => ({ name: test })) : [{name:""}],
@@ -70,6 +108,7 @@ export default function IPDModule({ patient }) {
       patientName: patient.patient.name,
       contactNumber: patient.patient.contactNumber,
       registrationNumber: patient.patient._id,
+      comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [],
       patient: patient.patient._id,
       diagnosis: patient.diagnosis || "",
       notes: patient.notes || "",
@@ -212,6 +251,9 @@ export default function IPDModule({ patient }) {
           treatment: ipdAdmission.treatment,
           medications: ipdAdmission.medications,
         },
+        conditionOnAdmission: ipdAdmission.conditionOnAdmission,
+        conditionOnDischarge: ipdAdmission.conditionOnDischarge,
+        comorbidities: ipdAdmission.comorbidities.map((comorbidity) => comorbidity.name),
         selectedPatientType: "IPD",
         labTests: ipdAdmission.labTests.map((test) => test.name),
       })).unwrap();
@@ -229,6 +271,20 @@ export default function IPDModule({ patient }) {
       });
     }
   };
+  
+
+  const handleComorbiditiesChange = (newComorbidities) => {
+    setIpdAdmission(prev => ({ ...prev, comorbidities: newComorbidities }));
+  };
+
+  const handleRemoveSelected = (name) => {
+    setIpdAdmission(prev => ({
+      ...prev,
+      comorbidities: prev.comorbidities.filter((val) => val.name !== name),
+    }));
+  };
+
+  
 
   return (
     <div className="space-y-4">
@@ -253,25 +309,6 @@ export default function IPDModule({ patient }) {
         </div>
       </div>
 
-      {/* Discharge Vitals */}
-      <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold">Discharge Vitals</h3>
-        <div className="grid grid-cols-4 gap-3">
-          {Object.entries(ipdAdmission.vitals.discharge).map(([key, value]) => (
-            <div key={key}>
-              <Label htmlFor={`discharge-${key}`} className="text-xs font-semibold">{key.charAt(0).toUpperCase() + key.slice(1)}</Label>
-              <Input
-                id={`discharge-${key}`}
-                name={key}
-                value={value}
-                onChange={(e) => handleVitalChange(e, 'discharge')}
-                className="h-8 text-sm font-medium"
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
       {/* Clinical Summary */}
       <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
         <h3 className="text-lg font-semibold">Clinical Summary</h3>
@@ -282,6 +319,37 @@ export default function IPDModule({ patient }) {
           placeholder="Enter clinical summary"
           className="min-h-[100px] text-sm font-medium"
         />
+      </div>
+
+      {/* Comorbidities */}
+      <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold">Comorbidities</h3>
+        <div className="mt-1 space-y-2">
+          <div className="flex flex-wrap gap-1">
+            {ipdAdmission.comorbidities?.map((val, index) => (
+              <Badge
+                key={index}
+                variant="primary"
+                className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
+              >
+                {val.name}
+                <X
+                  className="ml-1 h-3 w-3 cursor-pointer"
+                  onClick={() => handleRemoveSelected(val.name)}
+                />
+              </Badge>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <MultiSelectInput
+              suggestions={comorbiditiesList}
+              selectedValues={ipdAdmission.comorbidities}
+              setSelectedValues={handleComorbiditiesChange}
+              placeholder="Select comorbidities"
+            />
+           
+          </div>
+        </div>
       </div>
 
       {/* Diagnosis and Treatment */}
@@ -370,6 +438,25 @@ export default function IPDModule({ patient }) {
         <Button onClick={addLabTest} variant="outline" className="mt-2">
           <PlusCircle className="h-4 w-4 mr-2" /> Add Lab Test
         </Button>
+      </div>
+
+      {/* Discharge Vitals */}
+      <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold">Discharge Vitals</h3>
+        <div className="grid grid-cols-4 gap-3">
+          {Object.entries(ipdAdmission.vitals.discharge).map(([key, value]) => (
+            <div key={key}>
+              <Label htmlFor={`discharge-${key}`} className="text-xs font-semibold">{key.charAt(0).toUpperCase() + key.slice(1)}</Label>
+              <Input
+                id={`discharge-${key}`}
+                name={key}
+                value={value}
+                onChange={(e) => handleVitalChange(e, 'discharge')}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Notes */}

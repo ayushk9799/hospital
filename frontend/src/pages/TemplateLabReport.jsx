@@ -19,40 +19,69 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const [fields, setFields] = useState([]);
   const [reportDate, setReportDate] = useState(new Date());
   const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const [allReports, setAllReports] = useState([]);
+  const [generatedDate, setGeneratedDate] = useState(null);
 
   useEffect(() => {
-    if (template && template.fields) {
-      let matchingReport = null;
-      if (patientData && patientData.labReports) {
-        matchingReport = patientData.labReports.find(
-          (report) => report.name.toLowerCase() === template.name.toLowerCase()
-        );
-      }
+    if (template && template.fields && patientData && patientData.labReports) {
+      const relevantReports = patientData.labReports.filter(
+        (report) => report.name.toLowerCase() === template.name.toLowerCase()
+      );
+      setAllReports(relevantReports);
 
-      if (matchingReport) {
-        setFields(
-          Object.entries(template.fields).map(([name, field]) => ({
-            name,
-            label: field.label,
-            unit: field.unit,
-            normalRange: field.normalRange,
-            value: matchingReport.report[name] || "",
-          }))
-        );
+      if (relevantReports.length > 0) {
+        loadReportForDate(relevantReports, new Date());
       } else {
-        // Initialize fields with empty values when no matching report is found
-        setFields(
-          Object.entries(template.fields).map(([name, field]) => ({
-            name,
-            label: field.label,
-            unit: field.unit,
-            normalRange: field.normalRange,
-            value: "",
-          }))
-        );
+        setReportDate(new Date());
+        setGeneratedDate(null);
+        initializeEmptyFields();
       }
     }
   }, [template, patientData]);
+
+  const handleDateChange = (date) => {
+    loadReportForDate(allReports, date);
+  };
+
+  const loadReportForDate = (reports, date) => {
+    const selectedReport = reports.find(
+      (report) => new Date(report.date).toDateString() === date.toDateString()
+    );
+
+    if (selectedReport) {
+      setReportDate(new Date(selectedReport.date));
+      setGeneratedDate(new Date(selectedReport.date));
+      loadReportData(selectedReport);
+    } else {
+      setReportDate(date);
+      setGeneratedDate(null);
+      initializeEmptyFields();
+    }
+  };
+
+  const loadReportData = (report) => {
+    setFields(
+      Object.entries(template.fields).map(([name, field]) => ({
+        name,
+        label: field.label,
+        unit: field.unit,
+        normalRange: field.normalRange,
+        value: report.report[name]?.value || "",
+      }))
+    );
+  };
+
+  const initializeEmptyFields = () => {
+    setFields(
+      Object.entries(template.fields).map(([name, field]) => ({
+        name,
+        label: field.label,
+        unit: field.unit,
+        normalRange: field.normalRange,
+        value: "",
+      }))
+    );
+  };
 
   const handleInputChange = (e, fieldName) => {
     const { value } = e.target;
@@ -164,7 +193,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
                 <Calendar
                   mode="single"
                   selected={reportDate}
-                  onSelect={setReportDate}
+                  onSelect={handleDateChange}
                   initialFocus
                 />
               </PopoverContent>

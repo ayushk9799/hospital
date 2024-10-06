@@ -218,7 +218,7 @@ export default function IPDRegDialog({ open, onOpenChange }) {
               </Select>
               <MemoizedInput
                 id="admission.bookingDate"
-                label="Booking Date"
+                label="Admit Date"
                 type="date"
                 value={formData.admission.bookingDate}
                 onChange={handleInputChange}
@@ -349,7 +349,7 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                 placeholder="Address"
                 value={formData.address}
                 onChange={handleInputChange}
-                className="h-[80px]"
+                className="h-[19px] py-2 resize-none"
               />
               <MemoizedInput
                 id="admission.insuranceDetails.provider"
@@ -487,6 +487,26 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                     {errors["admission.diagnosis"]}
                   </p>
                 )}
+              </div>
+
+              <div>
+                <label htmlFor="admission.conditionOnAdmission" className="text-sm font-medium">
+                  Admission Condition
+                </label>
+                <Textarea
+                  id="admission.conditionOnAdmission"
+                  placeholder="Condition on Admission"
+                  value={formData.admission.conditionOnAdmission}
+                  onChange={(e) =>
+                    handleInputChange({
+                      target: {
+                        id: "admission.conditionOnAdmission",
+                        value: e.target.value,
+                      },
+                    })
+                  }
+                  className="h-[60px] mt-1"
+                />
               </div>
 
               {/* Admission Vitals */}

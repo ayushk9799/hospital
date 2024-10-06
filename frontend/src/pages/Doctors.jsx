@@ -9,7 +9,7 @@ export default function Doctors() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientType, setSelectedPatientType] = useState(null);
 
-  const handlePatientSelect = ({ ID, bookingNumber, patient, bookingDate, clinicalSummary, notes, type, vitals, diagnosis, treatment, medications, additionalInstructions, labTests }) => {
+  const handlePatientSelect = ({ ID, bookingNumber, patient, bookingDate, clinicalSummary, notes, type, vitals, diagnosis, treatment, medications, additionalInstructions, labTests,comorbidities,conditionOnAdmission,conditionOnDischarge }) => {
     console.log("Selected patient:", { ID, patient, type });
     setSelectedPatient({
       ID,
@@ -23,7 +23,10 @@ export default function Doctors() {
       treatment,
       medications,
       additionalInstructions,
-      labTests
+      labTests,
+      comorbidities,
+      conditionOnAdmission,
+      conditionOnDischarge
     });
     setSelectedPatientType(type);
   };

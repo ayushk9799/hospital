@@ -52,8 +52,6 @@ export const validateForm = (formData, setErrors) => {
   if (!formData.admission.assignedRoom) newErrors['admission.assignedRoom'] = "Room is required";
   if (!formData.admission.assignedBed) newErrors['admission.assignedBed'] = "Bed is required";
   if (!formData.admission.bookingDate) newErrors['admission.bookingDate'] = "Booking date is required";
-  if (!formData.admission.timeSlot.start) newErrors['admission.timeSlot.start'] = "Start time is required";
-  if (!formData.admission.timeSlot.end) newErrors['admission.timeSlot.end'] = "End time is required";
   if(!formData.admission.assignedDoctor) newErrors['admission.assignedDoctor'] = "Doctor is required";
   if(!formData.admission.department) newErrors['admission.department'] = "Department is required";
   

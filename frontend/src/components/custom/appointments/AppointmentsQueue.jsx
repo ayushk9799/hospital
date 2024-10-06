@@ -8,7 +8,7 @@ import { SearchIcon } from 'lucide-react'
 import { Input } from "../../ui/input";
 import { format } from "date-fns";
 
-const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, onSelect, vitals, diagnosis, treatment, medications, additionalInstructions, labTests, isSelected }) => {
+const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, onSelect, vitals, diagnosis, treatment, medications, additionalInstructions, labTests, isSelected ,comorbidities,conditionOnAdmission,conditionOnDischarge}) => {
   const truncateName = (name, maxLength = 15) => {
     return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
   };
@@ -18,7 +18,7 @@ const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalS
       className={`flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100 ${
         isSelected ? 'border-2 border-green-400 bg-green-50' : ''
       }`}
-      onClick={() => onSelect({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, vitals, diagnosis, treatment, medications, labTests })}
+      onClick={() => onSelect({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, vitals, diagnosis, treatment, medications, labTests,comorbidities,conditionOnAdmission,conditionOnDischarge })}
     >
       <div className="flex items-center space-x-4">
         <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
@@ -122,6 +122,9 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
                 medications={booking.medications}
                 labTests={booking.labTests}
                 onSelect={handlePatientSelect}
+                comorbidities={booking.comorbidities}
+                conditionOnAdmission={booking.conditionOnAdmission}
+                conditionOnDischarge={booking.conditionOnDischarge}
                 isSelected={selectedPatientId === booking._id}
               />
             ))}
