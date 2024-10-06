@@ -576,7 +576,7 @@ const CreateServiceBill = () => {
         <Button
           variant="outline"
           onClick={handleSaveToDraft}
-          disabled={isLoading}
+          disabled={true} // Changed to always be disabled
         >
           Save to Draft
         </Button>

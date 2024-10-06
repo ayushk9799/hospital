@@ -2,6 +2,7 @@ import express from 'express';
 import { verifySuperAdmin } from '../middleware/SuperAdminMiddleWare.js';
 import { Hospital } from '../models/Hospital.js'; // Make sure to import the Hospital model
 import mongoose from 'mongoose';
+import cookie from 'cookie';
 import { Template } from '../models/Template.js';
 
 const router = express.Router();
@@ -39,9 +40,18 @@ router.post('/create', verifySuperAdmin, async (req, res) => {
 });
 
 // New route to fetch hospital details
-router.get('/:hospitalId', async (req, res) => {
+router.get('/getHospital', async (req, res) => {
     try {
-        const hospital = await Hospital.findOne({ hospitalId: req.params.hospitalId });
+
+        
+        const cookies = cookie.parse(req.headers.cookie || '');
+        const hospitalId = cookies?.hospitalId;
+        if (!hospitalId) {
+          return res.status(400).json({ error: 'hospital not specified' });
+        }
+      
+
+        const hospital = await Hospital.findOne({ hospitalId});
         if (!hospital) {
             return res.status(404).json({ message: 'Hospital not found' });
         }

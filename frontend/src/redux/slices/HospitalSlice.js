@@ -5,8 +5,8 @@ import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 // Create an async thunk for fetching hospital data
 export const fetchHospitalInfo = createLoadingAsyncThunk(
   'hospital/fetchHospitalInfo',
-  async (hospitalId='india') => {
-    const response = await fetch(`${Backend_URL}/api/hospitals/${hospitalId}`);
+  async () => {
+    const response = await fetch(`${Backend_URL}/api/hospitals/getHospital`,{credentials:'include'});
     if (!response.ok) {
       throw new Error('Failed to fetch hospital data');
     }

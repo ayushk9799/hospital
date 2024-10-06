@@ -96,7 +96,7 @@ const PharmacyReports = () => {
 
   const twoMonthsFromNow = addMonths(
     new Date(),
-    Number(hospitalInfo.pharmacyExpiryThreshold)
+    Number(hospitalInfo?.pharmacyExpiryThreshold)
   );
   const itemsExpiringInTwoMonths = items.filter((item) => {
     const expiryDate = new Date(item.expiryDate);

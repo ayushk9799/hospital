@@ -170,21 +170,13 @@ export default function Reports() {
                             <Mail className="mr-2 h-4 w-4" />
                             <span>Email</span>
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => window.location.href = `tel:${staff.contactNumber}`}>
-                            <Phone className="mr-2 h-4 w-4" />
-                            <span>Call</span>
-                          </DropdownMenuItem>
+                          
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => navigate(`/schedule/${staff._id}`)}>
-                            <Clock className="mr-2 h-4 w-4" />
-                            <span>View Schedule</span>
-                          </DropdownMenuItem>
+                         
                           <DropdownMenuItem onClick={() => handleEditStaff(staff)}>
                             Edit Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/staff/${staff._id}`)}>
-                            View Profile
-                          </DropdownMenuItem>
+                         
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

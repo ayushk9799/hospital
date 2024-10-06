@@ -46,7 +46,7 @@ const navItems = [
   { name: "Rooms", icon: Bed, path: "/rooms" },
   // { name: "Appointments", icon: Calendar, path: "/appointments" },
   { name: "Services", icon: ClipboardList, path: "/services" },
-  { name: "Staffs", icon: UsersIcon, path: "/reports" },
+  { name: "Staffs", icon: UsersIcon, path: "/staffs" },
   // { name: "Analytics", icon: BarChart, path: "/analytics" },
   { name: "Settings", icon: Settings, path: "/settings" },
 ];

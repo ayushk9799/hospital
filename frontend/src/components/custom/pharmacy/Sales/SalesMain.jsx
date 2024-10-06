@@ -603,7 +603,7 @@ export default function SalesMain({
                 />
               </div>
               <div className="grid grid-cols-2 gap-4 items-center">
-                <Button variant="outline" size="sm" onClick={handleSaveDraft}>
+                <Button variant="outline" size="sm" onClick={handleSaveDraft} disabled={true}>
                   Save Draft
                 </Button>
                 <Button

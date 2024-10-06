@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import {
   Table,
   TableBody,
@@ -44,6 +44,7 @@ import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
 import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
 import { useSelector, useDispatch } from "react-redux";
 import { DateRangePicker } from "../assets/Data";
+import { fetchBills } from "../redux/slices/BillingSlice";
 import { setSelectedPatient } from "../redux/slices/patientSlice";
 import { startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
 import { format } from "date-fns";
@@ -64,9 +65,13 @@ export default function Patients() {
 
   // Use the useSelector hook to get the patients from the Redux store
   const patients = useSelector((state) => state.patients.patientlist);
-  const { bills } = useSelector((state) => state.bills);
+  const { bills ,billsStatus} = useSelector((state) => state.bills);
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
-
+useEffect(()=>{
+  if(billsStatus==="idle"){
+    dispatch(fetchBills())
+  }
+},[billsStatus])
   const filteredPatients = patients.filter((patient) => {
     const nameMatch = patient.patient?.name
       .toLowerCase()
@@ -225,11 +230,6 @@ export default function Patients() {
                     >
                       View Details
                     </DropdownMenuItem>
-                    {/* <DropdownMenuItem
-                      onClick={() => navigate(`/patients/${patient.id}/edit`)}
-                    >
-                      Edit Patient
-                    </DropdownMenuItem> */}
                     <DropdownMenuItem
                       onClick={() => handleExistingBills(patient)}
                     >
@@ -240,13 +240,6 @@ export default function Patients() {
                     >
                       Create New Bill
                     </DropdownMenuItem>
-                    {/* <DropdownMenuItem
-                      onClick={() =>
-                        navigate(`/appointments/schedule/${patient.id}`)
-                      }
-                    >
-                      Schedule Appointment
-                    </DropdownMenuItem> */}
                     {type === "IPD" && patient.status !== "Discharged" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
@@ -256,10 +249,6 @@ export default function Patients() {
                           : "Discharge Patient"}
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600">
-                      Delete Patient
-                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
