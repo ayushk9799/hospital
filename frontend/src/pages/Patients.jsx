@@ -145,18 +145,20 @@ console.log(patients)
           <TableRow>
             <TableHead>S.No</TableHead>
             <TableHead>Name</TableHead>
-            {type === "OPD" && <TableHead>Date</TableHead>}
-            {type === "OPD" && <TableHead>Time Slot</TableHead>}
-            <TableHead>Mobile</TableHead>
-            <TableHead>Gender</TableHead>
-            <TableHead>Doctor</TableHead>
             {type === "IPD" && (
               <>
                 <TableHead>Room</TableHead>
                 <TableHead>Admit Date</TableHead>
                 <TableHead>Discharge Date</TableHead>
+                <TableHead>Status</TableHead>
               </>
             )}
+            {type === "OPD" && <TableHead>Date</TableHead>}
+            {type === "OPD" && <TableHead>Time Slot</TableHead>}
+            <TableHead>Mobile</TableHead>
+            <TableHead>Gender</TableHead>
+            <TableHead>Doctor</TableHead>
+           
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -173,6 +175,16 @@ console.log(patients)
                   {patient.patient.name}
                 </Button>
               </TableCell>
+              {type === "IPD" && (
+                <>
+                  <TableCell>
+                    {patient.assignedRoom?.roomNumber || "--"}
+                  </TableCell>
+                  <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell>
+                  <TableCell>{patient.dateDischarged?format(new Date(patient.dateDischarged), 'dd-MM-yyyy'): "--"}</TableCell>
+                  <TableCell>{patient.status}</TableCell>
+                  </>
+              )}
               {type === "OPD" && <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell>} 
               {type === "OPD" && (
                 <TableCell>
@@ -182,15 +194,7 @@ console.log(patients)
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
               <TableCell>{patient.doctor?.name || "--"}</TableCell>
-              {type === "IPD" && (
-                <>
-                  <TableCell>
-                    {patient.assignedRoom?.roomNumber || "--"}
-                  </TableCell>
-                  <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell>
-                  <TableCell>{patient.dateOfDischarge || "--"}</TableCell>
-                </>
-              )}
+              
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -221,11 +225,11 @@ console.log(patients)
                     >
                       Schedule Appointment
                     </DropdownMenuItem>
-                    {type === "IPD" && patient.status !== "Discharged" && (
+                    {type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
                       >
-                        Discharge Patient
+                        {patient.status === "Discharged" ? "View Discharge Summary" : "Discharge Patient"}
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />

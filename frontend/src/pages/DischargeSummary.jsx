@@ -40,9 +40,19 @@ import {
 } from "../components/ui/select";
 import { labCategories, labReportFields } from "../assets/Data";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
-import CreateLabReport from "../pages/CreateLabReport"; // Importing CreateLabReport component
+import CreateLabReport from "./CreateLabReport";
 import { PDFViewer } from "@react-pdf/renderer";
 import DischargeSummaryPDF from "../components/custom/reports/DischargeSummaryPDF";
+import { dischargePatient } from "../redux/slices/dischargeSlice";
+import { useToast } from "../hooks/use-toast";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
 
 const comorbiditiesList = [
   "Hypertension",
@@ -66,6 +76,35 @@ const comorbiditiesList = [
   "Anemia",
   "Atrial fibrillation",
 ].map((name) => ({ name }));
+const allLabTests = labCategories.flatMap((category) =>
+  category.types.map((type) => ({ name: type }))
+);
+
+// Add this new component to display the lab report data as a table
+const LabReportTable = ({ report }) => {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Test</TableHead>
+          <TableHead>Result</TableHead>
+          <TableHead>Unit</TableHead>
+          <TableHead>Normal Range</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {Object.entries(report).map(([key, value]) => (
+          <TableRow key={key}>
+            <TableCell>{value.label}</TableCell>
+            <TableCell>{value.value}</TableCell>
+            <TableCell>{value.unit}</TableCell>
+            <TableCell>{value.normalRange}</TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
 
 export default function DischargeSummary() {
   const { patientId } = useParams();
@@ -75,6 +114,7 @@ export default function DischargeSummary() {
     state.patients.patientlist.find((p) => p._id === patientId)
   );
   console.log(patient);
+
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   useEffect(() => {
@@ -92,9 +132,9 @@ export default function DischargeSummary() {
     conditionOnAdmission: "",
     conditionOnDischarge: "",
     investigations: [{ name: "", category: "" }],
-    medicineAdvice: [{ name: "", dosage: "", duration: "" }],
+    medicineAdvice: [{ name: "", dosage: "0-0-0", duration: "" }],
     notes: "",
-    comorbidities: [{name:""}],
+    comorbidities: [{ name: "" }],
     comorbidityHandling: "separate",
     selectedTest: "",
     selectedCategory: "",
@@ -119,9 +159,6 @@ export default function DischargeSummary() {
 
   const [isLabReportOpen, setIsLabReportOpen] = useState(false); // State to manage modal visibility
   const [selectedInvestigation, setSelectedInvestigation] = useState(null); // State to track selected investigation
-  const [medicineAdvice, setMedicineAdvice] = useState([
-    { name: "", dosage: "0-0-0", duration: "" },
-  ]);
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
 
   const [patientInfo, setPatientInfo] = useState({
@@ -136,7 +173,9 @@ export default function DischargeSummary() {
     if (patient) {
       setFormData((prevData) => ({
         ...prevData,
-        admissionDate: patient.bookingDate ? new Date(patient.bookingDate).toISOString().split('T')[0] : "",
+        admissionDate: patient.bookingDate
+          ? new Date(patient.bookingDate).toISOString().split("T")[0]
+          : "",
         dateDischarged: patient.dateDischarged || "",
         diagnosis: patient.diagnosis || "",
         clinicalSummary: patient.clinicalSummary || "",
@@ -161,10 +200,12 @@ export default function DischargeSummary() {
         },
         investigations: patient.labReports || [{ name: "", category: "" }],
         medicineAdvice: patient.medicineAdvice || [
-          { name: "", dosage: "", duration: "" },
+          { name: "", dosage: "0-0-0", duration: "" },
         ],
         notes: patient.notes || "",
-        comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [{name:""}],
+        comorbidities: patient.comorbidities?.map((comorbidity) => ({
+          name: comorbidity,
+        })) || [{ name: "" }],
       }));
 
       setPatientInfo({
@@ -194,21 +235,26 @@ export default function DischargeSummary() {
     setFormData((prev) => ({ ...prev, [field]: date }));
   };
 
-  const handleInvestigationChange = (index, field, suggestion) => {
+  const handleInvestigationChange = (index, suggestion) => {
     const updatedInvestigations = [...formData.investigations];
-
     updatedInvestigations[index] = {
       name: suggestion.name,
       category: suggestion.category || "",
     };
-
     setFormData((prev) => ({ ...prev, investigations: updatedInvestigations }));
   };
 
   const handleAddInvestigation = () => {
     setFormData((prev) => ({
       ...prev,
-      investigations: [...prev.investigations, { name: "" }],
+      investigations: [...prev.investigations, { name: "", category: "" }],
+    }));
+  };
+
+  const handleRemoveInvestigation = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      investigations: prev.investigations.filter((_, i) => i !== index),
     }));
   };
 
@@ -227,10 +273,50 @@ export default function DischargeSummary() {
     setFormData((prev) => ({ ...prev, comorbidityHandling: value }));
   };
 
-  const handleSubmit = (e) => {
+  const { toast } = useToast();
+  const dischargeStatus = useSelector((state) => state.discharge.status);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Dispatch action to update patient discharge info
-    // navigate("/patients");
+    console.log(formData);
+    const dischargeData = {
+      patientId: patientId,
+      dateDischarged: formData.dateDischarged,
+      conditionOnAdmission: formData.conditionOnAdmission,
+      conditionOnDischarge: formData.conditionOnDischarge,
+      comorbidities: formData.comorbidities.map((c) => c.name),
+      clinicalSummary: formData.clinicalSummary,
+      diagnosis: formData.diagnosis,
+      treatment: formData.treatment,
+      medicineAdvice: formData.medicineAdvice.map((m) => ({
+        name: m.name,
+        duration: m.duration,
+        frequency: m.dosage,
+      })),
+      labReports: formData.investigations.map((i) => ({
+        name: i.name,
+        report: i.report,
+        date: i.date,
+      })),
+      vitals: formData.vitals,
+      notes: formData.notes,
+      status: "Discharged",
+    };
+
+    try {
+      await dispatch(dischargePatient(dischargeData)).unwrap();
+      toast({
+        title: "Success",
+        description: "Patient discharged successfully",
+      });
+      navigate("/patients");
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to discharge patient. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleTestSelect = (suggestion) => {
@@ -241,20 +327,47 @@ export default function DischargeSummary() {
     }));
   };
 
-  const handleOpenLabReport = (report) => {
-    setSelectedReport(report);
+  const handleOpenLabReport = (investigation) => {
+    setSelectedInvestigation(investigation);
     setIsLabReportOpen(true);
   };
 
   const handleCloseLabReport = () => {
-    setSelectedReport(null);
+    setSelectedInvestigation(null);
     setIsLabReportOpen(false);
   };
 
+  const handleSaveLabReport = (reportData) => {
+    const updatedInvestigations = formData.investigations.map((inv) =>
+      inv.name === selectedInvestigation.name
+        ? {
+            ...inv,
+            report: reportData.report,
+            date: reportData.date,
+          }
+        : inv
+    );
+
+    // If the investigation doesn't exist, add it to the list
+    if (!updatedInvestigations.some((inv) => inv.name === reportData.name)) {
+      updatedInvestigations.push({
+        name: reportData.name,
+        report: reportData.report,
+        date: reportData.date,
+      });
+    }
+
+    setFormData((prev) => ({ ...prev, investigations: updatedInvestigations }));
+    handleCloseLabReport();
+  };
+
   const handleMedicineAdviceChange = (index, field, value) => {
-    const newMedicineAdvice = [...medicineAdvice];
-    newMedicineAdvice[index] = { ...newMedicineAdvice[index], [field]: value };
-    setMedicineAdvice(newMedicineAdvice);
+    setFormData((prev) => ({
+      ...prev,
+      medicineAdvice: prev.medicineAdvice.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      ),
+    }));
   };
 
   const handleMedicineAdviceSuggestionSelect = (index, suggestion) => {
@@ -262,15 +375,20 @@ export default function DischargeSummary() {
   };
 
   const addMedicineAdvice = () => {
-    setMedicineAdvice([
-      ...medicineAdvice,
-      { name: "", dosage: "0-0-0", duration: "" },
-    ]);
+    setFormData((prev) => ({
+      ...prev,
+      medicineAdvice: [
+        ...prev.medicineAdvice,
+        { name: "", dosage: "0-0-0", duration: "" },
+      ],
+    }));
   };
 
   const removeMedicineAdvice = (index) => {
-    const newMedicineAdvice = medicineAdvice.filter((_, i) => i !== index);
-    setMedicineAdvice(newMedicineAdvice);
+    setFormData((prev) => ({
+      ...prev,
+      medicineAdvice: prev.medicineAdvice.filter((_, i) => i !== index),
+    }));
   };
 
   const handleVitalsChange = (type, field, value) => {
@@ -292,6 +410,19 @@ export default function DischargeSummary() {
 
   const handleClosePdfPreview = () => {
     setIsPdfPreviewOpen(false);
+  };
+
+  const getCategoryAndTypeForTest = (testName) => {
+    for (const category of labCategories) {
+      if (category.types.includes(testName)) {
+        const type = testName.toLowerCase().replace(/\s+/g, "-");
+        return { category: category.name.toLowerCase(), type };
+      }
+    }
+    return {
+      category: "other",
+      type: testName.toLowerCase().replace(/\s+/g, "-"),
+    };
   };
 
   const renderVitalsInputs = (type) => (
@@ -556,29 +687,53 @@ export default function DischargeSummary() {
               <div>
                 <Label htmlFor="investigations">Investigations</Label>
                 <div className="space-y-2 mt-2">
-                  {patient.labReports?.map((report, index) => (
+                  {formData.investigations.map((investigation, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <div className="w-1/2 flex items-center space-x-2">
-                        <Input
-                          value={report.name.toUpperCase()}
-                          readOnly
-                          className="flex-grow"
+                        <SearchSuggestion
+                          suggestions={allLabTests}
+                          placeholder="Select investigation"
+                          value={investigation.name}
+                          setValue={(value) =>
+                            handleInvestigationChange(index, { name: value })
+                          }
+                          onSuggestionSelect={(suggestion) =>
+                            handleInvestigationChange(index, suggestion)
+                          }
                         />
-                        <span className="text-sm text-gray-500">
-                          {new Date(report.date).toLocaleDateString()}
-                        </span>
+                        {investigation.date && (
+                          <span className="text-sm text-gray-500">
+                            {new Date(investigation.date).toLocaleDateString()}
+                          </span>
+                        )}
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
                         size="icon"
-                        onClick={() => handleOpenLabReport(report)}
+                        onClick={() => handleOpenLabReport(investigation)}
                         aria-label="Open Lab Report"
                       >
                         <ChevronRight className="h-5 w-5" />
                       </Button>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => handleRemoveInvestigation(index)}
+                        disabled={formData.investigations.length === 1}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
                   ))}
+                  <Button
+                    onClick={handleAddInvestigation}
+                    variant="outline"
+                    className="mt-2 font-semibold"
+                  >
+                    <PlusCircle className="h-4 w-4 mr-2" /> Add Investigation
+                  </Button>
                 </div>
               </div>
 
@@ -599,12 +754,12 @@ export default function DischargeSummary() {
               <div>
                 <Label htmlFor="medicineAdvice">Medicine/Advice</Label>
                 <div className="space-y-2 mt-2">
-                  {medicineAdvice.map((item, index) => (
+                  {formData.medicineAdvice.map((item, index) => (
                     <div key={index} className="grid grid-cols-4 gap-2 mb-2">
                       <SearchSuggestion
                         suggestions={medicines.map((item) => ({
                           name: item.name,
-                        }))} // Add your medicine suggestions here
+                        }))}
                         placeholder="Select medicine/advice"
                         value={item.name}
                         setValue={(value) =>
@@ -645,7 +800,7 @@ export default function DischargeSummary() {
                         variant="destructive"
                         size="icon"
                         onClick={() => removeMedicineAdvice(index)}
-                        disabled={medicineAdvice.length === 1}
+                        disabled={formData.medicineAdvice.length === 1}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -665,7 +820,11 @@ export default function DischargeSummary() {
                 <Button type="button" onClick={handlePreviewPDF}>
                   Preview Discharge Summary
                 </Button>
-                <Button type="submit">Submit Discharge Summary</Button>
+                <Button type="submit" disabled={dischargeStatus === "loading"}>
+                  {dischargeStatus === "loading"
+                    ? "Discharging..."
+                    : "Submit Discharge Summary"}
+                </Button>
               </div>
             </div>
           </form>
@@ -673,12 +832,12 @@ export default function DischargeSummary() {
       </Card>
 
       {/* Lab Report Modal */}
-      {isLabReportOpen && selectedReport && (
+      {isLabReportOpen && selectedInvestigation && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
           <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 p-4 overflow-y-auto max-h-[90vh]">
             <div className="flex justify-between items-center mb-3">
               <h2 className="text-lg font-semibold">
-                Lab Report: {selectedReport.name}
+                Lab Report: {selectedInvestigation.name}
               </h2>
               <Button
                 onClick={handleCloseLabReport}
@@ -688,31 +847,30 @@ export default function DischargeSummary() {
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <table className="w-full border-collapse">
-              <thead>
-                <tr className="bg-gray-100">
-                  <th className="border p-2 text-left">Test</th>
-                  <th className="border p-2 text-left">Result</th>
-                  <th className="border p-2 text-left">Unit</th>
-                  <th className="border p-2 text-left">Normal Range</th>
-                </tr>
-              </thead>
-              <tbody>
-                {Object.entries(selectedReport.report).map(([key, value]) => {
-                  // Skip rendering if value is null or an empty string
-                  if (value.value === null || value.value === "") return null;
-                  
-                  return (
-                    <tr key={key} className="border-b">
-                      <td className="border p-2 font-semibold">{value.label}</td>
-                      <td className="border p-2">{value.value}</td>
-                      <td className="border p-2">{value.unit}</td>
-                      <td className="border p-2">{value.normalRange}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            {selectedInvestigation.report ? (
+              <div>
+                <p className="mb-2">Date: {selectedInvestigation.date}</p>
+                <LabReportTable report={selectedInvestigation.report} />
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={handleCloseLabReport}>Close</Button>
+                </div>
+              </div>
+            ) : (
+              (() => {
+                const { category, type } = getCategoryAndTypeForTest(
+                  selectedInvestigation.name
+                );
+                return (
+                  <CreateLabReport
+                    category={category}
+                    type={type.replace(/[()]/g, "")}
+                    patientData={patient}
+                    onClose={handleCloseLabReport}
+                    onSave={handleSaveLabReport}
+                  />
+                );
+              })()
+            )}
           </div>
         </div>
       )}

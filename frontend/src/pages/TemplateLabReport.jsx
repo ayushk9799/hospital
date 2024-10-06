@@ -102,7 +102,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
           value: field.value,
           label: field.label,
           unit: field.unit,
-          normalRange: field.normalRange
+          normalRange: field.normalRange,
         };
         return acc;
       }, {}),
@@ -169,7 +169,10 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
           <Button onClick={() => setShowPDFPreview(false)}>Back to Form</Button>
         </div>
         <div className="flex-grow">
-          <PDFViewer className="w-full h-full min-h-[calc(100vh-100px)]" showToolbar={false}>
+          <PDFViewer
+            className="w-full h-full min-h-[calc(100vh-100px)]"
+            showToolbar={false}
+          >
             {generatePDF()}
           </PDFViewer>
         </div>
@@ -201,18 +204,20 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fields.map((field) => (
-              <div 
-                key={field.name} 
+              <div
+                key={field.name}
                 className={`flex flex-col ${
-                  field.label.toLowerCase() === "findings" || field.label.toLowerCase() === "impressions" 
-                    ? "md:col-span-2" 
+                  field.label.toLowerCase() === "findings" ||
+                  field.label.toLowerCase() === "impressions"
+                    ? "md:col-span-2"
                     : ""
                 }`}
               >
                 <Label htmlFor={field.name} className="mb-1">
                   {field.label}
                 </Label>
-                {field.label.toLowerCase() === "findings" || field.label.toLowerCase() === "impressions" ? (
+                {field.label.toLowerCase() === "findings" ||
+                field.label.toLowerCase() === "impressions" ? (
                   <Textarea
                     id={field.name}
                     name={field.name}

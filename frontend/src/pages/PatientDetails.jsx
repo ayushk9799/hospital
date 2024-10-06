@@ -314,7 +314,7 @@ export default function PatientDetails() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {Object.entries(report.report)
+                        {Object.entries(report?.report||{})
                           .filter(([_, data]) => data.value !== null && data.value !== "")
                           .map(([key, data]) => (
                             <TableRow key={key}>

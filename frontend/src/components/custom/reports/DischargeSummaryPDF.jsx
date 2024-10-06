@@ -34,13 +34,13 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   sectionTitle: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: 'bold',
     color: '#34495e',
     width: "20%",
   },
   sectionContent: {
-    fontSize: 9,
+    fontSize: 10,
     color: '#2c3e50',
     width: '80%',
     marginLeft: 5,
@@ -156,63 +156,76 @@ const InvestigationDisplay = ({ investigation }) => {
   const reportEntries = Object.entries(report).filter(([_, testData]) => testData.value);
   const halfLength = Math.ceil(reportEntries.length / 2);
 
+  const hasFindings = report.findings && Object.values(report.findings).some(value => value);
+
   return (
-    <View style={[styles.investigationContainer]}>
-      <View>
+    <View style={[styles.investigationContainer,hasFindings ? {flexDirection:'row'}:{}]}>
+      <View style={{width:"150px"}}>
         <Text style={styles.investigationTitle}>
           {name.toUpperCase()} {' '}
           ({format(new Date(date), 'dd-MM-yyyy')})
         </Text>
-        
       </View>
       
-      <View style={{ flexDirection: 'row' }}>
-        <View style={{ width: '50%' }}>
-          {reportEntries.slice(0, halfLength).map(([testName, testData]) => (
-            testData.value && (
-              <View key={testName} style={[styles.investigationRow, { marginLeft: 5 }]}>
+      {hasFindings ? (
+        <View style={{ flexDirection: 'row' }}>
+          
+          <View >
+            {report.findings  && (
+              <View style={[styles.investigationRow, { marginLeft: 5,fontSize:10 }]}>
                 <View style={[styles.investigationCell1]}>
-                  <Text>
-                    {formatLabel(testData.label) || testName}
-                  </Text>
-                  </View>
-                    <View style={[styles.investigationCell2]}>
-                      <Text>{testData.value}</Text>
-                    </View>
-                    {testData.unit && (
-                      <View style={[styles.investigationCell2]}>
-                        <Text>{testData.unit}</Text>
-                      </View>
-                    )}
-                  </View>)))}
-                  
-                  </View> 
-                
-             
-            
-        
-        <View style={{ width: '50%' }}>
-          {reportEntries.slice(halfLength).map(([testName, testData]) => (
-            testData.value && (
-              <View key={testName} style={[styles.investigationRow, { marginLeft: 5 }]}>
-               <View style={[styles.investigationCell1]}>
-                  <Text>
-                    {formatLabel(testData.label) || testName}
-                  </Text>
-                  </View>
-                    <View style={[styles.investigationCell2]}>
-                      <Text>{testData.value}</Text>
-                    </View>
-                    {testData.unit && (
-                      <View style={[styles.investigationCell2]}>
-                        <Text>{testData.unit}</Text>
-                      </View>
-                    )}
+                  <Text>{report.findings.value}</Text>
+                </View>
               </View>
-            )
-          ))}
+            )}
+          </View>
         </View>
-      </View>
+      ) : (
+        <View style={{ flexDirection: 'row' }}>
+          <View style={{ width: '50%' }}>
+            {reportEntries.slice(0, halfLength).map(([testName, testData]) => (
+              testData.value && (
+                <View key={testName} style={[styles.investigationRow, { marginLeft: 5 }]}>
+                  <View style={[styles.investigationCell1]}>
+                    <Text>
+                      {formatLabel(testData.label) || testName}
+                    </Text>
+                  </View>
+                  <View style={[styles.investigationCell2]}>
+                    <Text>{testData.value}</Text>
+                  </View>
+                  {testData.unit && (
+                    <View style={[styles.investigationCell2]}>
+                      <Text>{testData.unit}</Text>
+                    </View>
+                  )}
+                </View>
+              )
+            ))}
+          </View>
+          <View style={{ width: '50%' }}>
+            {reportEntries.slice(halfLength).map(([testName, testData]) => (
+              testData.value && (
+                <View key={testName} style={[styles.investigationRow, { marginLeft: 5 }]}>
+                  <View style={[styles.investigationCell1]}>
+                    <Text>
+                      {formatLabel(testData.label) || testName}
+                    </Text>
+                  </View>
+                  <View style={[styles.investigationCell2]}>
+                    <Text>{testData.value}</Text>
+                  </View>
+                  {testData.unit && (
+                    <View style={[styles.investigationCell2]}>
+                      <Text>{testData.unit}</Text>
+                    </View>
+                  )}
+                </View>
+              )
+            ))}
+          </View>
+        </View>
+      )}
     </View>
   );
 };
@@ -224,7 +237,7 @@ const DischargeSummaryPDF = ({ formData, patient }) => {
   const hasMedicineAdvice = formData.medicineAdvice && formData.medicineAdvice.some(m => m.name || m.dosage || m.duration);
   const hasAdmissionVitals = formData.vitals && hasValidData(formData.vitals.admission);
   const hasDischargeVitals = formData.vitals && hasValidData(formData.vitals.discharge);
-
+console.log(hasMedicineAdvice)
   const comorbiditiesString = formData.comorbidities?.filter(c => c.name)
     .map(c => c.name)
     .join(', ');
@@ -377,6 +390,11 @@ const DischargeSummaryPDF = ({ formData, patient }) => {
         )}
 
         <ConditionalSection title="Additional Notes" content={formData.notes} />
+        <View style={{ width: "100%", textAlign: "right", marginTop: 10 }}>
+          <Text style={{ fontSize: 11, fontWeight: "hairline" }}>
+            Doctor's Signature
+          </Text>
+        </View>
       </Page>
     </Document>
   );

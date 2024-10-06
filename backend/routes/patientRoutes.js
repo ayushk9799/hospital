@@ -195,6 +195,7 @@ router.get("/details", verifyToken, async (req, res) => {
       clinicalSummary:admission.clinicalSummary,
       comorbidities:admission.comorbidities,
       diagnosis: admission.diagnosis,
+      status:admission.status,
       labReports:admission.labReports,
       treatment: admission.treatment,
       conditionOnAdmission:admission.conditionOnAdmission,
@@ -642,5 +643,80 @@ console.log(existingReportIndex);
     res.status(500).json({ message: 'Error adding/updating lab report', error: error.message });
   }
 });
+
+// Add this route after the existing routes
+router.post("/discharge/:id", verifyToken, checkPermission("write:patients"), async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const {
+      dateDischarged,
+      conditionOnAdmission,
+      conditionOnDischarge,
+      comorbidities,
+      clinicalSummary,
+      diagnosis,
+      treatment,
+      medicineAdvice,
+      labReports,
+      vitals,
+      notes,
+    } = req.body;
+
+    const admission = await IPDAdmission.findById(id).session(session);
+    if (!admission) {
+      throw new Error("Admission not found");
+    }
+
+    // Update admission details
+    admission.dateDischarged = dateDischarged;
+    admission.conditionOnAdmission = conditionOnAdmission;
+    admission.conditionOnDischarge = conditionOnDischarge;
+    admission.comorbidities = comorbidities;
+    admission.clinicalSummary = clinicalSummary;
+    admission.diagnosis = diagnosis;
+    admission.treatment = treatment;
+    admission.medicineAdvice = medicineAdvice;
+    admission.labReports = labReports;
+    admission.vitals = vitals;
+    admission.notes = notes;
+    admission.status = "Discharged";
+
+    await admission.save({ session });
+
+    // Update room and bed status
+    if (admission.assignedRoom && admission.assignedBed) {
+      const room = await Room.findById(admission.assignedRoom).session(session);
+      if (room) {
+        const bedIndex = room.beds.findIndex(bed => bed._id.toString() === admission.assignedBed.toString());
+        if (bedIndex !== -1) {
+          room.beds[bedIndex].status = 'Available';
+          room.beds[bedIndex].currentPatient = null;
+          room.currentOccupancy -= 1;
+          await room.save({ session });
+        }
+      }
+    }
+
+    // Update patient status
+    const patient = await Patient.findById(admission.patient).session(session);
+    if (patient) {
+      patient.patientType = "OPD";
+      await patient.save({ session });
+    }
+
+    await session.commitTransaction();
+    res.json({ message: "Patient discharged successfully", admission });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
+// ... rest of the file
 
 export default router;

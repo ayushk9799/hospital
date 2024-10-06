@@ -18,7 +18,9 @@ import { Backend_URL } from "../assets/Data";
 import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 
-const CreateLabReport = ({ category, type, patientData, onClose, searchWhere }) => {
+const CreateLabReport = ({ category, type, patientData, onClose, onSave, searchWhere }) => {
+  console.log(category);
+  console.log(type);
   const navigate = useNavigate();
   const [fields, setFields] = useState([]);
   const [newField, setNewField] = useState({
@@ -136,6 +138,10 @@ const CreateLabReport = ({ category, type, patientData, onClose, searchWhere }) 
       const result = await response.json();
       console.log("Lab Report added successfully:", result);
       alert("Lab Report added successfully");
+      
+      // Call the onSave function with the new lab report data
+      onSave(labReportData);
+      
       onClose(); // Close the lab report form
     } catch (error) {
       console.error("Error adding lab report:", error);

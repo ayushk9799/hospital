@@ -30,6 +30,7 @@ const ipdAdmissionSchema = new mongoose.Schema({
   dateDischarged: { type: Date },
   conditionOnAdmission:{type:String},
   conditionOnDischarge:{type:String},
+  medicineAdvice:[{name:String,dosage:String,duration:String}],
   comorbidities:[{type:String}],
   clinicalSummary: { type: String },
   diagnosis: { type: String, },
