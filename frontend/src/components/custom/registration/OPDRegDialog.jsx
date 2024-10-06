@@ -126,7 +126,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
     if (!formData.contactNumber)
       newErrors.contactNumber = "Contact number is required";
     setErrors(newErrors);
-    console.log(newErrors);
+
     return Object.keys(newErrors).length === 0;
   };
 

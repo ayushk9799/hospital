@@ -54,7 +54,7 @@ const Lab = () => {
   const { labTestsTemplate, status, error } = useSelector(
     (state) => state.templates
   );
-  console.log(labTestsTemplate);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [searchType, setSearchType] = useState("");
   const [searchQuery, setSearchQuery] = useState({ bookingDate: "" });
@@ -149,7 +149,7 @@ const Lab = () => {
         throw new Error("Failed to fetch patient data");
       }
       const data = await response.json();
-      console.log("Patient search results:", data);
+
       if (data.length > 0) {
         setPatients(data);
         if (data.length === 1) {

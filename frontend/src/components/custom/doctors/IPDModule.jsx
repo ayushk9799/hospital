@@ -50,8 +50,6 @@ const comorbiditiesList = [
 ].map((name) => ({ name }));
 
 export default function IPDModule({ patient }) {
-
-  console.log(patient)
   const [ipdAdmission, setIpdAdmission] = useState({
     bookingDate: patient.bookingDate,
     bookingNumber: patient.bookingNumber,
@@ -59,16 +57,24 @@ export default function IPDModule({ patient }) {
     contactNumber: patient.patient.contactNumber,
     registrationNumber: patient.patient._id,
     patient: patient.patient._id,
-    diagnosis: patient.diagnosis ||"",
+    diagnosis: patient.diagnosis || "",
     notes: patient.notes || "",
     clinicalSummary: patient.clinicalSummary,
-    comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [],
+    comorbidities:
+      patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) ||
+      [],
     comorbidityHandling: "separate",
     conditionOnAdmission: patient.conditionOnAdmission || "",
     conditionOnDischarge: patient.conditionOnDischarge || "",
     treatment: patient.treatment || "",
-    medications: patient.medications.length > 0 ? patient.medications : [{name:"",frequency:"0-0-0",duration:""}],
-    labTests: patient.labTests.length > 0 ? patient.labTests.map((test) => ({ name: test })) : [{name:""}],
+    medications:
+      patient.medications.length > 0
+        ? patient.medications
+        : [{ name: "", frequency: "0-0-0", duration: "" }],
+    labTests:
+      patient.labTests.length > 0
+        ? patient.labTests.map((test) => ({ name: test }))
+        : [{ name: "" }],
     vitals: {
       admission: {
         bloodPressure: patient.vitals.admission.bloodPressure || "",
@@ -108,14 +114,22 @@ export default function IPDModule({ patient }) {
       patientName: patient.patient.name,
       contactNumber: patient.patient.contactNumber,
       registrationNumber: patient.patient._id,
-      comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [],
+      comorbidities:
+        patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) ||
+        [],
       patient: patient.patient._id,
       diagnosis: patient.diagnosis || "",
       notes: patient.notes || "",
       clinicalSummary: patient.clinicalSummary,
       treatment: patient.treatment || "",
-      medications: patient.medications.length > 0 ? patient.medications : [{name:"",frequency:"0-0-0",duration:""}],
-      labTests: patient.labTests.length > 0 ? patient.labTests.map((test) => ({ name: test })) : [{name:""}],
+      medications:
+        patient.medications.length > 0
+          ? patient.medications
+          : [{ name: "", frequency: "0-0-0", duration: "" }],
+      labTests:
+        patient.labTests.length > 0
+          ? patient.labTests.map((test) => ({ name: test }))
+          : [{ name: "" }],
       vitals: {
         admission: {
           bloodPressure: patient.vitals.admission.bloodPressure || "",
@@ -165,25 +179,25 @@ export default function IPDModule({ patient }) {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setIpdAdmission(prev => ({ ...prev, [name]: value }));
+    setIpdAdmission((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleVitalChange = (e, type) => {
     const { name, value } = e.target;
-    setIpdAdmission(prev => ({
+    setIpdAdmission((prev) => ({
       ...prev,
       vitals: {
         ...prev.vitals,
         [type]: {
           ...prev.vitals[type],
-          [name]: value
-        }
-      }
+          [name]: value,
+        },
+      },
     }));
   };
 
   const handleMedicationChange = (index, field, value) => {
-    setIpdAdmission(prev => {
+    setIpdAdmission((prev) => {
       const newMedications = [...prev.medications];
       newMedications[index] = { ...newMedications[index], [field]: value };
       return { ...prev, medications: newMedications };
@@ -195,21 +209,24 @@ export default function IPDModule({ patient }) {
   };
 
   const addMedication = () => {
-    setIpdAdmission(prev => ({
+    setIpdAdmission((prev) => ({
       ...prev,
-      medications: [...prev.medications, { name: '', frequency: '', duration: '' }]
+      medications: [
+        ...prev.medications,
+        { name: "", frequency: "", duration: "" },
+      ],
     }));
   };
 
   const removeMedication = (index) => {
-    setIpdAdmission(prev => ({
+    setIpdAdmission((prev) => ({
       ...prev,
-      medications: prev.medications.filter((_, i) => i !== index)
+      medications: prev.medications.filter((_, i) => i !== index),
     }));
   };
 
   const handleLabTestChange = (index, suggestion) => {
-    setIpdAdmission(prev => {
+    setIpdAdmission((prev) => {
       const newLabTests = [...prev.labTests];
       newLabTests[index] = suggestion;
       return { ...prev, labTests: newLabTests };
@@ -217,16 +234,16 @@ export default function IPDModule({ patient }) {
   };
 
   const addLabTest = () => {
-    setIpdAdmission(prev => ({
+    setIpdAdmission((prev) => ({
       ...prev,
-      labTests: [...prev.labTests, { name: "" }]
+      labTests: [...prev.labTests, { name: "" }],
     }));
   };
 
   const removeLabTest = (index) => {
-    setIpdAdmission(prev => ({
+    setIpdAdmission((prev) => ({
       ...prev,
-      labTests: prev.labTests.filter((_, i) => i !== index)
+      labTests: prev.labTests.filter((_, i) => i !== index),
     }));
   };
 
@@ -241,22 +258,26 @@ export default function IPDModule({ patient }) {
     }
 
     try {
-      await dispatch(savePrescription({
-        selectedVisitId: patient.ID,
-        vitals: ipdAdmission.vitals,
-        clinicalSummary: ipdAdmission.clinicalSummary,
-        notes: ipdAdmission.notes,
-        prescription: {
-          diagnosis: ipdAdmission.diagnosis,
-          treatment: ipdAdmission.treatment,
-          medications: ipdAdmission.medications,
-        },
-        conditionOnAdmission: ipdAdmission.conditionOnAdmission,
-        conditionOnDischarge: ipdAdmission.conditionOnDischarge,
-        comorbidities: ipdAdmission.comorbidities.map((comorbidity) => comorbidity.name),
-        selectedPatientType: "IPD",
-        labTests: ipdAdmission.labTests.map((test) => test.name),
-      })).unwrap();
+      await dispatch(
+        savePrescription({
+          selectedVisitId: patient.ID,
+          vitals: ipdAdmission.vitals,
+          clinicalSummary: ipdAdmission.clinicalSummary,
+          notes: ipdAdmission.notes,
+          prescription: {
+            diagnosis: ipdAdmission.diagnosis,
+            treatment: ipdAdmission.treatment,
+            medications: ipdAdmission.medications,
+          },
+          conditionOnAdmission: ipdAdmission.conditionOnAdmission,
+          conditionOnDischarge: ipdAdmission.conditionOnDischarge,
+          comorbidities: ipdAdmission.comorbidities.map(
+            (comorbidity) => comorbidity.name
+          ),
+          selectedPatientType: "IPD",
+          labTests: ipdAdmission.labTests.map((test) => test.name),
+        })
+      ).unwrap();
 
       toast({
         title: "Success",
@@ -271,37 +292,42 @@ export default function IPDModule({ patient }) {
       });
     }
   };
-  
 
   const handleComorbiditiesChange = (newComorbidities) => {
-    setIpdAdmission(prev => ({ ...prev, comorbidities: newComorbidities }));
+    setIpdAdmission((prev) => ({ ...prev, comorbidities: newComorbidities }));
   };
 
   const handleRemoveSelected = (name) => {
-    setIpdAdmission(prev => ({
+    setIpdAdmission((prev) => ({
       ...prev,
       comorbidities: prev.comorbidities.filter((val) => val.name !== name),
     }));
   };
 
-  
-
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold mb-2">IPD Admission for: {ipdAdmission.patientName} (P{ipdAdmission.registrationNumber.slice(-4)})</h2>
-      
+      <h2 className="text-xl font-bold mb-2">
+        IPD Admission for: {ipdAdmission.patientName} (P
+        {ipdAdmission.registrationNumber.slice(-4)})
+      </h2>
+
       {/* Admission Vitals */}
       <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
         <h3 className="text-lg font-semibold">Admission Vitals</h3>
         <div className="grid grid-cols-4 gap-3">
           {Object.entries(ipdAdmission.vitals.admission).map(([key, value]) => (
             <div key={key}>
-              <Label htmlFor={`admission-${key}`} className="text-xs font-semibold">{key.charAt(0).toUpperCase() + key.slice(1)}</Label>
+              <Label
+                htmlFor={`admission-${key}`}
+                className="text-xs font-semibold"
+              >
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </Label>
               <Input
                 id={`admission-${key}`}
                 name={key}
                 value={value}
-                onChange={(e) => handleVitalChange(e, 'admission')}
+                onChange={(e) => handleVitalChange(e, "admission")}
                 className="h-8 text-sm font-medium"
               />
             </div>
@@ -347,7 +373,6 @@ export default function IPDModule({ patient }) {
               setSelectedValues={handleComorbiditiesChange}
               placeholder="Select comorbidities"
             />
-           
           </div>
         </div>
       </div>
@@ -356,7 +381,9 @@ export default function IPDModule({ patient }) {
       <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
         <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
         <div>
-          <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
+          <Label htmlFor="diagnosis" className="text-xs font-semibold">
+            Diagnosis
+          </Label>
           <Textarea
             id="diagnosis"
             name="diagnosis"
@@ -367,7 +394,9 @@ export default function IPDModule({ patient }) {
           />
         </div>
         <div>
-          <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
+          <Label htmlFor="treatment" className="text-xs font-semibold">
+            Treatment
+          </Label>
           <Textarea
             id="treatment"
             name="treatment"
@@ -389,26 +418,41 @@ export default function IPDModule({ patient }) {
               placeholder="Select medicine"
               value={medication.name}
               setValue={(value) => handleMedicationChange(index, "name", value)}
-              onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+              onSuggestionSelect={(suggestion) =>
+                handleMedicationSuggestionSelect(index, suggestion)
+              }
             />
             <Input
               placeholder="Frequency"
               value={medication.frequency}
-              onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+              onChange={(e) =>
+                handleMedicationChange(index, "frequency", e.target.value)
+              }
               className="font-medium"
             />
             <Input
               placeholder="Duration"
               value={medication.duration}
-              onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+              onChange={(e) =>
+                handleMedicationChange(index, "duration", e.target.value)
+              }
               className="font-medium"
             />
-            <Button variant="destructive" size="icon" onClick={() => removeMedication(index)} disabled={ipdAdmission.medications.length === 1}>
+            <Button
+              variant="destructive"
+              size="icon"
+              onClick={() => removeMedication(index)}
+              disabled={ipdAdmission.medications.length === 1}
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
         ))}
-        <Button onClick={addMedication} variant="outline" className="mt-2 font-semibold">
+        <Button
+          onClick={addMedication}
+          variant="outline"
+          className="mt-2 font-semibold"
+        >
           <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
         </Button>
       </div>
@@ -423,7 +467,9 @@ export default function IPDModule({ patient }) {
               placeholder="Select lab test"
               value={test.name}
               setValue={(value) => handleLabTestChange(index, { name: value })}
-              onSuggestionSelect={(suggestion) => handleLabTestChange(index, suggestion)}
+              onSuggestionSelect={(suggestion) =>
+                handleLabTestChange(index, suggestion)
+              }
             />
             <Button
               variant="destructive"
@@ -446,12 +492,17 @@ export default function IPDModule({ patient }) {
         <div className="grid grid-cols-4 gap-3">
           {Object.entries(ipdAdmission.vitals.discharge).map(([key, value]) => (
             <div key={key}>
-              <Label htmlFor={`discharge-${key}`} className="text-xs font-semibold">{key.charAt(0).toUpperCase() + key.slice(1)}</Label>
+              <Label
+                htmlFor={`discharge-${key}`}
+                className="text-xs font-semibold"
+              >
+                {key.charAt(0).toUpperCase() + key.slice(1)}
+              </Label>
               <Input
                 id={`discharge-${key}`}
                 name={key}
                 value={value}
-                onChange={(e) => handleVitalChange(e, 'discharge')}
+                onChange={(e) => handleVitalChange(e, "discharge")}
                 className="h-8 text-sm font-medium"
               />
             </div>

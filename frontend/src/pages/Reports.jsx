@@ -57,6 +57,10 @@ export default function Reports() {
     navigate(`/staff/${staff._id}`, { state: { staffData: staff } });
   };
 
+  const handleEditStaff = (staff) => {
+    navigate('/addstaff', { state: { editMode: true, staffData: staff } });
+  };
+
   return (
     <div className="container mx-auto p-2 space-y-2">
       <Card>
@@ -175,11 +179,11 @@ export default function Reports() {
                             <Clock className="mr-2 h-4 w-4" />
                             <span>View Schedule</span>
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEditStaff(staff)}>
+                            Edit Details
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => navigate(`/staff/${staff._id}`)}>
                             View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => navigate(`/edit/${staff._id}`)}>
-                            Edit Details
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

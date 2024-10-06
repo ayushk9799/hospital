@@ -113,7 +113,6 @@ export default function DischargeSummary() {
   const patient = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
   );
-  console.log(patient);
 
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
@@ -155,7 +154,6 @@ export default function DischargeSummary() {
       },
     },
   });
-  console.log(formData.investigations);
 
   const [isLabReportOpen, setIsLabReportOpen] = useState(false); // State to manage modal visibility
   const [selectedInvestigation, setSelectedInvestigation] = useState(null); // State to track selected investigation
@@ -278,7 +276,7 @@ export default function DischargeSummary() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData);
+
     const dischargeData = {
       patientId: patientId,
       dateDischarged: formData.dateDischarged,

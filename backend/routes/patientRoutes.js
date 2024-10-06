@@ -664,7 +664,7 @@ router.post("/complexsearch", async (req, res) => {
       default:
         return res.status(400).json({ error: "Invalid search type" });
     }
-    console.log(query);
+
     const patients = await Model.find(query).populate(
       "patient",
       "age gender bloodType address"
@@ -695,7 +695,6 @@ router.post("/addLabReport", async (req, res) => {
         report.name === labReport.name &&
         report.date.toISOString().split("T")[0] === labReport.date
     );
-    console.log(existingReportIndex);
 
     if (existingReportIndex !== -1) {
       // Update existing report
@@ -720,12 +719,10 @@ router.post("/addLabReport", async (req, res) => {
     });
   } catch (error) {
     console.error("Error adding/updating lab report:", error);
-    res
-      .status(500)
-      .json({
-        message: "Error adding/updating lab report",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error adding/updating lab report",
+      error: error.message,
+    });
   }
 });
 

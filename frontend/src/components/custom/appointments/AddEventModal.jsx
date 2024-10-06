@@ -1,72 +1,88 @@
-import React, { useState } from 'react'
-import { Backend_URL } from '../../../assets/Data'
-import { useSelector } from 'react-redux'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../../ui/dialog"
-import { Button } from "../../ui/button"
-import { Input } from "../../ui/input"
-import { Label } from "../../ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select"
+import React, { useState } from "react";
+import { Backend_URL } from "../../../assets/Data";
+import { useSelector } from "react-redux";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "../../ui/dialog";
+import { Button } from "../../ui/button";
+import { Input } from "../../ui/input";
+import { Label } from "../../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 
 const AddEventModal = ({ isOpen, onClose }) => {
-  const [eventName, setEventName] = useState('')
-  const [eventDate, setEventDate] = useState(getCurrentDate())
-  const [startHour, setStartHour] = useState('')
-  const [startMinute, setStartMinute] = useState('')
-  const [endHour, setEndHour] = useState('')
-  const [endMinute, setEndMinute] = useState('')
-  const [startAmPm, setStartAmPm] = useState('AM')
-  const [endAmPm, setEndAmPm] = useState('AM')
-  const [staffId, setStaffId] = useState('')
+  const [eventName, setEventName] = useState("");
+  const [eventDate, setEventDate] = useState(getCurrentDate());
+  const [startHour, setStartHour] = useState("");
+  const [startMinute, setStartMinute] = useState("");
+  const [endHour, setEndHour] = useState("");
+  const [endMinute, setEndMinute] = useState("");
+  const [startAmPm, setStartAmPm] = useState("AM");
+  const [endAmPm, setEndAmPm] = useState("AM");
+  const [staffId, setStaffId] = useState("");
 
-  const staffList = useSelector((state)=> state.staff.doctors)
+  const staffList = useSelector((state) => state.staff.doctors);
   function getCurrentDate() {
     const today = new Date();
-    const dd = String(today.getDate()).padStart(2, '0');
-    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, "0");
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
     const yyyy = today.getFullYear();
     return `${dd}-${mm}-${yyyy}`;
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    const startTime = `${startHour}:${startMinute} ${startAmPm}`
-    const endTime = `${endHour}:${endMinute} ${endAmPm}`
-    
+    e.preventDefault();
+    const startTime = `${startHour}:${startMinute} ${startAmPm}`;
+    const endTime = `${endHour}:${endMinute} ${endAmPm}`;
+
     const eventData = {
       eventName,
       eventDate,
       timeSlot: {
         start: startTime,
-        end: endTime
+        end: endTime,
       },
-      staffId
-    }
+      staffId,
+    };
 
     try {
       const response = await fetch(`${Backend_URL}/api/events`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        credentials: 'include',
+        credentials: "include",
         body: JSON.stringify(eventData),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create event');
+        throw new Error("Failed to create event");
       }
 
       const newEvent = await response.json();
-      console.log('Event created:', newEvent);
+
       onClose();
     } catch (error) {
-      console.error('Error creating event:', error);
+      console.error("Error creating event:", error);
       // Handle error (e.g., show error message to user)
     }
-  }
+  };
 
-  const hours = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'))
-  const minutes = Array.from({ length: 60 }, (_, i) => String(i).padStart(2, '0'))
+  const hours = Array.from({ length: 12 }, (_, i) =>
+    String(i + 1).padStart(2, "0")
+  );
+  const minutes = Array.from({ length: 60 }, (_, i) =>
+    String(i).padStart(2, "0")
+  );
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -105,8 +121,10 @@ const AddEventModal = ({ isOpen, onClose }) => {
                     <SelectValue placeholder="HH" />
                   </SelectTrigger>
                   <SelectContent>
-                    {hours.map(hour => (
-                      <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                    {hours.map((hour) => (
+                      <SelectItem key={hour} value={hour}>
+                        {hour}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -115,8 +133,10 @@ const AddEventModal = ({ isOpen, onClose }) => {
                     <SelectValue placeholder="MM" />
                   </SelectTrigger>
                   <SelectContent>
-                    {minutes.map(minute => (
-                      <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                    {minutes.map((minute) => (
+                      <SelectItem key={minute} value={minute}>
+                        {minute}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -141,8 +161,10 @@ const AddEventModal = ({ isOpen, onClose }) => {
                     <SelectValue placeholder="HH" />
                   </SelectTrigger>
                   <SelectContent>
-                    {hours.map(hour => (
-                      <SelectItem key={hour} value={hour}>{hour}</SelectItem>
+                    {hours.map((hour) => (
+                      <SelectItem key={hour} value={hour}>
+                        {hour}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -151,8 +173,10 @@ const AddEventModal = ({ isOpen, onClose }) => {
                     <SelectValue placeholder="MM" />
                   </SelectTrigger>
                   <SelectContent>
-                    {minutes.map(minute => (
-                      <SelectItem key={minute} value={minute}>{minute}</SelectItem>
+                    {minutes.map((minute) => (
+                      <SelectItem key={minute} value={minute}>
+                        {minute}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -175,7 +199,7 @@ const AddEventModal = ({ isOpen, onClose }) => {
                 <SelectValue placeholder="Select staff" />
               </SelectTrigger>
               <SelectContent>
-                {staffList.map(staff => (
+                {staffList.map((staff) => (
                   <SelectItem key={staff._id} value={staff._id.toString()}>
                     {staff.name}
                   </SelectItem>
@@ -184,13 +208,15 @@ const AddEventModal = ({ isOpen, onClose }) => {
             </Select>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
             <Button type="submit">Add Event</Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
-}
+  );
+};
 
-export default AddEventModal
+export default AddEventModal;

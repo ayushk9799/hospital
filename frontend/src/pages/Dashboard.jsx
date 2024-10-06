@@ -1,84 +1,109 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Calendar, UserIcon, ChartLine, Activity, CalendarIcon, AlertCircle } from "lucide-react";
-import { Card, CardContent, CardHeader, CardDescription, CardTitle } from "../components/ui/card";
+import {
+  Calendar,
+  UserIcon,
+  ChartLine,
+  Activity,
+  CalendarIcon,
+  AlertCircle,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardDescription,
+  CardTitle,
+} from "../components/ui/card";
 import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  Legend, 
-  ResponsiveContainer, 
-  Tooltip 
-} from 'recharts';
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuLabel, 
-  DropdownMenuSeparator, 
-  DropdownMenuTrigger 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { DateRangePicker, convertFilterToDateRange } from "../assets/Data";
 import { fetchDashboardData } from "../redux/slices/dashboardSlice";
-import { 
-  startOfDay, 
-  endOfDay, 
-  subDays, 
-  startOfWeek, 
-  endOfWeek, 
-  startOfMonth, 
-  endOfMonth, 
-  isWithinInterval, 
-  format, 
+import {
+  startOfDay,
+  endOfDay,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  isWithinInterval,
+  format,
   eachDayOfInterval,
   isSameDay,
   formatDistanceToNow,
-} from 'date-fns';
-import { Pill } from 'lucide-react';
+} from "date-fns";
+import { Pill } from "lucide-react";
 import { PieChart, Pie, Cell, Label } from "recharts";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
-  const { dashboardData, dashboardDataStatus } = useSelector((state) => state.dashboard);
-  const {patientlist} = useSelector((state) => state.patients);
+  const { dashboardData, dashboardDataStatus } = useSelector(
+    (state) => state.dashboard
+  );
+  const { patientlist } = useSelector((state) => state.patients);
   const [dateFilter, setDateFilter] = useState("Today");
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
-  const [selectedDateRange, setSelectedDateRange] = useState({ from: null, to: null });
+  const [selectedDateRange, setSelectedDateRange] = useState({
+    from: null,
+    to: null,
+  });
 
   const recentPatients = useMemo(() => {
     return [...patientlist]
       .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
       .slice(0, 4)
-      .map(patient => ({
+      .map((patient) => ({
         _id: patient._id,
         name: patient.patient.name,
-        time: formatDistanceToNow(new Date(patient.createdAt), { addSuffix: true }),
-        type: patient.type || 'OPD',
-        avatar: patient.patient.name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()
-      }))
+        time: formatDistanceToNow(new Date(patient.createdAt), {
+          addSuffix: true,
+        }),
+        type: patient.type || "OPD",
+        avatar: patient.patient.name
+          .split(" ")
+          .map((word) => word[0])
+          .join("")
+          .slice(0, 2)
+          .toUpperCase(),
+      }));
   }, [patientlist]);
 
-  // console.log("Recent Patients:", recentPatients);
+  //
 
   const filteredData = useMemo(() => {
-    
-    if (typeof dashboardData !== 'object' || dashboardData === null) {
+    if (typeof dashboardData !== "object" || dashboardData === null) {
       // console.error("dashboardData is not an object:", dashboardData);
       return { currentValue: [], previousValue: [] };
     }
-    
+
     const dataArray = Object.values(dashboardData);
-    
-    if (dateFilter === "Custom") return { currentValue: dataArray, previousValue: [] };
+
+    if (dateFilter === "Custom")
+      return { currentValue: dataArray, previousValue: [] };
     const dates = convertFilterToDateRange(dateFilter);
     const startDate = new Date(dates.from);
     const endDate = new Date(dates.to);
     let previousStartDate, previousEndDate;
-    
+
     if (dateFilter === "Today") {
       previousStartDate = startOfDay(subDays(startDate, 1));
       previousEndDate = endOfDay(subDays(endDate, 1));
@@ -95,50 +120,66 @@ const Dashboard = () => {
       previousStartDate = null;
       previousEndDate = null;
     }
-    
+
     const currentValue = dataArray.filter((item) => {
       const itemDate = new Date(item.date);
       return isWithinInterval(itemDate, { start: startDate, end: endDate });
     });
-    const previousValue = previousStartDate && previousEndDate
-      ? dataArray.filter((item) => {
-          const itemDate = new Date(item.date);
-          return isWithinInterval(itemDate, { start: previousStartDate, end: previousEndDate });
-        })
-      : [];
+    const previousValue =
+      previousStartDate && previousEndDate
+        ? dataArray.filter((item) => {
+            const itemDate = new Date(item.date);
+            return isWithinInterval(itemDate, {
+              start: previousStartDate,
+              end: previousEndDate,
+            });
+          })
+        : [];
     return { currentValue, previousValue };
   }, [dashboardData, dateFilter]);
 
   const dashboardTotals = useMemo(() => {
-    // console.log("Calculating dashboardTotals with filteredData:", filteredData);
-    
+    //
+
     if (!Array.isArray(filteredData.currentValue)) {
       // console.error("filteredData.currentValue is not an array:", filteredData.currentValue);
-      return { totalRevenue: 0, totalPatients: 0, totalAppointments: 0, paymentMethods: {} };
+      return {
+        totalRevenue: 0,
+        totalPatients: 0,
+        totalAppointments: 0,
+        paymentMethods: {},
+      };
     }
-    
-    const totals = filteredData.currentValue.reduce((acc, curr) => {
-      console.log("Current item in reduce:", curr);
-      acc.totalRevenue += curr.revenue || 0;
-      acc.totalPatients += curr.uniquePatientCount || 0;
-      acc.totalAppointments += curr.totalAppointments || 0;
-      
-      // Combine payment methods from services and pharmacy
-      const allPaymentMethods = [
-        ...(curr.services?.paymentMethod || []),
-        ...(curr.pharmacy?.paymentMethod || [])
-      ];
-      
-      allPaymentMethods.forEach(method => {
-        const methodName = method.method || 'Others';
-        if (!acc.paymentMethods[methodName]) acc.paymentMethods[methodName] = 0;
-        acc.paymentMethods[methodName] += method.revenue || 0;
-      });
-      
-      return acc;
-    }, { totalRevenue: 0, totalPatients: 0, totalAppointments: 0, paymentMethods: {} });
-    
-    console.log("Calculated totals:", totals);
+
+    const totals = filteredData.currentValue.reduce(
+      (acc, curr) => {
+        acc.totalRevenue += curr.revenue || 0;
+        acc.totalPatients += curr.uniquePatientCount || 0;
+        acc.totalAppointments += curr.totalAppointments || 0;
+
+        // Combine payment methods from services and pharmacy
+        const allPaymentMethods = [
+          ...(curr.services?.paymentMethod || []),
+          ...(curr.pharmacy?.paymentMethod || []),
+        ];
+
+        allPaymentMethods.forEach((method) => {
+          const methodName = method.method || "Others";
+          if (!acc.paymentMethods[methodName])
+            acc.paymentMethods[methodName] = 0;
+          acc.paymentMethods[methodName] += method.revenue || 0;
+        });
+
+        return acc;
+      },
+      {
+        totalRevenue: 0,
+        totalPatients: 0,
+        totalAppointments: 0,
+        paymentMethods: {},
+      }
+    );
+
     return totals;
   }, [filteredData]);
 
@@ -146,21 +187,29 @@ const Dashboard = () => {
     const today = new Date();
     const startOfThisWeek = startOfWeek(today, { weekStartsOn: 0 }); // 0 for Sunday
     const endOfThisWeek = endOfWeek(today, { weekStartsOn: 0 });
-    
-    const weekDays = eachDayOfInterval({ start: startOfThisWeek, end: endOfThisWeek });
-    
-    const weekData = weekDays.map(day => ({
+
+    const weekDays = eachDayOfInterval({
+      start: startOfThisWeek,
+      end: endOfThisWeek,
+    });
+
+    const weekData = weekDays.map((day) => ({
       date: day,
-      formattedDate: format(day, 'EEE'),
+      formattedDate: format(day, "EEE"),
       patients: 0,
-      revenue: 0
+      revenue: 0,
     }));
-    
-    if (typeof dashboardData === 'object' && dashboardData !== null) {
-      Object.values(dashboardData).forEach(day => {
+
+    if (typeof dashboardData === "object" && dashboardData !== null) {
+      Object.values(dashboardData).forEach((day) => {
         const dayDate = new Date(day.date);
-        if (isWithinInterval(dayDate, { start: startOfThisWeek, end: endOfThisWeek })) {
-          const index = weekData.findIndex(d => isSameDay(d.date, dayDate));
+        if (
+          isWithinInterval(dayDate, {
+            start: startOfThisWeek,
+            end: endOfThisWeek,
+          })
+        ) {
+          const index = weekData.findIndex((d) => isSameDay(d.date, dayDate));
           if (index !== -1) {
             weekData[index].revenue = day.revenue || 0;
             weekData[index].patients = day.totalAppointments || 0;
@@ -168,12 +217,14 @@ const Dashboard = () => {
         }
       });
     }
-    
-    // console.log("Weekly performance data:", weekData);
+
+    //
     return weekData;
   }, [dashboardData]);
 
-  const hasWeeklyData = weeklyPerformanceData.some(day => day.patients > 0 || day.revenue > 0);
+  const hasWeeklyData = weeklyPerformanceData.some(
+    (day) => day.patients > 0 || day.revenue > 0
+  );
 
   useEffect(() => {
     if (dashboardDataStatus === "idle") {
@@ -227,7 +278,7 @@ const Dashboard = () => {
     const ISO_time = {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
-      range: range
+      range: range,
     };
 
     dispatch(fetchDashboardData(ISO_time));
@@ -236,29 +287,36 @@ const Dashboard = () => {
   const calculatePercentageChanges = useMemo(() => {
     if (filteredData.currentValue && filteredData.previousValue) {
       const calculateChange = (key) => {
-        const currentValue = filteredData.currentValue.reduce((sum, day) => sum + (day[key] || 0), 0);
-        const previousValue = filteredData.previousValue.reduce((sum, day) => sum + (day[key] || 0), 0);
-        
+        const currentValue = filteredData.currentValue.reduce(
+          (sum, day) => sum + (day[key] || 0),
+          0
+        );
+        const previousValue = filteredData.previousValue.reduce(
+          (sum, day) => sum + (day[key] || 0),
+          0
+        );
+
         if (previousValue === 0) return 100; // If previous value was 0, consider it as 100% increase
-        
-        const percentageChange = ((currentValue - previousValue) / previousValue) * 100;
+
+        const percentageChange =
+          ((currentValue - previousValue) / previousValue) * 100;
         return percentageChange.toFixed(2);
       };
 
       return {
-        totalRevenue: calculateChange('revenue'),
-        serviceCollection: calculateChange('services.revenue'),
-        pharmacyCollection: calculateChange('pharmacy.revenue'),
-        totalPatients: calculateChange('uniquePatientCount'),
-        totalAppointments: calculateChange('totalAppointments')
+        totalRevenue: calculateChange("revenue"),
+        serviceCollection: calculateChange("services.revenue"),
+        pharmacyCollection: calculateChange("pharmacy.revenue"),
+        totalPatients: calculateChange("uniquePatientCount"),
+        totalAppointments: calculateChange("totalAppointments"),
       };
     }
-    return { 
-      totalRevenue: null, 
-      serviceCollection: null, 
+    return {
+      totalRevenue: null,
+      serviceCollection: null,
       pharmacyCollection: null,
       totalPatients: null,
-      totalAppointments: null
+      totalAppointments: null,
     };
   }, [filteredData]);
 
@@ -304,11 +362,14 @@ const Dashboard = () => {
       return { serviceCollection: 0, pharmacyCollection: 0 };
     }
 
-    return filteredData.currentValue.reduce((acc, curr) => {
-      acc.serviceCollection += curr.services?.revenue || 0;
-      acc.pharmacyCollection += curr.pharmacy?.revenue || 0;
-      return acc;
-    }, { serviceCollection: 0, pharmacyCollection: 0 });
+    return filteredData.currentValue.reduce(
+      (acc, curr) => {
+        acc.serviceCollection += curr.services?.revenue || 0;
+        acc.pharmacyCollection += curr.pharmacy?.revenue || 0;
+        return acc;
+      },
+      { serviceCollection: 0, pharmacyCollection: 0 }
+    );
   }, [filteredData]);
 
   // Add this new function to calculate service and pharmacy payment methods
@@ -317,36 +378,51 @@ const Dashboard = () => {
       return { servicePayments: [], pharmacyPayments: [] };
     }
 
-    const payments = filteredData.currentValue.reduce((acc, curr) => {
-      // Service payments
-      (curr.services?.paymentMethod || []).forEach(method => {
-        const methodName = method.method || 'Others';
-        if (!acc.servicePayments[methodName]) acc.servicePayments[methodName] = 0;
-        acc.servicePayments[methodName] += method.revenue || 0;
-      });
+    const payments = filteredData.currentValue.reduce(
+      (acc, curr) => {
+        // Service payments
+        (curr.services?.paymentMethod || []).forEach((method) => {
+          const methodName = method.method || "Others";
+          if (!acc.servicePayments[methodName])
+            acc.servicePayments[methodName] = 0;
+          acc.servicePayments[methodName] += method.revenue || 0;
+        });
 
-      // Pharmacy payments
-      (curr.pharmacy?.paymentMethod || []).forEach(method => {
-        const methodName = method.method || 'Others';
-        if (!acc.pharmacyPayments[methodName]) acc.pharmacyPayments[methodName] = 0;
-        acc.pharmacyPayments[methodName] += method.revenue || 0;
-      });
+        // Pharmacy payments
+        (curr.pharmacy?.paymentMethod || []).forEach((method) => {
+          const methodName = method.method || "Others";
+          if (!acc.pharmacyPayments[methodName])
+            acc.pharmacyPayments[methodName] = 0;
+          acc.pharmacyPayments[methodName] += method.revenue || 0;
+        });
 
-      return acc;
-    }, { servicePayments: {}, pharmacyPayments: {} });
+        return acc;
+      },
+      { servicePayments: {}, pharmacyPayments: {} }
+    );
 
     const chartColors = {
-      'Cash': "hsl(var(--chart-1))", 'UPI': "hsl(var(--chart-2))",
-      'Card': "hsl(var(--chart-3))", 'Others': "hsl(var(--chart-4))"
+      Cash: "hsl(var(--chart-1))",
+      UPI: "hsl(var(--chart-2))",
+      Card: "hsl(var(--chart-3))",
+      Others: "hsl(var(--chart-4))",
     };
 
     return {
-      servicePayments: Object.entries(payments.servicePayments).map(([method, value]) => ({
-        method, value, fill: chartColors[method] || "hsl(var(--chart-4))"
-      })),
-      pharmacyPayments: Object.entries(payments.pharmacyPayments).map(([method, value]) => ({
-        method, value, fill: chartColors[method] || "hsl(var(--chart-4))"
-      }))
+      servicePayments: Object.entries(payments.servicePayments).map(
+        ([method, value]) => ({
+          method,
+          value,
+          fill: chartColors[method] || "hsl(var(--chart-4))",
+        })
+      ),
+      pharmacyPayments: Object.entries(payments.pharmacyPayments).map(
+        ([method, value]) => ({
+          method,
+          value,
+          fill: chartColors[method] || "hsl(var(--chart-4))",
+        })
+      ),
     };
   }, [filteredData]);
 
@@ -394,17 +470,39 @@ const Dashboard = () => {
             <DropdownMenuContent align="end" className="w-[200px]">
               <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("Today")}>Today</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("Yesterday")}>Yesterday</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("This Week")}>This Week</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("This Month")}>This Month</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("All")}>All Time</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("Custom")}>Custom Range</DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => handleDateFilterChange("Today")}
+              >
+                Today
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => handleDateFilterChange("Yesterday")}
+              >
+                Yesterday
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => handleDateFilterChange("This Week")}
+              >
+                This Week
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => handleDateFilterChange("This Month")}
+              >
+                This Month
+              </DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => handleDateFilterChange("All")}>
+                All Time
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onSelect={() => handleDateFilterChange("Custom")}
+              >
+                Custom Range
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>
-      
+
       <div className="flex gap-4">
         {/* Stats summary */}
         <div className="bg-white p-4 rounded-xl shadow w-1/2">
@@ -418,13 +516,27 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <UserIcon className="w-10 h-10 text-pink-600" />
-                    <p className="text-2xl font-bold text-pink-600">{dashboardTotals.totalPatients}</p>
+                    <p className="text-2xl font-bold text-pink-600">
+                      {dashboardTotals.totalPatients}
+                    </p>
                     <p className="text-sm text-gray-600">Total Patients</p>
-                    {calculatePercentageChanges.totalPatients !== null && dateFilter !== "Custom" && dateFilter !== "All" && (
-                      <p className={`text-xs ${calculatePercentageChanges.totalPatients >= 0 ? 'text-green-600' : 'text-red-600'} mt-1`}>
-                        {calculatePercentageChanges.totalPatients >= 0 ? '+' : ''}{calculatePercentageChanges.totalPatients}% {getComparisonText()}
-                      </p>
-                    )}
+                    {calculatePercentageChanges.totalPatients !== null &&
+                      dateFilter !== "Custom" &&
+                      dateFilter !== "All" && (
+                        <p
+                          className={`text-xs ${
+                            calculatePercentageChanges.totalPatients >= 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          } mt-1`}
+                        >
+                          {calculatePercentageChanges.totalPatients >= 0
+                            ? "+"
+                            : ""}
+                          {calculatePercentageChanges.totalPatients}%{" "}
+                          {getComparisonText()}
+                        </p>
+                      )}
                   </div>
                 </div>
               </CardContent>
@@ -434,13 +546,27 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Calendar className="w-10 h-10 text-orange-600" />
-                    <p className="text-2xl font-bold text-orange-600">{dashboardTotals.totalAppointments}</p>
+                    <p className="text-2xl font-bold text-orange-600">
+                      {dashboardTotals.totalAppointments}
+                    </p>
                     <p className="text-sm text-gray-600">Total Appointments</p>
-                    {calculatePercentageChanges.totalAppointments !== null && dateFilter !== "Custom" && dateFilter !== "All" && (
-                      <p className={`text-xs ${calculatePercentageChanges.totalAppointments >= 0 ? 'text-green-600' : 'text-red-600'} mt-1`}>
-                        {calculatePercentageChanges.totalAppointments >= 0 ? '+' : ''}{calculatePercentageChanges.totalAppointments}% {getComparisonText()}
-                      </p>
-                    )}
+                    {calculatePercentageChanges.totalAppointments !== null &&
+                      dateFilter !== "Custom" &&
+                      dateFilter !== "All" && (
+                        <p
+                          className={`text-xs ${
+                            calculatePercentageChanges.totalAppointments >= 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          } mt-1`}
+                        >
+                          {calculatePercentageChanges.totalAppointments >= 0
+                            ? "+"
+                            : ""}
+                          {calculatePercentageChanges.totalAppointments}%{" "}
+                          {getComparisonText()}
+                        </p>
+                      )}
                   </div>
                 </div>
               </CardContent>
@@ -451,13 +577,27 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <ChartLine className="w-10 h-10 text-purple-600" />
-                    <p className="text-2xl font-bold text-purple-600">₹{parseInt(dashboardTotals.totalRevenue).toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      ₹{parseInt(dashboardTotals.totalRevenue).toLocaleString()}
+                    </p>
                     <p className="text-sm text-gray-600">Total Revenue</p>
-                    {calculatePercentageChanges.totalRevenue !== null && dateFilter !== "Custom" && dateFilter !== "All" && (
-                      <p className={`text-xs ${calculatePercentageChanges.totalRevenue >= 0 ? 'text-green-600' : 'text-red-600'} mt-1`}>
-                        {calculatePercentageChanges.totalRevenue >= 0 ? '+' : ''}{calculatePercentageChanges.totalRevenue}% {getComparisonText()}
-                      </p>
-                    )}
+                    {calculatePercentageChanges.totalRevenue !== null &&
+                      dateFilter !== "Custom" &&
+                      dateFilter !== "All" && (
+                        <p
+                          className={`text-xs ${
+                            calculatePercentageChanges.totalRevenue >= 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          } mt-1`}
+                        >
+                          {calculatePercentageChanges.totalRevenue >= 0
+                            ? "+"
+                            : ""}
+                          {calculatePercentageChanges.totalRevenue}%{" "}
+                          {getComparisonText()}
+                        </p>
+                      )}
                   </div>
                 </div>
               </CardContent>
@@ -470,13 +610,30 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Activity className="w-10 h-10 text-blue-600" />
-                    <p className="text-2xl font-bold text-blue-600">₹{parseInt(calculateCollections.serviceCollection).toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      ₹
+                      {parseInt(
+                        calculateCollections.serviceCollection
+                      ).toLocaleString()}
+                    </p>
                     <p className="text-sm text-gray-600">Service Collection</p>
-                    {calculatePercentageChanges.serviceCollection !== null && dateFilter !== "Custom" && dateFilter !== "All" && (
-                      <p className={`text-xs ${calculatePercentageChanges.serviceCollection >= 0 ? 'text-green-600' : 'text-red-600'} mt-1`}>
-                        {calculatePercentageChanges.serviceCollection >= 0 ? '+' : ''}{calculatePercentageChanges.serviceCollection}% {getComparisonText()}
-                      </p>
-                    )}
+                    {calculatePercentageChanges.serviceCollection !== null &&
+                      dateFilter !== "Custom" &&
+                      dateFilter !== "All" && (
+                        <p
+                          className={`text-xs ${
+                            calculatePercentageChanges.serviceCollection >= 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          } mt-1`}
+                        >
+                          {calculatePercentageChanges.serviceCollection >= 0
+                            ? "+"
+                            : ""}
+                          {calculatePercentageChanges.serviceCollection}%{" "}
+                          {getComparisonText()}
+                        </p>
+                      )}
                   </div>
                 </div>
               </CardContent>
@@ -486,26 +643,45 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Pill className="w-10 h-10 text-green-600" />
-                    <p className="text-2xl font-bold text-green-600">₹{parseInt(calculateCollections.pharmacyCollection).toLocaleString()}</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      ₹
+                      {parseInt(
+                        calculateCollections.pharmacyCollection
+                      ).toLocaleString()}
+                    </p>
                     <p className="text-sm text-gray-600">Pharmacy Collection</p>
-                    {calculatePercentageChanges.pharmacyCollection !== null && dateFilter !== "Custom" && dateFilter !== "All" && (
-                      <p className={`text-xs ${calculatePercentageChanges.pharmacyCollection >= 0 ? 'text-green-600' : 'text-red-600'} mt-1`}>
-                        {calculatePercentageChanges.pharmacyCollection >= 0 ? '+' : ''}{calculatePercentageChanges.pharmacyCollection}% {getComparisonText()}
-                      </p>
-                    )}
+                    {calculatePercentageChanges.pharmacyCollection !== null &&
+                      dateFilter !== "Custom" &&
+                      dateFilter !== "All" && (
+                        <p
+                          className={`text-xs ${
+                            calculatePercentageChanges.pharmacyCollection >= 0
+                              ? "text-green-600"
+                              : "text-red-600"
+                          } mt-1`}
+                        >
+                          {calculatePercentageChanges.pharmacyCollection >= 0
+                            ? "+"
+                            : ""}
+                          {calculatePercentageChanges.pharmacyCollection}%{" "}
+                          {getComparisonText()}
+                        </p>
+                      )}
                   </div>
                 </div>
               </CardContent>
             </Card>
           </section>
         </div>
-        
+
         {/* Weekly Performance Graph */}
         <div className="w-1/2">
           <Card className="border border-gray-200 rounded-lg shadow-sm">
             <CardHeader>
               <CardTitle>Weekly Performance</CardTitle>
-              <CardDescription>Patient visits and Revenue for this week</CardDescription>
+              <CardDescription>
+                Patient visits and Revenue for this week
+              </CardDescription>
             </CardHeader>
             <CardContent>
               {hasWeeklyData ? (
@@ -513,17 +689,33 @@ const Dashboard = () => {
                   <BarChart data={weeklyPerformanceData}>
                     <XAxis dataKey="formattedDate" />
                     <YAxis yAxisId="left" orientation="left" stroke="#2563eb" />
-                    <YAxis yAxisId="right" orientation="right" stroke="#60a5fa" />
+                    <YAxis
+                      yAxisId="right"
+                      orientation="right"
+                      stroke="#60a5fa"
+                    />
                     <Tooltip />
                     <Legend />
-                    <Bar yAxisId="left" dataKey="patients" fill="#2563eb" name="Patients" />
-                    <Bar yAxisId="right" dataKey="revenue" fill="#60a5fa" name="Revenue (₹)" />
+                    <Bar
+                      yAxisId="left"
+                      dataKey="patients"
+                      fill="#2563eb"
+                      name="Patients"
+                    />
+                    <Bar
+                      yAxisId="right"
+                      dataKey="revenue"
+                      fill="#60a5fa"
+                      name="Revenue (₹)"
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
                 <div className="flex flex-col items-center justify-center h-[300px] text-gray-500">
                   <AlertCircle className="w-12 h-12 mb-2" />
-                  <p className="text-lg font-semibold">No data available for this week</p>
+                  <p className="text-lg font-semibold">
+                    No data available for this week
+                  </p>
                   <p className="text-sm">Check back later for updates</p>
                 </div>
               )}
@@ -531,7 +723,7 @@ const Dashboard = () => {
           </Card>
         </div>
       </div>
-      
+
       {/* New row for Payment Method Distribution */}
       <div className="mt-4 grid grid-cols-3 gap-4">
         <div>
@@ -582,9 +774,11 @@ const Dashboard = () => {
         </div>
         {/* Service Payment Methods */}
         <Card>
-          <CardHeader className='pb-0'>
+          <CardHeader className="pb-0">
             <CardTitle>Service Payment Methods</CardTitle>
-            <CardDescription>Distribution of payment methods for services</CardDescription>
+            <CardDescription>
+              Distribution of payment methods for services
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {calculatePaymentMethods.servicePayments.length > 0 ? (
@@ -592,27 +786,46 @@ const Dashboard = () => {
                 <div className="h-[180px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie 
-                        data={calculatePaymentMethods.servicePayments} 
-                        dataKey="value" 
-                        nameKey="method" 
-                        cx="50%" 
-                        cy="50%" 
-                        innerRadius={45} 
-                        outerRadius={85} 
+                      <Pie
+                        data={calculatePaymentMethods.servicePayments}
+                        dataKey="value"
+                        nameKey="method"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={85}
                         paddingAngle={1}
                       >
-                        {calculatePaymentMethods.servicePayments.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                        <Label 
+                        {calculatePaymentMethods.servicePayments.map(
+                          (entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          )
+                        )}
+                        <Label
                           content={({ viewBox }) => {
                             const { cx, cy } = viewBox;
-                            const total = calculatePaymentMethods.servicePayments.reduce((sum, entry) => sum + entry.value, 0);
+                            const total =
+                              calculatePaymentMethods.servicePayments.reduce(
+                                (sum, entry) => sum + entry.value,
+                                0
+                              );
                             return (
-                              <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
-                                <tspan x={cx} y={cy} className="text-xl font-bold">₹{parseInt(total).toLocaleString()}</tspan>
-                                <tspan x={cx} y={cy + 15} className="text-xs">Total</tspan>
+                              <text
+                                x={cx}
+                                y={cy}
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                              >
+                                <tspan
+                                  x={cx}
+                                  y={cy}
+                                  className="text-xl font-bold"
+                                >
+                                  ₹{parseInt(total).toLocaleString()}
+                                </tspan>
+                                <tspan x={cx} y={cy + 15} className="text-xs">
+                                  Total
+                                </tspan>
                               </text>
                             );
                           }}
@@ -623,12 +836,17 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 </div>
                 <div className="mt-0 flex justify-center space-x-4">
-                  {calculatePaymentMethods.servicePayments.map((entry, index) => (
-                    <div key={index} className="flex items-center">
-                      <div className="w-3 h-3 mr-1" style={{ backgroundColor: entry.fill }}></div>
-                      <span className="text-xs">{entry.method}</span>
-                    </div>
-                  ))}
+                  {calculatePaymentMethods.servicePayments.map(
+                    (entry, index) => (
+                      <div key={index} className="flex items-center">
+                        <div
+                          className="w-3 h-3 mr-1"
+                          style={{ backgroundColor: entry.fill }}
+                        ></div>
+                        <span className="text-xs">{entry.method}</span>
+                      </div>
+                    )
+                  )}
                 </div>
               </>
             ) : (
@@ -642,9 +860,11 @@ const Dashboard = () => {
 
         {/* Pharmacy Payment Methods */}
         <Card>
-          <CardHeader className='pb-0'>
+          <CardHeader className="pb-0">
             <CardTitle>Pharmacy Payment Methods</CardTitle>
-            <CardDescription>Distribution of payment methods for pharmacy</CardDescription>
+            <CardDescription>
+              Distribution of payment methods for pharmacy
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {calculatePaymentMethods.pharmacyPayments.length > 0 ? (
@@ -652,27 +872,46 @@ const Dashboard = () => {
                 <div className="h-[180px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
-                      <Pie 
-                        data={calculatePaymentMethods.pharmacyPayments} 
-                        dataKey="value" 
-                        nameKey="method" 
-                        cx="50%" 
-                        cy="50%" 
-                        innerRadius={45} 
-                        outerRadius={85} 
+                      <Pie
+                        data={calculatePaymentMethods.pharmacyPayments}
+                        dataKey="value"
+                        nameKey="method"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={85}
                         paddingAngle={1}
                       >
-                        {calculatePaymentMethods.pharmacyPayments.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.fill} />
-                        ))}
-                        <Label 
+                        {calculatePaymentMethods.pharmacyPayments.map(
+                          (entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.fill} />
+                          )
+                        )}
+                        <Label
                           content={({ viewBox }) => {
                             const { cx, cy } = viewBox;
-                            const total = calculatePaymentMethods.pharmacyPayments.reduce((sum, entry) => sum + entry.value, 0);
+                            const total =
+                              calculatePaymentMethods.pharmacyPayments.reduce(
+                                (sum, entry) => sum + entry.value,
+                                0
+                              );
                             return (
-                              <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central">
-                                <tspan x={cx} y={cy} className="text-xl font-bold">₹{parseInt(total).toLocaleString()}</tspan>
-                                <tspan x={cx} y={cy + 15} className="text-xs">Total</tspan>
+                              <text
+                                x={cx}
+                                y={cy}
+                                textAnchor="middle"
+                                dominantBaseline="central"
+                              >
+                                <tspan
+                                  x={cx}
+                                  y={cy}
+                                  className="text-xl font-bold"
+                                >
+                                  ₹{parseInt(total).toLocaleString()}
+                                </tspan>
+                                <tspan x={cx} y={cy + 15} className="text-xs">
+                                  Total
+                                </tspan>
                               </text>
                             );
                           }}
@@ -683,12 +922,17 @@ const Dashboard = () => {
                   </ResponsiveContainer>
                 </div>
                 <div className="mt-0 flex justify-center space-x-4">
-                  {calculatePaymentMethods.pharmacyPayments.map((entry, index) => (
-                    <div key={index} className="flex items-center">
-                      <div className="w-3 h-3 mr-1" style={{ backgroundColor: entry.fill }}></div>
-                      <span className="text-xs">{entry.method}</span>
-                    </div>
-                  ))}
+                  {calculatePaymentMethods.pharmacyPayments.map(
+                    (entry, index) => (
+                      <div key={index} className="flex items-center">
+                        <div
+                          className="w-3 h-3 mr-1"
+                          style={{ backgroundColor: entry.fill }}
+                        ></div>
+                        <span className="text-xs">{entry.method}</span>
+                      </div>
+                    )
+                  )}
                 </div>
               </>
             ) : (

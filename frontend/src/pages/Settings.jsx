@@ -1,30 +1,36 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '../components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../components/ui/dialog';
-import { Checkbox } from '../components/ui/checkbox';
-import { Input } from '../components/ui/input';
-import { ScrollArea } from '../components/ui/scroll-area';
-import { labCategories, labReportFields ,Backend_URL} from '../assets/Data';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "../components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import { Checkbox } from "../components/ui/checkbox";
+import { Input } from "../components/ui/input";
+import { ScrollArea } from "../components/ui/scroll-area";
+import { labCategories, labReportFields, Backend_URL } from "../assets/Data";
 
 export default function Settings() {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTests, setSelectedTests] = useState({});
   const [selectedFields, setSelectedFields] = useState({});
-  const [templateName, setTemplateName] = useState('');
-  const [nameError, setNameError] = useState('');
+  const [templateName, setTemplateName] = useState("");
+  const [nameError, setNameError] = useState("");
 
   const handleAddStaff = () => {
-    navigate('/addstaff');
+    navigate("/addstaff");
   };
 
   const handleCreateRoom = () => {
-    navigate('/create-room');
+    navigate("/create-room");
   };
 
   const handleHospitalInfo = () => {
-    navigate('/settings/hospital-info');
+    navigate("/settings/hospital-info");
   };
 
   const formatKey = (str) => {
@@ -35,25 +41,25 @@ export default function Settings() {
     const formattedCategory = formatKey(category);
     const formattedTest = formatKey(test);
 
-    setSelectedTests(prev => ({
+    setSelectedTests((prev) => ({
       ...prev,
       [formattedCategory]: {
         ...prev[formattedCategory],
-        [formattedTest]: !prev[formattedCategory]?.[formattedTest]
-      }
+        [formattedTest]: !prev[formattedCategory]?.[formattedTest],
+      },
     }));
 
     // Initialize or clear selected fields for this test
     if (!selectedTests[formattedCategory]?.[formattedTest]) {
-      setSelectedFields(prev => ({
+      setSelectedFields((prev) => ({
         ...prev,
         [formattedCategory]: {
           ...prev[formattedCategory],
-          [formattedTest]: {}
-        }
+          [formattedTest]: {},
+        },
       }));
     } else {
-      setSelectedFields(prev => {
+      setSelectedFields((prev) => {
         const newFields = { ...prev };
         if (newFields[formattedCategory]) {
           delete newFields[formattedCategory][formattedTest];
@@ -67,7 +73,7 @@ export default function Settings() {
     const formattedCategory = formatKey(category);
     const formattedTest = formatKey(test);
 
-    setSelectedFields(prev => ({
+    setSelectedFields((prev) => ({
       ...prev,
       [formattedCategory]: {
         ...prev[formattedCategory],
@@ -78,23 +84,25 @@ export default function Settings() {
             value: field.value,
             unit: field.unit,
             normalRange: field.normalRange,
-            isSelected: !prev[formattedCategory]?.[formattedTest]?.[field.name]?.isSelected
-          }
-        }
-      }
+            isSelected:
+              !prev[formattedCategory]?.[formattedTest]?.[field.name]
+                ?.isSelected,
+          },
+        },
+      },
     }));
   };
 
-  const handleCreateTemplate = async() => {
+  const handleCreateTemplate = async () => {
     if (!templateName.trim()) {
-      setNameError('Template name is required.');
+      setNameError("Template name is required.");
       return;
     }
 
     const template = {
       name: templateName,
-      fields: Object.entries(selectedFields)
-        .reduce((acc, [category, tests]) => {
+      fields: Object.entries(selectedFields).reduce(
+        (acc, [category, tests]) => {
           Object.entries(tests).forEach(([test, fields]) => {
             Object.entries(fields)
               .filter(([_, field]) => field.isSelected)
@@ -104,36 +112,35 @@ export default function Settings() {
                   label: field.label,
                   value: field.value,
                   unit: field.unit,
-                  normalRange: field.normalRange
+                  normalRange: field.normalRange,
                 };
               });
           });
           return acc;
-        }, {})
+        },
+        {}
+      ),
     };
 
-    console.log(template);
-
-    try{
-      const reponse =await fetch(`${Backend_URL}/api/hospitals/template/create`,{
-        method:'POST',
-        headers:{
-          'Content-Type':'application/json'
-        },
-        credentials:'include',
-        body:JSON.stringify({labTestsTemplate:template})
-      })
-      const data =await reponse.json();
-      console.log('Created Template:', data);
-    }
-    catch(error){
-      console.log(error);
-    }
+    try {
+      const reponse = await fetch(
+        `${Backend_URL}/api/hospitals/template/create`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ labTestsTemplate: template }),
+        }
+      );
+      const data = await reponse.json();
+    } catch (error) {}
     setIsOpen(false);
     setSelectedTests({});
     setSelectedFields({});
-    setTemplateName('');
-    setNameError('');
+    setTemplateName("");
+    setNameError("");
   };
 
   return (
@@ -158,10 +165,12 @@ export default function Settings() {
                   value={templateName}
                   onChange={(e) => {
                     setTemplateName(e.target.value);
-                    setNameError('');
+                    setNameError("");
                   }}
                 />
-                {nameError && <p className="text-red-500 text-sm">{nameError}</p>}
+                {nameError && (
+                  <p className="text-red-500 text-sm">{nameError}</p>
+                )}
               </div>
               <ScrollArea className="h-[300px] pr-4">
                 {labCategories.map((category) => (
@@ -173,30 +182,62 @@ export default function Settings() {
                           <div className="flex items-center space-x-2">
                             <Checkbox
                               id={`${category.name}-${test}`}
-                              checked={selectedTests[formatKey(category.name)]?.[formatKey(test)] || false}
-                              onCheckedChange={() => handleTestSelection(category.name, test)}
+                              checked={
+                                selectedTests[formatKey(category.name)]?.[
+                                  formatKey(test)
+                                ] || false
+                              }
+                              onCheckedChange={() =>
+                                handleTestSelection(category.name, test)
+                              }
                             />
-                            <label htmlFor={`${category.name}-${test}`} className="text-sm">
+                            <label
+                              htmlFor={`${category.name}-${test}`}
+                              className="text-sm"
+                            >
                               {test}
                             </label>
                           </div>
-                          {selectedTests[formatKey(category.name)]?.[formatKey(test)] && 
-                           labReportFields[formatKey(category.name)]?.[formatKey(test)] && (
-                            <div className="ml-6 space-y-1">
-                              {labReportFields[formatKey(category.name)][formatKey(test)].map((field) => (
-                                <div key={field.name} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={`${field.name}`}
-                                    checked={selectedFields[formatKey(category.name)]?.[formatKey(test)]?.[field.name]?.isSelected || false}
-                                    onCheckedChange={() => handleFieldSelection(category.name, test, field)}
-                                  />
-                                  <label htmlFor={`${field.name}`} className="text-xs">
-                                    {field.label}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          )}
+                          {selectedTests[formatKey(category.name)]?.[
+                            formatKey(test)
+                          ] &&
+                            labReportFields[formatKey(category.name)]?.[
+                              formatKey(test)
+                            ] && (
+                              <div className="ml-6 space-y-1">
+                                {labReportFields[formatKey(category.name)][
+                                  formatKey(test)
+                                ].map((field) => (
+                                  <div
+                                    key={field.name}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={`${field.name}`}
+                                      checked={
+                                        selectedFields[
+                                          formatKey(category.name)
+                                        ]?.[formatKey(test)]?.[field.name]
+                                          ?.isSelected || false
+                                      }
+                                      onCheckedChange={() =>
+                                        handleFieldSelection(
+                                          category.name,
+                                          test,
+                                          field
+                                        )
+                                      }
+                                    />
+                                    <label
+                                      htmlFor={`${field.name}`}
+                                      className="text-xs"
+                                    >
+                                      {field.label}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                         </div>
                       ))}
                     </div>

@@ -126,7 +126,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
       }
 
       const result = await response.json();
-      console.log("Lab Report added successfully:", result);
+
       alert("Lab Report added successfully");
       onClose();
     } catch (error) {

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -9,15 +9,30 @@ import { Plus, X } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from 'react-redux';
-import { createStaffMember } from '../redux/slices/staffSlice';
-import { useNavigate } from 'react-router-dom';
+import { createStaffMember, updateStaffMember } from '../redux/slices/staffSlice';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 export default function AddStaff() {
   const { toast } = useToast();
   const dispatch = useDispatch();
-  const navigate=useNavigate();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { staffId } = useParams();
   const { status, error } = useSelector((state) => state.staff);
-  const departments=useSelector((state)=>state.departments.departments);
+  const departments = useSelector((state) => state.departments.departments);
   const [formData, setFormData] = useState({ roles: [] });
+  const [editMode, setEditMode] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.editMode && location.state?.staffData) {
+      setEditMode(true);
+      setFormData(location.state.staffData);
+    } else if (staffId) {
+      // Fetch staff data by ID if needed
+      // This is just a placeholder, implement the actual fetch logic
+      // dispatch(fetchStaffById(staffId)).then(data => setFormData(data));
+      setEditMode(true);
+    }
+  }, [location, staffId]);
 
   const [errors, setErrors] = useState({});
   const [newQualification, setNewQualification] = useState("");
@@ -144,18 +159,26 @@ export default function AddStaff() {
     e.preventDefault();
     if (validateForm()) {
       try {
-        await dispatch(createStaffMember(formData)).unwrap();
-        toast({
-          variant : "success",
-          title: "Staff Added",
-          description: "Staff member has been added successfully.",
-        });
-        handleReset();
-        navigate('/reports')
+        if (editMode) {
+          await dispatch(updateStaffMember({ id: formData._id, data: formData })).unwrap();
+          toast({
+            variant: "success",
+            title: "Staff Updated",
+            description: "Staff member has been updated successfully.",
+          });
+        } else {
+          await dispatch(createStaffMember(formData)).unwrap();
+          toast({
+            variant: "success",
+            title: "Staff Added",
+            description: "Staff member has been added successfully.",
+          });
+        }
+        navigate('/reports');
       } catch (error) {
         toast({
           title: "Error",
-          description: error || "Failed to add staff member. Please try again.",
+          description: error || `Failed to ${editMode ? 'update' : 'add'} staff member. Please try again.`,
           variant: "destructive",
         });
       }
@@ -168,8 +191,8 @@ export default function AddStaff() {
   };
   return (
     <div className="max-w-[1200px] mx-auto p-4">
-      <h2 className="text-xl font-bold mb-0">Add New Staff Member</h2>
-      <p className="text-gray-600 mb-4">Fill in the details of the new staff member</p>
+      <h2 className="text-xl font-bold mb-0">{editMode ? 'Edit' : 'Add New'} Staff Member</h2>
+      <p className="text-gray-600 mb-4">Fill in the details of the {editMode ? 'existing' : 'new'} staff member</p>
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-4 gap-4">
           <div className="grid grid-cols-3 col-span-3 gap-4">
@@ -192,24 +215,27 @@ export default function AddStaff() {
                 placeholder="johndoe"
                 value={formData.username}
                 onChange={handleInputChange}
+                disabled={editMode} // Disable username field in edit mode
               />
               {errors.username && (
                 <span className="text-red-500 text-sm">{errors.username}</span>
               )}
             </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="********"
-                value={formData.password}
-                onChange={handleInputChange}
-              />
-              {errors.password && (
-                <span className="text-red-500 text-sm">{errors.password}</span>
-              )}
-            </div>
+            {!editMode && ( // Only show password field when not in edit mode
+              <div>
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="********"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                />
+                {errors.password && (
+                  <span className="text-red-500 text-sm">{errors.password}</span>
+                )}
+              </div>
+            )}
             <div>
               <Label htmlFor="employeeID">Employee ID</Label>
               <Input
@@ -477,10 +503,10 @@ export default function AddStaff() {
             {status === 'loading' ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Adding...
+                {editMode ? 'Updating...' : 'Adding...'}
               </>
             ) : (
-              'Add Staff'
+              editMode ? 'Update Staff' : 'Add Staff'
             )}
           </Button>
         </div>

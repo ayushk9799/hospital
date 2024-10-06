@@ -75,7 +75,7 @@ export default function Patients() {
     let dateMatch = true;
     // Parse the date string in the format "DD-MM-YYYY"
     const visitDate = patient.bookingDate;
-    console.log(visitDate);
+
     const today = new Date();
 
     switch (dateFilter) {

@@ -49,7 +49,6 @@ roomSchema.pre("save", function (next) {
     this.status = "Occupied";
   }
 
-  console.log(this.status);
   next();
 });
 

@@ -9,8 +9,24 @@ export default function Doctors() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientType, setSelectedPatientType] = useState(null);
 
-  const handlePatientSelect = ({ ID, bookingNumber, patient, bookingDate, clinicalSummary, notes, type, vitals, diagnosis, treatment, medications, additionalInstructions, labTests,comorbidities,conditionOnAdmission,conditionOnDischarge }) => {
-    console.log("Selected patient:", { ID, patient, type });
+  const handlePatientSelect = ({
+    ID,
+    bookingNumber,
+    patient,
+    bookingDate,
+    clinicalSummary,
+    notes,
+    type,
+    vitals,
+    diagnosis,
+    treatment,
+    medications,
+    additionalInstructions,
+    labTests,
+    comorbidities,
+    conditionOnAdmission,
+    conditionOnDischarge,
+  }) => {
     setSelectedPatient({
       ID,
       bookingNumber,
@@ -26,20 +42,20 @@ export default function Doctors() {
       labTests,
       comorbidities,
       conditionOnAdmission,
-      conditionOnDischarge
+      conditionOnDischarge,
     });
     setSelectedPatientType(type);
   };
 
-  useEffect(() => {
-    console.log("Updated selectedPatient:", selectedPatient);
-    console.log("Updated selectedPatientType:", selectedPatientType);
-  }, [selectedPatient, selectedPatientType]);
+  useEffect(() => {}, [selectedPatient, selectedPatientType]);
 
   return (
     <div className="h-full w-full flex flex-col">
       <AppointmentHeader />
-      <div className="grid grid-cols-4 gap-2" style={{ height: "calc(100vh - 100px)" }}>
+      <div
+        className="grid grid-cols-4 gap-2"
+        style={{ height: "calc(100vh - 100px)" }}
+      >
         <ScrollArea className="col-span-1 h-full">
           <AppointmentsQueue onPatientSelect={handlePatientSelect} />
         </ScrollArea>

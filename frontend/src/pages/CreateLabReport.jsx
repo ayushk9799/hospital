@@ -26,8 +26,6 @@ const CreateLabReport = ({
   onSave,
   searchWhere,
 }) => {
-  console.log(category);
-  console.log(type);
   const navigate = useNavigate();
   const [fields, setFields] = useState([]);
   const [newField, setNewField] = useState({
@@ -107,7 +105,7 @@ const CreateLabReport = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(reportDate);
+
     const labReportData = {
       name: `${type}`,
       date: format(reportDate, "yyyy-MM-dd"),
@@ -121,7 +119,7 @@ const CreateLabReport = ({
         return acc;
       }, {}),
     };
-    console.log(labReportData);
+
     try {
       const response = await fetch(`${Backend_URL}/api/patients/addLabReport`, {
         method: "POST",
@@ -141,7 +139,7 @@ const CreateLabReport = ({
       }
 
       const result = await response.json();
-      console.log("Lab Report added successfully:", result);
+
       alert("Lab Report added successfully");
 
       // Call the onSave function with the new lab report data

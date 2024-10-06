@@ -1,90 +1,96 @@
 import mongoose from "mongoose";
-import {hospitalPlugin} from '../plugins/hospitalPlugin.js'
+import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 const CounterSchema = new mongoose.Schema({
   date: { type: Date },
-  seq: { type: Number, default: 0 }
+  seq: { type: Number, default: 0 },
 });
 CounterSchema.plugin(hospitalPlugin);
-const Counter = mongoose.model('IPDCounter', CounterSchema);
+const Counter = mongoose.model("IPDCounter", CounterSchema);
 
-function formatDate(date,number) {
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0'); 
+function formatDate(date, number) {
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = String(date.getMonth() + 1).padStart(2, "0");
   const year = date.getFullYear();
-  console.log(day,month,year)
-  if(number===1){
+
+  if (number === 1) {
     return `${day}-${month}-${year}`;
-  }
-  else{
-    return `${day}/${month}/${year%100}`;
+  } else {
+    return `${day}/${month}/${year % 100}`;
   }
 }
 
-const ipdAdmissionSchema = new mongoose.Schema({
-  bookingDate: { type: Date },
-  bookingNumber: { type: Number },
-  patientName:{type:String},
-  contactNumber:{type:String},
-  registrationNumber:{type:String},
-  patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
-  dateDischarged: { type: Date },
-  conditionOnAdmission:{type:String},
-  conditionOnDischarge:{type:String},
-  medicineAdvice:[{name:String,dosage:String,duration:String}],
-  comorbidities:[{type:String}],
-  clinicalSummary: { type: String },
-  diagnosis: { type: String, },
-  treatment: { type: String,  },
-  medications:[{name:String,duration:String,frequency:String}],
-  labTests:[String],
-  labReports: [{
-    date: { type: Date},
-    name: { type: String },
-    report: { type: mongoose.Schema.Types.Mixed }
-  }],
-  vitals:{
-    admission:{ 
-    bloodPressure:String,
-    heartRate:Number,
-    temperature:Number,
-    weight:Number,
-    height:Number,
-    oxygenSaturation:Number,
-    respiratoryRate:Number,
+const ipdAdmissionSchema = new mongoose.Schema(
+  {
+    bookingDate: { type: Date },
+    bookingNumber: { type: Number },
+    patientName: { type: String },
+    contactNumber: { type: String },
+    registrationNumber: { type: String },
+    patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
+    dateDischarged: { type: Date },
+    conditionOnAdmission: { type: String },
+    conditionOnDischarge: { type: String },
+    medicineAdvice: [{ name: String, dosage: String, duration: String }],
+    comorbidities: [{ type: String }],
+    clinicalSummary: { type: String },
+    diagnosis: { type: String },
+    treatment: { type: String },
+    medications: [{ name: String, duration: String, frequency: String }],
+    labTests: [String],
+    labReports: [
+      {
+        date: { type: Date },
+        name: { type: String },
+        report: { type: mongoose.Schema.Types.Mixed },
+      },
+    ],
+    vitals: {
+      admission: {
+        bloodPressure: String,
+        heartRate: Number,
+        temperature: Number,
+        weight: Number,
+        height: Number,
+        oxygenSaturation: Number,
+        respiratoryRate: Number,
+      },
+      discharge: {
+        bloodPressure: String,
+        heartRate: Number,
+        temperature: Number,
+        oxygenSaturation: Number,
+        respiratoryRate: Number,
+      },
+    },
+    timeSlot: {
+      start: { type: String },
+      end: { type: String },
+    },
+    status: {
+      type: String,
+      enum: ["Admitted", "Discharged"],
+      default: "Admitted",
+    },
+    assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
+    department: { type: String },
+    assignedRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
+    assignedBed: { type: mongoose.Schema.Types.ObjectId, ref: "Room.beds" },
+    insuranceDetails: {
+      provider: String,
+      policyNumber: String,
+      coverageType: String,
+    },
+    notes: { type: String },
+    bills: {
+      pharmacy: [{ type: mongoose.Schema.Types.ObjectId, ref: "PharmacyBill" }],
+      services: [{ type: mongoose.Schema.Types.ObjectId, ref: "ServicesBill" }],
+    },
   },
-  discharge:{
-    bloodPressure:String,
-    heartRate:Number,
-    temperature:Number,
-    oxygenSaturation:Number,
-    respiratoryRate:Number,
-  },
- 
-},
-  timeSlot:{
-    start: { type: String },
-    end: { type: String },
-  },
-  status:{type:String,enum:["Admitted","Discharged"],default:"Admitted"},
-  assignedDoctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
-  department:{type:String},
-  assignedRoom: { type: mongoose.Schema.Types.ObjectId, ref: "Room" },
-  assignedBed:{ type: mongoose.Schema.Types.ObjectId, ref: "Room.beds" },
-  insuranceDetails: {
-    provider: String,
-    policyNumber: String,
-    coverageType: String,
-  },
-  notes:{type:String},
-  bills : {
-    pharmacy : [{type : mongoose.Schema.Types.ObjectId, ref : "PharmacyBill"}],
-    services : [{type : mongoose.Schema.Types.ObjectId, ref : "ServicesBill"}]
-  }
-},{timestamps:true});
+  { timestamps: true }
+);
 
-ipdAdmissionSchema.pre('save', async function(next) {
+ipdAdmissionSchema.pre("save", async function (next) {
   if (!this.bookingNumber) {
-    
     const counter = await Counter.findOneAndUpdate(
       { date: this.bookingDate },
       { $inc: { seq: 1 } },
@@ -93,9 +99,9 @@ ipdAdmissionSchema.pre('save', async function(next) {
     this.bookingNumber = counter.seq;
   }
   if (!this.ipdNumber) {
-     //to be decided
+    //to be decided
   }
   next();
 });
-ipdAdmissionSchema.plugin(hospitalPlugin)
+ipdAdmissionSchema.plugin(hospitalPlugin);
 export const IPDAdmission = mongoose.model("ipdAdmission", ipdAdmissionSchema);

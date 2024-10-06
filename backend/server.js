@@ -38,8 +38,8 @@ app.use(express.static(path.join(__dirname, '../frontend/build')));
 
 // Connect to MongoDB
 mongoose.connect('mongodb+srv://ayushkumarsanu6969:fk7f7SRyMjd6B84V@cluster0.ajyh7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0' || 'mongodb://localhost:27017/hospital_management')
-.then(() => )
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => {})
+.catch(err => {});
 
 // Apply tenant plugin to all schemas
 
@@ -62,7 +62,7 @@ app.use('/api/dashboard', dashboardRoute);
 
 // Serve index.html for any other routes
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+  res.sendFile(path.join(__dirname, '../frontend/build/', 'index.html'));
 });
 
 // Error handling middleware
@@ -72,5 +72,5 @@ app.use((err, req, res, next) => {
 
 // Start the server
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  
 });

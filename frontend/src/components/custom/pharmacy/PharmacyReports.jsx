@@ -1,43 +1,104 @@
-import React, {useEffect, useMemo} from "react";
+import React, { useEffect, useMemo } from "react";
 import { Button } from "../../ui/button";
-import { ChevronRight, BriefcaseMedicalIcon, AlertTriangle, ArrowDown, ArrowUp, Download, TrendingUp, FileX } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs"
+import {
+  ChevronRight,
+  BriefcaseMedicalIcon,
+  AlertTriangle,
+  ArrowDown,
+  ArrowUp,
+  Download,
+  TrendingUp,
+  FileX,
+} from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchSalesBills, fetchItems } from '../../../redux/slices/pharmacySlice';
-import BillsTableWithDialog from './itemMaster/BillsTableWithDialog';
-import { format, addMonths, isBefore, startOfToday, endOfToday, differenceInDays } from 'date-fns';
+import { useDispatch, useSelector } from "react-redux";
+import {
+  fetchSalesBills,
+  fetchItems,
+} from "../../../redux/slices/pharmacySlice";
+import BillsTableWithDialog from "./itemMaster/BillsTableWithDialog";
+import {
+  format,
+  addMonths,
+  isBefore,
+  startOfToday,
+  endOfToday,
+  differenceInDays,
+} from "date-fns";
 import { Badge } from "../../ui/badge"; // Add this import
 
 const topSellingArray = [
-  { name: "Amoxicillin 500mg", category: "Antibiotic", unitsSold: 1234, revenue: 6170.00, trend: { direction: "up", percentage: 5 } },
-  { name: "Lisinopril 10mg", category: "ACE Inhibitor", unitsSold: 987, revenue: 3948.00, trend: { direction: "down", percentage: 2 } },
-  { name: "Metformin 850mg", category: "Antidiabetic", unitsSold: 876, revenue: 2628.00, trend: { direction: "up", percentage: 3 } },
-  { name: "Amlodipine 5mg", category: "Calcium Channel Blocker", unitsSold: 765, revenue: 2295.00, trend: { direction: "up", percentage: 1 } },
-  { name: "Omeprazole 20mg", category: "Proton Pump Inhibitor", unitsSold: 654, revenue: 1962.00, trend: { direction: "down", percentage: 1 } },
+  {
+    name: "Amoxicillin 500mg",
+    category: "Antibiotic",
+    unitsSold: 1234,
+    revenue: 6170.0,
+    trend: { direction: "up", percentage: 5 },
+  },
+  {
+    name: "Lisinopril 10mg",
+    category: "ACE Inhibitor",
+    unitsSold: 987,
+    revenue: 3948.0,
+    trend: { direction: "down", percentage: 2 },
+  },
+  {
+    name: "Metformin 850mg",
+    category: "Antidiabetic",
+    unitsSold: 876,
+    revenue: 2628.0,
+    trend: { direction: "up", percentage: 3 },
+  },
+  {
+    name: "Amlodipine 5mg",
+    category: "Calcium Channel Blocker",
+    unitsSold: 765,
+    revenue: 2295.0,
+    trend: { direction: "up", percentage: 1 },
+  },
+  {
+    name: "Omeprazole 20mg",
+    category: "Proton Pump Inhibitor",
+    unitsSold: 654,
+    revenue: 1962.0,
+    trend: { direction: "down", percentage: 1 },
+  },
 ];
 
 const PharmacyReports = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const {salesBills, salesBillsStatus, items, itemsStatus } = useSelector(state => state.pharmacy);
-  const { hospitalInfo } = useSelector(state => state.hospital);
+  const { salesBills, salesBillsStatus, items, itemsStatus } = useSelector(
+    (state) => state.pharmacy
+  );
+  const { hospitalInfo } = useSelector((state) => state.hospital);
 
   useEffect(() => {
-    if (salesBillsStatus === 'idle') {
+    if (salesBillsStatus === "idle") {
       dispatch(fetchSalesBills());
     }
-    if (itemsStatus === 'idle') {
+    if (itemsStatus === "idle") {
       dispatch(fetchItems());
     }
   }, [dispatch, salesBillsStatus, itemsStatus]);
 
-  const lowStockItems = items.filter(item => item.quantity <= 200);
+  const lowStockItems = items.filter((item) => item.quantity <= 200);
 
-  const twoMonthsFromNow = addMonths(new Date(), Number(hospitalInfo.pharmacyExpiryThreshold));
-  const itemsExpiringInTwoMonths = items.filter(item => {
+  const twoMonthsFromNow = addMonths(
+    new Date(),
+    Number(hospitalInfo.pharmacyExpiryThreshold)
+  );
+  const itemsExpiringInTwoMonths = items.filter((item) => {
     const expiryDate = new Date(item.expiryDate);
     return isBefore(expiryDate, twoMonthsFromNow);
   });
@@ -45,28 +106,29 @@ const PharmacyReports = () => {
   const todayStats = useMemo(() => {
     const today = startOfToday();
     const endOfDay = endOfToday();
-    return salesBills.reduce((acc, bill) => {
-      const billDate = new Date(bill.createdAt);
-      if (billDate >= today && billDate <= endOfDay) {
-        acc.count++;
-        acc.totalAmount += bill.totalAmount;
-      }
-      return acc;
-    }, { count: 0, totalAmount: 0 });
+    return salesBills.reduce(
+      (acc, bill) => {
+        const billDate = new Date(bill.createdAt);
+        if (billDate >= today && billDate <= endOfDay) {
+          acc.count++;
+          acc.totalAmount += bill.totalAmount;
+        }
+        return acc;
+      },
+      { count: 0, totalAmount: 0 }
+    );
   }, [salesBills]);
-
-  console.log(todayStats);
 
   const getExpiryStatus = (expiryDate) => {
     const today = new Date();
     const daysLeft = differenceInDays(new Date(expiryDate), today);
-    
+
     if (daysLeft < 0) {
-      return { status: 'Expired', variant: 'destructive' };
+      return { status: "Expired", variant: "destructive" };
     } else if (daysLeft <= 30) {
-      return { status: 'Expiring Soon', variant: 'warning', daysLeft };
+      return { status: "Expiring Soon", variant: "warning", daysLeft };
     } else {
-      return { status: 'OK', variant: 'default', daysLeft };
+      return { status: "OK", variant: "default", daysLeft };
     }
   };
 
@@ -93,37 +155,56 @@ const PharmacyReports = () => {
         <div className="grid gap-4 grid-cols-4 mb-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Items Expiring Soon</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Items Expiring Soon
+              </CardTitle>
               <AlertTriangle className="w-4 h-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{itemsExpiringInTwoMonths.length}</div>
-              <p className="text-xs text-muted-foreground">Within next 60 days</p>
+              <div className="text-2xl font-bold">
+                {itemsExpiringInTwoMonths.length}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Within next 60 days
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Low Stock Items
+              </CardTitle>
               <ArrowDown className="w-4 h-4 text-red-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{lowStockItems.length}</div>
-              <p className="text-xs text-muted-foreground">Below reorder level</p>
+              <p className="text-xs text-muted-foreground">
+                Below reorder level
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Sales Today</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Total Sales Today
+              </CardTitle>
               <ArrowUp className="w-4 h-4 text-green-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">₹{todayStats.totalAmount.toLocaleString('en-IN', { maximumFractionDigits: 2 })}</div>
+              <div className="text-2xl font-bold">
+                ₹
+                {todayStats.totalAmount.toLocaleString("en-IN", {
+                  maximumFractionDigits: 2,
+                })}
+              </div>
               <p className="text-xs text-muted-foreground">Today's total</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Bills Generated Today</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Bills Generated Today
+              </CardTitle>
               <TrendingUp className="w-4 h-4 text-blue-500" />
             </CardHeader>
             <CardContent>
@@ -159,18 +240,32 @@ const PharmacyReports = () => {
                   <TableBody>
                     {itemsExpiringInTwoMonths.length > 0 ? (
                       itemsExpiringInTwoMonths.map((item, index) => {
-                        const { status, variant, daysLeft } = getExpiryStatus(item.expiryDate);
+                        const { status, variant, daysLeft } = getExpiryStatus(
+                          item.expiryDate
+                        );
                         return (
                           <TableRow key={index}>
-                            <TableCell className="capitalize">{item.name}</TableCell>
+                            <TableCell className="capitalize">
+                              {item.name}
+                            </TableCell>
                             <TableCell>{item.type}</TableCell>
-                            <TableCell className="capitalize">{item?.supplier?.name || '——'}</TableCell>
-                            <TableCell>{format(new Date(item?.expiryDate), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell className="capitalize">
+                              {item?.supplier?.name || "——"}
+                            </TableCell>
+                            <TableCell>
+                              {format(
+                                new Date(item?.expiryDate),
+                                "MMM dd, yyyy"
+                              )}
+                            </TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>
                               <Badge variant={variant}>
                                 {status}
-                                {status === 'Expiring Soon' && ` (${daysLeft} ${daysLeft === 1 ? 'day' : 'days'})`}
+                                {status === "Expiring Soon" &&
+                                  ` (${daysLeft} ${
+                                    daysLeft === 1 ? "day" : "days"
+                                  })`}
                               </Badge>
                             </TableCell>
                           </TableRow>
@@ -181,7 +276,9 @@ const PharmacyReports = () => {
                         <TableCell colSpan={6} className="h-24 text-center">
                           <div className="flex flex-col items-center justify-center text-gray-500">
                             <FileX className="w-8 h-8 mb-2" />
-                            <p className="font-semibold">No items expiring in the next 2 months</p>
+                            <p className="font-semibold">
+                              No items expiring in the next 2 months
+                            </p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -210,9 +307,13 @@ const PharmacyReports = () => {
                     {lowStockItems.length > 0 ? (
                       lowStockItems.map((item, index) => (
                         <TableRow key={index}>
-                          <TableCell className="capitalize">{item.name}</TableCell>
+                          <TableCell className="capitalize">
+                            {item.name}
+                          </TableCell>
                           <TableCell>{item?.type}</TableCell>
-                          <TableCell className="capitalize">{item?.supplier?.name || '—'}</TableCell>
+                          <TableCell className="capitalize">
+                            {item?.supplier?.name || "—"}
+                          </TableCell>
                           <TableCell>{item?.quantity}</TableCell>
                         </TableRow>
                       ))
@@ -221,7 +322,9 @@ const PharmacyReports = () => {
                         <TableCell colSpan={5} className="h-24 text-center">
                           <div className="flex flex-col items-center justify-center text-gray-500">
                             <FileX className="w-8 h-8 mb-2" />
-                            <p className="font-semibold">No low stock items available</p>
+                            <p className="font-semibold">
+                              No low stock items available
+                            </p>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -268,12 +371,16 @@ const PharmacyReports = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between">
                 <CardTitle>Recent Bills Generated</CardTitle>
-                <Button variant="outline" size="sm" onClick={() => navigate('/pharmacy/all-bills')}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => navigate("/pharmacy/all-bills")}
+                >
                   View All
                 </Button>
               </CardHeader>
               <CardContent>
-                  <BillsTableWithDialog bills={salesBills.slice(0, 5)} />
+                <BillsTableWithDialog bills={salesBills.slice(0, 5)} />
               </CardContent>
             </Card>
           </TabsContent>

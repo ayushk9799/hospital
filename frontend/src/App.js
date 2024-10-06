@@ -116,6 +116,7 @@ const AppContent = () => {
                 <Route path="/pharmacy/:tab" element={<Pharmacy />} />
                 <Route path="/pharmacy/all-bills" element={<PharmacyAllBills />} />
                 <Route path="/addstaff" element={<AddStaff />} />
+                <Route path="/editstaff/:staffId" element={<AddStaff />} />
                 <Route path="/lab" element={<Lab />} />
                 <Route path="/lab/create/:category/:type" element={<CreateLabReport />} />
                 <Route path="/lab/blood-work/create" element={<CreateBloodWork />} />

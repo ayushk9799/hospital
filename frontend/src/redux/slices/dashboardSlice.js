@@ -19,14 +19,17 @@ export const fetchDashboardData = createLoadingAsyncThunk(
     }
 
     const params = new URLSearchParams({ startDate, endDate });
-    const response = await fetch(`${Backend_URL}/api/dashboard/daily-stats?${params}`, {
-      credentials: 'include'
-    });
+    const response = await fetch(
+      `${Backend_URL}/api/dashboard/daily-stats?${params}`,
+      {
+        credentials: "include",
+      }
+    );
     if (!response.ok) {
-      throw new Error('Failed to fetch dashboard data');
+      throw new Error("Failed to fetch dashboard data");
     }
     const data = await response.json();
-    console.log("Fetched dashboard data:", data);
+
     return data;
   },
   { useGlobalLoader: true }
@@ -49,7 +52,7 @@ const dashboardSlice = createSlice({
         state.dashboardDataStatus = "succeeded";
         state.dashboardData = action.payload; // Set the data as is, without Array.isArray check
         state.dashboardRange = action.meta.arg.range; // Update the dashboardRange
-        console.log("Dashboard data set in state:", state.dashboardData); // Log the data being set in state
+        // Log the data being set in state
       })
       .addCase(fetchDashboardData.rejected, (state, action) => {
         state.dashboardDataStatus = "failed";

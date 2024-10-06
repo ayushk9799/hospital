@@ -3,6 +3,7 @@ import { Staff } from '../models/Staff.js';
 import { Department } from '../models/Departments.js';
 import { checkPermission, verifyToken } from '../middleware/authMiddleware.js';
 import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
 
 const router = express.Router();
 
@@ -12,11 +13,20 @@ router.post('/', verifyToken, checkPermission('write:all'), async (req, res) => 
   session.startTransaction();
 
   try {
-    const staff = new Staff(req.body);
+    const staffData = { ...req.body };
+
+    // Hash password if provided
+    if (staffData.password) {
+      const salt = await bcrypt.genSalt(10);
+      staffData.password = await bcrypt.hash(staffData.password, salt);
+    }
+
+    const staff = new Staff(staffData);
     await staff.save({ session });
 
-    if (req.body.department && Array.isArray(req.body.department)) {  //chhange required here no need to chck array mnualluu convert
-      for (const depName of req.body.department) {
+    if (staffData.department) {
+      const departments = Array.isArray(staffData.department) ? staffData.department : [staffData.department];
+      for (const depName of departments) {
         const department = await Department.findOne({ name: depName }).session(session);
         if (department) {
           department.staff.push(staff._id);
@@ -26,7 +36,7 @@ router.post('/', verifyToken, checkPermission('write:all'), async (req, res) => 
     }
 
     await session.commitTransaction();
-    res.status(201).json({ staff });
+    res.status(201).json({ staff: staff.toObject({ versionKey: false, transform: (doc, ret) => { delete ret.password; return ret; } }) });
   } catch (error) {
     await session.abortTransaction();
     res.status(400).json({ error: error.message });

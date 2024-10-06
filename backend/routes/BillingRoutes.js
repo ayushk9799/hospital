@@ -1,27 +1,43 @@
-import express from 'express';
-import mongoose from 'mongoose';
-import { Service } from '../models/Services.js';
-import { ServicesBill } from '../models/ServicesBill.js';
-import { IPDAdmission } from '../models/IPDAdmission.js';
-import { Visit } from '../models/Visits.js';
-import { Payment } from '../models/Payment.js';
-import { verifyToken } from '../middleware/authMiddleware.js';
+import express from "express";
+import mongoose from "mongoose";
+import { Service } from "../models/Services.js";
+import { ServicesBill } from "../models/ServicesBill.js";
+import { IPDAdmission } from "../models/IPDAdmission.js";
+import { Visit } from "../models/Visits.js";
+import { Payment } from "../models/Payment.js";
+import { verifyToken } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
 
 // Create a new bill of services
-router.post('/create-bill', verifyToken, async (req, res) => {
+router.post("/create-bill", verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { services, patient, patientType, totals, patientInfo, department, visitID } = req.body;
+    const {
+      services,
+      patient,
+      patientType,
+      totals,
+      patientInfo,
+      department,
+      visitID,
+    } = req.body;
     const user = req.user;
     if (!services || !Array.isArray(services)) {
-      throw new Error('Invalid services data');
+      throw new Error("Invalid services data");
     }
 
-    const bill = { ...totals, patientType, patient, services, patientInfo, department, createdBy : user._id };
+    const bill = {
+      ...totals,
+      patientType,
+      patient,
+      services,
+      patientInfo,
+      department,
+      createdBy: user._id,
+    };
     const newBill = new ServicesBill(bill);
 
     if (visitID) {
@@ -46,7 +62,7 @@ router.post('/create-bill', verifyToken, async (req, res) => {
 });
 
 // Update an existing bill
-router.post('/update-bill/:id', async (req, res) => {
+router.post("/update-bill/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -56,7 +72,7 @@ router.post('/update-bill/:id', async (req, res) => {
 
     const bill = await ServicesBill.findById(id).session(session);
     if (!bill) {
-      throw new Error('Bill not found');
+      throw new Error("Bill not found");
     }
 
     // Update services array
@@ -74,7 +90,9 @@ router.post('/update-bill/:id', async (req, res) => {
 
     await bill.save({ session });
 
-    const updatedBill = await ServicesBill.findById(bill._id).populate('payments').session(session);
+    const updatedBill = await ServicesBill.findById(bill._id)
+      .populate("payments")
+      .session(session);
 
     await session.commitTransaction();
     res.status(200).json(updatedBill);
@@ -87,42 +105,47 @@ router.post('/update-bill/:id', async (req, res) => {
 });
 
 // Get all service bills
-router.get('/get-bills', async (req, res) => {
+router.get("/get-bills", async (req, res) => {
   try {
-    const bills = await ServicesBill.find().sort({ createdAt: -1 }).populate('payments');
+    const bills = await ServicesBill.find()
+      .sort({ createdAt: -1 })
+      .populate("payments");
     res.status(200).json(bills);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
 
 // Get a specific service bill by ID
-router.get('/get-bill/:id', async (req, res) => {
+router.get("/get-bill/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const bill = await ServicesBill.findById(id).populate('payments');
-    
+    const bill = await ServicesBill.findById(id).populate("payments");
+
     if (!bill) {
-      return res.status(404).json({ message: 'Bill not found' });
+      return res.status(404).json({ message: "Bill not found" });
     }
-    
+
     res.status(200).json(bill);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error: error.message });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 
-// Create or update a service 
-router.post('/service', async (req, res) => {
+// Create or update a service
+router.post("/service", async (req, res) => {
   try {
     const { name, category, rate } = req.body;
-    if (!name || !rate) return res.status(400).json({ message: 'Name and rate are required' });
+    if (!name || !rate)
+      return res.status(400).json({ message: "Name and rate are required" });
 
     const serviceData = { name, category, rate };
     let service = await Service.findOne({ name });
 
     if (service) {
-      service = await Service.findByIdAndUpdate(service._id, serviceData, { new: true });
+      service = await Service.findByIdAndUpdate(service._id, serviceData, {
+        new: true,
+      });
       res.status(200).json(service);
     } else {
       service = new Service(serviceData);
@@ -130,50 +153,56 @@ router.post('/service', async (req, res) => {
       res.status(201).json(service);
     }
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
 
 // Get all services
-router.get('/services', async (req, res) => {
+router.get("/services", async (req, res) => {
   try {
-    const services = await Service.find().select('-hospital');
+    const services = await Service.find().select("-hospital");
     res.status(200).json(services);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
 
 // Delete a service
-router.delete('/service/:id', async (req, res) => {
+router.delete("/service/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const service = await Service.findByIdAndDelete(id);
-    if (!service) return res.status(404).json({ message: 'Service not found' });
-    res.status(200).json({ message: 'Service deleted successfully' });
+    if (!service) return res.status(404).json({ message: "Service not found" });
+    res.status(200).json({ message: "Service deleted successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
 
 // Update a service
-router.put('/service/:id', async (req, res) => {
+router.put("/service/:id", async (req, res) => {
   try {
     const { id } = req.params;
     const { name, category, rate } = req.body;
-    if (!name || !rate) return res.status(400).json({ message: 'Name and rate are required' });
+    if (!name || !rate)
+      return res.status(400).json({ message: "Name and rate are required" });
 
-    const updatedService = await Service.findByIdAndUpdate(id, { name, category, rate }, { new: true });
-    if (!updatedService) return res.status(404).json({ message: 'Service not found' });
+    const updatedService = await Service.findByIdAndUpdate(
+      id,
+      { name, category, rate },
+      { new: true }
+    );
+    if (!updatedService)
+      return res.status(404).json({ message: "Service not found" });
 
     res.status(200).json(updatedService);
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 });
 
 // Delete a bill
-router.delete('/delete-bill/:id', async (req, res) => {
+router.delete("/delete-bill/:id", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -181,7 +210,7 @@ router.delete('/delete-bill/:id', async (req, res) => {
     const { id } = req.params;
     const bill = await ServicesBill.findById(id).session(session);
     if (!bill) {
-      throw new Error('Bill not found');
+      throw new Error("Bill not found");
     }
 
     // Remove bill reference from visit/admission if it exists
@@ -200,7 +229,7 @@ router.delete('/delete-bill/:id', async (req, res) => {
     await ServicesBill.findByIdAndDelete(id).session(session);
 
     await session.commitTransaction();
-    res.status(200).json({ message: 'Bill deleted successfully' });
+    res.status(200).json({ message: "Bill deleted successfully" });
   } catch (error) {
     await session.abortTransaction();
     res.status(400).json({ message: error.message });
@@ -210,31 +239,33 @@ router.delete('/delete-bill/:id', async (req, res) => {
 });
 
 // Add a new payment to a service bill
-router.post('/:id/payments', verifyToken, async (req, res) => {
+router.post("/:id/payments", verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const { amount, paymentMethod } = req.body;
     const user = req.user;
-    console.log('user', user);
-    const bill = await ServicesBill.findById(req.params.id).populate('payments').session(session);
+
+    const bill = await ServicesBill.findById(req.params.id)
+      .populate("payments")
+      .session(session);
     if (!bill) {
-      throw new Error('Bill not found');
+      throw new Error("Bill not found");
     }
 
     // Ensure amount is a valid number
     const paymentAmount = parseFloat(amount);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      throw new Error('Invalid payment amount');
+      throw new Error("Invalid payment amount");
     }
 
     const payment = new Payment({
       amount: paymentAmount,
       paymentMethod,
-      paymentType: {name : 'Services', id : bill._id},
-      type: 'Income',
-      createdBy : user._id
+      paymentType: { name: "Services", id: bill._id },
+      type: "Income",
+      createdBy: user._id,
     });
     await payment.save({ session });
     bill.payments.push(payment._id);
@@ -243,7 +274,9 @@ router.post('/:id/payments', verifyToken, async (req, res) => {
     bill.amountPaid = bill.amountPaid + paymentAmount;
     await bill.save({ session });
 
-    const updatedBill = await ServicesBill.findById(bill._id).populate('payments').session(session);
+    const updatedBill = await ServicesBill.findById(bill._id)
+      .populate("payments")
+      .session(session);
 
     await session.commitTransaction();
     res.status(200).json(updatedBill);
@@ -254,7 +287,5 @@ router.post('/:id/payments', verifyToken, async (req, res) => {
     session.endSession();
   }
 });
-
-
 
 export default router;
