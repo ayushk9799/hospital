@@ -4,7 +4,7 @@ import { Room } from "../models/Room.js";
 import { Visit } from "../models/Visits.js";
 import { IPDAdmission } from "../models/IPDAdmission.js";
 import { ServicesBill } from "../models/ServicesBill.js";
-// import {Services} from "../models/Services.js";
+import {Service} from "../models/Services.js";
 import { checkPermission, verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 
@@ -29,17 +29,30 @@ router.post("/",verifyToken,checkPermission("write:patients"),async (req, res) =
 
       let admissionRecord;
 
+      let consultationFee = await Service.findOne({ name: 'Consultation Fee' }).session(session);
+
+      if (!consultationFee) {
+        // throw new Error("Consultation Fee service not found");
+        consultationFee = new Service({ name: 'Consultation Fee', rate: 500, category: 'General' });
+        await consultationFee.save({ session });
+      }
+
       // Create a bill for the patient
       const bill = new ServicesBill({
-        services: [{name : "Consultation", quantity : 1, rate : 500, category : "General"}],
+        services: [{
+          name: consultationFee.name,
+          quantity: 1,
+          rate: consultationFee.rate,
+          category: consultationFee.category
+        }],
         patient: patient._id,
         patientInfo: {
           name: patient.name,
           phone: patient?.contactNumber,
         },
-        totalAmount : 500,
-        subtotal : 500,
-        createdBy:user._id
+        totalAmount: consultationFee.rate,
+        subtotal: consultationFee.rate,
+        createdBy: user._id
       });
 
       if (patientType === "OPD") {
@@ -163,7 +176,7 @@ router.post("/search", async (req, res) => {
   }
 });
 router.get("/details", verifyToken, async (req, res) => {
-  console.log("details")
+  // console.log("details")
   try {
     const visits = await Visit.find()
       .populate(

@@ -36,6 +36,7 @@ import {
   format, 
   eachDayOfInterval,
   isSameDay,
+  formatDistanceToNow,
 } from 'date-fns';
 import { Pill } from 'lucide-react';
 import { PieChart, Pie, Cell, Label } from "recharts";
@@ -48,11 +49,25 @@ const Dashboard = () => {
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [selectedDateRange, setSelectedDateRange] = useState({ from: null, to: null });
 
+  const recentPatients = useMemo(() => {
+    return [...patientlist]
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      .slice(0, 4)
+      .map(patient => ({
+        _id: patient._id,
+        name: patient.patient.name,
+        time: formatDistanceToNow(new Date(patient.createdAt), { addSuffix: true }),
+        type: patient.type || 'OPD',
+        avatar: patient.patient.name.split(' ').map(word => word[0]).join('').slice(0, 2).toUpperCase()
+      }))
+  }, [patientlist]);
+
+  // console.log("Recent Patients:", recentPatients);
 
   const filteredData = useMemo(() => {
     
     if (typeof dashboardData !== 'object' || dashboardData === null) {
-      console.error("dashboardData is not an object:", dashboardData);
+      // console.error("dashboardData is not an object:", dashboardData);
       return { currentValue: [], previousValue: [] };
     }
     
@@ -95,10 +110,10 @@ const Dashboard = () => {
   }, [dashboardData, dateFilter]);
 
   const dashboardTotals = useMemo(() => {
-    console.log("Calculating dashboardTotals with filteredData:", filteredData);
+    // console.log("Calculating dashboardTotals with filteredData:", filteredData);
     
     if (!Array.isArray(filteredData.currentValue)) {
-      console.error("filteredData.currentValue is not an array:", filteredData.currentValue);
+      // console.error("filteredData.currentValue is not an array:", filteredData.currentValue);
       return { totalRevenue: 0, totalPatients: 0, totalAppointments: 0, paymentMethods: {} };
     }
     
@@ -519,71 +534,52 @@ const Dashboard = () => {
       
       {/* New row for Payment Method Distribution */}
       <div className="mt-4 grid grid-cols-3 gap-4">
-      <div>
-        {/* Upcoming Patients */}
-        <Card>
-          <CardHeader>
-            <CardTitle>IPD Patients</CardTitle>
-            <CardDescription>Latest admitted patients</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-5">
-              {[
-                {
-                  name: "Alice Johnson",
-                  time: "2 hours ago",
-                  status: "Stable",
-                  avatar: "AJ",
-                },
-                {
-                  name: "Bob Smith",
-                  time: "4 hours ago",
-                  status: "Critical",
-                  avatar: "BS",
-                },
-                {
-                  name: "Carol Williams",
-                  time: "Yesterday",
-                  status: "Recovering",
-                  avatar: "CW",
-                },
-                {
-                  name: "David Brown",
-                  time: "Yesterday",
-                  status: "Stable",
-                  avatar: "DB",
-                },
-              ].map((patient, index) => (
-                <div key={index} className="flex items-center">
-                  <p className="font-semibold mr-5 text-xl">{index + 1}</p>
-                  <Avatar className="h-9 w-9">
-                    <AvatarFallback>{patient.avatar}</AvatarFallback>
-                  </Avatar>
-                  <div className="ml-4 space-y-1">
-                    <p className="text-sm font-medium leading-none">
-                      {patient.name}
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      {patient.time}
-                    </p>
-                  </div>
-                  <Badge
-                    className={`ml-auto ${
-                      patient.status === "Stable"
-                        ? "bg-green-100 text-green-800"
-                        : patient.status === "Critical"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
-                    }`}
-                  >
-                    {patient.status}
-                  </Badge>
+        <div>
+          {/* Recent Patients */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Recent Patients</CardTitle>
+              <CardDescription>Latest admitted patients</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {recentPatients.length > 0 ? (
+                <div className="space-y-5">
+                  {recentPatients.map((patient, index) => (
+                    <div key={patient._id} className="flex items-center">
+                      <p className="font-semibold mr-5 text-xl">{index + 1}</p>
+                      <Avatar className="h-9 w-9">
+                        <AvatarFallback>{patient.avatar}</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-4 space-y-1">
+                        <p className="text-sm font-medium leading-none">
+                          {patient.name}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {patient.time}
+                        </p>
+                      </div>
+                      <Badge
+                        className={`ml-auto ${
+                          patient.type === "IPD"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-green-100 text-green-800"
+                        }`}
+                      >
+                        {patient.type}
+                      </Badge>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
+                  <AlertCircle className="w-12 h-12 mb-2" />
+                  <p className="text-lg font-semibold">No recent patients</p>
+                  <p className="text-sm">New patients will appear here</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
         {/* Service Payment Methods */}
         <Card>
           <CardHeader className='pb-0'>
