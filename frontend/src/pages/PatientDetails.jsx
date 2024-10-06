@@ -1,77 +1,155 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Backend_URL } from "../assets/Data";
-import { User, Phone, Mail, MapPin, Calendar, Activity, AlertTriangle, FileText, Edit, Printer, Heart, Thermometer, Scale, Ruler, Droplet, Wind } from "lucide-react";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchPatientDetails } from "../redux/slices/patientSlice";
+import {
+  User,
+  Phone,
+  Mail,
+  MapPin,
+  Activity,
+  Edit,
+  Printer,
+  Heart,
+  Thermometer,
+  Scale,
+  Ruler,
+  Droplet,
+  Wind,
+  AlertCircle,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { parse, format } from 'date-fns';
+import { format } from "date-fns";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { labReportFields } from '../assets/Data';
+import { useToast } from "../hooks/use-toast";
+
+// Move VitalItem component definition here
+const VitalItem = ({ icon, label, value, unit }) => (
+  <div className="flex items-center p-3 bg-gray-50 rounded-lg shadow-sm">
+    <div className="mr-3">{icon}</div>
+    <div>
+      <p className="text-sm font-medium text-gray-500">{label}</p>
+      <p className="text-lg font-semibold">
+        {value}{" "}
+        <span className="text-sm font-normal text-gray-500">{unit}</span>
+      </p>
+    </div>
+  </div>
+);
 
 export default function PatientDetails() {
   const { patientId } = useParams();
-  const [patientData, setPatientData] = useState(null);
+  const dispatch = useDispatch();
+  const { toast } = useToast();
+  const { patientDetails, patientDetailsStatus } = useSelector(state => state.patients);
   const [selectedVisit, setSelectedVisit] = useState(null);
-  const [activeTab, setActiveTab] = useState('');
+  const [activeTab, setActiveTab] = useState("");
 
   useEffect(() => {
-    const fetchPatientDetails = async () => {
-      try {
-        const response = await fetch(`${Backend_URL}/api/patients/${patientId}`, {headers:{'Content-Type':'application/json'}, credentials:'include'});
-        const data = await response.json();
-        setPatientData(data);
-        console.log(data);
-        // Set the most recent visit/admission as the default selected
-        const allDates = [
-          ...(data.visits || []).map(visit => ({ date: visit.bookingDate, type: 'visit', data: visit })),
-          ...(data.admissionDetails || []).map(admission => ({ date: admission.bookingDate, type: 'admission', data: admission }))
-        ].sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        if (allDates.length > 0) {
-          setSelectedVisit(allDates[0].date);
-          setActiveTab(allDates[0].data.reasonForVisit ? 'reason' : (allDates[0].data.diagnosis ? 'diagnosis' : 'reason'));
-        }
-      } catch (error) {
-        console.error("Error fetching patient details:", error);
-      }
-    };
-    fetchPatientDetails();
-  }, [patientId]);
+    dispatch(fetchPatientDetails(patientId)).unwrap().then(() => {
+      // console.log("Patient details fetched successfully");
+    }).catch((error) => {
+      // console.error("Error fetching patient details:", error);
+      toast({
+        title: "Error",
+        description: "Error fetching patient details",
+        variant: "destructive",
+      });
+    });
+  }, [dispatch, patientId]);
 
-  if (!patientData) return <div>Loading...</div>;
+  useEffect(() => {
+    if (patientDetails) {
+      const allDates = [
+        ...(patientDetails.visits || []).map((visit) => ({
+          date: visit.bookingDate,
+          type: "visit",
+          data: visit,
+        })),
+        ...(patientDetails.admissionDetails || []).map((admission) => ({
+          date: admission.bookingDate,
+          type: "admission",
+          data: admission,
+        })),
+      ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      if (allDates.length > 0) {
+        setSelectedVisit(allDates[0].date);
+        setActiveTab(
+          allDates[0].data.reasonForVisit
+            ? "reason"
+            : allDates[0].data.diagnosis
+            ? "diagnosis"
+            : "reason"
+        );
+      }
+    }
+  }, [patientDetails]);
+
+  if (patientDetailsStatus === 'loading') return null;
+  if (patientDetailsStatus === 'failed') return (
+    <div className="flex flex-col items-center justify-center h-screen">
+      <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
+      <div className="text-xl font-semibold text-gray-800">Error loading patient details</div>
+      <div className="text-gray-600 mt-2">Please try again later or contact support.</div>
+    </div>
+  );
+  if (!patientDetails) return null;
 
   const allDates = [
-    ...(patientData.visits || []).map(visit => ({ date: visit.bookingDate, type: 'visit', data: visit })),
-    ...(patientData.admissionDetails || []).map(admission => ({ date: admission.bookingDate, type: 'admission', data: admission }))
+    ...(patientDetails.visits || []).map((visit) => ({
+      date: visit.bookingDate,
+      type: "visit",
+      data: visit,
+    })),
+    ...(patientDetails.admissionDetails || []).map((admission) => ({
+      date: admission.bookingDate,
+      type: "admission",
+      data: admission,
+    })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const selectedItem = allDates.find(item => item.date === selectedVisit);
+  const selectedItem = selectedVisit ? allDates.find((item) => item.date === selectedVisit) : null;
 
   const renderVisitDetails = () => {
-    if (!selectedVisit || !patientData) return null;
+    if (!selectedVisit || !patientDetails) return null;
 
-    const visitData = patientData.visits.find(v => v.bookingDate === selectedVisit) || 
-                      patientData.admissionDetails.find(a => a.bookingDate === selectedVisit);
+    const visitData =
+      patientDetails.visits?.find((v) => v.bookingDate === selectedVisit) ||
+      patientDetails.admissionDetails?.find((a) => a.bookingDate === selectedVisit);
 
     if (!visitData) return null;
 
-    const isIPD = selectedItem.type === 'admission'?true:false;
-    console.log(isIPD)
+    const isIPD = selectedItem?.type === "admission" ? true : false;
 
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground mb-4">
-          <TabsTrigger value="reason" className="px-3">Reason</TabsTrigger>
-          <TabsTrigger value="diagnosis" className="px-3">Diagnosis</TabsTrigger>
-          <TabsTrigger value="treatment" className="px-3">Treatment</TabsTrigger>
-          <TabsTrigger value="medications" className="px-3">Medications</TabsTrigger>
-          <TabsTrigger value="labTests" className="px-3">Lab Tests</TabsTrigger>
-          <TabsTrigger value="vitals" className="px-3">Vitals</TabsTrigger>
-          <TabsTrigger value="labReports" className="px-3">Lab Reports</TabsTrigger>
+          <TabsTrigger value="reason" className="px-3">
+            Reason
+          </TabsTrigger>
+          <TabsTrigger value="diagnosis" className="px-3">
+            Diagnosis
+          </TabsTrigger>
+          <TabsTrigger value="treatment" className="px-3">
+            Treatment
+          </TabsTrigger>
+          <TabsTrigger value="medications" className="px-3">
+            Medications
+          </TabsTrigger>
+          <TabsTrigger value="labTests" className="px-3">
+            Lab Tests
+          </TabsTrigger>
+          <TabsTrigger value="vitals" className="px-3">
+            Vitals
+          </TabsTrigger>
+          <TabsTrigger value="labReports" className="px-3">
+            Lab Reports
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="reason">
@@ -301,7 +379,9 @@ export default function PatientDetails() {
                     <h3 className="text-lg font-semibold mb-2">
                       {report.name.replaceAll("-", " ").toUpperCase()}
                       <span className="text-sm font-normal ml-2 text-gray-500">
-                        {report.date ? new Date(report.date).toLocaleDateString("en-IN") : ""}
+                        {report.date
+                          ? new Date(report.date).toLocaleDateString("en-IN")
+                          : ""}
                       </span>
                     </h3>
                     <Table>
@@ -315,10 +395,15 @@ export default function PatientDetails() {
                       </TableHeader>
                       <TableBody>
                         {Object.entries(report.report)
-                          .filter(([_, data]) => data.value !== null && data.value !== "")
+                          .filter(
+                            ([_, data]) =>
+                              data.value !== null && data.value !== ""
+                          )
                           .map(([key, data]) => (
                             <TableRow key={key}>
-                              <TableCell className="font-medium">{data.label}</TableCell>
+                              <TableCell className="font-medium">
+                                {data.label}
+                              </TableCell>
                               <TableCell>{data.value}</TableCell>
                               <TableCell>{data.unit}</TableCell>
                               <TableCell>{data.normalRange}</TableCell>
@@ -339,10 +424,10 @@ export default function PatientDetails() {
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-4 bg-gray-50">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold text-gray-800">Patient Profile</h1>
-        <div className="space-x-2">
+    <div className="container mx-auto p-2 space-y-4 bg-gray-50">
+      <div className="flex justify-between items-center mb-2">
+        <h1 className="text-xl font-bold text-gray-800">Patient Profile</h1>
+        <div className="space-x-2 hidden">
           <Button variant="outline" size="sm" className="hover:bg-gray-100">
             <Edit className="mr-2 h-4 w-4" /> Edit
           </Button>
@@ -356,22 +441,45 @@ export default function PatientDetails() {
         <CardContent className="grid md:grid-cols-3 gap-4 p-3">
           <div className="flex items-center space-x-3">
             <Avatar className="h-14 w-14 ring-2 ring-primary ring-offset-2">
-              <AvatarImage src="/placeholder.svg" alt={patientData.name} />
-              <AvatarFallback>{patientData.name.charAt(0)}</AvatarFallback>
+              <AvatarImage src="/placeholder.svg" alt={patientDetails.name} />
+              <AvatarFallback>{patientDetails.name.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="text-lg font-semibold text-gray-800">{patientData.name}</h2>
-              <p className="text-xs text-gray-500">ID: {patientData.registrationNumber}</p>
-              <Badge variant="outline" className="mt-1 text-xs">{patientData.bloodType}</Badge>
+              <h2 className="text-lg font-semibold text-gray-800">
+                {patientDetails.name}
+              </h2>
+              <p className="text-xs text-gray-500">
+                ID: {patientDetails.registrationNumber}
+              </p>
+              <Badge variant="outline" className="mt-1 text-xs">
+                {patientDetails.bloodType}
+              </Badge>
             </div>
           </div>
           <div className="space-y-1 text-sm">
-            <InfoItem icon={<User className="h-4 w-4" />} label="Age & Gender" value={`${patientData.age} yrs, ${patientData.gender}`} />
-            <InfoItem icon={<Phone className="h-4 w-4" />} label="Contact" value={patientData.contactNumber} />
-            <InfoItem icon={<Mail className="h-4 w-4" />} label="Email" value={patientData.email} />
+            <InfoItem
+              icon={<User className="h-4 w-4" />}
+              label="Age & Gender"
+              value={`${patientDetails.age} yrs, ${patientDetails.gender}`}
+            />
+            <InfoItem
+              icon={<Phone className="h-4 w-4" />}
+              label="Contact"
+              value={patientDetails.contactNumber}
+            />
+           
           </div>
           <div className="text-sm">
-            <InfoItem icon={<MapPin className="h-4 w-4" />} label="Address" value={patientData.address} />
+            <InfoItem
+              icon={<MapPin className="h-4 w-4" />}
+              label="Address"
+              value={patientDetails.address}
+            />
+             <InfoItem
+              icon={<Mail className="h-4 w-4" />}
+              label="Email"
+              value={patientDetails.email}
+            />
           </div>
         </CardContent>
       </Card>
@@ -384,12 +492,14 @@ export default function PatientDetails() {
               key={item.date}
               variant={selectedVisit === item.date ? "default" : "outline"}
               size="sm"
-              className={`${selectedVisit === item.date ? 'ring-2 ring-primary' : ''}`}
+              className={`${
+                selectedVisit === item.date ? "ring-2 ring-primary" : ""
+              }`}
               onClick={() => setSelectedVisit(item.date)}
             >
-              <span className="mr-1">{format(item.date, 'dd MMM yyyy')}</span>
+              <span className="mr-1">{format(new Date(item.date), "dd MMM yyyy")}</span>
               <Badge variant="secondary" className="text-xs">
-                {item.type === 'visit' ? 'OPD' : 'IPD'}
+                {item.type === "visit" ? "OPD" : "IPD"}
               </Badge>
             </Button>
           ))}
@@ -412,16 +522,3 @@ function InfoItem({ icon, label, value, className = "" }) {
     </div>
   );
 }
-
-// New component for individual vital items
-const VitalItem = ({ icon, label, value, unit }) => (
-  <div className="flex items-center p-3 bg-gray-50 rounded-lg shadow-sm">
-    <div className="mr-3">{icon}</div>
-    <div>
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className="text-lg font-semibold">
-        {value} <span className="text-sm font-normal text-gray-500">{unit}</span>
-      </p>
-    </div>
-  </div>
-);

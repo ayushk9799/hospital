@@ -86,13 +86,29 @@ router.post('/update-bill/:id', async (req, res) => {
   }
 });
 
-// Get all bills
+// Get all service bills
 router.get('/get-bills', async (req, res) => {
   try {
     const bills = await ServicesBill.find().sort({ createdAt: -1 }).populate('payments');
     res.status(200).json(bills);
   } catch (error) {
     res.status(500).json({ message: 'Server error', error });
+  }
+});
+
+// Get a specific service bill by ID
+router.get('/get-bill/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const bill = await ServicesBill.findById(id).populate('payments');
+    
+    if (!bill) {
+      return res.status(404).json({ message: 'Bill not found' });
+    }
+    
+    res.status(200).json(bill);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 
@@ -238,5 +254,7 @@ router.post('/:id/payments', verifyToken, async (req, res) => {
     session.endSession();
   }
 });
+
+
 
 export default router;
