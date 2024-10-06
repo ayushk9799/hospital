@@ -23,7 +23,7 @@ import dashboardRoute from './routes/dashboardRoute.js';
 dotenv.config({path:'./config/config.env'});
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Get the directory name of the current module
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -37,7 +37,7 @@ app.use(express.static(path.join(__dirname, '../frontend/build')));
  app.options("*", cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
 // Connect to MongoDB
-mongoose.connect('mongodb+srv://ayushkumarsanu6969:fk7f7SRyMjd6B84V@cluster0.ajyh7.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0' || 'mongodb://localhost:27017/hospital_management')
+mongoose.connect(process.env.MONGODB_URI)
 .then(() => {})
 .catch(err => {});
 
