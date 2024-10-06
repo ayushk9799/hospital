@@ -1,28 +1,36 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
 export const hospitalPlugin = (schema) => {
   // Add the hospital field to the schema if it doesn't exist
-  if (!schema.path('hospital')) {
-    // console.log("adding hospital")
-    schema.add({ hospital: { type: mongoose.Schema.Types.ObjectId, ref: 'Hospital' } });
+  if (!schema.path("hospital")) {
+    //
+    schema.add({
+      hospital: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital" },
+    });
   }
 
   // Helper function to set hospital condition
-  const setHospitalCondition = function() {
-    // console.log("setting hospital")
+  const setHospitalCondition = function () {
+    //
     if (!this.getQuery().hospital && mongoose.connection.hospital) {
       this.where({ hospital: mongoose.connection.hospital });
     }
   };
 
   // Apply setHospitalCondition to all query middlewares
-  ['find', 'findOne', 'update', 'findOneAndUpdate', 'delete', 'deleteMany'].forEach(method => {
+  [
+    "find",
+    "findOne",
+    "update",
+    "findOneAndUpdate",
+    "delete",
+    "deleteMany",
+  ].forEach((method) => {
     schema.pre(method, setHospitalCondition);
   });
 
   // Middleware for 'save'
-  schema.pre('save', function(next) {
-    console.log("saving")
+  schema.pre("save", function (next) {
     if (!this.hospital && mongoose.connection.hospital) {
       this.hospital = mongoose.connection.hospital;
     }
@@ -30,9 +38,9 @@ export const hospitalPlugin = (schema) => {
   });
 
   // Middleware for 'insertMany'
-  schema.pre('insertMany', function(next, docs) {
+  schema.pre("insertMany", function (next, docs) {
     if (Array.isArray(docs)) {
-      docs.forEach(doc => {
+      docs.forEach((doc) => {
         if (!doc.hospital && mongoose.connection.hospital) {
           doc.hospital = mongoose.connection.hospital;
         }
@@ -42,7 +50,7 @@ export const hospitalPlugin = (schema) => {
   });
 
   // Add a static method to the schema for hospital-aware aggregation
-  schema.statics.hospitalAwareAggregate = function(pipeline) {
+  schema.statics.hospitalAwareAggregate = function (pipeline) {
     const hospitalId = mongoose.connection.hospital;
     if (hospitalId) {
       // Add a $match stage at the beginning of the pipeline to filter by hospital

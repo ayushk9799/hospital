@@ -1,23 +1,47 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate, useParams, useLocation } from 'react-router-dom';
+import React, { useState, useEffect, useMemo } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { Card, CardContent } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
-import { ArrowLeft, Pencil, Trash2, Plus, AlertCircle, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Pencil,
+  Trash2,
+  Plus,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
 import { Separator } from "../components/ui/separator";
-import { fetchServices } from '../redux/slices/serviceSlice';
+import { fetchServices } from "../redux/slices/serviceSlice";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
-import { createBill, setCreateBillStatusIdle, updateBill } from '../redux/slices/BillingSlice';
-import { useToast } from '../hooks/use-toast';
-import { setSelectedPatientForBill } from '../redux/slices/patientSlice';
-import { CalendarDays, Phone, Mail, MapPin } from 'lucide-react';
+import {
+  createBill,
+  setCreateBillStatusIdle,
+  updateBill,
+} from "../redux/slices/BillingSlice";
+import { useToast } from "../hooks/use-toast";
+import { setSelectedPatientForBill } from "../redux/slices/patientSlice";
+import { CalendarDays, Phone, Mail, MapPin } from "lucide-react";
 import { Badge } from "../components/ui/badge";
-import { format } from 'date-fns';
+import { format } from "date-fns";
 const CreateServiceBill = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -25,24 +49,36 @@ const CreateServiceBill = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  const selectedPatient = useSelector((state) => state.patients.selectedPatient);
+  const selectedPatient = useSelector(
+    (state) => state.patients.selectedPatient
+  );
   const patientDetails = selectedPatient?.patient;
   const { services, servicesStatus } = useSelector((state) => state.services);
   const createBillStatus = useSelector((state) => state.bills.createBillStatus);
   const updateBillStatus = useSelector((state) => state.bills.updateBillStatus);
   const [addedServices, setAddedServices] = useState([]);
-  const [newService, setNewService] = useState({ serviceName: '', quantity: '', rate: '', total: '', category: '' });
+  const [newService, setNewService] = useState({
+    serviceName: "",
+    quantity: "",
+    rate: "",
+    total: "",
+    category: "",
+  });
   const [serviceName, setServiceName] = useState("");
-  const [additionalDiscount, setAdditionalDiscount] = useState('');
-  const [additionalDiscountType, setAdditionalDiscountType] = useState('amount');
+  const [additionalDiscount, setAdditionalDiscount] = useState("");
+  const [additionalDiscountType, setAdditionalDiscountType] =
+    useState("amount");
   const [isEditing, setIsEditing] = useState(false);
 
   const calculateTotals = useMemo(() => {
-    const subtotal = addedServices.reduce((sum, service) => sum + service.total, 0);
+    const subtotal = addedServices.reduce(
+      (sum, service) => sum + service.total,
+      0
+    );
     let discountValue = 0;
 
-    if (additionalDiscount !== '') {
-      if (additionalDiscountType === 'amount') {
+    if (additionalDiscount !== "") {
+      if (additionalDiscountType === "amount") {
         discountValue = parseFloat(additionalDiscount);
       } else {
         discountValue = (parseFloat(additionalDiscount) / 100) * subtotal;
@@ -55,12 +91,12 @@ const CreateServiceBill = () => {
     return {
       subtotal,
       additionalDiscount: discountValue.toFixed(2),
-      totalAmount: totalAmount
+      totalAmount: totalAmount,
     };
   }, [addedServices, additionalDiscount, additionalDiscountType]);
 
   useEffect(() => {
-    if (servicesStatus === 'idle') dispatch(fetchServices());
+    if (servicesStatus === "idle") dispatch(fetchServices());
   }, [dispatch, servicesStatus]);
 
   useEffect(() => {
@@ -68,29 +104,31 @@ const CreateServiceBill = () => {
       setIsEditing(true);
       const billData = location.state.billData;
       // Populate form with bill data
-      setAddedServices(billData.services.map((service, index) => ({
-        id: index + 1,
-        service: service.name,
-        category: service.category,
-        quantity: service.quantity,
-        rate: service.rate,
-        total: service.rate * service.quantity,
-      })));
-      setAdditionalDiscount(billData.additionalDiscount || '');
+      setAddedServices(
+        billData.services.map((service, index) => ({
+          id: index + 1,
+          service: service.name,
+          category: service.category,
+          quantity: service.quantity,
+          rate: service.rate,
+          total: service.rate * service.quantity,
+        }))
+      );
+      setAdditionalDiscount(billData.additionalDiscount || "");
       dispatch(setSelectedPatientForBill(billData.patient));
     }
   }, [billId, location.state]);
 
   useEffect(() => {
-    if (createBillStatus === 'succeeded') {
-      toast({ 
+    if (createBillStatus === "succeeded") {
+      toast({
         variant: "success",
         title: "Bill created successfully",
         description: "The bill has been successfully created.",
       });
       dispatch(setCreateBillStatusIdle());
-      navigate('/billings');
-    } else if (createBillStatus === 'failed') {
+      navigate("/billings");
+    } else if (createBillStatus === "failed") {
       toast({
         title: "Error creating bill",
         description: "There was an error creating the bill. Please try again.",
@@ -101,15 +139,15 @@ const CreateServiceBill = () => {
   }, [createBillStatus, dispatch, toast, navigate]);
 
   useEffect(() => {
-    if (updateBillStatus === 'succeeded') {
-      toast({ 
+    if (updateBillStatus === "succeeded") {
+      toast({
         variant: "success",
         title: "Bill updated successfully",
         description: "The bill has been successfully updated.",
       });
       dispatch(setCreateBillStatusIdle());
-      navigate('/billings');
-    } else if (updateBillStatus === 'failed') {
+      navigate("/billings");
+    } else if (updateBillStatus === "failed") {
       toast({
         title: "Error updating bill",
         description: "There was an error updating the bill. Please try again.",
@@ -121,7 +159,7 @@ const CreateServiceBill = () => {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewService(prev => {
+    setNewService((prev) => {
       const updatedItem = { ...prev, [name]: value };
       if (updatedItem.quantity && updatedItem.rate) {
         const quantity = parseInt(updatedItem.quantity);
@@ -134,7 +172,7 @@ const CreateServiceBill = () => {
 
   useEffect(() => {
     if (serviceName) {
-      setNewService(prev => ({ ...prev, serviceName }));
+      setNewService((prev) => ({ ...prev, serviceName }));
     }
   }, [serviceName]);
 
@@ -150,26 +188,32 @@ const CreateServiceBill = () => {
       category: newService.category || "Not specified",
       quantity: quantityValue,
       rate: totalValue / quantityValue,
-      total: totalValue
+      total: totalValue,
     };
-    
-    setAddedServices(prev => [...prev, newServiceWithoutDiscount]);
-    setNewService({ serviceName: '', quantity: '', rate: '', total: '', category: '' });
-    setServiceName('');
+
+    setAddedServices((prev) => [...prev, newServiceWithoutDiscount]);
+    setNewService({
+      serviceName: "",
+      quantity: "",
+      rate: "",
+      total: "",
+      category: "",
+    });
+    setServiceName("");
   };
 
   const handleRemoveService = (id) => {
-    setAddedServices(prev => prev.filter(service => service.id !== id));
+    setAddedServices((prev) => prev.filter((service) => service.id !== id));
   };
 
   const handleServiceSuggestionSelect = (suggestion) => {
-    setNewService(prev => ({
+    setNewService((prev) => ({
       ...prev,
       serviceName: suggestion.name,
       rate: suggestion.rate,
       total: suggestion.rate,
       category: suggestion.category,
-      quantity: 1
+      quantity: 1,
     }));
   };
 
@@ -178,26 +222,28 @@ const CreateServiceBill = () => {
     if (addedServices.length === 0) {
       toast({
         title: "No services added",
-        description: "Please add at least one service before creating the bill.",
+        description:
+          "Please add at least one service before creating the bill.",
         variant: "destructive",
       });
       return;
     }
 
     let additionalDiscountAmount = parseFloat(additionalDiscount) || 0;
-    
+
     // Convert percentage to amount if necessary
-    if (additionalDiscountType === 'percentage') {
-      additionalDiscountAmount = (additionalDiscountAmount / 100) * calculateTotals.subtotal;
+    if (additionalDiscountType === "percentage") {
+      additionalDiscountAmount =
+        (additionalDiscountAmount / 100) * calculateTotals.subtotal;
     }
 
     const billData = {
-      services: addedServices.map(service => ({
+      services: addedServices.map((service) => ({
         name: service.service,
         quantity: service.quantity,
         rate: service.rate,
         discount: service.discAmt,
-        category: service.category
+        category: service.category,
       })),
       patient: selectedPatient.patient._id,
       patientType: selectedPatient.type,
@@ -208,9 +254,9 @@ const CreateServiceBill = () => {
       totals: {
         totalAmount: calculateTotals.totalAmount,
         subtotal: calculateTotals.subtotal,
-        additionalDiscount: additionalDiscountAmount
+        additionalDiscount: additionalDiscountAmount,
       },
-      visitID: selectedPatient?._id
+      visitID: selectedPatient?._id,
     };
 
     if (isEditing) {
@@ -222,15 +268,20 @@ const CreateServiceBill = () => {
 
   const handleSaveToDraft = () => {
     // Implement the save to draft functionality here
-    console.log("Save to Draft button clicked");
   };
 
   const handleReset = () => {
     setAddedServices([]);
-    setNewService({ serviceName: '', quantity: '', rate: '', total: '', category: '' });
-    setServiceName('');
-    setAdditionalDiscount('');
-    setAdditionalDiscountType('amount');
+    setNewService({
+      serviceName: "",
+      quantity: "",
+      rate: "",
+      total: "",
+      category: "",
+    });
+    setServiceName("");
+    setAdditionalDiscount("");
+    setAdditionalDiscountType("amount");
   };
 
   if (!selectedPatient) {
@@ -238,34 +289,43 @@ const CreateServiceBill = () => {
   }
 
   const handleEditService = (id) => {
-    const serviceToEdit = addedServices.find(service => service.id === id);
+    const serviceToEdit = addedServices.find((service) => service.id === id);
     if (serviceToEdit) {
       setNewService({
         serviceName: serviceToEdit.service,
         quantity: serviceToEdit.quantity.toString(),
         rate: serviceToEdit.rate.toString(),
         total: serviceToEdit.total.toString(),
-        category: serviceToEdit.category
+        category: serviceToEdit.category,
       });
       setServiceName(serviceToEdit.service);
-      setAddedServices(prev => prev.filter(service => service.id !== id));
+      setAddedServices((prev) => prev.filter((service) => service.id !== id));
     }
   };
 
-  const isLoading = createBillStatus === 'loading' || updateBillStatus === 'loading';
+  const isLoading =
+    createBillStatus === "loading" || updateBillStatus === "loading";
 
   return (
     <div className="w-full mx-auto p-2 space-y-2">
-      <div className="flex items-center cursor-pointer" onClick={() => navigate(-1)}>
+      <div
+        className="flex items-center cursor-pointer"
+        onClick={() => navigate(-1)}
+      >
         <ArrowLeft className="mr-2" />
-        <h1 className="text-lg font-bold">{isEditing ? 'Edit Bill' : 'Add Bill'}</h1>
+        <h1 className="text-lg font-bold">
+          {isEditing ? "Edit Bill" : "Add Bill"}
+        </h1>
       </div>
 
       <Card>
         <CardContent className="flex items-center justify-between p-4">
           <div className="flex items-center">
             <Avatar className="h-12 w-12 mr-4">
-              <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${patientDetails?.name}`} alt={patientDetails?.name} />
+              <AvatarImage
+                src={`https://api.dicebear.com/6.x/initials/svg?seed=${patientDetails?.name}`}
+                alt={patientDetails?.name}
+              />
               <AvatarFallback>{patientDetails?.name?.charAt(0)}</AvatarFallback>
             </Avatar>
             <div>
@@ -273,14 +333,20 @@ const CreateServiceBill = () => {
               <div className="flex gap-2 mt-1">
                 <Badge variant="outline">{patientDetails?.gender}</Badge>
                 <Badge variant="outline">{patientDetails?.age} yrs</Badge>
-                {patientDetails?.bloodGroup && <Badge variant="outline">{patientDetails.bloodGroup}</Badge>}
+                {patientDetails?.bloodGroup && (
+                  <Badge variant="outline">{patientDetails.bloodGroup}</Badge>
+                )}
               </div>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-2 text-sm">
             <div className="flex items-center gap-2">
               <CalendarDays className="w-4 h-4 text-gray-400" />
-              <span>{selectedPatient?.bookingDate ? format(selectedPatient?.bookingDate, 'MMM dd, hh:mm a') : 'N/A'}</span>
+              <span>
+                {selectedPatient?.bookingDate
+                  ? format(selectedPatient?.bookingDate, "MMM dd, hh:mm a")
+                  : "N/A"}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-gray-400" />
@@ -304,11 +370,13 @@ const CreateServiceBill = () => {
 
       <Card>
         <CardContent className="p-4 min-h-[430px]">
-        
-        <form onSubmit={handleAddService} className="grid grid-cols-6 gap-4 items-end mb-4">
+          <form
+            onSubmit={handleAddService}
+            className="grid grid-cols-6 gap-4 items-end mb-4"
+          >
             <div className="col-span-2">
               <Label htmlFor="serviceName">Service Name</Label>
-              <SearchSuggestion 
+              <SearchSuggestion
                 suggestions={services}
                 placeholder="Enter service name"
                 value={serviceName}
@@ -318,26 +386,68 @@ const CreateServiceBill = () => {
             </div>
             <div>
               <Label htmlFor="quantity">Quantity *</Label>
-              <Input type="number" id="quantity" name="quantity" placeholder="Quantity" value={newService.quantity} onChange={handleInputChange} required />
+              <Input
+                type="number"
+                id="quantity"
+                name="quantity"
+                placeholder="Quantity"
+                value={newService.quantity}
+                onChange={handleInputChange}
+                required
+              />
             </div>
             <div>
               <Label htmlFor="rate">Rate</Label>
-              <Input type="number" id="rate" name="rate" placeholder="Rate" value={newService.rate} onChange={handleInputChange} />
+              <Input
+                type="number"
+                id="rate"
+                name="rate"
+                placeholder="Rate"
+                value={newService.rate}
+                onChange={handleInputChange}
+              />
             </div>
             <div>
               <Label htmlFor="total">Total *</Label>
-              <Input type="number" id="total" name="total" placeholder="Total" value={newService.total} onChange={handleInputChange} required />
+              <Input
+                type="number"
+                id="total"
+                name="total"
+                placeholder="Total"
+                value={newService.total}
+                onChange={handleInputChange}
+                required
+              />
             </div>
-            <div className='flex items-center justify-center'>
-              <Button type="submit" variant="outline" size="sm" className="h-8 w-8 p-0 mr-2" >
+            <div className="flex items-center justify-center">
+              <Button
+                type="submit"
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 mr-2"
+              >
                 <Plus className="h-4 w-4" />
               </Button>
-              <Button type="button" variant="outline" size="sm" className="h-8 w-8 p-0 mr-2" onClick={() => setNewService({ serviceName: '', quantity: '', rate: '', total: '', category: '' })}>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 w-8 p-0 mr-2"
+                onClick={() =>
+                  setNewService({
+                    serviceName: "",
+                    quantity: "",
+                    rate: "",
+                    total: "",
+                    category: "",
+                  })
+                }
+              >
                 <Trash2 className="h-4 w-4" />
               </Button>
             </div>
           </form>
-          <Separator className='my-2' />
+          <Separator className="my-2" />
           <h3 className="font-semibold text-lg mb-2">Added Service</h3>
           {addedServices.length > 0 ? (
             <Table>
@@ -359,14 +469,34 @@ const CreateServiceBill = () => {
                     <TableCell>{service.service}</TableCell>
                     <TableCell>{service.category}</TableCell>
                     <TableCell>{service.quantity}</TableCell>
-                    <TableCell>{service.rate.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                    <TableCell>{service.total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                    <TableCell>
+                      {service.rate.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
+                    <TableCell>
+                      {service.total.toLocaleString("en-IN", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
+                    </TableCell>
                     <TableCell className="text-right">
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0 mr-2" onClick={() => handleEditService(service.id)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 mr-2"
+                        onClick={() => handleEditService(service.id)}
+                      >
                         <span className="sr-only">Edit</span>
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => handleRemoveService(service.id)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleRemoveService(service.id)}
+                      >
                         <span className="sr-only">Remove</span>
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -387,7 +517,9 @@ const CreateServiceBill = () => {
       <Card>
         <CardContent className="p-4 flex justify-between items-center">
           <div className="flex items-center space-x-4">
-            <Label htmlFor="additionalDiscountType">Additional Discount Type:</Label>
+            <Label htmlFor="additionalDiscountType">
+              Additional Discount Type:
+            </Label>
             <Select
               id="additionalDiscountType"
               value={additionalDiscountType}
@@ -405,7 +537,7 @@ const CreateServiceBill = () => {
             <Input
               id="additionalDiscount"
               type="text"
-              placeholder={additionalDiscountType === 'amount' ? '0.00' : '0%'}
+              placeholder={additionalDiscountType === "amount" ? "0.00" : "0%"}
               value={additionalDiscount}
               onChange={(e) => setAdditionalDiscount(e.target.value)}
               className="w-24"
@@ -414,11 +546,23 @@ const CreateServiceBill = () => {
           <div className="flex flex-col items-end">
             <div className="flex items-center space-x-2">
               <Label>Subtotal:</Label>
-              <span>₹{calculateTotals.subtotal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              <span>
+                ₹
+                {calculateTotals.subtotal.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
             </div>
             <div className="flex items-center space-x-2">
               <Label>Total Amount:</Label>
-              <span className="text-xl font-bold">₹{calculateTotals.totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
+              <span className="text-xl font-bold">
+                ₹
+                {calculateTotals.totalAmount.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
             </div>
           </div>
         </CardContent>
@@ -429,17 +573,23 @@ const CreateServiceBill = () => {
         <Button variant="outline" onClick={handleReset} disabled={isLoading}>
           Reset
         </Button>
-        <Button variant="outline" onClick={handleSaveToDraft} disabled={isLoading}>
+        <Button
+          variant="outline"
+          onClick={handleSaveToDraft}
+          disabled={isLoading}
+        >
           Save to Draft
         </Button>
         <Button onClick={handleCreate} disabled={isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isEditing ? 'Updating...' : 'Creating...'}
+              {isEditing ? "Updating..." : "Creating..."}
             </>
+          ) : isEditing ? (
+            "Update Bill"
           ) : (
-            isEditing ? 'Update Bill' : 'Create Bill'
+            "Create Bill"
           )}
         </Button>
       </div>

@@ -18,7 +18,14 @@ import { Backend_URL } from "../assets/Data";
 import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 
-const CreateLabReport = ({ category, type, patientData, onClose, onSave, searchWhere }) => {
+const CreateLabReport = ({
+  category,
+  type,
+  patientData,
+  onClose,
+  onSave,
+  searchWhere,
+}) => {
   console.log(category);
   console.log(type);
   const navigate = useNavigate();
@@ -37,9 +44,8 @@ const CreateLabReport = ({ category, type, patientData, onClose, onSave, searchW
 
   useEffect(() => {
     if (labReportFields[category] && labReportFields[category][type]) {
-      const relevantReports = patientData?.labReports?.filter(
-        (report) => report.name === type
-      ) || [];
+      const relevantReports =
+        patientData?.labReports?.filter((report) => report.name === type) || [];
       setAllReports(relevantReports);
 
       if (relevantReports.length > 0) {
@@ -80,7 +86,6 @@ const CreateLabReport = ({ category, type, patientData, onClose, onSave, searchW
   };
 
   const resetForm = () => {
-    console.log("form reset ")
     setFields(
       labReportFields[category][type].map((field) => ({
         ...field,
@@ -111,7 +116,7 @@ const CreateLabReport = ({ category, type, patientData, onClose, onSave, searchW
           value: field.value,
           label: field.label,
           unit: field.unit,
-          normalRange: field.normalRange
+          normalRange: field.normalRange,
         };
         return acc;
       }, {}),
@@ -138,10 +143,10 @@ const CreateLabReport = ({ category, type, patientData, onClose, onSave, searchW
       const result = await response.json();
       console.log("Lab Report added successfully:", result);
       alert("Lab Report added successfully");
-      
+
       // Call the onSave function with the new lab report data
       onSave(labReportData);
-      
+
       onClose(); // Close the lab report form
     } catch (error) {
       console.error("Error adding lab report:", error);
@@ -200,7 +205,10 @@ const CreateLabReport = ({ category, type, patientData, onClose, onSave, searchW
           <Button onClick={() => setShowPDFPreview(false)}>Back to Form</Button>
         </div>
         <div className="flex-grow">
-          <PDFViewer className="w-full h-full min-h-[calc(100vh-100px)]" showToolbar={false}>
+          <PDFViewer
+            className="w-full h-full min-h-[calc(100vh-100px)]"
+            showToolbar={false}
+          >
             {generatePDF()}
           </PDFViewer>
         </div>
@@ -241,7 +249,14 @@ const CreateLabReport = ({ category, type, patientData, onClose, onSave, searchW
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fields.map((field) => (
-              <div key={field.name} className={field.name === "findings" || field.name === "impression" ? "col-span-2" : ""}>
+              <div
+                key={field.name}
+                className={
+                  field.name === "findings" || field.name === "impression"
+                    ? "col-span-2"
+                    : ""
+                }
+              >
                 <Label htmlFor={field.name} className="mb-1">
                   {field.label}
                 </Label>

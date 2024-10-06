@@ -85,7 +85,6 @@ const initialFormData = {
 const initialErrors = {};
 
 export default function OPDRegDialog({ open, onOpenChange }) {
-  console.log("opd");
   const dispatch = useDispatch();
   const { toast } = useToast();
   const registerPatientStatus = useSelector(
@@ -113,8 +112,10 @@ export default function OPDRegDialog({ open, onOpenChange }) {
     });
   }, []);
 
-  const handleSelectChange = useCallback((id, value) =>
-    handleInputChange({ target: { id, value } }), [handleInputChange]);
+  const handleSelectChange = useCallback(
+    (id, value) => handleInputChange({ target: { id, value } }),
+    [handleInputChange]
+  );
 
   const validateForm = () => {
     const newErrors = {};
@@ -134,128 +135,140 @@ export default function OPDRegDialog({ open, onOpenChange }) {
     setSearchQuery((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  const handleSubmit = useCallback(async (e) => {
-    e.preventDefault();
-    if (isOldPatient) {
-      if (
-        searchType === "name" &&
-        (!searchQuery.name || !searchQuery.bookingDate)
-      ) {
-        toast({
-          title: "Invalid Search",
-          description:
-            "Please provide both name and booking date for name-based search.",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!searchQuery.bookingDate) {
-        toast({
-          title: "Invalid Search",
-          description: "Booking date is required for all search types.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      try {
-        const response = await fetch(
-          `${Backend_URL}/api/patients/complexsearch`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include",
-            body: JSON.stringify({
-              searchQuery: {
-                ...searchQuery,
-                bookingDate: searchQuery.bookingDate,
-              },
-              searchType,
-              searchWhere: formData.patientType.toLowerCase(),
-            }),
-          }
-        );
-        if (!response.ok) {
-          throw new Error("Failed to fetch patient data");
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      if (isOldPatient) {
+        if (
+          searchType === "name" &&
+          (!searchQuery.name || !searchQuery.bookingDate)
+        ) {
+          toast({
+            title: "Invalid Search",
+            description:
+              "Please provide both name and booking date for name-based search.",
+            variant: "destructive",
+          });
+          return;
         }
-        const data = await response.json();
-        if (data.length > 0) {
-          setFormData({
-            ...initialFormData,
-            ...data[0],
-            name: data[0].patientName,
-            age: data[0].patient.age,
-            gender: data[0].patient.gender,
-            bloodType: data[0].patient.bloodType,
-            address: data[0].patient.address,
-          });
+        if (!searchQuery.bookingDate) {
           toast({
-            title: "Patient Found",
-            description: "Patient information has been loaded.",
-            variant: "default",
+            title: "Invalid Search",
+            description: "Booking date is required for all search types.",
+            variant: "destructive",
           });
-          setIsOldPatient(false);
-        } else {
+          return;
+        }
+
+        try {
+          const response = await fetch(
+            `${Backend_URL}/api/patients/complexsearch`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              credentials: "include",
+              body: JSON.stringify({
+                searchQuery: {
+                  ...searchQuery,
+                  bookingDate: searchQuery.bookingDate,
+                },
+                searchType,
+                searchWhere: formData.patientType.toLowerCase(),
+              }),
+            }
+          );
+          if (!response.ok) {
+            throw new Error("Failed to fetch patient data");
+          }
+          const data = await response.json();
+          if (data.length > 0) {
+            setFormData({
+              ...initialFormData,
+              ...data[0],
+              name: data[0].patientName,
+              age: data[0].patient.age,
+              gender: data[0].patient.gender,
+              bloodType: data[0].patient.bloodType,
+              address: data[0].patient.address,
+            });
+            toast({
+              title: "Patient Found",
+              description: "Patient information has been loaded.",
+              variant: "default",
+            });
+            setIsOldPatient(false);
+          } else {
+            toast({
+              title: "Patient Not Found",
+              description: "No matching patient records found.",
+              variant: "destructive",
+            });
+          }
+        } catch (error) {
+          console.error("Error searching for patient:", error);
           toast({
-            title: "Patient Not Found",
-            description: "No matching patient records found.",
+            title: "Search Error",
+            description: "An error occurred while searching for the patient.",
             variant: "destructive",
           });
         }
-      } catch (error) {
-        console.error("Error searching for patient:", error);
-        toast({
-          title: "Search Error",
-          description: "An error occurred while searching for the patient.",
-          variant: "destructive",
-        });
-      }
-    } else {
-      // Existing new patient registration logic
-      if (validateForm()) {
-        const submissionData = {
-          ...formData,
-          dateOfBirth: formData.dateOfBirth
-            ? new Date(formData.dateOfBirth).toISOString()
-            : null,
-          age: parseInt(formData.age, 10),
-          visit: {
-            ...formData.visit,
-            bookingDate: formData.visit.bookingDate,
-            vitals: Object.fromEntries(
-              Object.entries(formData.visit.vitals).map(([key, value]) =>
-                key === "bloodPressure"
-                  ? [key, value]
-                  : [key, parseFloat(value)]
-              )
-            ),
-          },
-        };
-        dispatch(registerPatient(submissionData))
-          .unwrap()
-          .then(() => {
-            toast({
-              title: "Patient registered successfully",
-              description: "The new patient has been added.",
-              variant: "success",
+      } else {
+        // Existing new patient registration logic
+        if (validateForm()) {
+          const submissionData = {
+            ...formData,
+            dateOfBirth: formData.dateOfBirth
+              ? new Date(formData.dateOfBirth).toISOString()
+              : null,
+            age: parseInt(formData.age, 10),
+            visit: {
+              ...formData.visit,
+              bookingDate: formData.visit.bookingDate,
+              vitals: Object.fromEntries(
+                Object.entries(formData.visit.vitals).map(([key, value]) =>
+                  key === "bloodPressure"
+                    ? [key, value]
+                    : [key, parseFloat(value)]
+                )
+              ),
+            },
+          };
+          dispatch(registerPatient(submissionData))
+            .unwrap()
+            .then(() => {
+              toast({
+                title: "Patient registered successfully",
+                description: "The new patient has been added.",
+                variant: "success",
+              });
+              dispatch(fetchPatients());
+              onOpenChange(false);
+            })
+            .catch((error) => {
+              toast({
+                title: "Failed to register patient",
+                description:
+                  error.message ||
+                  "There was an error registering the patient. Please try again.",
+                variant: "destructive",
+              });
             });
-            dispatch(fetchPatients());
-            onOpenChange(false);
-          })
-          .catch((error) => {
-            toast({
-              title: "Failed to register patient",
-              description:
-                error.message ||
-                "There was an error registering the patient. Please try again.",
-              variant: "destructive",
-            });
-          })
+        }
       }
-    }
-  }, [isOldPatient, searchType, searchQuery, formData, validateForm, dispatch, toast, onOpenChange]);
+    },
+    [
+      isOldPatient,
+      searchType,
+      searchQuery,
+      formData,
+      validateForm,
+      dispatch,
+      toast,
+      onOpenChange,
+    ]
+  );
 
   const handleReset = useCallback(() => {
     setFormData(initialFormData);

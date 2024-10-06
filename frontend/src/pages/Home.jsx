@@ -1,16 +1,16 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { CardContent, Card } from "../components/ui/card";
-import { Link } from 'react-router-dom';
+import { Link } from "react-router-dom";
 import { ShieldCheck, Users, BarChart, Pill, Loader2 } from "lucide-react";
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
-import { useLocation } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-import { Backend_URL } from '../assets/Data';
-import { useDispatch, useSelector } from 'react-redux';
-import { fetchUserData, loginUser } from '../redux/slices/userSlice';
-import { useToast } from '../hooks/use-toast';
+import { useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { Backend_URL } from "../assets/Data";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchUserData, loginUser } from "../redux/slices/userSlice";
+import { useToast } from "../hooks/use-toast";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
@@ -18,9 +18,9 @@ export default function LandingPage() {
   const location = useLocation();
   const featuresRef = useRef(null);
   const [formData, setFormData] = useState({
-    hospitalId: '',
-    username: '', // Changed from email to username
-    password: '',
+    hospitalId: "",
+    username: "", // Changed from email to username
+    password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
   const loginStatus = useSelector((state) => state.user.loginStatus);
@@ -29,20 +29,20 @@ export default function LandingPage() {
 
   useEffect(() => {
     if (location.state?.scrollToFeatures && featuresRef.current) {
-      featuresRef.current.scrollIntoView({ behavior: 'smooth' });
+      featuresRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [location]);
 
   const scrollToFeatures = (e) => {
     e.preventDefault();
-    featuresRef.current?.scrollIntoView({ behavior: 'smooth' });
+    featuresRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [id]: value
+      [id]: value,
     }));
   };
 
@@ -52,11 +52,10 @@ export default function LandingPage() {
       setIsLoading(true);
       try {
         await dispatch(loginUser(formData)).unwrap();
-        console.log('Login successful');
         await dispatch(fetchUserData());
-        navigate('/');
+        navigate("/");
       } catch (error) {
-        console.error('Login error:', error);
+        console.error("Login error:", error);
         toast({
           title: "Login failed",
           description: "Please check your credentials and try again.",
@@ -79,23 +78,34 @@ export default function LandingPage() {
       <header className="px-4 lg:px-6 h-16 flex items-center bg-white shadow-sm">
         <Link className="flex items-center justify-center" to="/">
           <ColorfulLogo className="h-7 w-7 text-blue-600" />
-          <span className="ml-2 text-2xl font-bold text-gray-900">The Hospital</span>
+          <span className="ml-2 text-2xl font-bold text-gray-900">
+            The Hospital
+          </span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-sm font-medium hover:underline underline-offset-4" to="/">
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
+            to="/"
+          >
             Home
           </Link>
-          <a 
-            href="#features" 
+          <a
+            href="#features"
             className="text-sm font-medium hover:underline underline-offset-4 cursor-pointer"
             onClick={scrollToFeatures}
           >
             Features
           </a>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" to="/about">
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
+            to="/about"
+          >
             About
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" to="/contact">
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
+            to="/contact"
+          >
             Contact
           </Link>
         </nav>
@@ -110,8 +120,9 @@ export default function LandingPage() {
                     Streamline Your Hospital Management
                   </h1>
                   <p className="max-w-[600px] text-gray-500 md:text-xl">
-                    The Hospital provides a comprehensive solution for efficient hospital administration, patient care, and
-                    resource management.
+                    The Hospital provides a comprehensive solution for efficient
+                    hospital administration, patient care, and resource
+                    management.
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -131,7 +142,10 @@ export default function LandingPage() {
                   <form onSubmit={handleSubmit} className="space-y-4">
                     <h2 className="text-2xl font-bold text-center">Login</h2>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="hospitalId">
+                      <label
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        htmlFor="hospitalId"
+                      >
                         Hospital ID
                       </label>
                       <Input
@@ -145,7 +159,10 @@ export default function LandingPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="username">
+                      <label
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        htmlFor="username"
+                      >
                         User ID
                       </label>
                       <Input
@@ -159,7 +176,10 @@ export default function LandingPage() {
                       />
                     </div>
                     <div className="space-y-2">
-                      <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="password">
+                      <label
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        htmlFor="password"
+                      >
                         Password
                       </label>
                       <Input
@@ -172,8 +192,8 @@ export default function LandingPage() {
                         onChange={handleInputChange}
                       />
                     </div>
-                    <Button 
-                      className="w-full bg-blue-600 text-white hover:bg-blue-700" 
+                    <Button
+                      className="w-full bg-blue-600 text-white hover:bg-blue-700"
                       type="submit"
                       disabled={isLoading}
                     >
@@ -182,10 +202,10 @@ export default function LandingPage() {
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         </>
                       ) : (
-                        'Login'
+                        "Login"
                       )}
                     </Button>
-                    {loginStatus === 'failed' && (
+                    {loginStatus === "failed" && (
                       <p className="text-red-500 text-sm">{loginError}</p>
                     )}
                   </form>
@@ -194,41 +214,67 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-        <section id="features" ref={featuresRef} className="w-full py-12 md:py-24 lg:py-32 bg-gray-100">
+        <section
+          id="features"
+          ref={featuresRef}
+          className="w-full py-12 md:py-24 lg:py-32 bg-gray-100"
+        >
           <div className="container px-4 md:px-6">
-            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-12">Key Features</h2>
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl text-center mb-12">
+              Key Features
+            </h2>
             <div className="grid gap-6 grid-cols-4">
               <div className="flex flex-col items-center text-center space-y-4">
                 <ShieldCheck className="h-12 w-12 text-blue-600" />
                 <h3 className="text-xl font-bold">Secure Patient Records</h3>
-                <p className="text-gray-500">Maintain confidential patient information with our state-of-the-art security measures.</p>
+                <p className="text-gray-500">
+                  Maintain confidential patient information with our
+                  state-of-the-art security measures.
+                </p>
               </div>
               <div className="flex flex-col items-center text-center space-y-4">
                 <Users className="h-12 w-12 text-blue-600" />
                 <h3 className="text-xl font-bold">Staff Management</h3>
-                <p className="text-gray-500">Efficiently manage schedules, assignments, and performance of your medical staff.</p>
+                <p className="text-gray-500">
+                  Efficiently manage schedules, assignments, and performance of
+                  your medical staff.
+                </p>
               </div>
               <div className="flex flex-col items-center text-center space-y-4">
                 <Pill className="h-12 w-12 text-blue-600" />
                 <h3 className="text-xl font-bold">Pharmacy Management</h3>
-                <p className="text-gray-500">Streamline medication dispensing, inventory control, and prescription tracking.</p>
+                <p className="text-gray-500">
+                  Streamline medication dispensing, inventory control, and
+                  prescription tracking.
+                </p>
               </div>
               <div className="flex flex-col items-center text-center space-y-4">
                 <BarChart className="h-12 w-12 text-blue-600" />
                 <h3 className="text-xl font-bold">Analytics Dashboard</h3>
-                <p className="text-gray-500">Gain insights into hospital operations with comprehensive analytics and reporting.</p>
+                <p className="text-gray-500">
+                  Gain insights into hospital operations with comprehensive
+                  analytics and reporting.
+                </p>
               </div>
             </div>
           </div>
         </section>
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-white">
-        <p className="text-xs text-gray-500">© 2024 TheHospital. All rights reserved.</p>
+        <p className="text-xs text-gray-500">
+          © 2024 TheHospital. All rights reserved.
+        </p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-xs hover:underline underline-offset-4" to="/terms">
+          <Link
+            className="text-xs hover:underline underline-offset-4"
+            to="/terms"
+          >
             Terms of Service
           </Link>
-          <Link className="text-xs hover:underline underline-offset-4" to="/privacy">
+          <Link
+            className="text-xs hover:underline underline-offset-4"
+            to="/privacy"
+          >
             Privacy
           </Link>
         </nav>

@@ -67,7 +67,6 @@ const Lab = () => {
 
   useEffect(() => {
     if (status === "idle") {
-      console.log("Fetching templates");
       dispatch(fetchTemplates());
     }
   }, [status, dispatch]);

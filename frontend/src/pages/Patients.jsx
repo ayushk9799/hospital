@@ -45,12 +45,7 @@ import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
 import { useSelector, useDispatch } from "react-redux";
 import { DateRangePicker } from "../assets/Data";
 import { setSelectedPatient } from "../redux/slices/patientSlice";
-import {
-  startOfDay,
-  endOfDay,
-  subDays,
-  isWithinInterval,
-} from "date-fns";
+import { startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
 import { format } from "date-fns";
 
 // Add this selector function at the top of your file, outside of the component
@@ -69,7 +64,7 @@ export default function Patients() {
 
   // Use the useSelector hook to get the patients from the Redux store
   const patients = useSelector((state) => state.patients.patientlist);
-  const {bills} = useSelector((state) => state.bills);
+  const { bills } = useSelector((state) => state.bills);
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
 
   const filteredPatients = patients.filter((patient) => {
@@ -79,8 +74,8 @@ export default function Patients() {
 
     let dateMatch = true;
     // Parse the date string in the format "DD-MM-YYYY"
-    const visitDate = patient.bookingDate
-    console.log(visitDate)
+    const visitDate = patient.bookingDate;
+    console.log(visitDate);
     const today = new Date();
 
     switch (dateFilter) {
@@ -123,15 +118,13 @@ export default function Patients() {
     dispatch(setSelectedPatient(patient));
     const bill = bills.find((bill) => bill._id === billID);
     navigate(`/billings/edit/${billID}`, { state: { billData: bill } });
-    // console.log('click');
-  }
+    // ;
+  };
 
   const createServiceBill = (patient) => {
     dispatch(setSelectedPatient(patient));
     navigate("/billings/create-service-bill");
   };
-
- 
 
   const PatientTable = ({ patients, type }) => {
     const navigate = useNavigate();
@@ -143,7 +136,9 @@ export default function Patients() {
       return (
         <div className="flex flex-col items-center justify-center py-12">
           <UserX className="h-16 w-16 text-gray-400 mb-4" />
-          <p className="text-xl font-semibold text-gray-600">No patients found</p>
+          <p className="text-xl font-semibold text-gray-600">
+            No patients found
+          </p>
           <p className="text-gray-500">Try adjusting your search or filters</p>
         </div>
       );
@@ -168,7 +163,7 @@ export default function Patients() {
             <TableHead>Mobile</TableHead>
             <TableHead>Gender</TableHead>
             <TableHead>Doctor</TableHead>
-           
+
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -190,12 +185,22 @@ export default function Patients() {
                   <TableCell>
                     {patient.assignedRoom?.roomNumber || "--"}
                   </TableCell>
-                  <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell>
-                  <TableCell>{patient.dateDischarged?format(new Date(patient.dateDischarged), 'dd-MM-yyyy'): "--"}</TableCell>
+                  <TableCell>
+                    {format(new Date(patient.bookingDate), "dd-MM-yyyy")}
+                  </TableCell>
+                  <TableCell>
+                    {patient.dateDischarged
+                      ? format(new Date(patient.dateDischarged), "dd-MM-yyyy")
+                      : "--"}
+                  </TableCell>
                   <TableCell>{patient.status}</TableCell>
-                  </>
+                </>
               )}
-              {type === "OPD" && <TableCell>{format(new Date(patient.bookingDate), 'dd-MM-yyyy')}</TableCell>} 
+              {type === "OPD" && (
+                <TableCell>
+                  {format(new Date(patient.bookingDate), "dd-MM-yyyy")}
+                </TableCell>
+              )}
               {type === "OPD" && (
                 <TableCell>
                   {patient.timeSlot?.start} - {patient.timeSlot?.end}
@@ -204,7 +209,7 @@ export default function Patients() {
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
               <TableCell>{patient.doctor?.name || "--"}</TableCell>
-              
+
               <TableCell>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -214,7 +219,9 @@ export default function Patients() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() => navigate(`/patients/${patient.patient._id}`)}
+                      onClick={() =>
+                        navigate(`/patients/${patient.patient._id}`)
+                      }
                     >
                       View Details
                     </DropdownMenuItem>
@@ -223,7 +230,9 @@ export default function Patients() {
                     >
                       Edit Patient
                     </DropdownMenuItem> */}
-                    <DropdownMenuItem onClick={() => handleExistingBills(patient)}>
+                    <DropdownMenuItem
+                      onClick={() => handleExistingBills(patient)}
+                    >
                       Existing Bill
                     </DropdownMenuItem>
                     <DropdownMenuItem
@@ -242,7 +251,9 @@ export default function Patients() {
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
                       >
-                        {patient.status === "Discharged" ? "View Discharge Summary" : "Discharge Patient"}
+                        {patient.status === "Discharged"
+                          ? "View Discharge Summary"
+                          : "Discharge Patient"}
                       </DropdownMenuItem>
                     )}
                     <DropdownMenuSeparator />
@@ -269,8 +280,6 @@ export default function Patients() {
     setDateFilter("All");
   };
 
-  
-
   return (
     <Card className="w-full">
       <CardHeader>
@@ -278,11 +287,7 @@ export default function Patients() {
         <CardDescription>Manage and view patient information</CardDescription>
       </CardHeader>
       <CardContent>
-        <OPDRegDialog
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-        
-        />
+        <OPDRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
         <IPDRegDialog
           open={isIPDDialogOpen}
           onOpenChange={setIsIPDDialogOpen}
@@ -408,7 +413,6 @@ export default function Patients() {
                   <DropdownMenuContent>
                     <DropdownMenuItem
                       onSelect={() => {
-                        
                         setIsDialogOpen(true);
                       }}
                     >

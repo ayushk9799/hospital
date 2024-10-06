@@ -18,13 +18,30 @@ import {
   Wind,
   AlertCircle,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { format } from "date-fns";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
 import { useToast } from "../hooks/use-toast";
 
 // Move VitalItem component definition here
@@ -45,21 +62,26 @@ export default function PatientDetails() {
   const { patientId } = useParams();
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const { patientDetails, patientDetailsStatus } = useSelector(state => state.patients);
+  const { patientDetails, patientDetailsStatus } = useSelector(
+    (state) => state.patients
+  );
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [activeTab, setActiveTab] = useState("");
 
   useEffect(() => {
-    dispatch(fetchPatientDetails(patientId)).unwrap().then(() => {
-      // console.log("Patient details fetched successfully");
-    }).catch((error) => {
-      // console.error("Error fetching patient details:", error);
-      toast({
-        title: "Error",
-        description: "Error fetching patient details",
-        variant: "destructive",
+    dispatch(fetchPatientDetails(patientId))
+      .unwrap()
+      .then(() => {
+        // ;
+      })
+      .catch((error) => {
+        // console.error("Error fetching patient details:", error);
+        toast({
+          title: "Error",
+          description: "Error fetching patient details",
+          variant: "destructive",
+        });
       });
-    });
   }, [dispatch, patientId]);
 
   useEffect(() => {
@@ -90,14 +112,19 @@ export default function PatientDetails() {
     }
   }, [patientDetails]);
 
-  if (patientDetailsStatus === 'loading') return null;
-  if (patientDetailsStatus === 'failed') return (
-    <div className="flex flex-col items-center justify-center h-screen">
-      <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
-      <div className="text-xl font-semibold text-gray-800">Error loading patient details</div>
-      <div className="text-gray-600 mt-2">Please try again later or contact support.</div>
-    </div>
-  );
+  if (patientDetailsStatus === "loading") return null;
+  if (patientDetailsStatus === "failed")
+    return (
+      <div className="flex flex-col items-center justify-center h-screen">
+        <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
+        <div className="text-xl font-semibold text-gray-800">
+          Error loading patient details
+        </div>
+        <div className="text-gray-600 mt-2">
+          Please try again later or contact support.
+        </div>
+      </div>
+    );
   if (!patientDetails) return null;
 
   const allDates = [
@@ -113,14 +140,18 @@ export default function PatientDetails() {
     })),
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
-  const selectedItem = selectedVisit ? allDates.find((item) => item.date === selectedVisit) : null;
+  const selectedItem = selectedVisit
+    ? allDates.find((item) => item.date === selectedVisit)
+    : null;
 
   const renderVisitDetails = () => {
     if (!selectedVisit || !patientDetails) return null;
 
     const visitData =
       patientDetails.visits?.find((v) => v.bookingDate === selectedVisit) ||
-      patientDetails.admissionDetails?.find((a) => a.bookingDate === selectedVisit);
+      patientDetails.admissionDetails?.find(
+        (a) => a.bookingDate === selectedVisit
+      );
 
     if (!visitData) return null;
 
@@ -394,8 +425,11 @@ export default function PatientDetails() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {Object.entries(report?.report||{})
-                          .filter(([_, data]) => data.value !== null && data.value !== "")
+                        {Object.entries(report?.report || {})
+                          .filter(
+                            ([_, data]) =>
+                              data.value !== null && data.value !== ""
+                          )
                           .map(([key, data]) => (
                             <TableRow key={key}>
                               <TableCell className="font-medium">
@@ -464,7 +498,6 @@ export default function PatientDetails() {
               label="Contact"
               value={patientDetails.contactNumber}
             />
-           
           </div>
           <div className="text-sm">
             <InfoItem
@@ -472,7 +505,7 @@ export default function PatientDetails() {
               label="Address"
               value={patientDetails.address}
             />
-             <InfoItem
+            <InfoItem
               icon={<Mail className="h-4 w-4" />}
               label="Email"
               value={patientDetails.email}
@@ -494,7 +527,9 @@ export default function PatientDetails() {
               }`}
               onClick={() => setSelectedVisit(item.date)}
             >
-              <span className="mr-1">{format(new Date(item.date), "dd MMM yyyy")}</span>
+              <span className="mr-1">
+                {format(new Date(item.date), "dd MMM yyyy")}
+              </span>
               <Badge variant="secondary" className="text-xs">
                 {item.type === "visit" ? "OPD" : "IPD"}
               </Badge>
