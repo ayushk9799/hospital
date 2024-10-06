@@ -38,6 +38,7 @@ import {
   Filter,
   Calendar as CalendarIcon,
   X,
+  UserX,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
@@ -128,7 +129,16 @@ console.log(patients)
     const handleDischarge = (patient) => {
       navigate(`/patients/discharge/${patient._id}`, { state: { patient } });
     };
-console.log(patients.map(patient=>patient.bookingDate))
+    if (patients.length === 0) {
+      return (
+        <div className="flex flex-col items-center justify-center py-12">
+          <UserX className="h-16 w-16 text-gray-400 mb-4" />
+          <p className="text-xl font-semibold text-gray-600">No patients found</p>
+          <p className="text-gray-500">Try adjusting your search or filters</p>
+        </div>
+      );
+    }
+
     return (
       <Table>
         <TableHeader>
@@ -399,9 +409,9 @@ console.log(patients.map(patient=>patient.bookingDate))
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-                <Button variant="outline">
+                {/* <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" /> Export
-                </Button>
+                </Button> */}
               </div>
             </div>
           </div>

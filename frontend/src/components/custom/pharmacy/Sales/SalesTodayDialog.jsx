@@ -31,9 +31,9 @@ const SalesTodayDialog = ({ isOpen, setIsOpen }) => {
             <DialogTitle>Sales Today - {format(new Date(), 'MMMM d, yyyy')}</DialogTitle>
             <DialogDescription>Showing {todaySales.length} sales for today</DialogDescription>
           </div>
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <FileDown className="mr-2 h-4 w-4" /> Export
-          </Button>
+          </Button> */}
         </DialogHeader>
         {salesBillsStatus === 'loading' ? (
           <p>Loading sales data...</p>

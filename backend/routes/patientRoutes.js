@@ -179,6 +179,7 @@ router.get("/details", verifyToken, async (req, res) => {
       timeSlot: visit.timeSlot,
       additionalInstructions: visit.additionalInstructions,
       type: "OPD",
+      createdAt:visit.createdAt
     }));
 
     const processedAdmissions = ipdAdmissions.map((admission) => ({
@@ -206,6 +207,7 @@ router.get("/details", verifyToken, async (req, res) => {
       timeSlot: admission.timeSlot,
       vitals: admission.vitals,
       type: "IPD",
+      createdAt:admission.createdAt
     }));
 
     const combinedData = [...processedVisits, ...processedAdmissions];
@@ -235,10 +237,6 @@ router.delete(
   
   async (req, res) => {
     try {
-      
-
-    
-
       const result = await Visit.deleteMany();
 
       if (result.deletedCount === 0) {

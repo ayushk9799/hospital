@@ -1,17 +1,16 @@
 import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "../components/ui/button";
 import {
   User,
   Mail,
-  Phone,
   Briefcase,
   Calendar,
   Clock,
   Award,
   BookOpen,
-  Stethoscope,
   FileText,
-  Edit,
-  Printer,
   DollarSign,
   Building,
 } from "lucide-react";
@@ -19,21 +18,11 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
-import { Button } from "../components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
 import {
   Tabs,
   TabsContent,
@@ -42,60 +31,30 @@ import {
 } from "../components/ui/tabs";
 import StaffMonthlyCalender from "../components/custom/staff/StaffMonthlyCalender";
 
-const staffMember = {
-  id: "66ea972e8317a263bc18aa37",
-  name: "Raviket",
-  role: "Admin",
-  department: "Oncology",
-  email: "america@gmail.com",
-  phone: "", // Not provided in the data
-  status: "Active", // Assuming active since there's no status field
-  joinDate: "2019-02-18",
-  shift: {
-    type: "Morning",
-    hours: {
-      start: "09:31",
-      end: "14:31"
-    }
-  },
-  education: [], // Using qualifications, but it's empty in the provided data
-  certifications: [], // Empty in the provided data
-  schedule: [], // Not provided in the data
-  recentPatients: [], // Using currentPatients, but it's empty in the provided data
-  employeeID: "123455",
-  username: "iam_ayush691",
-  yearsOfExperience: 5,
-  address: "DM residence road ,banka-813102 ,Bihar",
-  dateOfBirth: "2019-02-18",
-  gender: "Male",
-  salary: 50000,
-  payrollInfo: {
-    bankName: "bank of india",
-    accountNumber: "123455234543",
-    ifscCode: "12343234"
-  }
-};
-
 export default function StaffProfile() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const staffMember = location.state?.staffData || {};
+
   return (
-    <div className="div space-y-4 mt-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Staff Profile</h1>
-        <div className="space-x-2">
-          <Button variant="outline">
-            <Edit className="mr-2 h-4 w-4" /> Edit Profile
+    <div className="div my-2 space-y-2">
+      <div className="flex justify-between items-center">
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-4 w-4" />
           </Button>
-          <Button variant="outline">
-            <Printer className="mr-2 h-4 w-4" /> Print Profile
-          </Button>
+          <h1 className="text-xl font-bold">Staff Profile</h1>
         </div>
       </div>
 
       <div className="grid grid-cols-5 gap-4">
         <Card className="md:col-span-2">
-          <CardHeader className="pb-2">
-            {/* <CardTitle>Personal Information</CardTitle> */}
-          </CardHeader>
+          <CardHeader></CardHeader>
           <CardContent className="grid gap-4">
             <div className="flex items-center space-x-4">
               <Avatar className="h-16 w-16">
@@ -114,7 +73,7 @@ export default function StaffProfile() {
                 <h2 className="text-xl font-bold">
                   {staffMember.name}
                 </h2>
-                <p className="text-gray-500">{staffMember.role}</p>
+                <p className="text-gray-500">{staffMember.roles?.join(", ")}</p>
               </div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -128,11 +87,11 @@ export default function StaffProfile() {
               </div>
               <div className="flex items-center space-x-2">
                 <Briefcase className="h-4 w-4 text-gray-500" />
-                <span>{staffMember.department}</span>
+                <span>{staffMember.department?.join(", ")}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Calendar className="h-4 w-4 text-gray-500" />
-                <span>Joined on {staffMember.joinDate}</span>
+                <span>Joined on {staffMember.hireDate}</span>
               </div>
             </div>
           </CardContent>
@@ -144,25 +103,19 @@ export default function StaffProfile() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="font-semibold">Status:</span>
-              <Badge variant="default">
-                {staffMember.status}
-              </Badge>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="font-semibold">Shift:</span>
-              <span>{staffMember.shift.type}</span>
+              <span className="font-semibold">Shift Type:</span>
+              <span>{staffMember.shift?.type}</span>
             </div>
             <div className="flex align-center justify-between">
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-green-500" />
                 <span className="font-semibold">Time In:</span>
-                <span>{staffMember.shift.hours.start}</span>
+                <span>{staffMember.shift?.hours.start}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Clock className="h-4 w-4 text-red-500" />
                 <span className="font-semibold">Time Out:</span>
-                <span>{staffMember.shift.hours.end}</span>
+                <span>{staffMember.shift?.hours.end}</span>
               </div>
             </div>
           </CardContent>
@@ -233,17 +186,17 @@ export default function StaffProfile() {
                   <div className="flex items-center space-x-2">
                     <Building className="h-4 w-4 text-gray-500" />
                     <span className="font-semibold">Bank Name:</span>
-                    <span>{staffMember.payrollInfo.bankName}</span>
+                    <span>{staffMember.payrollInfo?.bankName}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-gray-500" />
                     <span className="font-semibold">Account Number:</span>
-                    <span>{staffMember.payrollInfo.accountNumber}</span>
+                    <span>{staffMember.payrollInfo?.accountNumber}</span>
                   </div>
                   <div className="flex items-center space-x-2">
                     <FileText className="h-4 w-4 text-gray-500" />
                     <span className="font-semibold">IFSC Code:</span>
-                    <span>{staffMember.payrollInfo.ifscCode}</span>
+                    <span>{staffMember.payrollInfo?.ifscCode}</span>
                   </div>
                 </div>
               </CardContent>
@@ -260,39 +213,33 @@ export default function StaffProfile() {
               <CardContent>
                 <div className="space-y-6">
                   <div>
-                    <h3 className="text-lg font-semibold mb-2">Education</h3>
-                    {staffMember.education.length > 0 ? (
+                    <h3 className="text-lg font-semibold mb-2">Qualifications</h3>
+                    {staffMember.qualifications?.length > 0 ? (
                       <ul className="space-y-2">
-                        {staffMember.education.map((edu, index) => (
+                        {staffMember.qualifications.map((qual, index) => (
                           <li key={index} className="flex items-start space-x-2">
                             <BookOpen className="h-5 w-5 text-blue-500 mt-0.5" />
                             <div>
-                              <p className="font-medium">{edu.degree}</p>
-                              <p className="text-sm text-gray-600">
-                                {edu.institution}, {edu.year}
-                              </p>
+                              <p className="font-medium">{qual}</p>
                             </div>
                           </li>
                         ))}
                       </ul>
                     ) : (
-                      <p>No education information available.</p>
+                      <p>No qualification information available.</p>
                     )}
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold mb-2">
                       Certifications
                     </h3>
-                    {staffMember.certifications.length > 0 ? (
+                    {staffMember.certifications?.length > 0 ? (
                       <ul className="space-y-2">
                         {staffMember.certifications.map((cert, index) => (
                           <li key={index} className="flex items-start space-x-2">
                             <Award className="h-5 w-5 text-green-500 mt-0.5" />
                             <div>
-                              <p className="font-medium">{cert.name}</p>
-                              <p className="text-sm text-gray-600">
-                                Obtained in {cert.year}
-                              </p>
+                              <p className="font-medium">{cert}</p>
                             </div>
                           </li>
                         ))}

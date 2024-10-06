@@ -160,9 +160,9 @@ export default function ItemsMaster() {
                 <Button variant="outline" onClick={handleOpenAddItemDialog}>
                   <Plus className="mr-2 h-4 w-4" /> Add Item
                 </Button>
-                <Button variant="outline">
+                {/* <Button variant="outline">
                   <FileDown className="mr-2 h-4 w-4" /> Export
-                </Button>
+                </Button> */}
               </div>
             </div>
             {filteredItems.length === 0 ? (

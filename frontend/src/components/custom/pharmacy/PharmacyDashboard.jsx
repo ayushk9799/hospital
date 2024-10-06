@@ -174,10 +174,10 @@ const PharmacyDashboard = () => {
               <DropdownMenuItem onSelect={() => handleDateFilterChange("Custom")}>Custom Range</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <Download className="w-3 h-3 mr-2" />
             Export Dashboard
-          </Button>
+          </Button> */}
         </div>
       </div>
       <div className="space-y-4 mt-2">

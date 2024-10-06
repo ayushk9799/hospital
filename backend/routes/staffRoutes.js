@@ -13,8 +13,6 @@ router.post('/', verifyToken, checkPermission('write:all'), async (req, res) => 
 
   try {
     const staff = new Staff(req.body);
-     console.log("roles")
-    console.log(req.body);
     await staff.save({ session });
 
     if (req.body.department && Array.isArray(req.body.department)) {  //chhange required here no need to chck array mnualluu convert

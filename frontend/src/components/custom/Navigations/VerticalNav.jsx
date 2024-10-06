@@ -16,6 +16,7 @@ import {
   PillIcon,
   TestTube,
   ChevronRight,
+  UsersIcon
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
@@ -45,7 +46,7 @@ const navItems = [
   { name: "Rooms", icon: Bed, path: "/rooms" },
   // { name: "Appointments", icon: Calendar, path: "/appointments" },
   { name: "Services", icon: ClipboardList, path: "/services" },
-  { name: "Reports", icon: FileText, path: "/reports" },
+  { name: "Staffs", icon: UsersIcon, path: "/reports" },
   // { name: "Analytics", icon: BarChart, path: "/analytics" },
   { name: "Settings", icon: Settings, path: "/settings" },
 ];

@@ -8,7 +8,8 @@ import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchSalesBills, fetchItems } from '../../../redux/slices/pharmacySlice';
 import BillsTableWithDialog from './itemMaster/BillsTableWithDialog';
-import { format, addMonths, isBefore, startOfToday, endOfToday } from 'date-fns';
+import { format, addMonths, isBefore, startOfToday, endOfToday, differenceInDays } from 'date-fns';
+import { Badge } from "../../ui/badge"; // Add this import
 
 const topSellingArray = [
   { name: "Amoxicillin 500mg", category: "Antibiotic", unitsSold: 1234, revenue: 6170.00, trend: { direction: "up", percentage: 5 } },
@@ -22,6 +23,7 @@ const PharmacyReports = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {salesBills, salesBillsStatus, items, itemsStatus } = useSelector(state => state.pharmacy);
+  const { hospitalInfo } = useSelector(state => state.hospital);
 
   useEffect(() => {
     if (salesBillsStatus === 'idle') {
@@ -34,7 +36,7 @@ const PharmacyReports = () => {
 
   const lowStockItems = items.filter(item => item.quantity <= 200);
 
-  const twoMonthsFromNow = addMonths(new Date(), 2);
+  const twoMonthsFromNow = addMonths(new Date(), Number(hospitalInfo.pharmacyExpiryThreshold));
   const itemsExpiringInTwoMonths = items.filter(item => {
     const expiryDate = new Date(item.expiryDate);
     return isBefore(expiryDate, twoMonthsFromNow);
@@ -55,6 +57,19 @@ const PharmacyReports = () => {
 
   console.log(todayStats);
 
+  const getExpiryStatus = (expiryDate) => {
+    const today = new Date();
+    const daysLeft = differenceInDays(new Date(expiryDate), today);
+    
+    if (daysLeft < 0) {
+      return { status: 'Expired', variant: 'destructive' };
+    } else if (daysLeft <= 30) {
+      return { status: 'Expiring Soon', variant: 'warning', daysLeft };
+    } else {
+      return { status: 'OK', variant: 'default', daysLeft };
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center bg-gray-100 pr-2">
@@ -68,10 +83,10 @@ const PharmacyReports = () => {
           </span>
         </div>
         <div className="flex items-center space-x-4">
-          <Button variant="outline" size="sm">
+          {/* <Button variant="outline" size="sm">
             <Download className="w-3 h-3 mr-2" />
             Export Report
-          </Button>
+          </Button> */}
         </div>
       </div>
       <main className="flex-1 overflow-y-auto mt-2">
@@ -138,22 +153,32 @@ const PharmacyReports = () => {
                       <TableHead>Supplier</TableHead>
                       <TableHead>Expiry Date</TableHead>
                       <TableHead>Quantity</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {itemsExpiringInTwoMonths.length > 0 ? (
-                      itemsExpiringInTwoMonths.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="capitalize">{item.name}</TableCell>
-                          <TableCell>{item.type}</TableCell>
-                          <TableCell className="capitalize">{item?.supplier?.name || '——'}</TableCell>
-                          <TableCell>{format(new Date(item?.expiryDate), 'MMM, yyyy')}</TableCell>
-                          <TableCell>{item.quantity}</TableCell>
-                        </TableRow>
-                      ))
+                      itemsExpiringInTwoMonths.map((item, index) => {
+                        const { status, variant, daysLeft } = getExpiryStatus(item.expiryDate);
+                        return (
+                          <TableRow key={index}>
+                            <TableCell className="capitalize">{item.name}</TableCell>
+                            <TableCell>{item.type}</TableCell>
+                            <TableCell className="capitalize">{item?.supplier?.name || '——'}</TableCell>
+                            <TableCell>{format(new Date(item?.expiryDate), 'MMM dd, yyyy')}</TableCell>
+                            <TableCell>{item.quantity}</TableCell>
+                            <TableCell>
+                              <Badge variant={variant}>
+                                {status}
+                                {status === 'Expiring Soon' && ` (${daysLeft} ${daysLeft === 1 ? 'day' : 'days'})`}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
+                        <TableCell colSpan={6} className="h-24 text-center">
                           <div className="flex flex-col items-center justify-center text-gray-500">
                             <FileX className="w-8 h-8 mb-2" />
                             <p className="font-semibold">No items expiring in the next 2 months</p>

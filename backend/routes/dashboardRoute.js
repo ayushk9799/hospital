@@ -263,6 +263,7 @@ router.get('/daily-stats', async (req, res) => {
       return acc;
     }, {});
 
+
     await session.commitTransaction();
     session.endSession();
 

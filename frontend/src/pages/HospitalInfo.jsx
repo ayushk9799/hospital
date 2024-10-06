@@ -14,6 +14,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchHospitalInfo, updateHospitalInfo } from '../redux/slices/HospitalSlice';
+import { X, Plus } from 'lucide-react';
+import { Badge } from "../components/ui/badge";
+import { ScrollArea } from "../components/ui/scroll-area";
 
 const HospitalInfo = () => {
   const { toast } = useToast();
@@ -33,7 +36,12 @@ const HospitalInfo = () => {
     pharmacyAddress: '',
     pharmacyContactNumber: '',
     pharmacyLogo: '',
+    pharmacyExpiryThreshold: '',
+    pharmacyItemCategories: [],
+    hospitalServiceCategories: [],
   });
+
+  const [newCategory, setNewCategory] = useState('');
 
   useEffect(() => {
     if (hospitalInfoStatus === 'idle') {
@@ -58,195 +66,204 @@ const HospitalInfo = () => {
     }));
   };
 
+  const handleCategoryChange = (e, field) => {
+    const categories = e.target.value.split(',').map(cat => cat.trim());
+    setFormData(prevData => ({
+      ...prevData,
+      [field]: categories
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       await dispatch(updateHospitalInfo(formData)).unwrap();
       toast({
-        title: "Success",
+        variant: 'success',
+        title: "Updated Successfully",
         description: "Hospital information has been updated successfully.",
       });
     } catch (error) {
       toast({
-        title: "Error",
+        title: "Enable to update",
         description: "Failed to update hospital information. Please try again.",
         variant: "destructive",
       });
     }
   };
 
+  const handleAddCategory = (field) => {
+    if (newCategory.trim()) {
+      setFormData(prevData => ({
+        ...prevData,
+        [field]: [...prevData[field], newCategory.trim()]
+      }));
+      setNewCategory('');
+    }
+  };
+
+  const handleRemoveCategory = (field, index) => {
+    setFormData(prevData => ({
+      ...prevData,
+      [field]: prevData[field].filter((_, i) => i !== index)
+    }));
+  };
+
   return (
-    <Card className="w-full mx-auto">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <div>
-          <CardTitle>Hospital Information Management</CardTitle>
-          <CardDescription>Enter or update your hospital's details</CardDescription>
+    <Card className="w-full">
+      <CardHeader className="border-b pb-3">
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="text-2xl font-bold">Hospital Information Management</CardTitle>
+            <CardDescription className="text-gray-500">Manage your hospital's details</CardDescription>
+          </div>
+          <Button 
+            onClick={handleSubmit} 
+            disabled={updateStatus === 'loading'}
+            // className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {updateStatus === 'loading' ? 'Saving...' : 'Save Changes'}
+          </Button>
         </div>
-        <Button 
-          onClick={handleSubmit} 
-          disabled={updateStatus === 'loading'}
-        >
-          {updateStatus === 'loading' ? 'Saving...' : 'Save'}
-        </Button>
       </CardHeader>
-      <CardContent>
-        <form className="space-y-6">
-          <Tabs defaultValue="hospital" className="w-full">
-            <TabsList className="grid w-[400px] grid-cols-2">
-              <TabsTrigger value="hospital">Hospital Information</TabsTrigger>
-              <TabsTrigger value="pharmacy">Pharmacy Information</TabsTrigger>
-            </TabsList>
-            <TabsContent value="hospital">
-              <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="hospitalId">Hospital ID</Label>
-                  <Input
-                    id="hospitalId"
-                    name="hospitalId"
-                    value={formData.hospitalId}
-                    onChange={handleChange}
-                    placeholder="Enter hospital ID"
-                    disabled
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="name">Hospital Name</Label>
-                  <Input
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    placeholder="Enter hospital name"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="contactNumber">Contact Number</Label>
-                  <Input
-                    id="contactNumber"
-                    name="contactNumber"
-                    value={formData.contactNumber}
-                    onChange={handleChange}
-                    placeholder="Enter contact number"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    name="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="Enter email address"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="website">Website</Label>
-                  <Input
-                    id="website"
-                    name="website"
-                    type="url"
-                    value={formData.website}
-                    onChange={handleChange}
-                    placeholder="Enter website URL"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="doctorName">Doctor Name</Label>
-                  <Input
-                    id="doctorName"
-                    name="doctorName"
-                    value={formData.doctorName}
-                    onChange={handleChange}
-                    placeholder="Enter doctor name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="doctorInfo">Doctor Information</Label>
-                  <Textarea
-                    id="doctorInfo"
-                    name="doctorInfo"
-                    value={formData.doctorInfo}
-                    onChange={handleChange}
-                    placeholder="Enter doctor information"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
-                  <Textarea
-                    id="address"
-                    name="address"
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder="Enter hospital address"
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="logo">Logo URL</Label>
-                  <Input
-                    id="logo"
-                    name="logo"
-                    value={formData.logo}
-                    onChange={handleChange}
-                    placeholder="Enter logo URL"
-                  />
-                </div>
+      <CardContent className="pt-6">
+        <Tabs defaultValue="hospital" className="w-full">
+          <TabsList className="grid w-1/2 grid-cols-2 mb-6">
+            <TabsTrigger value="hospital" className="text-sm font-medium">Hospital Information</TabsTrigger>
+            <TabsTrigger value="pharmacy" className="text-sm font-medium">Pharmacy Information</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="hospital">
+            <div className="grid grid-cols-3 gap-6">
+              <div className="col-span-2 grid grid-cols-2 gap-6">
+                <InputField label="Hospital ID" name="hospitalId" value={formData.hospitalId} onChange={handleChange} disabled />
+                <InputField label="Hospital Name" name="name" value={formData.name} onChange={handleChange} required />
+                <InputField label="Contact Number" name="contactNumber" value={formData.contactNumber} onChange={handleChange} required />
+                <InputField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
+                <InputField label="Website" name="website" type="url" value={formData.website} onChange={handleChange} />
+                <InputField label="Doctor Name" name="doctorName" value={formData.doctorName} onChange={handleChange} />
+                <TextareaField label="Doctor Information" name="doctorInfo" value={formData.doctorInfo} onChange={handleChange} />
+                <TextareaField label="Address" name="address" value={formData.address} onChange={handleChange} required />
+                <InputField label="Logo URL" name="logo" value={formData.logo} onChange={handleChange} />
               </div>
-            </TabsContent>
-            <TabsContent value="pharmacy">
-              <div className="grid grid-cols-3 gap-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="pharmacyName">Pharmacy Name</Label>
-                  <Input
-                    id="pharmacyName"
-                    name="pharmacyName"
-                    value={formData.pharmacyName}
-                    onChange={handleChange}
-                    placeholder="Enter pharmacy name"
-                  />
-                </div>
-               
-                <div className="space-y-2">
-                  <Label htmlFor="pharmacyContactNumber">Pharmacy Contact Number</Label>
-                  <Input
-                    id="pharmacyContactNumber"
-                    name="pharmacyContactNumber"
-                    value={formData.pharmacyContactNumber}
-                    onChange={handleChange}
-                    placeholder="Enter pharmacy contact number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pharmacyLogo">Pharmacy Logo URL</Label>
-                  <Input
-                    id="pharmacyLogo"
-                    name="pharmacyLogo"
-                    value={formData.pharmacyLogo}
-                    onChange={handleChange}
-                    placeholder="Enter pharmacy logo URL"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pharmacyAddress">Pharmacy Address</Label>
-                  <Textarea
-                    id="pharmacyAddress"
-                    name="pharmacyAddress"
-                    value={formData.pharmacyAddress}
-                    onChange={handleChange}
-                    placeholder="Enter pharmacy address"
-                  />
-                </div>
+              <div className="col-span-1">
+                <CategoryField 
+                  label="Hospital Service Categories" 
+                  categories={formData.hospitalServiceCategories} 
+                  newCategory={newCategory}
+                  setNewCategory={setNewCategory}
+                  onAdd={() => handleAddCategory('hospitalServiceCategories')}
+                  onRemove={(index) => handleRemoveCategory('hospitalServiceCategories', index)}
+                />
               </div>
-            </TabsContent>
-          </Tabs>
-        </form>
+            </div>
+          </TabsContent>
+          
+          <TabsContent value="pharmacy">
+            <div className="grid grid-cols-3 gap-6">
+              <div className="col-span-2 grid grid-cols-2 gap-6">
+                <InputField label="Pharmacy Name" name="pharmacyName" value={formData.pharmacyName} onChange={handleChange} />
+                <InputField label="Pharmacy Contact Number" name="pharmacyContactNumber" value={formData.pharmacyContactNumber} onChange={handleChange} />
+                <InputField label="Pharmacy Logo URL" name="pharmacyLogo" value={formData.pharmacyLogo} onChange={handleChange} />
+                <TextareaField label="Pharmacy Address" name="pharmacyAddress" value={formData.pharmacyAddress} onChange={handleChange} />
+                <InputField label="Item Expiry Threshold (months)" name="pharmacyExpiryThreshold" type="number" value={formData.pharmacyExpiryThreshold} onChange={handleChange} />
+              </div>
+              <div className="col-span-1">
+                <CategoryField 
+                  label="Pharmacy Item Categories" 
+                  categories={formData.pharmacyItemCategories} 
+                  newCategory={newCategory}
+                  setNewCategory={setNewCategory}
+                  onAdd={() => handleAddCategory('pharmacyItemCategories')}
+                  onRemove={(index) => handleRemoveCategory('pharmacyItemCategories', index)}
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
       </CardContent>
     </Card>
   );
 };
+
+const InputField = ({ label, name, value, onChange, type = "text", required = false, disabled = false }) => (
+  <div className="space-y-2">
+    <Label htmlFor={name} className="text-sm font-medium">{label}</Label>
+    <Input
+      id={name}
+      name={name}
+      type={type}
+      value={value}
+      onChange={onChange}
+      placeholder={`Enter ${label.toLowerCase()}`}
+      required={required}
+      disabled={disabled}
+      className="w-full"
+    />
+  </div>
+);
+
+const TextareaField = ({ label, name, value, onChange, required = false }) => (
+  <div className="space-y-2">
+    <Label htmlFor={name} className="text-sm font-medium">{label}</Label>
+    <Textarea
+      id={name}
+      name={name}
+      value={value}
+      onChange={onChange}
+      placeholder={`Enter ${label.toLowerCase()}`}
+      required={required}
+      className="w-full"
+    />
+  </div>
+);
+
+const CategoryField = ({ label, categories, newCategory, setNewCategory, onAdd, onRemove }) => (
+  <div className="space-y-2">
+    <Label className="text-sm font-medium">{label}</Label>
+    <div className="flex flex-col space-y-2">
+      <div className="flex space-x-2">
+        <Input
+          value={newCategory}
+          onChange={(e) => setNewCategory(e.target.value)}
+          placeholder="Enter a new category"
+          className="flex-grow"
+        />
+        <Button 
+          type="button" 
+          onClick={onAdd} 
+          // className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+          disabled={!newCategory.trim()}
+        >
+          <Plus size={16} />
+          {/* <span className="ml-2">Add</span> */}
+        </Button>
+      </div>
+      <ScrollArea className="h-[150px] w-full border rounded-md p-4">
+        {categories.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {categories.map((category, index) => (
+              <Badge 
+                key={index} 
+                variant="secondary"
+                className="text-sm py-1 px-2 flex items-center space-x-1"
+              >
+                <span>{category}</span>
+                <button
+                  onClick={() => onRemove(index)}
+                  className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+                >
+                  <X size={14} />
+                </button>
+              </Badge>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-sm">No categories added yet.</p>
+        )}
+      </ScrollArea>
+    </div>
+  </div>
+);
 
 export default HospitalInfo;

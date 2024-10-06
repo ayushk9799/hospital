@@ -173,9 +173,9 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                 <div className="w-full text-left text-sm mt-1">
                   <span className="font-semibold">Bill Status: </span>{getBillStatus(billData)}
                 </div>
-                <div className="w-full text-left text-sm mt-1">
+                {/* <div className="w-full text-left text-sm mt-1">
                   <span className="font-semibold">Invoice By: </span>{billData.physician || 'N/A'}
-                </div>
+                </div> */}
               </div>
             </div>
           </div>
