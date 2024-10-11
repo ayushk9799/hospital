@@ -22,6 +22,11 @@ const HospitalSchema = new mongoose.Schema({
     min: 0,
     default: 3 // Default to 3 months, for example
   },
+  pharmacyItemCategories: {
+    type: [String],
+    default: []
+  }
+  // Removed hospitalServiceCategories
 });
 
 export const Hospital = mongoose.model("Hospital", HospitalSchema);

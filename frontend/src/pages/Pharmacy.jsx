@@ -23,7 +23,7 @@ const Pharmacy = () => {
 
   return (
     <div className="flex flex-col flex-1 mt-1 h-[calc(100vh-52px)]">
-      <Tabs value={tab || "dashboard"} onValueChange={handleTabChange} className="w-full h-full">
+      <Tabs value={tab || "sales"} onValueChange={handleTabChange} className="w-full h-full">
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="sales">Sales</TabsTrigger>

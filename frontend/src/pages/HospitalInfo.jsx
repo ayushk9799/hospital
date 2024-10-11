@@ -38,7 +38,6 @@ const HospitalInfo = () => {
     pharmacyLogo: '',
     pharmacyExpiryThreshold: '',
     pharmacyItemCategories: [],
-    hospitalServiceCategories: [],
   });
 
   const [newCategory, setNewCategory] = useState('');
@@ -141,6 +140,7 @@ const HospitalInfo = () => {
       });
     } catch (error) {
       toast({
+        title: "Unable to update",
         title: "Unable to update",
         description: "Failed to update hospital information. Please try again.",
         variant: "destructive",
@@ -301,52 +301,56 @@ const TextareaField = ({ label, name, value, onChange, required = false }) => (
   </div>
 );
 
-const CategoryField = ({ label, categories, newCategory, setNewCategory, onAdd, onRemove }) => (
-  <div className="space-y-2">
-    <Label className="text-sm font-medium">{label}</Label>
-    <div className="flex flex-col space-y-2">
-      <div className="flex space-x-2">
-        <Input
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-          placeholder="Enter a new category"
-          className="flex-grow"
-        />
-        <Button 
-          type="button" 
-          onClick={onAdd} 
-          // className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
-          disabled={!newCategory.trim()}
-        >
-          <Plus size={16} />
-          {/* <span className="ml-2">Add</span> */}
-        </Button>
-      </div>
-      <ScrollArea className="h-[150px] w-full border rounded-md p-4">
-        {categories.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category, index) => (
-              <Badge 
-                key={index} 
-                variant="secondary"
-                className="text-sm py-1 px-2 flex items-center space-x-1"
-              >
-                <span>{category}</span>
-                <button
-                  onClick={() => onRemove(index)}
-                  className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+const CategoryField = ({ label, categories, newCategory, setNewCategory, onAdd, onRemove }) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onAdd();
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium">{label}</Label>
+      <div className="flex flex-col space-y-2">
+        <form onSubmit={handleSubmit} className="flex space-x-2">
+          <Input
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            placeholder="Enter a new category"
+            className="flex-grow"
+          />
+          <Button 
+            type="submit" 
+            disabled={!newCategory.trim()}
+          >
+            <Plus size={16} />
+          </Button>
+        </form>
+        <ScrollArea className="h-[150px] w-full border rounded-md p-4">
+          {categories.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category, index) => (
+                <Badge 
+                  key={index} 
+                  variant="secondary"
+                  className="text-sm py-1 px-2 flex items-center space-x-1"
                 >
-                  <X size={14} />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-sm">No categories added yet.</p>
-        )}
-      </ScrollArea>
+                  <span>{category}</span>
+                  <button
+                    onClick={() => onRemove(index)}
+                    className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+                  >
+                    <X size={14} />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No categories added yet.</p>
+          )}
+        </ScrollArea>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default HospitalInfo;

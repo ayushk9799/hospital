@@ -4,7 +4,6 @@ import { Input } from "../../../ui/input";
 import { Button } from "../../../ui/button";
 import { Label } from "../../../ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../../ui/select"; // Import Select components
-import { typeOptions } from "./EditItemDialog";
 import { useDispatch } from "react-redux";
 import { createInventoryItem } from "../../../../redux/slices/pharmacySlice";
 import { useToast } from "../../../../hooks/use-toast";
@@ -14,6 +13,7 @@ export default function AddItemDialog({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const { createInventoryItemStatus } = useSelector((state) => state.pharmacy);
+  const {pharmacyItemCategories=[]} = useSelector((state) => state.hospital.hospitalInfo);
   
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -90,7 +90,7 @@ export default function AddItemDialog({ isOpen, onClose }) {
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {typeOptions.map((type) => (
+                  {pharmacyItemCategories.map((type) => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>

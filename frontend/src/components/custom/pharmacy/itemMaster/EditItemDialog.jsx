@@ -8,7 +8,6 @@ import { useToast } from "../../../../hooks/use-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { updateInventoryItem } from "../../../../redux/slices/pharmacySlice";
 import { Loader2 } from 'lucide-react'
-export const typeOptions = ['Tablet', 'Capsule', 'Liquid', 'Injection', 'Syrup', 'Other'];
 
 export default function EditItemDialog({ isOpen, onClose, item }) {
   const dispatch = useDispatch();
@@ -21,6 +20,7 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
   const [MRP, setMRP] = useState(item?.MRP || "");
   const [types, setTypes] = useState(item?.type || "");
   const [supplierName, setSupplierName] = useState(item?.supplier?.name || "");
+  const {pharmacyItemCategories=[]} = useSelector((state) => state.hospital.hospitalInfo);
 
   useEffect(() => {
     if (item) {
@@ -88,7 +88,7 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
                   <SelectValue placeholder="Select Type" />
                 </SelectTrigger>
                 <SelectContent>
-                  {typeOptions.map((type) => (
+                  {pharmacyItemCategories.map((type) => (
                     <SelectItem key={type} value={type}>{type}</SelectItem>
                   ))}
                 </SelectContent>

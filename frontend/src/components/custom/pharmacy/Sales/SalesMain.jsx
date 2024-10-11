@@ -557,7 +557,7 @@ export default function SalesMain({
               onSubmit={handleCreateSalesOrder}
             >
               <div className="grid col-span-3 grid-cols-4 gap-4">
-                <div className="h-full">
+                <div className="h-full flex items-center">
                   <Select
                     onValueChange={handlePaymentMethodChange}
                     value={paymentMethod}

@@ -95,7 +95,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80 p-0">
+          <PopoverContent className="w-80 p-0 mt-2" side="bottom" align="end">
             <div className="p-4">
               <h3 className="font-semibold text-lg mb-2">Notifications</h3>
               <Separator className="my-2" />
