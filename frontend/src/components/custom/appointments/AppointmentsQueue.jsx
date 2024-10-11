@@ -7,25 +7,34 @@ import { Badge } from "../../ui/badge";
 import { SearchIcon } from 'lucide-react'
 import { Input } from "../../ui/input";
 import { format } from "date-fns";
+import { Avatar, AvatarFallback } from "../../ui/avatar";
 
-const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, onSelect, vitals, diagnosis, treatment, medications, additionalInstructions, labTests, isSelected ,comorbidities,conditionOnAdmission,conditionOnDischarge}) => {
+const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, onSelect, vitals, diagnosis, treatment, medications, additionalInstructions, labTests, isSelected, comorbidities, conditionOnAdmission, conditionOnDischarge }) => {
   const truncateName = (name, maxLength = 15) => {
     return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
   };
 
+  const getInitials = (name) => {
+    const names = name.split(' ');
+    if (names.length === 1) return names[0].charAt(0).toUpperCase();
+    return (names[0].charAt(0) + names[names.length - 1].charAt(0)).toUpperCase();
+  };
+
   return (
     <div
-      className={`flex items-center justify-between p-4 border-b cursor-pointer hover:bg-gray-100 ${
+      className={`flex items-center justify-between border-b p-4 cursor-pointer hover:bg-gray-100 ${
         isSelected ? 'border-2 border-green-400 bg-green-50' : ''
       }`}
-      onClick={() => onSelect({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, vitals, diagnosis, treatment, medications, labTests,comorbidities,conditionOnAdmission,conditionOnDischarge })}
+      onClick={() => onSelect({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, vitals, diagnosis, treatment, medications, labTests, comorbidities, conditionOnAdmission, conditionOnDischarge })}
     >
       <div className="flex items-center space-x-4">
-        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
-          {patient.name.charAt(0)}
-        </div>
+        <Avatar>
+          <AvatarFallback className="bg-blue-500 text-white font-semibold">
+            {getInitials(patient.name)}
+          </AvatarFallback>
+        </Avatar>
         <div>
-          <h3 className="font-semibold">{truncateName(patient.name)}</h3>
+          <h3 className="font-semibold capitalize">{truncateName(patient.name)}</h3>
           <p className="text-sm text-gray-500">{patient.contactNumber}</p>
         </div>
       </div>

@@ -556,7 +556,7 @@ router.put(
       const visit = await Visit.findById(id)
         .session(session)
         .select(
-          "diagnosis treatment medications labTests additionalInstructions vitals"
+          "diagnosis bookingNumber treatment medications labTests additionalInstructions vitals comorbidities"
         );
       if (!visit) {
         throw new Error("Visit not found");

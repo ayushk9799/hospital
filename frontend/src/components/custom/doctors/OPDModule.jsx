@@ -39,11 +39,13 @@ export default function OPDModule({ patient }) {
     medications: [{ name: "", frequency: "0-0-0", duration: "" }],
     additionalInstructions: "",
   });
-  const [labTests, setLabTests] = useState([{ name: "" }]);
+  const [labTests, setLabTests] = useState([]);
+  const [selectedLabTests, setSelectedLabTests] = useState([]);
 
   const dispatch = useDispatch();
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
+  const prescriptionUpdateStatus = useSelector((state) => state.patients.prescriptionUpdateStatus);
   const { toast } = useToast();
 
   const [showPDFPreview, setShowPDFPreview] = useState(false);
@@ -78,10 +80,10 @@ export default function OPDModule({ patient }) {
           : [{ name: "", frequency: "0-0-0", duration: "" }],
         additionalInstructions: patient.additionalInstructions || "",
       });
-      setLabTests(patient.labTests?.length > 0
-        ? patient.labTests.map((test) => ({ name: test }))
-        : [{ name: "" }]
-      );
+      // Update labTests and selectedLabTests
+      const patientLabTests = patient.labTests?.map(test => ({ name: test })) || [];
+      setLabTests(patientLabTests);
+      setSelectedLabTests(patientLabTests);
     }
   }, [patient]);
 
@@ -159,6 +161,14 @@ export default function OPDModule({ patient }) {
     setSelectedComorbidities(selectedComorbidities.filter(c => c.name !== name));
   };
 
+  const handleLabTestsChange = (newLabTests) => {
+    setSelectedLabTests(newLabTests);
+  };
+
+  const handleRemoveLabTest = (name) => {
+    setSelectedLabTests(selectedLabTests.filter(test => test.name !== name));
+  };
+
   const handleSavePrescription = async () => {
     if (!patient.ID) {
       toast({
@@ -175,14 +185,14 @@ export default function OPDModule({ patient }) {
         vitals,
         prescription,
         selectedPatientType: "OPD",
-        labTests: labTests.map((test) => test.name),
-        comorbidities: selectedComorbidities.map(c => c.name), // Update this line
+        labTests: selectedLabTests.map(test => test.name),
+        comorbidities: selectedComorbidities.map(c => c.name),
       })).unwrap();
 
       toast({
         variant: "success",
-        title: "Added Successfully!",
-        description: "Prescription, vitals, lab tests, and comorbidities saved successfully!",
+        title: "Saved Successfully!",
+        description: "Prescription updated successfully!",
       });
     } catch (error) {
       console.error("Error saving prescription:", error);
@@ -196,9 +206,19 @@ export default function OPDModule({ patient }) {
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold mb-2">Prescription for: {patient.patient.name} (P{patient.patient._id.slice(-4)})</h2>
-      <ScrollArea className="h-[calc(100vh-200px)]">
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
+      <div className="flex justify-between items-center mb-2">
+        <h2 className="text-xl font-bold">Prescription for: {patient.patient.name} (P{patient.patient._id.slice(-4)})</h2>
+        <div className="space-x-2">
+          <Button className="font-semibold" size="sm" variant="outline" onClick={() => setShowPDFPreview(true)}>
+            Preview PDF
+          </Button>
+          <Button className="font-semibold" size="sm" disabled={prescriptionUpdateStatus === "loading"} onClick={handleSavePrescription}>
+            {prescriptionUpdateStatus === "loading" ? "Saving..." : "Save"}
+          </Button>
+        </div>
+      </div>
+      <ScrollArea className="h-[calc(100vh-115px)] pr-4">
+        <div className=" px-1 bg-gray-50">
           <h3 className="text-lg font-semibold">Vitals</h3>
           <div className="grid grid-cols-4 gap-3">
             <div>
@@ -235,15 +255,31 @@ export default function OPDModule({ patient }) {
             </div>
           </div>
         </div>
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
+        <div className=" pt-4 px-1 bg-gray-50 ">
           <h3 className="text-lg font-semibold">Diagnosis, Treatment, and Medications</h3>
-          <div>
-            <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
-            <Textarea id="diagnosis" name="diagnosis" value={prescription.diagnosis} onChange={handlePrescriptionChange} placeholder="Enter patient's diagnosis" className="min-h-[100px] text-sm font-medium" />
-          </div>
-          <div>
-            <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
-            <Textarea id="treatment" name="treatment" value={prescription.treatment} onChange={handlePrescriptionChange} placeholder="Enter recommended treatment" className="min-h-[100px] text-sm font-medium" />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
+              <Textarea 
+                id="diagnosis" 
+                name="diagnosis" 
+                value={prescription.diagnosis} 
+                onChange={handlePrescriptionChange} 
+                placeholder="Enter patient's diagnosis" 
+                className="min-h-[100px] text-sm font-medium" 
+              />
+            </div>
+            <div>
+              <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
+              <Textarea 
+                id="treatment" 
+                name="treatment" 
+                value={prescription.treatment} 
+                onChange={handlePrescriptionChange} 
+                placeholder="Enter recommended treatment" 
+                className="min-h-[100px] text-sm font-medium" 
+              />
+            </div>
           </div>
           <div>
             <Label className="font-semibold">Medications</Label>
@@ -283,60 +319,78 @@ export default function OPDModule({ patient }) {
             </Button>
           </div>
         </div>
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
-          {labTests.map((test, index) => (
-            <div key={index} className="flex items-center space-x-2 mb-2">
-              <SearchSuggestion
-                suggestions={allLabTests}
-                placeholder="Select lab test"
-                value={test.name}
-                setValue={(value) => handleLabTestChange(index, { name: value })}
-                onSuggestionSelect={(suggestion) => handleLabTestChange(index, suggestion)}
-              />
-              <Button
-                variant="destructive"
-                size="icon"
-                onClick={() => removeLabTest(index)}
-                disabled={labTests.length === 1}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
+        <div className="grid grid-cols-2 px-1 gap-4 bg-gray-50">
+          <div className="pt-2 bg-gray-50">
+            <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <MultiSelectInput
+                  suggestions={allLabTests}
+                  selectedValues={selectedLabTests}
+                  setSelectedValues={handleLabTestsChange}
+                  placeholder="Select lab tests"
+                />
+              </div>
+              <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                {selectedLabTests.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedLabTests.map((test, index) => (
+                      <Badge
+                        key={index}
+                        variant="primary"
+                        className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                      >
+                        {test.name}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => handleRemoveLabTest(test.name)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No lab tests selected</p>
+                )}
+              </div>
             </div>
-          ))}
-          <Button onClick={addLabTest} variant="outline" className="mt-2">
-            <PlusCircle className="h-4 w-4 mr-2" /> Add Lab Test
-          </Button>
-        </div>
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
-          <h3 className="text-lg font-semibold">Comorbidities</h3>
-          <div className="mt-1 space-y-2">
-            <div className="flex flex-wrap gap-1">
-              {selectedComorbidities.map((comorbidity, index) => (
-                <Badge
-                  key={index}
-                  variant="primary"
-                  className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
-                >
-                  {comorbidity.name}
-                  <X
-                    className="ml-1 h-3 w-3 cursor-pointer"
-                    onClick={() => handleRemoveComorbidity(comorbidity.name)}
-                  />
-                </Badge>
-              ))}
-            </div>
-            <div className="flex gap-2">
-              <MultiSelectInput
-                suggestions={comorbodities.map(name => ({ name }))}
-                selectedValues={selectedComorbidities}
-                setSelectedValues={handleComorbiditiesChange}
-                placeholder="Select comorbidities"
-              />
+          </div>
+
+          <div className="pt-2 bg-gray-50">
+            <h3 className="text-lg font-semibold">Comorbidities</h3>
+            <div className=" space-y-2">
+              <div className="flex gap-2">
+                <MultiSelectInput
+                  suggestions={comorbodities.map(name => ({ name }))}
+                  selectedValues={selectedComorbidities}
+                  setSelectedValues={handleComorbiditiesChange}
+                  placeholder="Select comorbidities"
+                />
+              </div>
+              <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                {selectedComorbidities.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {selectedComorbidities.map((comorbidity, index) => (
+                      <Badge
+                        key={index}
+                        variant="primary"
+                        className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
+                      >
+                        {comorbidity.name}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => handleRemoveComorbidity(comorbidity.name)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No comorbidities selected</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
+        <div className="space-y-2 px-1 pt-4 mb-4 bg-gray-50 ">
           <h3 className="text-lg font-semibold">Additional Instructions</h3>
           <Textarea
             id="additionalInstructions"
@@ -346,14 +400,6 @@ export default function OPDModule({ patient }) {
             placeholder="Any additional instructions or notes"
             className="min-h-[100px] text-sm font-medium"
           />
-        </div>
-        <div className="flex justify-between mt-4">
-          <Button className="font-semibold" onClick={handleSavePrescription}>
-            Save Prescription, Vitals, Lab Tests, and Comorbidities
-          </Button>
-          <Button className="font-semibold" onClick={() => setShowPDFPreview(true)}>
-            Preview PDF
-          </Button>
         </div>
       </ScrollArea>
       {showPDFPreview && (

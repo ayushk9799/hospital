@@ -51,16 +51,16 @@ export default function Doctors() {
 
   return (
     <div className="h-full w-full flex flex-col">
-      <AppointmentHeader />
+      {/* <AppointmentHeader /> */}
       <div
         className="grid grid-cols-4 gap-2"
-        style={{ height: "calc(100vh - 100px)" }}
+        style={{ height: "calc(100vh - 50px)" }}
       >
-        <ScrollArea className="col-span-1 h-full">
+        <ScrollArea className="col-span-1 pr-4 h-full">
           <AppointmentsQueue onPatientSelect={handlePatientSelect} />
         </ScrollArea>
         <ScrollArea className="col-span-3 h-full">
-          <div className="flex-1 p-2 overflow-auto">
+          <div className="flex-1 p-2 overflow-auto w-full">
             {selectedPatient ? (
               selectedPatientType === "OPD" ? (
                 <OPDModule patient={selectedPatient} />

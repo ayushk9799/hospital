@@ -56,7 +56,7 @@ export const registerPatient = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
-export const savePrescription = createAsyncThunk(
+export const savePrescription = createLoadingAsyncThunk(
   "patients/savePrescription",
   async ({
     selectedVisitId,
@@ -99,7 +99,8 @@ export const savePrescription = createAsyncThunk(
 
     const data = await response.json();
     return data;
-  }
+  },
+  { useGlobalLoader: true}
 );
 
 // Add this new thunk for fetching patient details

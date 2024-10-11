@@ -18,6 +18,7 @@ const MultiSelectInput = forwardRef(
     const [filteredSuggestions, setFilteredSuggestions] = useState([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [inputValue, setInputValue] = useState("");
+    const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const suggestionListRef = useRef(null);
 
     useEffect(() => {
@@ -48,7 +49,22 @@ const MultiSelectInput = forwardRef(
     };
 
     const handleKeyDown = (e) => {
-      if (e.key === "Enter") {
+      if (showSuggestions && filteredSuggestions.length > 0) {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setHighlightedIndex((prevIndex) =>
+            prevIndex < filteredSuggestions.length - 1 ? prevIndex + 1 : 0
+          );
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setHighlightedIndex((prevIndex) =>
+            prevIndex > 0 ? prevIndex - 1 : filteredSuggestions.length - 1
+          );
+        } else if (e.key === "Enter" && highlightedIndex !== -1) {
+          e.preventDefault();
+          handleSuggestionClick(filteredSuggestions[highlightedIndex]);
+        }
+      } else if (e.key === "Enter") {
         e.preventDefault();
         setSelectedValues([...selectedValues, { name: inputValue }]);
         setInputValue("");
@@ -60,7 +76,7 @@ const MultiSelectInput = forwardRef(
     };
 
     return (
-      <div className="relative w-full max-w-md">
+      <div className="relative w-full">
         <div className="relative flex flex-wrap gap-2">
           <Input
             ref={ref}
@@ -85,7 +101,9 @@ const MultiSelectInput = forwardRef(
               <li
                 key={suggestion.name}
                 onClick={() => handleSuggestionClick(suggestion)}
-                className="px-4 py-2 cursor-pointer hover:bg-gray-100"
+                className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
+                  index === highlightedIndex ? "bg-gray-100" : ""
+                }`}
               >
                 <span className="capitalize">{suggestion.name}</span>
               </li>
