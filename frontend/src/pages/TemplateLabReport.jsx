@@ -14,6 +14,7 @@ import { Backend_URL } from "../assets/Data";
 import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 import { Textarea } from "../components/ui/textarea";
+import SearchSuggestion from "../components/custom/registration/CustomSearchSuggestion";
 
 const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const [fields, setFields] = useState([]);
@@ -23,13 +24,13 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const [generatedDate, setGeneratedDate] = useState(null);
 
   useEffect(() => {
-    if (template && template.fields && patientData && patientData.labReports) {
-      const relevantReports = patientData.labReports.filter(
+    if (template && template.fields ) {
+      const relevantReports = patientData?.labReports.filter(
         (report) => report.name.toLowerCase() === template.name.toLowerCase()
       );
       setAllReports(relevantReports);
 
-      if (relevantReports.length > 0) {
+      if (relevantReports?.length > 0) {
         loadReportForDate(relevantReports, new Date());
       } else {
         setReportDate(new Date());
@@ -66,6 +67,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
         label: field.label,
         unit: field.unit,
         normalRange: field.normalRange,
+        options:field.options,
         value: report.report[name]?.value || "",
       }))
     );
@@ -78,6 +80,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
         label: field.label,
         unit: field.unit,
         normalRange: field.normalRange,
+        options:field.options,
         value: "",
       }))
     );
@@ -88,6 +91,14 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
     setFields((prevFields) =>
       prevFields.map((field) =>
         field.name === fieldName ? { ...field, value } : field
+      )
+    );
+  };
+
+  const handleOptionSelect = (fieldName, selectedOption) => {
+    setFields((prevFields) =>
+      prevFields.map((field) =>
+        field.name === fieldName ? { ...field, value: selectedOption.name } : field
       )
     );
   };
@@ -103,6 +114,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
           label: field.label,
           unit: field.unit,
           normalRange: field.normalRange,
+         
         };
         return acc;
       }, {}),
@@ -179,6 +191,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
       </div>
     );
   }
+  
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -225,6 +238,14 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
                     onChange={(e) => handleInputChange(e, field.name)}
                     className="w-full"
                     rows={4}
+                  />
+                ) : field.options ? (
+                  <SearchSuggestion
+                    suggestions={field.options.map(option => ({ name: option }))}
+                    placeholder={`Select ${field.label}`}
+                    value={field.value}
+                    setValue={(value) => handleInputChange({ target: { value } }, field.name)}
+                    onSuggestionSelect={(suggestion) => handleOptionSelect(field.name, suggestion)}
                   />
                 ) : (
                   <div className="flex items-center">

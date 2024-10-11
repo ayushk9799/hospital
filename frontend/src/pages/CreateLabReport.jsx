@@ -17,6 +17,7 @@ import { labReportFields } from "../assets/Data";
 import { Backend_URL } from "../assets/Data";
 import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
+import SearchSuggestion from "../components/custom/registration/CustomSearchSuggestion";
 
 const CreateLabReport = ({
   category,
@@ -99,6 +100,14 @@ const CreateLabReport = ({
     setFields((prevFields) =>
       prevFields.map((field) =>
         field.name === fieldName ? { ...field, value } : field
+      )
+    );
+  };
+
+  const handleOptionSelect = (fieldName, selectedOption) => {
+    setFields((prevFields) =>
+      prevFields.map((field) =>
+        field.name === fieldName ? { ...field, value: selectedOption.name } : field
       )
     );
   };
@@ -265,6 +274,14 @@ const CreateLabReport = ({
                     value={field.value}
                     onChange={(e) => handleInputChange(e, field.name)}
                     className="h-32 w-full"
+                  />
+                ) : field.options ? (
+                  <SearchSuggestion
+                    suggestions={field.options.map(option => ({ name: option }))}
+                    placeholder={`Select ${field.label}`}
+                    value={field.value}
+                    setValue={(value) => handleInputChange({ target: { value } }, field.name)}
+                    onSuggestionSelect={(suggestion) => handleOptionSelect(field.name, suggestion)}
                   />
                 ) : (
                   <div className="flex items-center">

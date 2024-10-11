@@ -1,5 +1,5 @@
 import { Hospital } from '../models/Hospital.js';
-import mongoose from 'mongoose';
+import { runWithHospitalContext } from '../utils/asyncLocalStorage.js';
 import cookie from 'cookie';
 
 export const identifyHospital = async (req, res, next) => {
@@ -15,9 +15,10 @@ export const identifyHospital = async (req, res, next) => {
       return res.status(404).json({ error: 'Hospital not found' });
     }
     
-    mongoose.connection.hospital = hospital._id;
-    req.hospital=hospital._id
-    next();
+    runWithHospitalContext(hospital._id, () => {
+      req.hospital = hospital._id;
+      next();
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error identifying hospital' });
   }
@@ -35,9 +36,10 @@ export const identifyHospitalFromBody = async (req, res, next) => {
       return res.status(404).json({ error: 'Hospital not found' });
     }
     
-    mongoose.connection.hospital = hospital._id;
-    req.hospital = hospital._id;
-    next();
+    runWithHospitalContext(hospital._id, () => {
+      req.hospital = hospital._id;
+      next();
+    });
   } catch (error) {
     res.status(500).json({ error: 'Error identifying hospital' });
   }

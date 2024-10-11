@@ -11,6 +11,12 @@ import { useSelector, useDispatch } from "react-redux";
 import { fetchItems } from "../../../redux/slices/pharmacySlice";
 import { savePrescription } from "../../../redux/slices/patientSlice";
 import { useToast } from "../../../hooks/use-toast";
+import { PDFViewer } from "@react-pdf/renderer";
+import OPDPrescriptionPDF from "../reports/OPDPrescriptionPDF";
+import { comorbodities } from "../../../assets/Data";
+import { Badge } from "../../ui/badge";
+import { X } from "lucide-react";
+import MultiSelectInput from "../MultiSelectInput";
 
 // Flatten the lab categories
 const allLabTests = labCategories.flatMap((category) =>
@@ -39,6 +45,12 @@ export default function OPDModule({ patient }) {
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const { toast } = useToast();
+
+  const [showPDFPreview, setShowPDFPreview] = useState(false);
+
+  const [selectedComorbidities, setSelectedComorbidities] = useState(
+    patient.comorbidities?.map(comorbidity => ({ name: comorbidity })) || []
+  );
 
   useEffect(() => {
     if (itemsStatus === "idle") {
@@ -139,6 +151,14 @@ export default function OPDModule({ patient }) {
     setLabTests(newLabTests);
   };
 
+  const handleComorbiditiesChange = (newComorbidities) => {
+    setSelectedComorbidities(newComorbidities);
+  };
+
+  const handleRemoveComorbidity = (name) => {
+    setSelectedComorbidities(selectedComorbidities.filter(c => c.name !== name));
+  };
+
   const handleSavePrescription = async () => {
     if (!patient.ID) {
       toast({
@@ -156,12 +176,13 @@ export default function OPDModule({ patient }) {
         prescription,
         selectedPatientType: "OPD",
         labTests: labTests.map((test) => test.name),
+        comorbidities: selectedComorbidities.map(c => c.name), // Update this line
       })).unwrap();
 
       toast({
         variant: "success",
         title: "Added Successfully!",
-        description: "Prescription, vitals, and lab tests saved successfully!",
+        description: "Prescription, vitals, lab tests, and comorbidities saved successfully!",
       });
     } catch (error) {
       console.error("Error saving prescription:", error);
@@ -288,6 +309,34 @@ export default function OPDModule({ patient }) {
           </Button>
         </div>
         <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
+          <h3 className="text-lg font-semibold">Comorbidities</h3>
+          <div className="mt-1 space-y-2">
+            <div className="flex flex-wrap gap-1">
+              {selectedComorbidities.map((comorbidity, index) => (
+                <Badge
+                  key={index}
+                  variant="primary"
+                  className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
+                >
+                  {comorbidity.name}
+                  <X
+                    className="ml-1 h-3 w-3 cursor-pointer"
+                    onClick={() => handleRemoveComorbidity(comorbidity.name)}
+                  />
+                </Badge>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <MultiSelectInput
+                suggestions={comorbodities.map(name => ({ name }))}
+                selectedValues={selectedComorbidities}
+                setSelectedValues={handleComorbiditiesChange}
+                placeholder="Select comorbidities"
+              />
+            </div>
+          </div>
+        </div>
+        <div className="space-y-4 p-4 bg-gray-50 rounded-lg shadow-md">
           <h3 className="text-lg font-semibold">Additional Instructions</h3>
           <Textarea
             id="additionalInstructions"
@@ -298,10 +347,42 @@ export default function OPDModule({ patient }) {
             className="min-h-[100px] text-sm font-medium"
           />
         </div>
+        <div className="flex justify-between mt-4">
+          <Button className="font-semibold" onClick={handleSavePrescription}>
+            Save Prescription, Vitals, Lab Tests, and Comorbidities
+          </Button>
+          <Button className="font-semibold" onClick={() => setShowPDFPreview(true)}>
+            Preview PDF
+          </Button>
+        </div>
       </ScrollArea>
-      <Button className="w-full font-semibold" onClick={handleSavePrescription}>
-        Save Prescription, Vitals, and Lab Tests
-      </Button>
+      {showPDFPreview && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white rounded-lg shadow-lg w-[850px] h-[90vh] p-4">
+            <div className="flex justify-between items-center mb-3">
+              <h2 className="text-lg font-semibold">
+                OPD Prescription Preview
+              </h2>
+              <Button
+                onClick={() => setShowPDFPreview(false)}
+                variant="ghost"
+                size="icon"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+            <PDFViewer width="100%" height="90%">
+              <OPDPrescriptionPDF
+                patient={patient.patient}
+                vitals={vitals}
+                prescription={prescription}
+                labTests={labTests}
+                selectedComorbidities={selectedComorbidities}
+              />
+            </PDFViewer>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

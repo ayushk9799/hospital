@@ -33,6 +33,10 @@ export default function Settings() {
     navigate("/settings/hospital-info");
   };
 
+  const handleCustomization = () => {
+    navigate("/settings/customization");
+  };
+
   const formatKey = (str) => {
     return str.toLowerCase().replace(/[()]/g, "").replace(/\s+/g, "-");
   };
@@ -84,6 +88,7 @@ export default function Settings() {
             value: field.value,
             unit: field.unit,
             normalRange: field.normalRange,
+            options: field.options, // Add this line to include options
             isSelected:
               !prev[formattedCategory]?.[formattedTest]?.[field.name]
                 ?.isSelected,
@@ -113,6 +118,7 @@ export default function Settings() {
                   value: field.value,
                   unit: field.unit,
                   normalRange: field.normalRange,
+                  options: field.options, // Add this line to include options
                 };
               });
           });
@@ -123,7 +129,7 @@ export default function Settings() {
     };
 
     try {
-      const reponse = await fetch(
+      const response = await fetch(
         `${Backend_URL}/api/hospitals/template/create`,
         {
           method: "POST",
@@ -134,8 +140,12 @@ export default function Settings() {
           body: JSON.stringify({ labTestsTemplate: template }),
         }
       );
-      const data = await reponse.json();
-    } catch (error) {}
+      const data = await response.json();
+      // Handle the response data as needed
+    } catch (error) {
+      // Handle any errors
+      console.error("Error creating template:", error);
+    }
     setIsOpen(false);
     setSelectedTests({});
     setSelectedFields({});
@@ -150,6 +160,7 @@ export default function Settings() {
         <Button onClick={handleAddStaff}>Add Staff</Button>
         <Button onClick={handleCreateRoom}>Create Room</Button>
         <Button onClick={handleHospitalInfo}>Hospital Info</Button>
+        <Button onClick={handleCustomization}>Customization</Button>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button>Create Test Template</Button>
@@ -249,7 +260,7 @@ export default function Settings() {
           </DialogContent>
         </Dialog>
       </div>
-      {/* Other settings content */}
+      
     </div>
   );
 }

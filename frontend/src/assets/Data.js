@@ -23,7 +23,7 @@ import {
 import { cn } from "../lib/utils";
 
 // backend url
-export const Backend_URL = "https://thehospital.in";
+export const Backend_URL = "http://localhost:3000";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -151,6 +151,7 @@ export const calculatePercentageChange = (current, previous) => {
   const change = ((current - previous) / Math.abs(previous)) * 100;
   return Number(change.toFixed(2)); // Round to 2 decimal places
 };
+
 
 export const convertTo12Hour = (time24) => {
   const [hours, minutes] = time24.split(":");
@@ -402,18 +403,21 @@ export const labReportFields = {
         label: "RBC Morphology",
         unit: "",
         normalRange: "Normal",
+        options: ["Normal", "Microcytic", "Macrocytic", "Hypochromic", "Target cells", "Sickle cells", "Other abnormalities"]
       },
       {
         name: "wbc_morphology",
         label: "WBC Morphology",
         unit: "",
         normalRange: "Normal",
+        options: ["Normal", "Left shift", "Toxic granulation", "Hypersegmented neutrophils", "Atypical lymphocytes", "Blasts", "Other abnormalities"]
       },
       {
         name: "platelet_morphology",
         label: "Platelet Morphology",
         unit: "",
         normalRange: "Normal",
+        options: ["Normal", "Large platelets", "Platelet clumps", "Other abnormalities"]
       },
     ],
     "reticulocyte-count": [
@@ -705,6 +709,7 @@ export const labReportFields = {
         label: "Rheumatoid Factor (RF)",
         unit: "IU/mL",
         normalRange: "<14",
+        options: ["Negative", "Weakly Positive", "Positive", "Strongly Positive"]
       },
     ],
     "anti-streptolysin-o-aso": [
@@ -713,6 +718,7 @@ export const labReportFields = {
         label: "Anti-Streptolysin O (ASO)",
         unit: "IU/mL",
         normalRange: "<200",
+        options: ["Negative", "Positive"]
       },
     ],
     "hepatitis-markers": [
@@ -721,12 +727,14 @@ export const labReportFields = {
         label: "Hepatitis B Surface Antigen (HBsAg)",
         unit: "",
         normalRange: "Negative",
+        options: ["Negative", "Positive"]
       },
       {
         name: "anti_hcv",
         label: "Anti-HCV",
         unit: "",
         normalRange: "Negative",
+        options: ["Negative", "Positive"]
       },
     ],
     hiv: [
@@ -735,10 +743,17 @@ export const labReportFields = {
         label: "HIV 1 & 2 Antibodies",
         unit: "",
         normalRange: "Non-reactive",
+        options: ["Non-reactive", "Reactive"]
       },
     ],
     vdrl: [
-      { name: "vdrl", label: "VDRL", unit: "", normalRange: "Non-reactive" },
+      {
+        name: "vdrl",
+        label: "VDRL",
+        unit: "",
+        normalRange: "Non-reactive",
+        options: ["Non-reactive", "Reactive"]
+      },
     ],
   },
   microbiology: {
@@ -748,6 +763,7 @@ export const labReportFields = {
         label: "Organism",
         unit: "",
         normalRange: "No growth",
+        options: ["No growth", "E. coli", "Klebsiella", "Proteus", "Enterococcus", "Pseudomonas", "Candida", "Other"]
       },
       {
         name: "colony_count",
@@ -762,6 +778,7 @@ export const labReportFields = {
         label: "Organism",
         unit: "",
         normalRange: "No pathogenic organism isolated",
+        options: ["No pathogenic organism isolated", "Salmonella", "Shigella", "Campylobacter", "E. coli O157:H7", "Other"]
       },
     ],
     "blood-culture": [
@@ -770,6 +787,7 @@ export const labReportFields = {
         label: "Organism",
         unit: "",
         normalRange: "No growth",
+        options: ["No growth", "Staphylococcus aureus", "Streptococcus pneumoniae", "E. coli", "Klebsiella", "Pseudomonas", "Candida", "Other"]
       },
       {
         name: "antibiotic_sensitivity",
@@ -784,6 +802,7 @@ export const labReportFields = {
         label: "Organism",
         unit: "",
         normalRange: "Normal respiratory flora",
+        options: ["Normal respiratory flora", "Streptococcus pneumoniae", "Haemophilus influenzae", "Moraxella catarrhalis", "Pseudomonas aeruginosa", "Mycobacterium tuberculosis", "Other"]
       },
       {
         name: "antibiotic_sensitivity",
@@ -800,6 +819,7 @@ export const labReportFields = {
         label: "Antinuclear Antibodies (ANA)",
         unit: "",
         normalRange: "Negative",
+        options: ["Negative", "Positive"]
       },
     ],
     "anti-dsdna": [
@@ -866,12 +886,14 @@ export const labReportFields = {
         label: "Color",
         unit: "",
         normalRange: "Pale yellow to amber",
+        options: ["Pale yellow", "Yellow", "Amber", "Red", "Brown", "Other"]
       },
       {
         name: "appearance",
         label: "Appearance",
         unit: "",
         normalRange: "Clear",
+        options: ["Clear", "Slightly cloudy", "Cloudy", "Turbid"]
       },
       {
         name: "specific_gravity",
@@ -880,33 +902,72 @@ export const labReportFields = {
         normalRange: "1.005-1.030",
       },
       { name: "ph", label: "pH", unit: "", normalRange: "4.5-8" },
-      { name: "protein", label: "Protein", unit: "", normalRange: "Negative" },
-      { name: "glucose", label: "Glucose", unit: "", normalRange: "Negative" },
-      { name: "ketones", label: "Ketones", unit: "", normalRange: "Negative" },
-      { name: "blood", label: "Blood", unit: "", normalRange: "Negative" },
+      {
+        name: "protein",
+        label: "Protein",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Trace", "1+", "2+", "3+", "4+"]
+      },
+      {
+        name: "glucose",
+        label: "Glucose",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Trace", "1+", "2+", "3+", "4+"]
+      },
+      {
+        name: "ketones",
+        label: "Ketones",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Trace", "Small", "Moderate", "Large"]
+      },
+      {
+        name: "blood",
+        label: "Blood",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Trace", "1+", "2+", "3+"]
+      },
       {
         name: "leukocyte_esterase",
         label: "Leukocyte Esterase",
         unit: "",
         normalRange: "Negative",
+        options: ["Negative", "Trace", "Small", "Moderate", "Large"]
       },
-      { name: "nitrite", label: "Nitrite", unit: "", normalRange: "Negative" },
+      {
+        name: "nitrite",
+        label: "Nitrite",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Positive"]
+      },
     ],
   },
   "stool-analysis": {
     "routine-stool": [
-      { name: "color", label: "Color", unit: "", normalRange: "Brown" },
+      {
+        name: "color",
+        label: "Color",
+        unit: "",
+        normalRange: "Brown",
+        options: ["Brown", "Yellow", "Green", "Black", "Red", "Clay-colored", "Other"]
+      },
       {
         name: "consistency",
         label: "Consistency",
         unit: "",
         normalRange: "Formed",
+        options: ["Formed", "Soft", "Loose", "Watery", "Mucoid"]
       },
       {
         name: "occult_blood",
         label: "Occult Blood",
         unit: "",
         normalRange: "Negative",
+        options: ["Negative", "Positive"]
       },
       {
         name: "wbc",
@@ -929,12 +990,14 @@ export const labReportFields = {
         label: "Blood Group",
         unit: "",
         normalRange: "A, B, AB, or O",
+        options: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
       },
       {
         name: "rh_factor",
         label: "Rh Factor",
         unit: "",
         normalRange: "Positive or Negative",
+        options: ["Positive", "Negative"]
       },
     ],
     "australian-antigen-hepatitis-b-surface-antigen": [
@@ -943,6 +1006,7 @@ export const labReportFields = {
         label: "Hepatitis B Surface Antigen (HBsAg)",
         unit: "",
         normalRange: "Negative",
+        options: ["Negative", "Positive"]
       },
     ],
     "antibody-screening": [
@@ -951,6 +1015,7 @@ export const labReportFields = {
         label: "Antibody Screen",
         unit: "",
         normalRange: "Negative",
+        options: ["Negative", "Positive"]
       },
       {
         name: "antibody_identification",
@@ -1241,3 +1306,25 @@ export function numberToWords(number) {
 
   return words.trim();
 }
+export const comorbodities=[
+  "Hypertension",
+  "Diabetes mellitus",
+  "Obesity",
+  "COPD",
+  "Asthma",
+  "Coronary artery disease",
+  "Congestive heart failure",
+  "Chronic kidney disease",
+  "Osteoarthritis",
+  "Rheumatoid arthritis",
+  "Depression",
+  "Anxiety disorders",
+  "Hypothyroidism",
+  "Hyperlipidemia",
+  "GERD",
+  "Sleep apnea",
+  "Osteoporosis",
+  "Chronic liver disease",
+  "Anemia",
+  "Atrial fibrillation",
+];

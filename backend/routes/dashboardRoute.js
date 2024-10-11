@@ -17,7 +17,7 @@ router.get('/stats', async (req, res) => {
     // Convert date strings to Date objects
     const fromDate = new Date(from);
     const toDate = new Date(to);
-
+  
     // Calculate total revenue
     const totalRevenue = await Payment.hospitalAwareAggregate([
       {
@@ -77,7 +77,8 @@ router.get('/daily-stats', async (req, res) => {
 
     const start = new Date(startDate);
     const end = new Date(endDate);
-
+  // console.log("start",start)
+  // console.log("end",end)
     // Existing payment aggregation
     const paymentStats = await Payment.hospitalAwareAggregate([
       {
@@ -227,8 +228,7 @@ router.get('/daily-stats', async (req, res) => {
         }
       ]).session(session)
     ]);
-
-    // Merge visit and IPD stats
+   
     const mergedAppointmentStats = [...visitStats, ...ipdStats].reduce((acc, curr) => {
       const existingEntry = acc.find(entry => entry._id === curr._id);
       if (existingEntry) {
@@ -246,9 +246,27 @@ router.get('/daily-stats', async (req, res) => {
       return acc;
     }, []);
 
-    // Merge payment stats with appointment stats
-    const finalStats = paymentStats.map(payStat => {
-      const appStat = mergedAppointmentStats.find(appStat => appStat._id === payStat.date) || {};
+    // Create a set of all unique dates
+    const allDates = new Set([
+      ...paymentStats.map(stat => stat.date),
+      ...mergedAppointmentStats.map(stat => stat._id)
+    ]);
+
+    // Create the final stats array
+    const finalStats = Array.from(allDates).map(date => {
+      const payStat = paymentStats.find(stat => stat.date === date) || {
+        date,
+        revenue: 0,
+        count: 0,
+        services: { revenue: 0, count: 0, paymentMethod: [] },
+        pharmacy: { revenue: 0, count: 0, paymentMethod: [] }
+      };
+      const appStat = mergedAppointmentStats.find(stat => stat._id === date) || {
+        visitCount: 0,
+        ipdCount: 0,
+        uniquePatients: []
+      };
+
       return {
         ...payStat,
         visitCount: appStat.visitCount || 0,
@@ -258,11 +276,13 @@ router.get('/daily-stats', async (req, res) => {
       };
     });
 
+    // Sort the finalStats array by date
+ 
+
     const formattedStats = finalStats.reduce((acc, stat) => {
       acc[stat.date] = stat;
       return acc;
     }, {});
-
 
     await session.commitTransaction();
     session.endSession();

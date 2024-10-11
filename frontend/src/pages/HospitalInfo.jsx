@@ -14,7 +14,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchHospitalInfo, updateHospitalInfo } from '../redux/slices/HospitalSlice';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Upload } from 'lucide-react';
 import { Badge } from "../components/ui/badge";
 import { ScrollArea } from "../components/ui/scroll-area";
 
@@ -42,6 +42,8 @@ const HospitalInfo = () => {
   });
 
   const [newCategory, setNewCategory] = useState('');
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoFile, setLogoFile] = useState(null);
 
   useEffect(() => {
     if (hospitalInfoStatus === 'idle') {
@@ -74,10 +76,64 @@ const HospitalInfo = () => {
     }));
   };
 
+  const handleLogoUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadLogo = async () => {
+    if (!logoFile) return null;
+
+    const formData = new FormData();
+    formData.append('logo', logoFile);
+
+    try {
+      const response = await fetch('/api/upload-logo', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload logo');
+      }
+
+      const data = await response.json();
+      return data.logoUrl; // Assuming the API returns the URL of the uploaded logo
+    } catch (error) {
+      console.error('Error uploading logo:', error);
+      toast({
+        title: "Logo Upload Failed",
+        description: "Failed to upload the logo. Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
+  const triggerLogoUpload = () => {
+    document.getElementById('logo-upload').click();
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      await dispatch(updateHospitalInfo(formData)).unwrap();
+      let updatedFormData = { ...formData };
+
+      if (logoFile) {
+        const logoUrl = await uploadLogo();
+        if (logoUrl) {
+          updatedFormData.logo = logoUrl;
+        }
+      }
+
+      await dispatch(updateHospitalInfo(updatedFormData)).unwrap();
       toast({
         variant: 'success',
         title: "Updated Successfully",
@@ -85,7 +141,7 @@ const HospitalInfo = () => {
       });
     } catch (error) {
       toast({
-        title: "Enable to update",
+        title: "Unable to update",
         description: "Failed to update hospital information. Please try again.",
         variant: "destructive",
       });
@@ -144,7 +200,34 @@ const HospitalInfo = () => {
                 <InputField label="Doctor Name" name="doctorName" value={formData.doctorName} onChange={handleChange} />
                 <TextareaField label="Doctor Information" name="doctorInfo" value={formData.doctorInfo} onChange={handleChange} />
                 <TextareaField label="Address" name="address" value={formData.address} onChange={handleChange} required />
-                <InputField label="Logo URL" name="logo" value={formData.logo} onChange={handleChange} />
+                <div className="col-span-1">
+                  <Label htmlFor="logo-upload" className="text-sm font-medium">Hospital Logo</Label>
+                  <div 
+                    className="mt-2 flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-40 h-40 cursor-pointer"
+                    onClick={triggerLogoUpload}
+                  >
+                    <div className="text-center">
+                      {logoPreview ? (
+                        <img src={logoPreview} alt="Logo Preview" className="mx-auto h-32 w-32 object-cover" />
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Upload className="h-10 w-10 text-gray-300" aria-hidden="true" />
+                          <span className="mt-2 block text-sm font-semibold text-gray-900">
+                            Upload
+                          </span>
+                        </div>
+                      )}
+                      <input
+                        id="logo-upload"
+                        name="logo-upload"
+                        type="file"
+                        className="hidden"
+                        onChange={handleLogoUpload}
+                        accept="image/*"
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="col-span-1">
                 <CategoryField 

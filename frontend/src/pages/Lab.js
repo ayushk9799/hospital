@@ -119,13 +119,7 @@ const Lab = () => {
       return;
     }
 
-    console.log(
-      "Searching for patient with",
-      searchType,
-      searchQuery,
-      "in",
-      searchWhere
-    );
+   
     try {
       const response = await fetch(
         `${Backend_URL}/api/patients/complexsearch`,

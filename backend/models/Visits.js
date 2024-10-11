@@ -26,6 +26,7 @@ const visitSchema = new mongoose.Schema({
   doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff",  },
   department: { type: String,  },
   reasonForVisit: { type: String,  },
+  comorbodities:[{type:String}],
   timeSlot:{
     start: { type: String },
     end: { type: String },
@@ -39,6 +40,7 @@ const visitSchema = new mongoose.Schema({
   }],
   labTests: [String],
   additionalInstructions: { type: String },
+  status:{type:String,default:"pending"},
   vitals:{
     bloodPressure:String,
     heartRate:Number,

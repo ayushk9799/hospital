@@ -4,6 +4,7 @@ import { Hospital } from '../models/Hospital.js'; // Make sure to import the Hos
 import mongoose from 'mongoose';
 import cookie from 'cookie';
 import { Template } from '../models/Template.js';
+import { identifyHospital } from '../middleware/hospitalMiddleware.js';
 
 const router = express.Router();
 
@@ -91,7 +92,7 @@ router.post('/:hospitalId', async (req, res) => {
         res.status(400).json({ message: 'Error updating hospital', error: error.message });
     }
 });
-router.post('/template/create', async (req, res) => {
+router.post('/template/create',identifyHospital, async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -100,7 +101,8 @@ router.post('/template/create', async (req, res) => {
         if (!template) {
             template = new Template({
                 labTestsTemplate: req.body.labTestsTemplate || [],
-                headerTemplate: req.body.headerTemplate || {}
+                headerTemplate: req.body.headerTemplate || {},
+                diagnosisTemplate:req.body.diagnosisTemplate||[],
             });
             await template.save({ session });
         } else {
@@ -109,6 +111,10 @@ router.post('/template/create', async (req, res) => {
             }
             if (req.body.headerTemplate) {
                 template.headerTemplate = req.body.headerTemplate; // Replace headerTemplate
+            }
+            if(req.body.diagnosisTemplate)
+            {
+                template.diagnosisTemplate=req.body.diagnosisTemplate
             }
             await template.save({ session });
         }
@@ -125,7 +131,7 @@ router.post('/template/create', async (req, res) => {
 });
 
 // New route to get the template
-router.get('/template/read', async (req, res) => {
+router.get('/template/read',identifyHospital, async (req, res) => {
     try {
         const template = await Template.findOne();
         if (!template) {

@@ -12,6 +12,7 @@ import { fetchItems } from "../../../redux/slices/pharmacySlice";
 import { labCategories } from "../../../assets/Data";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
+import { comorbodities } from "../../../assets/Data";
 import MultiSelectInput from "../MultiSelectInput";
 import {
   Select,
@@ -26,28 +27,7 @@ const allLabTests = labCategories.flatMap((category) =>
   category.types.map((type) => ({ name: type }))
 );
 
-const comorbiditiesList = [
-  "Hypertension",
-  "Diabetes mellitus",
-  "Obesity",
-  "COPD",
-  "Asthma",
-  "Coronary artery disease",
-  "Congestive heart failure",
-  "Chronic kidney disease",
-  "Osteoarthritis",
-  "Rheumatoid arthritis",
-  "Depression",
-  "Anxiety disorders",
-  "Hypothyroidism",
-  "Hyperlipidemia",
-  "GERD",
-  "Sleep apnea",
-  "Osteoporosis",
-  "Chronic liver disease",
-  "Anemia",
-  "Atrial fibrillation",
-].map((name) => ({ name }));
+const comorbiditiesList = comorbodities.map((name) => ({ name }));
 
 export default function IPDModule({ patient }) {
   const [ipdAdmission, setIpdAdmission] = useState({

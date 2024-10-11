@@ -39,6 +39,7 @@ import Services from './pages/Services';
 import CreateServiceBill from './pages/CreateServiceBill';
 import AboutPage from './pages/About';
 import ContactPage from './pages/ContactUs';
+import Customization from './pages/Customization';
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -126,6 +127,7 @@ const AppContent = () => {
                 <Route path="/billings/create-service-bill" element={<CreateServiceBill />} />
                 <Route path="/billings/edit/:billId" element={<CreateServiceBill />} />
                 <Route path="/settings/hospital-info" element={<HospitalInfo />} />
+                <Route path="/settings/customization" element={<Customization />} />
               </>
             )}
           </Routes>
