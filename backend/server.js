@@ -20,10 +20,11 @@ import pharmacyRoutes from './routes/pharmacyRoutes.js';
 import eventRoutes from './routes/eventRoutes.js';
 import billingRoutes from './routes/BillingRoutes.js';
 import dashboardRoute from './routes/dashboardRoute.js';
+import expenseRoutes from './routes/expenseRoutes.js';
 dotenv.config({path:'./config/config.env'});
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Get the directory name of the current module
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -37,8 +38,8 @@ app.use(express.static(path.join(__dirname, '../frontend/build')));
  app.options("*", cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
-.then(() => {})
+mongoose.connect(process.env.MONGODB_URI) 
+.then(() => {console.log("Connected to MongoDB")})
 .catch(err => {});
 
 // Apply tenant plugin to all schemas
@@ -59,6 +60,7 @@ app.use('/api/pharmacy', pharmacyRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/dashboard', dashboardRoute);
+app.use('/api/expenses', expenseRoutes);
 
 // Serve index.html for any other routes
 app.get('*', (req, res) => {

@@ -39,6 +39,7 @@ import Services from './pages/Services';
 import CreateServiceBill from './pages/CreateServiceBill';
 import AboutPage from './pages/About';
 import ContactPage from './pages/ContactUs';
+import Expenses from './pages/Expenses';
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -93,7 +94,7 @@ const AppContent = () => {
         <main
           className={`${
             isAuthenticated ? (isCollapsed ? "ml-16" : "ml-56") : ""
-          } pl-4 pr-4 w-full h-full bg-gray-50`}
+          } pl-4 pr-4 w-full h-full bg-gray-50 transition-all duration-300`}
         >
           <Routes>
             <Route path="/" element={isAuthenticated ? <Dashboard /> : <Home />} />
@@ -126,6 +127,7 @@ const AppContent = () => {
                 <Route path="/billings/create-service-bill" element={<CreateServiceBill />} />
                 <Route path="/billings/edit/:billId" element={<CreateServiceBill />} />
                 <Route path="/settings/hospital-info" element={<HospitalInfo />} />
+                <Route path="/expenses" element={<Expenses />} />
               </>
             )}
           </Routes>

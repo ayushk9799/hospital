@@ -38,7 +38,6 @@ const HospitalInfo = () => {
     pharmacyLogo: '',
     pharmacyExpiryThreshold: '',
     pharmacyItemCategories: [],
-    hospitalServiceCategories: [],
   });
 
   const [newCategory, setNewCategory] = useState('');
@@ -77,6 +76,7 @@ const HospitalInfo = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Send the entire formData object, which now includes the category arrays
       await dispatch(updateHospitalInfo(formData)).unwrap();
       toast({
         variant: 'success',
@@ -85,7 +85,7 @@ const HospitalInfo = () => {
       });
     } catch (error) {
       toast({
-        title: "Enable to update",
+        title: "Unable to update",
         description: "Failed to update hospital information. Please try again.",
         variant: "destructive",
       });
@@ -135,27 +135,15 @@ const HospitalInfo = () => {
           
           <TabsContent value="hospital">
             <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 grid grid-cols-2 gap-6">
-                <InputField label="Hospital ID" name="hospitalId" value={formData.hospitalId} onChange={handleChange} disabled />
-                <InputField label="Hospital Name" name="name" value={formData.name} onChange={handleChange} required />
-                <InputField label="Contact Number" name="contactNumber" value={formData.contactNumber} onChange={handleChange} required />
-                <InputField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
-                <InputField label="Website" name="website" type="url" value={formData.website} onChange={handleChange} />
-                <InputField label="Doctor Name" name="doctorName" value={formData.doctorName} onChange={handleChange} />
-                <TextareaField label="Doctor Information" name="doctorInfo" value={formData.doctorInfo} onChange={handleChange} />
-                <TextareaField label="Address" name="address" value={formData.address} onChange={handleChange} required />
-                <InputField label="Logo URL" name="logo" value={formData.logo} onChange={handleChange} />
-              </div>
-              <div className="col-span-1">
-                <CategoryField 
-                  label="Hospital Service Categories" 
-                  categories={formData.hospitalServiceCategories} 
-                  newCategory={newCategory}
-                  setNewCategory={setNewCategory}
-                  onAdd={() => handleAddCategory('hospitalServiceCategories')}
-                  onRemove={(index) => handleRemoveCategory('hospitalServiceCategories', index)}
-                />
-              </div>
+              <InputField label="Hospital ID" name="hospitalId" value={formData.hospitalId} onChange={handleChange} disabled />
+              <InputField label="Hospital Name" name="name" value={formData.name} onChange={handleChange} required />
+              <InputField label="Contact Number" name="contactNumber" value={formData.contactNumber} onChange={handleChange} required />
+              <InputField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
+              <InputField label="Website" name="website" type="url" value={formData.website} onChange={handleChange} />
+              <InputField label="Doctor Name" name="doctorName" value={formData.doctorName} onChange={handleChange} />
+              <TextareaField label="Doctor Information" name="doctorInfo" value={formData.doctorInfo} onChange={handleChange} />
+              <TextareaField label="Address" name="address" value={formData.address} onChange={handleChange} required />
+              <InputField label="Logo URL" name="logo" value={formData.logo} onChange={handleChange} />
             </div>
           </TabsContent>
           
@@ -218,52 +206,56 @@ const TextareaField = ({ label, name, value, onChange, required = false }) => (
   </div>
 );
 
-const CategoryField = ({ label, categories, newCategory, setNewCategory, onAdd, onRemove }) => (
-  <div className="space-y-2">
-    <Label className="text-sm font-medium">{label}</Label>
-    <div className="flex flex-col space-y-2">
-      <div className="flex space-x-2">
-        <Input
-          value={newCategory}
-          onChange={(e) => setNewCategory(e.target.value)}
-          placeholder="Enter a new category"
-          className="flex-grow"
-        />
-        <Button 
-          type="button" 
-          onClick={onAdd} 
-          // className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
-          disabled={!newCategory.trim()}
-        >
-          <Plus size={16} />
-          {/* <span className="ml-2">Add</span> */}
-        </Button>
-      </div>
-      <ScrollArea className="h-[150px] w-full border rounded-md p-4">
-        {categories.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {categories.map((category, index) => (
-              <Badge 
-                key={index} 
-                variant="secondary"
-                className="text-sm py-1 px-2 flex items-center space-x-1"
-              >
-                <span>{category}</span>
-                <button
-                  onClick={() => onRemove(index)}
-                  className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+const CategoryField = ({ label, categories, newCategory, setNewCategory, onAdd, onRemove }) => {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    onAdd();
+  };
+
+  return (
+    <div className="space-y-2">
+      <Label className="text-sm font-medium">{label}</Label>
+      <div className="flex flex-col space-y-2">
+        <form onSubmit={handleSubmit} className="flex space-x-2">
+          <Input
+            value={newCategory}
+            onChange={(e) => setNewCategory(e.target.value)}
+            placeholder="Enter a new category"
+            className="flex-grow"
+          />
+          <Button 
+            type="submit" 
+            disabled={!newCategory.trim()}
+          >
+            <Plus size={16} />
+          </Button>
+        </form>
+        <ScrollArea className="h-[150px] w-full border rounded-md p-4">
+          {categories.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {categories.map((category, index) => (
+                <Badge 
+                  key={index} 
+                  variant="secondary"
+                  className="text-sm py-1 px-2 flex items-center space-x-1"
                 >
-                  <X size={14} />
-                </button>
-              </Badge>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-sm">No categories added yet.</p>
-        )}
-      </ScrollArea>
+                  <span>{category}</span>
+                  <button
+                    onClick={() => onRemove(index)}
+                    className="ml-1 text-gray-500 hover:text-red-500 focus:outline-none"
+                  >
+                    <X size={14} />
+                  </button>
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-sm">No categories added yet.</p>
+          )}
+        </ScrollArea>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default HospitalInfo;

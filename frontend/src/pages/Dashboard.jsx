@@ -725,13 +725,13 @@ const Dashboard = () => {
       </div>
 
       {/* New row for Payment Method Distribution */}
-      <div className="mt-4 grid grid-cols-3 gap-4">
+      <div className="mt-4 grid grid-cols-3 gap-4 mb-4">
         <div>
           {/* Recent Patients */}
-          <Card>
+          <Card className="h-full">
             <CardHeader>
               <CardTitle>Recent Patients</CardTitle>
-              <CardDescription>Latest admitted patients</CardDescription>
+              <CardDescription>Latest registered patients</CardDescription>
             </CardHeader>
             <CardContent>
               {recentPatients.length > 0 ? (
@@ -783,7 +783,7 @@ const Dashboard = () => {
           <CardContent>
             {calculatePaymentMethods.servicePayments.length > 0 ? (
               <>
-                <div className="h-[180px]">
+                <div className="h-[230px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -792,8 +792,8 @@ const Dashboard = () => {
                         nameKey="method"
                         cx="50%"
                         cy="50%"
-                        innerRadius={45}
-                        outerRadius={85}
+                        innerRadius={50}
+                        outerRadius={95}
                         paddingAngle={1}
                       >
                         {calculatePaymentMethods.servicePayments.map(
@@ -850,7 +850,7 @@ const Dashboard = () => {
                 </div>
               </>
             ) : (
-              <div className="h-[180px] flex flex-col items-center justify-center text-gray-500">
+              <div className="h-[230px] flex flex-col items-center justify-center text-gray-500">
                 <AlertCircle className="w-12 h-12 mb-2" />
                 <p className="text-sm">No payment data available</p>
               </div>
@@ -869,7 +869,7 @@ const Dashboard = () => {
           <CardContent>
             {calculatePaymentMethods.pharmacyPayments.length > 0 ? (
               <>
-                <div className="h-[180px]">
+                <div className="h-[230px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -878,8 +878,8 @@ const Dashboard = () => {
                         nameKey="method"
                         cx="50%"
                         cy="50%"
-                        innerRadius={45}
-                        outerRadius={85}
+                        innerRadius={50}
+                        outerRadius={95}
                         paddingAngle={1}
                       >
                         {calculatePaymentMethods.pharmacyPayments.map(
@@ -936,7 +936,7 @@ const Dashboard = () => {
                 </div>
               </>
             ) : (
-              <div className="h-[180px] flex flex-col items-center justify-center text-gray-500">
+              <div className="h-[230px] flex flex-col items-center justify-center text-gray-500">
                 <AlertCircle className="w-12 h-12 mb-2" />
                 <p className="text-sm">No payment data available</p>
               </div>

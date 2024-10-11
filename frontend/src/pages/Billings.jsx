@@ -158,7 +158,7 @@ const Billings = () => {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Billing List</CardTitle>
-        <CardDescription>Manage and view billing information</CardDescription>
+        <CardDescription>Manage and view services billing information</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex justify-between items-center mb-4">
@@ -248,16 +248,16 @@ const Billings = () => {
         </div>
         {filteredBills.length > 0 ? (
           <Table>
-            <TableHeader>
+            <TableHeader className="">
               <TableRow>
-                <TableHead>Bill ID</TableHead>
-                <TableHead>Patient Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Patient Type</TableHead>
-                <TableHead>Date & Time</TableHead>
-                <TableHead>Total Amount</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="font-semibold">Bill ID</TableHead>
+                <TableHead className="font-semibold">Patient Name</TableHead>
+                <TableHead className="font-semibold">Phone</TableHead>
+                <TableHead className="font-semibold">Patient Type</TableHead>
+                <TableHead className="font-semibold">Date & Time</TableHead>
+                <TableHead className="font-semibold">Total Amount</TableHead>
+                <TableHead className="font-semibold">Status</TableHead>
+                <TableHead className="font-semibold">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

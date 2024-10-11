@@ -6,8 +6,7 @@ import { CardContent, Card } from "../components/ui/card"
 import { Link } from "react-router-dom"
 import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin } from "lucide-react"
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
-import { useNavigate } from 'react-router-dom';
-import { useLocation } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 export default function ContactPage() {
   const navigate = useNavigate();
@@ -29,87 +28,85 @@ export default function ContactPage() {
     <div className="flex flex-col min-h-screen bg-gray-50">
       <header className="px-4 lg:px-6 h-16 flex items-center bg-white shadow-sm">
         <Link className="flex items-center justify-center" to="/">
-          <ColorfulLogo className="h-7 w-7 text-blue-600" />
-          <span className="ml-2 text-2xl font-bold text-gray-900">The Hospital</span>
+          <ColorfulLogo className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+          <span className="ml-2 text-lg sm:text-xl md:text-2xl font-bold text-gray-900">The Hospital</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
-          <Link className="text-sm font-medium hover:underline underline-offset-4" to="/">
+        <nav className="ml-auto flex gap-2 sm:gap-4">
+          <Link className="text-xs sm:text-sm font-medium hover:underline underline-offset-4" to="/">
             Home
           </Link>
           <a 
             href="/#features" 
-            className="text-sm font-medium hover:underline underline-offset-4"
+            className="text-xs sm:text-sm font-medium hover:underline underline-offset-4"
             onClick={handleFeaturesClick}
           >
             Features
           </a>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" to="/about">
+          <Link className="text-xs sm:text-sm font-medium hover:underline underline-offset-4" to="/about">
             About
           </Link>
-          <Link className="text-sm font-medium hover:underline underline-offset-4" to="/contact">
+          <Link className="text-xs sm:text-sm font-medium hover:underline underline-offset-4" to="/contact">
             Contact
           </Link>
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 bg-white">
+        <section className="w-full py-6 sm:py-8 md:py-12 bg-white">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl">Contact Us</h1>
-                <p className="max-w-[900px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  We're here to help. Get in touch with us for any inquiries or support.
-                </p>
-              </div>
+            <div className="flex flex-col items-center justify-center space-y-2 sm:space-y-4 text-center">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold tracking-tighter">Contact Us</h1>
+              <p className="max-w-[600px] text-gray-500 text-sm sm:text-base md:text-lg">
+                We're here to help. Get in touch with us for any inquiries or support.
+              </p>
             </div>
           </div>
         </section>
-        <section className="w-full py-12 md:py-24 lg:py-32">
+        <section className="w-full py-6 sm:py-8 md:py-12">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-10 px-10 md:gap-16 lg:grid-cols-2">
-            <div className="space-y-4">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Contact Information</h2>
-                <Card>
-                  <CardContent className="p-6">
+            <div className="grid gap-8 md:gap-12 lg:grid-cols-2">
+              <div className="space-y-4">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter">Contact Information</h2>
+                <Card className="w-full">
+                  <CardContent className="p-4 sm:p-6">
                     <div className="space-y-4">
                       <div className="flex items-center space-x-4">
-                        <Phone className="h-6 w-6 text-blue-600" />
-                        <span>+91 9097849090</span>
+                        <Phone className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+                        <span className="text-sm sm:text-base">+91 9097849090</span>
                       </div>
                       <div className="flex items-center space-x-4">
-                        <Mail className="h-6 w-6 text-blue-600" />
-                        <span>support@thehospital.com</span>
+                        <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
+                        <span className="text-sm sm:text-base">support@thehospital.com</span>
                       </div>
-                      <div className="flex items-center space-x-4">
-                        <MapPin className="h-6 w-6 text-blue-600" />
-                        <span>Thousand Ways Private Limited<br />
-                            Dariyapur, Bodh Gaya,
+                      <div className="flex items-start space-x-4">
+                        <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0 mt-1" />
+                        <span className="text-sm sm:text-base">Thousand Ways Private Limited<br />
+                            Dariyapur, Bodh Gaya,<br />
                             Bihar 824237, India</span>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
                 <div className="space-y-4">
-                  <h3 className="text-xl font-bold">Follow Us</h3>
+                  <h3 className="text-lg sm:text-xl font-bold">Follow Us</h3>
                   <div className="flex space-x-4">
                     <Link href="#" className="text-gray-500 hover:text-blue-600">
-                      <Facebook className="h-6 w-6" />
+                      <Facebook className="h-5 w-5 sm:h-6 sm:w-6" />
                       <span className="sr-only">Facebook</span>
                     </Link>
                     <Link href="#" className="text-gray-500 hover:text-blue-600">
-                      <Twitter className="h-6 w-6" />
+                      <Twitter className="h-5 w-5 sm:h-6 sm:w-6" />
                       <span className="sr-only">Twitter</span>
                     </Link>
                     <Link href="#" className="text-gray-500 hover:text-blue-600">
-                      <Linkedin className="h-6 w-6" />
+                      <Linkedin className="h-5 w-5 sm:h-6 sm:w-6" />
                       <span className="sr-only">LinkedIn</span>
                     </Link>
                   </div>
                 </div>
               </div>
               <div className="space-y-4" ref={contactFormRef}>
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Contact Us</h2>
-                <p className="text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tighter">Contact Us</h2>
+                <p className="text-gray-500 text-sm sm:text-base">
                   We appreciate your interest. Please complete the form below, and a member of our team will respond promptly.
                 </p>
                 <form className="space-y-4">
@@ -121,6 +118,7 @@ export default function ContactPage() {
                       id="name"
                       placeholder="Enter your full name"
                       required
+                      className="w-full"
                     />
                   </div>
                   <div className="space-y-2">
@@ -132,6 +130,7 @@ export default function ContactPage() {
                       placeholder="Enter your contact number"
                       required
                       type="tel"
+                      className="w-full"
                     />
                   </div>
                   <div className="space-y-2">
@@ -142,6 +141,7 @@ export default function ContactPage() {
                       id="message"
                       placeholder="Please provide details about your inquiry"
                       required
+                      className="w-full"
                     />
                   </div>
                   <Button type="submit" className="w-full bg-blue-600 text-white hover:bg-blue-700">
@@ -149,14 +149,13 @@ export default function ContactPage() {
                   </Button>
                 </form>
               </div>
-              
             </div>
           </div>
         </section>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t bg-white">
-        <p className="text-xs text-gray-500">© 2024 The Hospital. All rights reserved.</p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+      <footer className="flex flex-col sm:flex-row justify-between items-center py-6 px-4 md:px-6 border-t bg-white">
+        <p className="text-xs text-gray-500 mb-2 sm:mb-0">© 2024 The Hospital. All rights reserved.</p>
+        <nav className="flex gap-4">
           <Link className="text-xs hover:underline underline-offset-4" href="#">
             Terms of Service
           </Link>

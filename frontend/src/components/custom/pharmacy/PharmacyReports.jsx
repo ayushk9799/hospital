@@ -120,6 +120,10 @@ const PharmacyReports = () => {
   }, [salesBills]);
 
   const getExpiryStatus = (expiryDate) => {
+    if (!expiryDate) {
+      return { status: null, variant: "secondary" };
+    }
+
     const today = new Date();
     const daysLeft = differenceInDays(new Date(expiryDate), today);
 
@@ -253,20 +257,26 @@ const PharmacyReports = () => {
                               {item?.supplier?.name || "——"}
                             </TableCell>
                             <TableCell>
-                              {format(
-                                new Date(item?.expiryDate),
-                                "MMM dd, yyyy"
-                              )}
+                              {item.expiryDate
+                                ? format(
+                                    new Date(item.expiryDate),
+                                    "MMM dd, yyyy"
+                                  )
+                                : "—"}
                             </TableCell>
                             <TableCell>{item.quantity}</TableCell>
                             <TableCell>
-                              <Badge variant={variant}>
-                                {status}
-                                {status === "Expiring Soon" &&
-                                  ` (${daysLeft} ${
-                                    daysLeft === 1 ? "day" : "days"
-                                  })`}
-                              </Badge>
+                              {status ? (
+                                <Badge variant={variant}>
+                                  {status}
+                                  {status === "Expiring Soon" &&
+                                    ` (${daysLeft} ${
+                                      daysLeft === 1 ? "day" : "days"
+                                    })`}
+                                </Badge>
+                              ) : (
+                                "—"
+                              )}
                             </TableCell>
                           </TableRow>
                         );

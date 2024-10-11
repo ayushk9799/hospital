@@ -16,7 +16,8 @@ import {
   PillIcon,
   TestTube,
   ChevronRight,
-  UsersIcon
+  UsersIcon,
+  IndianRupee
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
@@ -40,8 +41,9 @@ const navItems = [
   { name: "Dashboard", icon: Home, path: "/" },
   { name: "Patients", icon: Users, path: "/patients" },
   { name: "Billings", icon: ReceiptText, path: "/billings" },
+  { name: "Expenses", icon: IndianRupee, path: "/expenses" }, // Add this new navigation item
   { name: "Doctors", icon: Stethoscope, path: "/doctors" },
-  { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy" },
+  { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy/sales" },
   { name: "Lab", icon: TestTube, path: "/lab" },
   { name: "Rooms", icon: Bed, path: "/rooms" },
   // { name: "Appointments", icon: Calendar, path: "/appointments" },

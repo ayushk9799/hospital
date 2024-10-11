@@ -74,6 +74,7 @@ router.post('/:hospitalId', async (req, res) => {
             return res.status(404).json({ message: 'Hospital not found' });
         }
 
+        // Update all fields, including the new category fields
         Object.assign(hospital, req.body);
 
         const updatedHospital = await hospital.save({ session });
