@@ -133,7 +133,7 @@ export default function RoomManagementDashboard() {
   );
 
   return (
-    <div className="container mx-auto p-6 space-y-4 pt-2">
+    <div className="w-full mx-auto">
       <Card>
         <CardHeader>
           <CardTitle>Room List</CardTitle>

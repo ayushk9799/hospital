@@ -25,7 +25,6 @@ import { Plus, Pencil, Trash, Package, CheckCircle } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   createOrder,
-  setCreateOrderStatus,
   fetchSuppliers,
   fetchSupplierDetails,
   clearSelectedSupplier,
@@ -222,17 +221,6 @@ export default function Purchase() {
     dispatch(createOrder(orderData));
   };
 
-  useEffect(() => {
-    if (createOrderStatus === "succeeded") {
-      alert("Purchase order created successfully!");
-    } else if (createOrderStatus === "failed") {
-      alert(`Failed to create purchase order: ${error}`);
-    }
-    return () => {
-      dispatch(setCreateOrderStatus("idle"));
-    };
-  }, [createOrderStatus, error]);
-
   const handlePayFullAmount = () => {
     setAmountPaying(totals.grandTotal.toFixed(2));
   };
@@ -402,7 +390,7 @@ export default function Purchase() {
                         </TableCell>
                         <TableCell className="w-20">
                           {newItem.quantity && newItem.MRP
-                            ? `₹${newItem.total.toFixed(2)}`
+                            ? `₹${newItem.total.toLocaleString("en-IN")}`
                             : "₹0.00"}
                         </TableCell>
                         <TableCell>
@@ -444,7 +432,7 @@ export default function Purchase() {
                             <TableCell>₹{item.MRP.toFixed(2)}</TableCell>
                             <TableCell>{item.discount}%</TableCell>
                             <TableCell>{item.expiryDate}</TableCell>
-                            <TableCell>₹{item.total.toFixed(2)}</TableCell>
+                            <TableCell>₹{item.total.toLocaleString("en-IN")}</TableCell>
                             <TableCell>
                               <Button
                                 size="icon"
@@ -498,7 +486,7 @@ export default function Purchase() {
                 />
               </CardContent>
             </Card>
-            <Card className="h-[calc(100vh-340px)]">
+            <Card className="h-[calc(100vh-346px)]">
               <CardHeader>
                 <CardTitle>Supplier Information</CardTitle>
               </CardHeader>
@@ -555,19 +543,19 @@ export default function Purchase() {
               <div className="grid col-span-3 grid-cols-5 gap-4">
                 <LabeledInput
                   label="Subtotal"
-                  value={`₹${totals.subtotal.toFixed(2)}`}
+                  value={`₹${totals.subtotal.toLocaleString("en-IN")}`}
                   readOnly
                   className="w-full"
                 />
                 <LabeledInput
                   label="Discount Total"
-                  value={`₹${totals.discountTotal.toFixed(2)}`}
+                  value={`₹${totals.discountTotal.toLocaleString("en-IN")}`}
                   readOnly
                   className="w-full"
                 />
                 <LabeledInput
                   label="Grand Total"
-                  value={`₹${totals.grandTotal.toFixed(2)}`}
+                  value={`₹${totals.grandTotal.toLocaleString("en-IN")}`}
                   readOnly
                   className="w-full font-bold"
                 />
@@ -593,7 +581,7 @@ export default function Purchase() {
                 </div>
                 <LabeledInput
                   label="Due Amount"
-                  value={`₹${totals.dueAmount.toFixed(2)}`}
+                  value={`₹${totals.dueAmount.toLocaleString("en-IN")}`}
                   readOnly
                   className="w-full font-bold text-red-500"
                 />

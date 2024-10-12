@@ -92,7 +92,8 @@ router.post("/update-bill/:id", async (req, res) => {
 
     const updatedBill = await ServicesBill.findById(bill._id)
       .populate("payments")
-      .session(session);
+      .session(session)
+      .lean();
 
     await session.commitTransaction();
     res.status(200).json(updatedBill);
@@ -109,18 +110,19 @@ router.get("/get-bills", async (req, res) => {
   try {
     const bills = await ServicesBill.find()
       .sort({ createdAt: -1 })
-      .populate("payments");
+      .populate("payments")
+      .lean();
     res.status(200).json(bills);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
   }
-});
+}); 
 
 // Get a specific service bill by ID
 router.get("/get-bill/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const bill = await ServicesBill.findById(id).populate("payments");
+    const bill = await ServicesBill.findById(id).populate("payments").lean();
 
     if (!bill) {
       return res.status(404).json({ message: "Bill not found" });
@@ -160,7 +162,7 @@ router.post("/service", async (req, res) => {
 // Get all services
 router.get("/services", async (req, res) => {
   try {
-    const services = await Service.find().select("-hospital");
+    const services = await Service.find().select("-hospital").lean();
     res.status(200).json(services);
   } catch (error) {
     res.status(500).json({ message: "Server error", error });
@@ -171,7 +173,7 @@ router.get("/services", async (req, res) => {
 router.delete("/service/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const service = await Service.findByIdAndDelete(id);
+    const service = await Service.findByIdAndDelete(id).lean();
     if (!service) return res.status(404).json({ message: "Service not found" });
     res.status(200).json({ message: "Service deleted successfully" });
   } catch (error) {

@@ -110,11 +110,11 @@ const AppContent = () => {
                 <Route path="/appointments" element={<Appointments />} />
                 <Route path="/doctors" element={<Doctors />} />
                 <Route path="/rooms" element={<Rooms />} />
-                <Route path="/staffs" element={<Reports />} />
+                <Route path="/staff" element={<Reports />} />
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/staff/:staffId" element={<StaffProfile />} />
                 <Route path="/analytics" element={<Analytics />} />
-                <Route path="/pharmacy" element={<Navigate to="/pharmacy/dashboard" replace />} />
+                <Route path="/pharmacy" element={<Navigate to="/pharmacy/sales" replace />} />
                 <Route path="/pharmacy/:tab" element={<Pharmacy />} />
                 <Route path="/pharmacy/all-bills" element={<PharmacyAllBills />} />
                 <Route path="/addstaff" element={<AddStaff />} />

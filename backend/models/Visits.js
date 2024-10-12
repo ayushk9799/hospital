@@ -39,6 +39,7 @@ const visitSchema = new mongoose.Schema({
     duration: String
   }],
   labTests: [String],
+  comorbidities: [{ type: String }],
   additionalInstructions: { type: String },
   status:{type:String,default:"pending"},
   vitals:{

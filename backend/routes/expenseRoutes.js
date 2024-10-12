@@ -222,7 +222,8 @@ router.get('/', verifyToken, async (req, res) => {
   try {
     const expenses = await Expense.find()
       .populate('payments')
-      .sort({ date: -1 });
+      .sort({ date: -1, _id: -1 })
+      .lean();
 
     res.status(200).json(expenses);
   } catch (error) {

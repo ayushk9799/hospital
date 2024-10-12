@@ -17,6 +17,7 @@ import { comorbodities } from "../../../assets/Data";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
 import MultiSelectInput from "../MultiSelectInput";
+import { Separator } from "../../ui/separator";
 
 // Flatten the lab categories
 const allLabTests = labCategories.flatMap((category) =>
@@ -42,6 +43,8 @@ export default function OPDModule({ patient }) {
   });
   const [labTests, setLabTests] = useState([]);
   const [selectedLabTests, setSelectedLabTests] = useState([]);
+  const [comorbidities, setComorbidities] = useState([]);
+  const [selectedComorbidities, setSelectedComorbidities] = useState([]);
 
   const dispatch = useDispatch();
   const medicines = useSelector((state) => state.pharmacy.items);
@@ -50,10 +53,6 @@ export default function OPDModule({ patient }) {
   const { toast } = useToast();
 
   const [showPDFPreview, setShowPDFPreview] = useState(false);
-
-  const [selectedComorbidities, setSelectedComorbidities] = useState(
-    patient.comorbidities?.map(comorbidity => ({ name: comorbidity })) || []
-  );
 
   useEffect(() => {
     if (itemsStatus === "idle") {
@@ -85,6 +84,11 @@ export default function OPDModule({ patient }) {
       const patientLabTests = patient.labTests?.map(test => ({ name: test })) || [];
       setLabTests(patientLabTests);
       setSelectedLabTests(patientLabTests);
+      
+      // Update comorbidities and selectedComorbidities
+      const patientComorbidities = patient.comorbidities?.map(comorbidity => ({ name: comorbidity })) || [];
+      setComorbidities(patientComorbidities);
+      setSelectedComorbidities(patientComorbidities);
     }
   }, [patient]);
 
@@ -206,8 +210,8 @@ export default function OPDModule({ patient }) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
+    <div className="space-y-2">
+      <div className="flex justify-between items-center border-b border-gray-300 pb-2">
         <h2 className="text-xl font-bold">Prescription for: {patient.patient.name} (P{patient.patient._id.slice(-4)})</h2>
         <div className="space-x-2">
           <Button className="font-semibold" size="sm" variant="outline" onClick={() => setShowPDFPreview(true)}>
@@ -218,7 +222,8 @@ export default function OPDModule({ patient }) {
           </Button>
         </div>
       </div>
-      <ScrollArea className="h-[calc(100vh-115px)] pr-4">
+      {/* <Separator className="mt-0" /> */}
+      <ScrollArea className="h-[calc(100vh-125px)] pr-4 ">
         <div className=" px-1 bg-gray-50">
           <h3 className="text-lg font-semibold">Vitals</h3>
           <div className="grid grid-cols-4 gap-3">
@@ -256,8 +261,8 @@ export default function OPDModule({ patient }) {
             </div>
           </div>
         </div>
-        <div className=" pt-4 px-1 bg-gray-50 ">
-          <h3 className="text-lg font-semibold">Diagnosis, Treatment, and Medications</h3>
+        <div className="pt-4 p-1 bg-gray-50 ">
+          <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
@@ -281,43 +286,6 @@ export default function OPDModule({ patient }) {
                 className="min-h-[100px] text-sm font-medium" 
               />
             </div>
-          </div>
-          <div>
-            <Label className="font-semibold">Medications</Label>
-            {prescription.medications?.map((medication, index) => (
-              <div key={index} className="grid grid-cols-4 gap-2 mb-2">
-                <SearchSuggestion
-                  suggestions={commonMedications}
-                  placeholder="Select medicine"
-                  value={medication.name}
-                  setValue={(value) => handleMedicationChange(index, "name", value)}
-                  onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
-                />
-                <Input
-                  placeholder="0-0-0"
-                  value={medication.frequency}
-                  onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
-                  className="font-medium"
-                />
-                <Input
-                  placeholder="Duration"
-                  value={medication.duration}
-                  onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
-                  className="font-medium"
-                />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => removeMedication(index)}
-                  disabled={prescription.medications.length === 1}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            ))}
-            <Button onClick={addMedication} variant="outline" className="mt-2 font-semibold">
-              <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
-            </Button>
           </div>
         </div>
         <div className="grid grid-cols-2 px-1 gap-4 bg-gray-50">
@@ -391,7 +359,46 @@ export default function OPDModule({ patient }) {
             </div>
           </div>
         </div>
-        <div className="space-y-2 px-1 pt-4 mb-4 bg-gray-50 ">
+        <div className="pt-4 px-1 bg-gray-50">
+          <h3 className="text-lg font-semibold">Medications</h3>
+          <div>
+            {prescription.medications?.map((medication, index) => (
+              <div key={index} className="grid grid-cols-4 gap-2 mb-2">
+                <SearchSuggestion
+                  suggestions={commonMedications}
+                  placeholder="Select medicine"
+                  value={medication.name}
+                  setValue={(value) => handleMedicationChange(index, "name", value)}
+                  onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+                />
+                <Input
+                  placeholder="0-0-0"
+                  value={medication.frequency}
+                  onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                  className="font-medium"
+                />
+                <Input
+                  placeholder="Duration"
+                  value={medication.duration}
+                  onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                  className="font-medium"
+                />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => removeMedication(index)}
+                  disabled={prescription.medications.length === 1}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button onClick={addMedication} variant="outline" className="mt-2 font-semibold">
+              <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
+            </Button>
+          </div>
+        </div>
+        <div className="space-y-2 px-1 pt-4 mb-4 bg-gray-50">
           <h3 className="text-lg font-semibold">Additional Instructions</h3>
           <Textarea
             id="additionalInstructions"

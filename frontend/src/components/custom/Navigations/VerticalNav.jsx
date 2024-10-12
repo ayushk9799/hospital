@@ -41,14 +41,14 @@ const navItems = [
   { name: "Dashboard", icon: Home, path: "/" },
   { name: "Patients", icon: Users, path: "/patients" },
   { name: "Billings", icon: ReceiptText, path: "/billings" },
-  { name: "Expenses", icon: IndianRupee, path: "/expenses" }, // Add this new navigation item
+  { name: "Expenses", icon: IndianRupee, path: "/expenses" },
   { name: "Doctors", icon: Stethoscope, path: "/doctors" },
-  { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy/sales" },
+  { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy" },
   { name: "Lab", icon: TestTube, path: "/lab" },
   { name: "Rooms", icon: Bed, path: "/rooms" },
   // { name: "Appointments", icon: Calendar, path: "/appointments" },
   { name: "Services", icon: ClipboardList, path: "/services" },
-  { name: "Staffs", icon: UsersIcon, path: "/staffs" },
+  { name: "Staffs", icon: UsersIcon, path: "/staff" },
   // { name: "Analytics", icon: BarChart, path: "/analytics" },
   { name: "Settings", icon: Settings, path: "/settings" },
 ];
@@ -90,20 +90,12 @@ export const ColorfulLogo = ({ className }) => (
 export default function VerticalNav({ isCollapsed }) {
   const navigate = useNavigate();
   const location = useLocation();
-  const [activeItem, setActiveItem] = useState(() => {
-    const currentPath = location.pathname;
-    const currentItem = navItems.find((item) => item.path === currentPath);
-    return currentItem ? currentItem.name : "Dashboard";
-  });
-  const [expandedItems, setExpandedItems] = useState({});
 
-  const handleNavigation = (item) => {
-    setActiveItem(item.name);
-    navigate(item.path);
-  };
-
-  const toggleExpand = (itemName) => {
-    setExpandedItems((prev) => ({ ...prev, [itemName]: !prev[itemName] }));
+  const isActive = (itemPath) => {
+    if (itemPath === "/") {
+      return location.pathname === "/";
+    }
+    return location.pathname.startsWith(itemPath);
   };
 
   return (
@@ -124,62 +116,26 @@ export default function VerticalNav({ isCollapsed }) {
                       variant="ghost"
                       className={cn(
                         "w-full justify-start",
-                        activeItem === item.name
+                        isActive(item.path)
                           ? "bg-blue-100 text-blue-900"
                           : "text-gray-600 hover:bg-blue-50 hover:text-blue-900",
                         isCollapsed ? "px-2" : "px-4"
                       )}
-                      onClick={() =>
-                        item.subItems
-                          ? toggleExpand(item.name)
-                          : handleNavigation(item)
-                      }
+                      onClick={() => navigate(item.path)}
                     >
                       <item.icon
                         className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")}
                       />
-                      {!isCollapsed && (
-                        <>
-                          <span>{item.name}</span>
-                          {item.subItems && (
-                            <ChevronRight
-                              className={cn(
-                                "ml-auto h-4 w-4 transition-transform",
-                                expandedItems[item.name] && "rotate-90"
-                              )}
-                            />
-                          )}
-                        </>
-                      )}
+                      {!isCollapsed && <span>{item.name}</span>}
                     </Button>
                   </TooltipTrigger>
                   {isCollapsed && (
                     <TooltipContent side="right">
-                      <p>{item.name}</p>
+                      <p className="font-semibold">{item.name}</p>
                     </TooltipContent>
                   )}
                 </Tooltip>
               </TooltipProvider>
-              {!isCollapsed && item.subItems && expandedItems[item.name] && (
-                <ul className="ml-6 mt-1 space-y-1">
-                  {item.subItems.map((subItem) => (
-                    <li key={subItem.name}>
-                      <Button
-                        variant="ghost"
-                        className={cn(
-                          "w-full justify-start px-4",
-                          activeItem === subItem.name
-                            ? "bg-blue-100 text-blue-900"
-                            : "text-gray-600 hover:bg-blue-50 hover:text-blue-900"
-                        )}
-                        onClick={() => handleNavigation(subItem)}
-                      >
-                        <span>{subItem.name}</span>
-                      </Button>
-                    </li>
-                  ))}
-                </ul>
-              )}
             </li>
           ))}
         </ul>

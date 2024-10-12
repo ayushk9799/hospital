@@ -99,6 +99,7 @@ const PharmacyReports = () => {
     Number(hospitalInfo?.pharmacyExpiryThreshold)
   );
   const itemsExpiringInTwoMonths = items.filter((item) => {
+    if (!item.expiryDate) return false; // Exclude items with undefined expiry date
     const expiryDate = new Date(item.expiryDate);
     return isBefore(expiryDate, twoMonthsFromNow);
   });

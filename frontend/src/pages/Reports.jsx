@@ -62,7 +62,7 @@ export default function Reports() {
   };
 
   return (
-    <div className="container mx-auto p-2 space-y-2">
+    <div className="w-full mx-auto">
       <Card>
         <CardHeader>
           <CardTitle>Staff List</CardTitle>

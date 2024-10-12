@@ -221,8 +221,8 @@ router.get("/details", verifyToken, async (req, res) => {
       bookingDate: visit.bookingDate,
       doctor: visit.doctor,
       reasonForVisit: visit.reasonForVisit,
-      status: visit.status,
-      comorbidities: visit.comorbodities,
+      status:visit.status,
+      comorbidities:visit.comorbidities,
       vitals: visit.vitals,
       diagnosis: visit.diagnosis,
       treatment: visit.treatment,
@@ -549,7 +549,7 @@ router.put(
     session.startTransaction();
     try {
       const { id } = req.params;
-      const { vitals, prescription, labTests } = req.body;
+      const { vitals, prescription, labTests, comorbidities } = req.body;
       const visit = await Visit.findById(id)
         .session(session)
         .select(
@@ -570,9 +570,10 @@ router.put(
       visit.additionalInstructions = prescription.additionalInstructions;
       // Update lab tests
       visit.labTests = labTests;
+      visit.comorbidities = comorbidities;
       await visit.save({ session });
       await session.commitTransaction();
-      res.json(visit);
+      res.status(200).json(visit);
     } catch (error) {
       await session.abortTransaction();
       res.status(400).json({ error: error.message });
