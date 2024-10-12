@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { useToast } from "../hooks/use-toast";
+import { s3Domain } from "../assets/Data";
+import { Backend_URL } from "../assets/Data";
 import {
   Card,
   CardContent,
@@ -11,67 +13,76 @@ import {
   CardTitle,
   CardDescription,
 } from "../components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
-import { useSelector, useDispatch } from 'react-redux';
-import { fetchHospitalInfo, updateHospitalInfo } from '../redux/slices/HospitalSlice';
-import { X, Plus, Upload } from 'lucide-react';
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "../components/ui/tabs";
+import { useSelector, useDispatch } from "react-redux";
+import {
+  fetchHospitalInfo,
+  updateHospitalInfo,
+} from "../redux/slices/HospitalSlice";
+import { X, Plus, Upload } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { ScrollArea } from "../components/ui/scroll-area";
 
 const HospitalInfo = () => {
   const { toast } = useToast();
   const dispatch = useDispatch();
-  const { hospitalInfo, hospitalInfoStatus, updateStatus } = useSelector((state) => state.hospital);
+  const { hospitalInfo, hospitalInfoStatus, updateStatus } = useSelector(
+    (state) => state.hospital
+  );
   const [formData, setFormData] = useState({
-    name: '',
-    logo: '',
-    address: '',
-    contactNumber: '',
-    email: '',
-    website: '',
-    doctorName: '',
-    doctorInfo: '',
-    hospitalId: '',
-    pharmacyName: '',
-    pharmacyAddress: '',
-    pharmacyContactNumber: '',
-    pharmacyLogo: '',
-    pharmacyExpiryThreshold: '',
+    name: "",
+    logo: "",
+    address: "",
+    contactNumber: "",
+    email: "",
+    website: "",
+    doctorName: "",
+    doctorInfo: "",
+    hospitalId: "",
+    pharmacyName: "",
+    pharmacyAddress: "",
+    pharmacyContactNumber: "",
+    pharmacyLogo: "",
+    pharmacyExpiryThreshold: "",
     pharmacyItemCategories: [],
   });
 
-  const [newCategory, setNewCategory] = useState('');
+  const [newCategory, setNewCategory] = useState("");
   const [logoPreview, setLogoPreview] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
 
   useEffect(() => {
-    if (hospitalInfoStatus === 'idle') {
+    if (hospitalInfoStatus === "idle") {
       dispatch(fetchHospitalInfo());
     }
   }, [dispatch, hospitalInfoStatus]);
 
   useEffect(() => {
     if (hospitalInfo) {
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        ...hospitalInfo
+        ...hospitalInfo,
       }));
     }
   }, [hospitalInfo]);
-
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleCategoryChange = (e, field) => {
-    const categories = e.target.value.split(',').map(cat => cat.trim());
-    setFormData(prevData => ({
+    const categories = e.target.value.split(",").map((cat) => cat.trim());
+    setFormData((prevData) => ({
       ...prevData,
-      [field]: categories
+      [field]: categories,
     }));
   };
 
@@ -90,23 +101,34 @@ const HospitalInfo = () => {
   const uploadLogo = async () => {
     if (!logoFile) return null;
 
-    const formData = new FormData();
-    formData.append('logo', logoFile);
-
     try {
-      const response = await fetch('/api/upload-logo', {
-        method: 'POST',
-        body: formData,
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/hospitals/getUploadUrl`,
+        {
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
-        throw new Error('Failed to upload logo');
+        throw new Error("Failed to upload logo");
       }
 
       const data = await response.json();
-      return data.logoUrl; // Assuming the API returns the URL of the uploaded logo
+
+      const res = await fetch(data.url, {
+        method: "PUT",
+        body: logoFile,
+        headers: {
+          "Content-Type": "image/png",
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to upload logo");
+      } else {
+        return `${s3Domain}/${data.key}`;
+      }
     } catch (error) {
-      console.error('Error uploading logo:', error);
+      console.error("Error uploading logo:", error);
       toast({
         title: "Logo Upload Failed",
         description: "Failed to upload the logo. Please try again.",
@@ -117,7 +139,7 @@ const HospitalInfo = () => {
   };
 
   const triggerLogoUpload = () => {
-    document.getElementById('logo-upload').click();
+    document.getElementById("logo-upload").click();
   };
 
   const handleSubmit = async (e) => {
@@ -134,7 +156,7 @@ const HospitalInfo = () => {
 
       await dispatch(updateHospitalInfo(updatedFormData)).unwrap();
       toast({
-        variant: 'success',
+        variant: "success",
         title: "Updated Successfully",
         description: "Hospital information has been updated successfully.",
       });
@@ -150,18 +172,18 @@ const HospitalInfo = () => {
 
   const handleAddCategory = (field) => {
     if (newCategory.trim()) {
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        [field]: [...prevData[field], newCategory.trim()]
+        [field]: [...prevData[field], newCategory.trim()],
       }));
-      setNewCategory('');
+      setNewCategory("");
     }
   };
 
   const handleRemoveCategory = (field, index) => {
-    setFormData(prevData => ({
+    setFormData((prevData) => ({
       ...prevData,
-      [field]: prevData[field].filter((_, i) => i !== index)
+      [field]: prevData[field].filter((_, i) => i !== index),
     }));
   };
 
@@ -170,48 +192,112 @@ const HospitalInfo = () => {
       <CardHeader className="border-b pb-3">
         <div className="flex justify-between items-center">
           <div>
-            <CardTitle className="text-2xl font-bold">Hospital Information Management</CardTitle>
-            <CardDescription className="text-gray-500">Manage your hospital's details</CardDescription>
+            <CardTitle className="text-2xl font-bold">
+              Hospital Information Management
+            </CardTitle>
+            <CardDescription className="text-gray-500">
+              Manage your hospital's details
+            </CardDescription>
           </div>
-          <Button 
-            onClick={handleSubmit} 
-            disabled={updateStatus === 'loading'}
+          <Button
+            onClick={handleSubmit}
+            disabled={updateStatus === "loading"}
             // className="bg-blue-600 hover:bg-blue-700 text-white"
           >
-            {updateStatus === 'loading' ? 'Saving...' : 'Save Changes'}
+            {updateStatus === "loading" ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </CardHeader>
       <CardContent className="pt-6">
         <Tabs defaultValue="hospital" className="w-full">
           <TabsList className="grid w-1/2 grid-cols-2 mb-6">
-            <TabsTrigger value="hospital" className="text-sm font-medium">Hospital Information</TabsTrigger>
-            <TabsTrigger value="pharmacy" className="text-sm font-medium">Pharmacy Information</TabsTrigger>
+            <TabsTrigger value="hospital" className="text-sm font-medium">
+              Hospital Information
+            </TabsTrigger>
+            <TabsTrigger value="pharmacy" className="text-sm font-medium">
+              Pharmacy Information
+            </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="hospital">
             <div className="grid grid-cols-3 gap-6">
               <div className="col-span-2 grid grid-cols-2 gap-6">
-                <InputField label="Hospital ID" name="hospitalId" value={formData.hospitalId} onChange={handleChange} disabled />
-                <InputField label="Hospital Name" name="name" value={formData.name} onChange={handleChange} required />
-                <InputField label="Contact Number" name="contactNumber" value={formData.contactNumber} onChange={handleChange} required />
-                <InputField label="Email" name="email" type="email" value={formData.email} onChange={handleChange} required />
-                <InputField label="Website" name="website" type="url" value={formData.website} onChange={handleChange} />
-                <InputField label="Doctor Name" name="doctorName" value={formData.doctorName} onChange={handleChange} />
-                <TextareaField label="Doctor Information" name="doctorInfo" value={formData.doctorInfo} onChange={handleChange} />
-                <TextareaField label="Address" name="address" value={formData.address} onChange={handleChange} required />
+                <InputField
+                  label="Hospital ID"
+                  name="hospitalId"
+                  value={formData.hospitalId}
+                  onChange={handleChange}
+                  disabled
+                />
+                <InputField
+                  label="Hospital Name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
+                <InputField
+                  label="Contact Number"
+                  name="contactNumber"
+                  value={formData.contactNumber}
+                  onChange={handleChange}
+                  required
+                />
+                <InputField
+                  label="Email"
+                  name="email"
+                  type="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+                <InputField
+                  label="Website"
+                  name="website"
+                  type="url"
+                  value={formData.website}
+                  onChange={handleChange}
+                />
+                <InputField
+                  label="Doctor Name"
+                  name="doctorName"
+                  value={formData.doctorName}
+                  onChange={handleChange}
+                />
+                <TextareaField
+                  label="Doctor Information"
+                  name="doctorInfo"
+                  value={formData.doctorInfo}
+                  onChange={handleChange}
+                />
+                <TextareaField
+                  label="Address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleChange}
+                  required
+                />
                 <div className="col-span-1">
-                  <Label htmlFor="logo-upload" className="text-sm font-medium">Hospital Logo</Label>
-                  <div 
+                  <Label htmlFor="logo-upload" className="text-sm font-medium">
+                    Hospital Logo
+                  </Label>
+                  <div
                     className="mt-2 flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-40 h-40 cursor-pointer"
                     onClick={triggerLogoUpload}
                   >
                     <div className="text-center">
-                      {logoPreview ? (
-                        <img src={logoPreview} alt="Logo Preview" className="mx-auto h-32 w-32 object-cover" />
+                      {logoPreview || formData.logo ? (
+                        <img
+                          src={logoPreview || formData.logo}
+                          alt="Logo Preview"
+                          className="mx-auto h-32 w-32 object-cover"
+                        />
                       ) : (
                         <div className="flex flex-col items-center">
-                          <Upload className="h-10 w-10 text-gray-300" aria-hidden="true" />
+                          <Upload
+                            className="h-10 w-10 text-gray-300"
+                            aria-hidden="true"
+                          />
                           <span className="mt-2 block text-sm font-semibold text-gray-900">
                             Upload
                           </span>
@@ -230,35 +316,65 @@ const HospitalInfo = () => {
                 </div>
               </div>
               <div className="col-span-1">
-                <CategoryField 
-                  label="Hospital Service Categories" 
-                  categories={formData.hospitalServiceCategories} 
+                <CategoryField
+                  label="Hospital Service Categories"
+                  categories={formData.hospitalServiceCategories}
                   newCategory={newCategory}
                   setNewCategory={setNewCategory}
-                  onAdd={() => handleAddCategory('hospitalServiceCategories')}
-                  onRemove={(index) => handleRemoveCategory('hospitalServiceCategories', index)}
+                  onAdd={() => handleAddCategory("hospitalServiceCategories")}
+                  onRemove={(index) =>
+                    handleRemoveCategory("hospitalServiceCategories", index)
+                  }
                 />
               </div>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="pharmacy">
             <div className="grid grid-cols-3 gap-6">
               <div className="col-span-2 grid grid-cols-2 gap-6">
-                <InputField label="Pharmacy Name" name="pharmacyName" value={formData.pharmacyName} onChange={handleChange} />
-                <InputField label="Pharmacy Contact Number" name="pharmacyContactNumber" value={formData.pharmacyContactNumber} onChange={handleChange} />
-                <InputField label="Pharmacy Logo URL" name="pharmacyLogo" value={formData.pharmacyLogo} onChange={handleChange} />
-                <TextareaField label="Pharmacy Address" name="pharmacyAddress" value={formData.pharmacyAddress} onChange={handleChange} />
-                <InputField label="Item Expiry Threshold (months)" name="pharmacyExpiryThreshold" type="number" value={formData.pharmacyExpiryThreshold} onChange={handleChange} />
+                <InputField
+                  label="Pharmacy Name"
+                  name="pharmacyName"
+                  value={formData.pharmacyName}
+                  onChange={handleChange}
+                />
+                <InputField
+                  label="Pharmacy Contact Number"
+                  name="pharmacyContactNumber"
+                  value={formData.pharmacyContactNumber}
+                  onChange={handleChange}
+                />
+                <InputField
+                  label="Pharmacy Logo URL"
+                  name="pharmacyLogo"
+                  value={formData.pharmacyLogo}
+                  onChange={handleChange}
+                />
+                <TextareaField
+                  label="Pharmacy Address"
+                  name="pharmacyAddress"
+                  value={formData.pharmacyAddress}
+                  onChange={handleChange}
+                />
+                <InputField
+                  label="Item Expiry Threshold (months)"
+                  name="pharmacyExpiryThreshold"
+                  type="number"
+                  value={formData.pharmacyExpiryThreshold}
+                  onChange={handleChange}
+                />
               </div>
               <div className="col-span-1">
-                <CategoryField 
-                  label="Pharmacy Item Categories" 
-                  categories={formData.pharmacyItemCategories} 
+                <CategoryField
+                  label="Pharmacy Item Categories"
+                  categories={formData.pharmacyItemCategories}
                   newCategory={newCategory}
                   setNewCategory={setNewCategory}
-                  onAdd={() => handleAddCategory('pharmacyItemCategories')}
-                  onRemove={(index) => handleRemoveCategory('pharmacyItemCategories', index)}
+                  onAdd={() => handleAddCategory("pharmacyItemCategories")}
+                  onRemove={(index) =>
+                    handleRemoveCategory("pharmacyItemCategories", index)
+                  }
                 />
               </div>
             </div>
@@ -269,9 +385,19 @@ const HospitalInfo = () => {
   );
 };
 
-const InputField = ({ label, name, value, onChange, type = "text", required = false, disabled = false }) => (
+const InputField = ({
+  label,
+  name,
+  value,
+  onChange,
+  type = "text",
+  required = false,
+  disabled = false,
+}) => (
   <div className="space-y-2">
-    <Label htmlFor={name} className="text-sm font-medium">{label}</Label>
+    <Label htmlFor={name} className="text-sm font-medium">
+      {label}
+    </Label>
     <Input
       id={name}
       name={name}
@@ -288,7 +414,9 @@ const InputField = ({ label, name, value, onChange, type = "text", required = fa
 
 const TextareaField = ({ label, name, value, onChange, required = false }) => (
   <div className="space-y-2">
-    <Label htmlFor={name} className="text-sm font-medium">{label}</Label>
+    <Label htmlFor={name} className="text-sm font-medium">
+      {label}
+    </Label>
     <Textarea
       id={name}
       name={name}
@@ -301,7 +429,14 @@ const TextareaField = ({ label, name, value, onChange, required = false }) => (
   </div>
 );
 
-const CategoryField = ({ label, categories, newCategory, setNewCategory, onAdd, onRemove }) => {
+const CategoryField = ({
+  label,
+  categories,
+  newCategory,
+  setNewCategory,
+  onAdd,
+  onRemove,
+}) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     onAdd();
@@ -318,19 +453,16 @@ const CategoryField = ({ label, categories, newCategory, setNewCategory, onAdd, 
             placeholder="Enter a new category"
             className="flex-grow"
           />
-          <Button 
-            type="submit" 
-            disabled={!newCategory.trim()}
-          >
+          <Button type="submit" disabled={!newCategory.trim()}>
             <Plus size={16} />
           </Button>
         </form>
         <ScrollArea className="h-[150px] w-full border rounded-md p-4">
-          {categories.length > 0 ? (
+          {categories?.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {categories.map((category, index) => (
-                <Badge 
-                  key={index} 
+                <Badge
+                  key={index}
                   variant="secondary"
                   className="text-sm py-1 px-2 flex items-center space-x-1"
                 >

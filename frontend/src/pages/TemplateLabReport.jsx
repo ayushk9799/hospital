@@ -15,6 +15,9 @@ import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 import { Textarea } from "../components/ui/textarea";
 import SearchSuggestion from "../components/custom/registration/CustomSearchSuggestion";
+import { useSelector, useDispatch } from "react-redux";
+import { addLabReport } from "../redux/slices/patientSlice";
+import { useToast } from "../hooks/use-toast";
 
 const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const [fields, setFields] = useState([]);
@@ -22,6 +25,9 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const [allReports, setAllReports] = useState([]);
   const [generatedDate, setGeneratedDate] = useState(null);
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
+  const dispatch = useDispatch();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (template && template.fields ) {
@@ -114,36 +120,35 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
           label: field.label,
           unit: field.unit,
           normalRange: field.normalRange,
-         
         };
         return acc;
       }, {}),
     };
-    try {
-      const response = await fetch(`${Backend_URL}/api/patients/addLabReport`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          visitId: patientData._id,
-          labReport: labReportData,
-          searchWhere: searchWhere,
-        }),
-      });
 
-      if (!response.ok) {
+    try {
+      const resultAction = await dispatch(addLabReport({
+        visitId: patientData._id,
+        labReport: labReportData,
+        searchWhere: searchWhere,
+      }));
+
+      if (addLabReport.fulfilled.match(resultAction)) {
+        toast({
+          title: "Success",
+          description: "Lab Report added successfully",
+          variant:"success"
+        });
+        onClose();
+      } else {
         throw new Error("Failed to add lab report");
       }
-
-      const result = await response.json();
-
-      alert("Lab Report added successfully");
-      onClose();
     } catch (error) {
       console.error("Error adding lab report:", error);
-      alert("Error adding lab report");
+      toast({
+        title: "Error",
+        description: "Failed to add lab report",
+        variant: "destructive",
+      });
     }
   };
 
@@ -161,7 +166,9 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
             };
             return acc;
           }, {}),
+
         }}
+        hospital={hospital}
         patientData={patientData}
       />
     );

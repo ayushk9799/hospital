@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
 });
 
-const OPDPrescriptionPDF = ({ patient, vitals, prescription, labTests,selectedComorbidities }) => {
+const OPDPrescriptionPDF = ({ patient, vitals, prescription, labTests,selectedComorbidities,hospital }) => {
     
   const capitalizeAll = (str) => {
     return str.toUpperCase();
@@ -224,7 +224,7 @@ const OPDPrescriptionPDF = ({ patient, vitals, prescription, labTests,selectedCo
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <HeaderTemplate />
+        <HeaderTemplate hospital={hospital} />
 
         <View style={styles.titleContainer}>
           <View style={{ flex: 1 }} /> {/* Empty view for left spacing */}

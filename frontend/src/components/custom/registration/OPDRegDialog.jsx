@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "../../ui/dialog";
 import { useDispatch, useSelector } from "react-redux";
+import { revisitPatient } from "../../../redux/slices/patientSlice";
 import {
   fetchPatients,
   registerPatient,
@@ -186,11 +187,14 @@ export default function OPDRegDialog({ open, onOpenChange }) {
           if (data.length > 0) {
             setFormData({
               ...initialFormData,
-              ...data[0],
+              followUp: true,
+              _id: data[0].patient._id,
               name: data[0].patientName,
               age: data[0].patient.age,
               gender: data[0].patient.gender,
               bloodType: data[0].patient.bloodType,
+              registrationNumber: data[0].registrationNumber,
+              contactNumber: data[0].contactNumber,
               address: data[0].patient.address,
             });
             toast({
@@ -280,6 +284,51 @@ export default function OPDRegDialog({ open, onOpenChange }) {
     onOpenChange(false);
     setFormData(initialFormData);
   }, [onOpenChange]);
+
+  const handleFollowUp = useCallback(async () => {
+    if (validateForm()) {
+      const { followUp, _id, ...submissionDataWithoutFollowUp } = formData;
+      const submissionData = {
+        ...submissionDataWithoutFollowUp,
+        dateOfBirth: formData.dateOfBirth
+          ? new Date(formData.dateOfBirth).toISOString()
+          : null,
+        age: parseInt(formData.age, 10),
+        visit: {
+          ...formData.visit,
+          bookingDate: formData.visit.bookingDate,
+          vitals: Object.fromEntries(
+            Object.entries(formData.visit.vitals).map(([key, value]) =>
+              key === "bloodPressure"
+                ? [key, value]
+                : [key, parseFloat(value)]
+            )
+          ),
+        },
+      };
+      
+      dispatch(revisitPatient({submissionData,_id}))
+        .unwrap()
+        .then(() => {
+          toast({
+            title: "Follow-up visit registered successfully",
+            description: "The follow-up visit has been added.",
+            variant: "success",
+          });
+          dispatch(fetchPatients());
+          onOpenChange(false);
+        })
+        .catch((error) => {
+          toast({
+            title: "Failed to register follow-up visit",
+            description:
+              error.message ||
+              "There was an error registering the follow-up visit. Please try again.",
+            variant: "destructive",
+          });
+        });
+    }
+  }, [formData, validateForm, dispatch, toast, onOpenChange]);
 
   useEffect(() => {
     if (!open) {
@@ -443,9 +492,25 @@ export default function OPDRegDialog({ open, onOpenChange }) {
                 >
                   Cancel
                 </Button>
+                {formData.followUp && (
+                  <Button
+                    type="button"
+                    onClick={handleFollowUp}
+                    disabled={registerPatientStatus === "loading"}
+                  >
+                    {registerPatientStatus === "loading" ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Follow-up"
+                    )}
+                  </Button>
+                )}
                 <Button
                   type="submit"
-                  disabled={registerPatientStatus === "loading"}
+                  disabled={registerPatientStatus === "loading" || formData.followUp}
                 >
                   {registerPatientStatus === "loading" ? (
                     <>

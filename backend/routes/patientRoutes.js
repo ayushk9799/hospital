@@ -19,7 +19,7 @@ router.post(
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
-  
+
     try {
       const { patientType, visit, admission, ...patientData } = req.body;
       const user = req.user;
@@ -37,19 +37,16 @@ router.post(
       let consultationFee = await Service.findOne({
         name: "Consultation Fee",
       }).session(session);
-  
+
       if (!consultationFee) {
-        
         // throw new Error("Consultation Fee service not found");
         consultationFee = new Service({
           name: "Consultation Fee",
           rate: 500,
           category: "General",
         });
-        console.log("consultationFees",consultationFee)
         await consultationFee.save({ session });
       }
-       console.log("consultationFee",consultationFee)
       // Create a bill for the patient
       const bill = new ServicesBill({
         services: [
@@ -224,8 +221,8 @@ router.get("/details", verifyToken, async (req, res) => {
       bookingDate: visit.bookingDate,
       doctor: visit.doctor,
       reasonForVisit: visit.reasonForVisit,
-      status:visit.status,
-      comorbidities:visit.comorbodities,
+      status: visit.status,
+      comorbidities: visit.comorbodities,
       vitals: visit.vitals,
       diagnosis: visit.diagnosis,
       treatment: visit.treatment,
@@ -653,7 +650,7 @@ router.post("/complexsearch", async (req, res) => {
   const { searchQuery, searchType, searchWhere } = req.body;
 
   try {
-    let Model = searchWhere === "opd" ? Visit : IPDAdmission;
+    let Model = searchWhere === "opd" ? Visit : IPDAdmission; //should be changed to the Patient model
     let query = { bookingDate: searchQuery.bookingDate };
 
     switch (searchType) {
@@ -689,7 +686,10 @@ router.post("/addLabReport", async (req, res) => {
     const { visitId, labReport, searchWhere } = req.body;
     const Model = searchWhere === "opd" ? Visit : IPDAdmission;
 
-    const visit = await Model.findById(visitId);
+    const visit = await Model.findById(visitId).populate(
+      "patient",
+      "name dateOfBirth gender contactNumber email address bloodType age"
+    );
     if (!visit) {
       return res.status(404).json({ message: "Visit not found" });
     }
@@ -814,7 +814,39 @@ router.post(
     }
   }
 );
+// ... existing imports ...
 
-// ... rest of the file
+// Add this new route after the existing routes
+router.post("/search", verifyToken, async (req, res) => {
+  try {
+    const { name, registrationNumber, contactNumber } = req.body;
+
+    if (!name && !registrationNumber && !contactNumber) {
+      return res
+        .status(400)
+        .json({ error: "Please provide at least one search parameter" });
+    }
+
+    let query = {};
+
+    if (name) {
+      query.name = { $regex: name, $options: "i" };
+    } else if (registrationNumber) {
+      query.registrationNumber = registrationNumber;
+    } else if (contactNumber) {
+      query.contactNumber = contactNumber;
+    }
+
+    const patients = await Patient.find(query);
+
+    if (patients.length === 0) {
+      return res.status(404).json({ message: "No patients found" });
+    }
+
+    res.json(patients);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;

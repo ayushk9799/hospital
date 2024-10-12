@@ -33,6 +33,7 @@ export default function OPDModule({ patient }) {
     weight: "",
     oxygenSaturation: "",
   });
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
   const [prescription, setPrescription] = useState({
     diagnosis: "",
     treatment: "",
@@ -424,6 +425,7 @@ export default function OPDModule({ patient }) {
                 prescription={prescription}
                 labTests={labTests}
                 selectedComorbidities={selectedComorbidities}
+                hospital={hospital}
               />
             </PDFViewer>
           </div>

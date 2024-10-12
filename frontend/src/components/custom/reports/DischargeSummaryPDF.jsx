@@ -253,7 +253,7 @@ const InvestigationDisplay = ({ investigation }) => {
   );
 };
 
-const DischargeSummaryPDF = ({ formData, patient }) => {
+const DischargeSummaryPDF = ({ formData, patient,hospital}) => {
   const hasComorbidities =
     formData.comorbidities && formData.comorbidities.some((c) => c.name);
   const hasInvestigations =
@@ -295,7 +295,7 @@ const DischargeSummaryPDF = ({ formData, patient }) => {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <HeaderTemplate />
+        <HeaderTemplate hospital={hospital} />
 
         <Text style={styles.title}>Discharge Summary</Text>
 

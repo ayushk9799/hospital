@@ -48,6 +48,7 @@ import { fetchBills } from "../redux/slices/BillingSlice";
 import { setSelectedPatient } from "../redux/slices/patientSlice";
 import { startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
 import { format } from "date-fns";
+import { fetchPatients } from "../redux/slices/patientSlice";
 
 // Add this selector function at the top of your file, outside of the component
 
@@ -64,8 +65,14 @@ export default function Patients() {
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
 
   // Use the useSelector hook to get the patients from the Redux store
-  const patients = useSelector((state) => state.patients.patientlist);
+  const {patientlist:patients,status} = useSelector((state) => state.patients);
   const { bills ,billsStatus} = useSelector((state) => state.bills);
+  
+  useEffect(()=>{
+    if(status==="idle"){
+      dispatch(fetchPatients())
+    }
+  },[status])
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
 useEffect(()=>{
   if(billsStatus==="idle"){

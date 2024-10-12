@@ -1306,6 +1306,8 @@ export function numberToWords(number) {
 
   return words.trim();
 }
+
+export const s3Domain="https://thousandwayshospital.s3.ap-south-1.amazonaws.com"
 export const comorbodities=[
   "Hypertension",
   "Diabetes mellitus",

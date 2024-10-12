@@ -116,6 +116,7 @@ export default function DischargeSummary() {
 
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
   useEffect(() => {
     if (itemsStatus === "idle") {
       dispatch(fetchItems());
@@ -888,7 +889,7 @@ export default function DischargeSummary() {
               </Button>
             </div>
             <PDFViewer width="100%" height="90%">
-              <DischargeSummaryPDF formData={formData} patient={patientInfo} />
+              <DischargeSummaryPDF formData={formData} patient={patientInfo} hospital={hospital}/>
             </PDFViewer>
           </div>
         </div>

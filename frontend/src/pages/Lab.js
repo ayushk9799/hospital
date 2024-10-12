@@ -296,7 +296,7 @@ const Lab = () => {
                     Lab Tests for {patientData.patientName}
                   </h2>
                   <p className="text-gray-600 mb-2">
-                    Contact: {patientData.contactMNumber}
+                    Contact: {patientData.contactNumber}
                   </p>
                   {patientData.labTests && patientData.labTests.length > 0 ? (
                     <div className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">

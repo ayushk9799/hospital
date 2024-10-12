@@ -1,9 +1,9 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/renderer';
 import { format } from 'date-fns';
 import tinosRegular from '../../../fonts/Tinos-Regular.ttf';
 import tinosBold from '../../../fonts/Tinos-Bold.ttf';
-// Register fonts
 Font.register({
     family: "Tinos",
     fonts: [
@@ -123,33 +123,34 @@ export const styles = StyleSheet.create({
   },
 });
 
-export const HeaderTemplate=()=>{
-  return(
+export const HeaderTemplate = ({ hospital }) => {
+ 
+  return (
     <>
       <View style={styles.header}>
-          <View>
-            <Text style={styles.clinicName}>KIDNEY STONE & UROLOGY CLINIC</Text>
+        <View>
+          <Text style={styles.clinicName}>{hospital.name}</Text>
+        </View>
+        <View style={{ display: "flex", flexDirection: "row" }}>
+          <View style={{ marginLeft: 50 }}>
+            <Image
+              src={hospital.logo}
+              style={{ width: 70 }}
+            />
           </View>
-          <View style={{ display: "flex", flexDirection: "row" }}>
-            <View style={{ marginLeft: 50 }}>
-              <Image
-                src={require("./Capture2.png")}
-                style={{ width: 70 }}
-              />
-            </View>
-            <View style={{ position: "absolute", width: "100%" }}>
-              <Text style={styles.clinicInfo}>
-                Jail Road, Near Mahindra Showroom, Tilkamanjhi, Bhagalpur
-              </Text>
-              <Text style={styles.doctorInfo}>DR. RAJAN KUMAR SINHA</Text>
-              <Text style={styles.clinicInfo}>
-                M.B.B.S(Ranchi), MS(Gen.Surgery), MCh(Urology), Kolkata
-              </Text>
-              <Text style={styles.clinicInfo}>Consultant Urologist</Text>
-              <Text style={styles.clinicInfo}>Mob : 9709993104</Text>
-            </View>
+          <View style={{ position: "absolute", width: "100%" }}>
+            <Text style={styles.clinicInfo}>
+              {hospital.address}
+            </Text>
+            <Text style={styles.doctorInfo}>{hospital.doctorName}</Text>
+            <Text style={styles.clinicInfo}>
+              {hospital.doctorInfo}
+            </Text>
+            <Text style={styles.clinicInfo}>Consultant Urologist</Text>
+            <Text style={styles.clinicInfo}>Mob : {hospital.contactNumber}</Text>
           </View>
         </View>
+      </View>
     </>
   )
 }   
@@ -191,13 +192,13 @@ const PatientDetailsTemplate = ({ patientData, reportData }) => {
   );
 };
 
-const LabReportPDF = ({ reportData, patientData }) => {
+const LabReportPDF = ({ reportData, patientData,hospital }) => {
   const reportEntries = Object.entries(reportData.report);
-
+  
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <HeaderTemplate />
+        <HeaderTemplate hospital={hospital} />
         <PatientDetailsTemplate patientData={patientData} reportData={reportData} />
         
         <View style={styles.reportContainer}>

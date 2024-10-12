@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { addLabReport } from "../redux/slices/patientSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -18,16 +20,20 @@ import { Backend_URL } from "../assets/Data";
 import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 import SearchSuggestion from "../components/custom/registration/CustomSearchSuggestion";
+import { useSelector } from "react-redux";
+import { useToast } from "../hooks/use-toast";
 
 const CreateLabReport = ({
   category,
   type,
   patientData,
   onClose,
-  onSave,
+  
   searchWhere,
 }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { toast } = useToast();
   const [fields, setFields] = useState([]);
   const [newField, setNewField] = useState({
     name: "",
@@ -36,6 +42,7 @@ const CreateLabReport = ({
     value: "",
     normalRange: "",
   });
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
   const [reportDate, setReportDate] = useState(new Date());
   const [generatedDate, setGeneratedDate] = useState(null);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
@@ -130,34 +137,30 @@ const CreateLabReport = ({
     };
 
     try {
-      const response = await fetch(`${Backend_URL}/api/patients/addLabReport`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          visitId: patientData._id,
-          labReport: labReportData,
-          searchWhere: searchWhere,
-        }),
-      });
+      const resultAction = await dispatch(addLabReport({
+        visitId: patientData._id,
+        labReport: labReportData,
+        searchWhere: searchWhere,
+      }));
 
-      if (!response.ok) {
+      if (addLabReport.fulfilled.match(resultAction)) {
+        toast({
+          title: "Success",
+          description: "Lab Report added successfully",
+          variant:"success"
+        });
+       
+        onClose();
+      } else {
         throw new Error("Failed to add lab report");
       }
-
-      const result = await response.json();
-
-      alert("Lab Report added successfully");
-
-      // Call the onSave function with the new lab report data
-      onSave(labReportData);
-
-      onClose(); // Close the lab report form
     } catch (error) {
       console.error("Error adding lab report:", error);
-      alert("Error adding lab report");
+      toast({
+        title: "Error",
+        description: "Failed to add lab report",
+        variant: "destructive",
+      });
     }
   };
 
@@ -193,6 +196,7 @@ const CreateLabReport = ({
             return acc;
           }, {}),
         }}
+        hospital={hospital}
         patientData={patientData}
       />
     );

@@ -5,6 +5,7 @@ import mongoose from 'mongoose';
 import cookie from 'cookie';
 import { Template } from '../models/Template.js';
 import { identifyHospital } from '../middleware/hospitalMiddleware.js';
+import {presignedUrl} from "../s3.js"
 
 const router = express.Router();
 
@@ -143,5 +144,12 @@ router.get('/template/read',identifyHospital, async (req, res) => {
         res.status(500).json({ message: 'Error fetching template', error: error.message });
     }
 });
-
+router.get('/getUploadUrl',identifyHospital,async(req,res)=>{
+    try{
+    const data=await presignedUrl()
+    res.status(200).json(data)
+    }catch(error){
+        res.status(400).json({message:"Error fetching upload url",error:error.message})
+    }
+})
 export default router;
