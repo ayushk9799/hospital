@@ -54,39 +54,47 @@ const MedicineSuggDialog = ({ isOpen, setIsOpen, selectedPatient, onConfirm }) =
           <DialogTitle>{selectedPatient?.patient?.name}'s Medications</DialogTitle>
           <DialogDescription>Select the medications you want to prescribe</DialogDescription>
         </DialogHeader>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <Checkbox
-                  checked={selectedMedicines.length === selectedPatient?.medications?.length}
-                  onCheckedChange={handleSelectAll}
-                />
-              </TableHead>
-              <TableHead>Medication Name</TableHead>
-              <TableHead>Frequency</TableHead>
-              <TableHead>Duration</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {selectedPatient?.medications?.map((medication, index) => (
-              <TableRow key={index}>
-                <TableCell>
-                  <Checkbox
-                    checked={selectedMedicines.some(item => item.name === medication.name)}
-                    onCheckedChange={() => handleCheckboxChange(medication)}
-                  />
-                </TableCell>
-                <TableCell>{medication?.name}</TableCell>
-                <TableCell>{medication?.frequency}</TableCell>
-                <TableCell>{medication?.duration}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <DialogFooter>
-          <Button onClick={handleConfirm}>Confirm</Button>
-        </DialogFooter>
+        {selectedPatient?.medications?.length > 0 ? (
+          <>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <Checkbox
+                      checked={selectedMedicines.length === selectedPatient?.medications?.length}
+                      onCheckedChange={handleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead>Medication Name</TableHead>
+                  <TableHead>Frequency</TableHead>
+                  <TableHead>Duration</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {selectedPatient?.medications?.map((medication, index) => (
+                  <TableRow key={index}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedMedicines.some(item => item.name === medication.name)}
+                        onCheckedChange={() => handleCheckboxChange(medication)}
+                      />
+                    </TableCell>
+                    <TableCell>{medication?.name}</TableCell>
+                    <TableCell>{medication?.frequency}</TableCell>
+                    <TableCell>{medication?.duration}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <DialogFooter>
+              <Button onClick={handleConfirm}>Confirm</Button>
+            </DialogFooter>
+          </>
+        ) : (
+          <div className="text-center py-4">
+            <p>No medications found for this patient.</p>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

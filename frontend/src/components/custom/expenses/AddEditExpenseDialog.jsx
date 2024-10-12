@@ -83,6 +83,15 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
           description: `The expense has been ${expenseToEdit ? 'updated' : 'added'}.`,
           variant: "success",
         });
+        // Reset form fields
+        setFormData({
+          category: '',
+          description: '',
+          amount: '',
+          date: format(new Date(), 'yyyy-MM-dd'),
+          amountPaid: '',
+          paymentMethod: ''
+        });
         onClose();
       })
       .catch((error) => {

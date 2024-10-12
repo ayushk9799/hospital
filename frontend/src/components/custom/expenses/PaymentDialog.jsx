@@ -28,6 +28,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
   const totalAmount = expenseData?.amount || 0;
   const paidAmount = expenseData?.amountPaid || 0;
   const dueAmount = totalAmount - paidAmount;
+  const isFullyPaid = dueAmount <= 0;
 
   const handleAddPayment = () => {
     if (!paymentAmount || !paymentMethod) {
@@ -102,6 +103,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
                 onChange={(e) => setPaymentAmount(e.target.value)}
                 placeholder="Enter amount"
                 className="pr-10"
+                disabled={isFullyPaid}
               />
               <Button
                 variant="ghost"
@@ -109,6 +111,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
                 className="absolute right-1 top-1/2 -translate-y-1/2"
                 onClick={handleSetDueAmount}
                 title="Set Due Amount"
+                disabled={isFullyPaid}
               >
                 <CreditCard className="h-4 w-4" />
               </Button>
@@ -117,7 +120,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
           
           <div className="space-y-1">
             <Label htmlFor="paymentMethod">Payment Method</Label>
-            <Select onValueChange={setPaymentMethod} value={paymentMethod}>
+            <Select onValueChange={setPaymentMethod} value={paymentMethod} disabled={isFullyPaid}>
               <SelectTrigger id="paymentMethod">
                 <SelectValue placeholder="Select method" />
               </SelectTrigger>
@@ -169,8 +172,8 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
           <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
             Cancel
           </Button>
-          <Button onClick={handleAddPayment} disabled={isLoading}>
-            {isLoading ? "Processing..." : "Add Payment"}
+          <Button onClick={handleAddPayment} disabled={isLoading || isFullyPaid}>
+            {isLoading ? "Processing..." : isFullyPaid ? "Fully Paid" : "Add Payment"}
           </Button>
         </DialogFooter>
       </DialogContent>

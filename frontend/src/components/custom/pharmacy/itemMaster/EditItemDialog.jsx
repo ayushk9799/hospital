@@ -11,7 +11,7 @@ import { Loader2 } from 'lucide-react'
 
 export default function EditItemDialog({ isOpen, onClose, item }) {
   const dispatch = useDispatch();
-  const { updateInventoryItemStatus } = useSelector((state) => state.pharmacy);
+  const { updateInventoryStatus } = useSelector((state) => state.pharmacy);
   const { toast } = useToast();
   const [name, setName] = useState(item?.name || "");
   const [price, setPrice] = useState(item?.CP || "");
@@ -20,7 +20,8 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
   const [MRP, setMRP] = useState(item?.MRP || "");
   const [types, setTypes] = useState(item?.type || "");
   const [supplierName, setSupplierName] = useState(item?.supplier?.name || "");
-  const {pharmacyItemCategories=[]} = useSelector((state) => state.hospital.hospitalInfo);
+  const {hospitalInfo} = useSelector((state) => state.hospital);
+  const pharmacyItemCategories = hospitalInfo?.pharmacyItemCategories || [];
 
   useEffect(() => {
     if (item) {
@@ -124,8 +125,8 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
           <DialogFooter className="mt-4">
             <Button type="button" size="sm" variant="outline" onClick={handleReset}>Reset</Button>
             <Button type="button" size="sm" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" size="sm" disabled={updateInventoryItemStatus === "loading"}>
-              {updateInventoryItemStatus === "loading" ? (
+            <Button type="submit" size="sm" disabled={updateInventoryStatus === "loading"}>
+              {updateInventoryStatus === "loading" ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Saving...

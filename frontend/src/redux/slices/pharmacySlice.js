@@ -25,18 +25,20 @@ const initialState = {
 };
 
 // fetch all orders
-export const fetchOrders = createAsyncThunk("orders/fetchOrders", async () => {
+export const fetchOrders = createLoadingAsyncThunk("orders/fetchOrders", async () => {
   const response = await fetch(`${Backend_URL}/api/orders`, {
     credentials: "include",
   });
   if (!response.ok) {
     throw new Error("Failed to fetch orders");
   }
-  return response.json();
-});
+    return response.json();
+  },
+  { useGlobalLoader: true }
+);
 
 // create order with supplier and items creation
-export const createOrder = createAsyncThunk(
+export const createOrder = createLoadingAsyncThunk(
   "orders/createOrder",
   async (orderData) => {
     const response = await fetch(`${Backend_URL}/api/orders/create`, {
@@ -51,7 +53,8 @@ export const createOrder = createAsyncThunk(
       throw new Error("Failed to create order");
     }
     return response.json();
-  }
+  },
+  { useGlobalLoader: true }
 );
 
 // fetch all suppliers
@@ -227,28 +230,9 @@ const pharmacySlice = createSlice({
   name: "pharmacy",
   initialState,
   reducers: {
-    setCreateSalesBillStatus: (state, action) => {
-      state.createSalesBillStatus = action.payload;
-    },
-    setCreateOrderStatus: (state, action) => {
-      state.createOrderStatus = action.payload;
-    },
     clearSelectedSupplier: (state) => {
       state.selectedSupplier = null;
       state.supplierDetailsStatus = "idle";
-    },
-    // New reducer to set updateInventoryStatus to idle
-    setUpdateInventoryStatusIdle: (state) => {
-      state.updateInventoryItemStatus = "idle";
-    },
-    setCreateInventoryItemStatusIdle: (state) => {
-      state.createInventoryItemStatus = "idle";
-    },
-    setDeleteInventoryItemStatusIdle: (state) => {
-      state.deleteInventoryItemStatus = "idle";
-    },
-    setDashboardDataStatusIdle: (state) => {
-      state.dashboardDataStatus = "idle";
     },
   },
   extraReducers: (builder) => {
@@ -330,10 +314,10 @@ const pharmacySlice = createSlice({
         state.error = action.error.message;
       })
       .addCase(updateInventoryItem.pending, (state) => {
-        state.updateInventoryItemStatus = "loading";
+        state.updateInventoryStatus = "loading";
       })
       .addCase(updateInventoryItem.fulfilled, (state, action) => {
-        state.updateInventoryItemStatus = "succeeded";
+        state.updateInventoryStatus = "succeeded";
         // Update the item in the items array
         const index = state.items.findIndex(
           (item) => item._id === action.payload._id
@@ -343,7 +327,7 @@ const pharmacySlice = createSlice({
         }
       })
       .addCase(updateInventoryItem.rejected, (state, action) => {
-        state.updateInventoryItemStatus = "failed";
+        state.updateInventoryStatus = "failed";
         state.error = action.error.message;
       })
       .addCase(createInventoryItem.pending, (state) => {
@@ -384,13 +368,5 @@ const pharmacySlice = createSlice({
 });
 
 // Update the exported actions
-export const {
-  setCreateSalesBillStatus,
-  setCreateOrderStatus,
-  clearSelectedSupplier,
-  setUpdateInventoryStatusIdle,
-  setCreateInventoryItemStatusIdle,
-  setDeleteInventoryItemStatusIdle,
-  setDashboardDataStatusIdle,
-} = pharmacySlice.actions;
+export const { clearSelectedSupplier } = pharmacySlice.actions;
 export default pharmacySlice.reducer;

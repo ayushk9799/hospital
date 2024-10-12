@@ -142,7 +142,6 @@ const expenseSlice = createSlice({
     updateExpenseStatus: "idle",
     payExpenseStatus: "idle",
     deleteExpenseStatus: "idle",
-    fetchExpensesStatus: "idle", // New status for fetching expenses
     error: null,
   },
   reducers: {},
@@ -203,15 +202,15 @@ const expenseSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(fetchExpenses.pending, (state) => {
-        state.fetchExpensesStatus = "loading";
+        state.expensesStatus = "loading";
         state.error = null;
       })
       .addCase(fetchExpenses.fulfilled, (state, action) => {
-        state.fetchExpensesStatus = "succeeded";
+        state.expensesStatus = "succeeded";
         state.expenses = action.payload;
       })
       .addCase(fetchExpenses.rejected, (state, action) => {
-        state.fetchExpensesStatus = "failed";
+        state.expensesStatus = "failed";
         state.error = action.payload;
       });
   },

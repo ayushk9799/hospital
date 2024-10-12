@@ -139,7 +139,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => navigate(`/staff/${user?.id}`, { state: { staffData: user } })}>Profile</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate(`/staff/${user?._id}`, { state: { staffData: user } })}>Profile</DropdownMenuItem>
             <DropdownMenuItem onSelect={() => navigate("/settings")}>Settings</DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout}>

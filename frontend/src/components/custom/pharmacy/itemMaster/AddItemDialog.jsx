@@ -13,7 +13,8 @@ export default function AddItemDialog({ isOpen, onClose }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const { createInventoryItemStatus } = useSelector((state) => state.pharmacy);
-  const {pharmacyItemCategories=[]} = useSelector((state) => state.hospital.hospitalInfo);
+  const {hospitalInfo} = useSelector((state) => state.hospital  );
+  const pharmacyItemCategories = hospitalInfo?.pharmacyItemCategories || [];
   
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");

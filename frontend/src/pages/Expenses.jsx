@@ -24,13 +24,6 @@ import {
 } from "../components/ui/alert-dialog"
 import PaymentDialog from "../components/custom/expenses/PaymentDialog"
 
-const sampleExpenses = [
-  { id: 'E001', category: 'Supplies', description: 'Medical supplies', amount: 5000, date: '2023-03-15T10:30:00Z', status: 'Paid' },
-  { id: 'E002', category: 'Utilities', description: 'Electricity bill', amount: 8000, date: '2023-03-14T14:45:00Z', status: 'Pending' },
-  { id: 'E003', category: 'Salaries', description: 'Staff salaries', amount: 50000, date: '2023-03-13T09:00:00Z', status: 'Paid' },
-  { id: 'E004', category: 'Equipment', description: 'New X-ray machine', amount: 200000, date: '2023-03-12T11:20:00Z', status: 'Pending' },
-  { id: 'E005', category: 'Maintenance', description: 'Building repairs', amount: 15000, date: '2023-03-11T16:00:00Z', status: 'Paid' },
-]
 
 const Expenses = () => {
   const dispatch = useDispatch();
