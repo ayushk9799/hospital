@@ -186,7 +186,7 @@ useEffect(()=>{
               <TableCell>
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-normal text-black"
+                  className="p-0 h-auto font-normal text-black capitalize"
                   onClick={() => navigate(`/patients/${patient.patient._id}`)}
                 >
                   {patient.patient.name}

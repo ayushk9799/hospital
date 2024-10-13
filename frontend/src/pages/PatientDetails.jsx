@@ -472,8 +472,8 @@ export default function PatientDetails() {
         <CardContent className="grid md:grid-cols-3 gap-4 p-3">
           <div className="flex items-center space-x-3">
             <Avatar className="h-14 w-14 ring-2 ring-primary ring-offset-2">
-              <AvatarImage src="/placeholder.svg" alt={patientDetails.name} />
-              <AvatarFallback>{patientDetails.name.charAt(0)}</AvatarFallback>
+              {/* <AvatarImage src="/placeholder.svg" alt={patientDetails.name} /> */}
+              <AvatarFallback >{patientDetails.name.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>
               <h2 className="text-lg font-semibold text-gray-800">

@@ -155,6 +155,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
                 additionalInstructions={booking.additionalInstructions}
                 labTests={booking.labTests}
                 onSelect={handlePatientSelect}
+                comorbidities={booking.comorbidities}
                 isSelected={selectedPatientId === booking._id}
               />
             ))}
@@ -177,6 +178,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
                 additionalInstructions={booking.additionalInstructions}
                 labTests={booking.labTests}
                 onSelect={handlePatientSelect}
+                comorbidities={booking.comorbidities}
                 isSelected={selectedPatientId === booking._id}
               />
             ))}

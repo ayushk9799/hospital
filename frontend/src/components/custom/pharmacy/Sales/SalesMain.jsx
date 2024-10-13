@@ -34,6 +34,16 @@ import { SearchSuggestion } from "../../registration/CustomSearchSuggestion";
 import { useToast } from "../../../../hooks/use-toast";
 import ViewBillDialog from "../reports/ViewBillDialog";
 import MedicineSuggDialog from "./MedicineSuggDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../../ui/alert-dialog";
 
 export default function SalesMain({
   clearTrigger,
@@ -79,6 +89,7 @@ export default function SalesMain({
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
   const [isMedicineSuggDialogOpen, setIsMedicineSuggDialogOpen] =
     useState(false);
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
 
   // patient list modified for search suggestion
   const patientListModified = useMemo(() => {
@@ -199,9 +210,9 @@ export default function SalesMain({
   // handle create sales order sending data to backend
   const handleCreateSalesOrder = (e) => {
     e.preventDefault();
-    if (items.length === 0 || customerInfo.name === "") {
+    if (items.length === 0) {
       toast({
-        title: "Please add items and customer name to create a sales order",
+        title: "Please add items to create a sales order",
       });
       return;
     }
@@ -213,6 +224,18 @@ export default function SalesMain({
       toast({ title: "Please enter buyer name" });
       return;
     }
+    
+    // Check if customer name is empty
+    if (customerInfo.name.trim() === "") {
+      setIsAlertDialogOpen(true);
+      return;
+    }
+    
+    createSalesOrder();
+  };
+
+  // Add this new function to create the sales order
+  const createSalesOrder = () => {
     const itemsArray = items.map((item) => ({
       item: item.id,
       quantity: item.quantity,
@@ -225,7 +248,7 @@ export default function SalesMain({
     }
     const patientInfo = {
       items: itemsArray,
-      patientInfo: { name: customerInfo.name, phone: customerInfo.phone },
+      patientInfo: { name: customerInfo?.name===""? "Unknown": customerInfo.name, phone: customerInfo.phone },
       billInfo,
       totals,
       paymentMethod,
@@ -324,6 +347,13 @@ export default function SalesMain({
       setShouldOpenMedicineSuggDialog(false);
     }
   }, [selectedPatient, shouldOpenMedicineSuggDialog]);
+
+  // Add this function to handle the confirmation from the alert dialog
+  const handleAlertDialogConfirm = () => {
+    setCustomerInfo(prev => ({ ...prev, name: "Unknown" }));
+    setIsAlertDialogOpen(false);
+    createSalesOrder();
+  };
 
   return (
     <div className="flex flex-col">
@@ -633,6 +663,20 @@ export default function SalesMain({
         selectedPatient={selectedPatient}
         onConfirm={handleConfirmedMedications}
       />
+      <AlertDialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Create Unknown Sale?</AlertDialogTitle>
+            <AlertDialogDescription>
+              The customer name is empty. Do you want to create an unknown sale?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAlertDialogConfirm}>Continue</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

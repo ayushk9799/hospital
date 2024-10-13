@@ -43,7 +43,7 @@ export default function OPDModule({ patient }) {
   });
   const [labTests, setLabTests] = useState([]);
   const [selectedLabTests, setSelectedLabTests] = useState([]);
-  const [comorbidities, setComorbidities] = useState([]);
+  // const [comorbidities, setComorbidities] = useState([]);
   const [selectedComorbidities, setSelectedComorbidities] = useState([]);
 
   const dispatch = useDispatch();
@@ -87,7 +87,7 @@ export default function OPDModule({ patient }) {
       
       // Update comorbidities and selectedComorbidities
       const patientComorbidities = patient.comorbidities?.map(comorbidity => ({ name: comorbidity })) || [];
-      setComorbidities(patientComorbidities);
+      // setComorbidities(patientComorbidities);
       setSelectedComorbidities(patientComorbidities);
     }
   }, [patient]);

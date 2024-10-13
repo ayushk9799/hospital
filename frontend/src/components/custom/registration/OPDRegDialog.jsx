@@ -10,6 +10,7 @@ import {
 } from "../../ui/dialog";
 import { useDispatch, useSelector } from "react-redux";
 import { revisitPatient } from "../../../redux/slices/patientSlice";
+import { fetchBills } from "../../../redux/slices/BillingSlice";
 import {
   fetchPatients,
   registerPatient,
@@ -38,6 +39,9 @@ import {
   TooltipTrigger,
 } from "../../ui/tooltip";
 import { Label } from "../../ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+import { Checkbox } from "../../ui/checkbox";
+import { FloatingLabelSelect } from "./PatientInfoForm";
 
 const initialFormData = {
   name: "",
@@ -80,6 +84,8 @@ const initialFormData = {
       provider: "",
       policyNumber: "",
     },
+    consultationFee: true,
+    paymentMethod: "",
   },
 };
 
@@ -109,6 +115,12 @@ export default function OPDRegDialog({ open, onOpenChange }) {
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = value;
+
+      // Clear payment method when consultation fee is unchecked
+      if (id === "visit.consultationFee" && value === false) {
+        newState.visit.paymentMethod = "";
+      }
+
       return newState;
     });
   }, []);
@@ -126,6 +138,8 @@ export default function OPDRegDialog({ open, onOpenChange }) {
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.contactNumber)
       newErrors.contactNumber = "Contact number is required";
+    if (formData.visit.consultationFee && !formData.visit.paymentMethod)
+      newErrors.paymentMethod = "Payment method is required when consultation fee is added";
     setErrors(newErrors);
 
     return Object.keys(newErrors).length === 0;
@@ -239,6 +253,8 @@ export default function OPDRegDialog({ open, onOpenChange }) {
               ),
             },
           };
+          // console.log(submissionData);
+          
           dispatch(registerPatient(submissionData))
             .unwrap()
             .then(() => {
@@ -248,6 +264,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
                 variant: "success",
               });
               dispatch(fetchPatients());
+              dispatch(fetchBills());
               onOpenChange(false);
             })
             .catch((error) => {
@@ -346,7 +363,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
         className={
           isOldPatient
             ? "max-w-[800px] max-h-[80vh] overflow-y-auto"
-            : "max-w-[1200px] max-h-[80vh] overflow-y-auto"
+            : "max-w-[1000px] h-[70vh] overflow-y-auto"
         }
       >
         <DialogHeader>
@@ -357,7 +374,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
               : "Register new patient"}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit} className="h-[calc(70vh-115px)]">
           <div className="space-y-4 mb-4">
             <div className="flex items-center space-x-2">
               <Switch
@@ -434,9 +451,14 @@ export default function OPDRegDialog({ open, onOpenChange }) {
           </div>
 
           {!isOldPatient && (
-            <>
-              <div className="grid grid-cols-4 gap-4">
-                <div className="grid grid-cols-3 col-span-3 gap-4">
+            <Tabs defaultValue="basic-info" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="basic-info">Basic Information</TabsTrigger>
+                <TabsTrigger value="vitals">Vitals</TabsTrigger>
+                <TabsTrigger value="insurance">Insurance</TabsTrigger>
+              </TabsList>
+              <TabsContent value="basic-info">
+                <div className="grid grid-cols-3 gap-4">
                   <PatientInfoForm
                     formData={formData}
                     handleInputChange={handleInputChange}
@@ -449,80 +471,122 @@ export default function OPDRegDialog({ open, onOpenChange }) {
                     handleSelectChange={handleSelectChange}
                     errors={errors}
                   />
+                  <div className="grid grid-cols-3 col-span-3 gap-4">
+                    <div className="flex-1">
+                      <Textarea
+                        id="visit.reasonForVisit"
+                        placeholder="Reason for Visit"
+                        value={formData.visit.reasonForVisit}
+                        onChange={handleInputChange}
+                        className="h-[80px]"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <Textarea
+                        id="address"
+                        placeholder="Address: 123 Main St, Anytown USA"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        className="h-[80px]"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id="visit.consultationFee"
+                          checked={formData.visit.consultationFee}
+                          onCheckedChange={(checked) =>
+                            handleInputChange({
+                              target: { id: "visit.consultationFee", value: checked },
+                            })
+                          }
+                        />
+                        <label
+                          htmlFor="visit.consultationFee"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Add Consultation Fee
+                        </label>
+                      </div>
+                      <FloatingLabelSelect
+                        id="visit.paymentMethod"
+                        label="Payment Method"
+                        value={formData.visit.paymentMethod}
+                        onValueChange={(value) => handleSelectChange("visit.paymentMethod", value)}
+                        error={errors.paymentMethod}
+                        disabled={!formData.visit.consultationFee}
+                      >
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="UPI">UPI</SelectItem>
+                        <SelectItem value="Card">Card</SelectItem>
+                        <SelectItem value="Due">Due</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </FloatingLabelSelect>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-4">
-                  <Textarea
-                    id="visit.reasonForVisit"
-                    placeholder="Reason for Visit"
-                    value={formData.visit.reasonForVisit}
-                    onChange={handleInputChange}
-                    className="h-[80px]"
-                  />
-                  <Textarea
-                    id="address"
-                    placeholder="Address: 123 Main St, Anytown USA"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                    className="h-[80px]"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 gap-4 mt-4">
-                <VitalsForm
+              </TabsContent>
+              <TabsContent value="vitals">
+               <div className="grid grid-cols-3 gap-4">
+               <VitalsForm
                   formData={formData}
                   handleSelectChange={handleSelectChange}
                   errors={errors}
                 />
-              </div>
-              <div className="grid grid-cols-2 gap-4 mt-4">
+               </div>
+              </TabsContent>
+              <TabsContent value="insurance">
                 <InsuranceForm
                   formData={formData.visit}
                   handleSelectChange={handleSelectChange}
                   errors={errors}
                 />
-              </div>
-              <DialogFooter className="mt-4">
-                <Button type="button" variant="outline" onClick={handleReset}>
-                  Reset
-                </Button>
+              </TabsContent>
+            </Tabs>
+          )}
+
+          {!isOldPatient && (
+            <DialogFooter className="mt-4">
+              <Button type="button" variant="outline" onClick={handleReset}>
+                Reset
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleDialogClose}
+              >
+                Cancel
+              </Button>
+              {formData.followUp && (
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={handleDialogClose}
-                >
-                  Cancel
-                </Button>
-                {formData.followUp && (
-                  <Button
-                    type="button"
-                    onClick={handleFollowUp}
-                    disabled={registerPatientStatus === "loading"}
-                  >
-                    {registerPatientStatus === "loading" ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </>
-                    ) : (
-                      "Follow-up"
-                    )}
-                  </Button>
-                )}
-                <Button
-                  type="submit"
-                  disabled={registerPatientStatus === "loading" || formData.followUp}
+                  onClick={handleFollowUp}
+                  disabled={registerPatientStatus === "loading"}
                 >
                   {registerPatientStatus === "loading" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Registering...
+                      Processing...
                     </>
                   ) : (
-                    "Register"
+                    "Follow-up"
                   )}
                 </Button>
-              </DialogFooter>
-            </>
+              )}
+              <Button
+                type="submit"
+                disabled={registerPatientStatus === "loading" || formData.followUp}
+              >
+                {registerPatientStatus === "loading" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Registering...
+                  </>
+                ) : (
+                  "Register"
+                )}
+              </Button>
+            </DialogFooter>
           )}
         </form>
       </DialogContent>
