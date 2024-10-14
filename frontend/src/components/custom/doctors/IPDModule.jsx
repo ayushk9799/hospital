@@ -280,8 +280,7 @@ export default function IPDModule({ patient }) {
     <div className="space-y-2">
       <div className="flex justify-between items-center border-b border-gray-300 pb-2">
         <h2 className="text-xl font-bold">
-          IPD Admission for: {ipdAdmission.patientName} (P
-          {ipdAdmission.registrationNumber.slice(-4)})
+          IPD Admission for: {ipdAdmission.patientName} 
         </h2>
         <div className="space-x-2">
           <Button 

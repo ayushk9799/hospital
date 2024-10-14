@@ -20,7 +20,8 @@ export const dischargePatient = createAsyncThunk(
         return rejectWithValue(errorData);
       }
 
-      return await response.json();
+      const updatedPatient = await response.json();
+      return updatedPatient.admission; // Return the updated patient data
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -69,6 +70,7 @@ const dischargeSlice = createSlice({
       })
       .addCase(dischargePatient.fulfilled, (state, action) => {
         state.status = 'succeeded';
+        console.log("dischatvdcduc")
         state.dischargeData = action.payload;
       })
       .addCase(dischargePatient.rejected, (state, action) => {

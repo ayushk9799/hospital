@@ -5,6 +5,7 @@ import {
 } from "@reduxjs/toolkit";
 import { Backend_URL } from "../../assets/Data";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
+import { dischargePatient } from "./dischargeSlice"; // Import the dischargePatient thunk
 
 // Replace the existing fetchPatients thunk with this:
 export const fetchPatients = createLoadingAsyncThunk(
@@ -288,6 +289,22 @@ const patientSlice = createSlice({
       .addCase(addLabReport.rejected, (state, action) => {
         state.addLabReportStatus = "failed";
         state.error = action.payload;
+      })
+      .addCase(dischargePatient.fulfilled, (state, action) => {
+        console.log("patkhbc")
+        const updatedPatient = action.payload;
+        const {assignedRoom, assignedBed, department,patient,...rest} = updatedPatient;
+        const index = state.patientlist.findIndex(
+          (patient) => patient._id === updatedPatient._id
+        );
+        if (index !== -1) {
+          // Update the patient in the patientlist
+          state.patientlist[index] = { ...state.patientlist[index], ...rest };
+        }
+        // If the discharged patient is the currently selected patient, update it as well
+        if (state.selectedPatient && state.selectedPatient._id === updatedPatient._id) {
+          state.selectedPatient = { ...state.selectedPatient, ...updatedPatient };
+        }
       });
   },
 });

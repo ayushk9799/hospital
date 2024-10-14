@@ -212,7 +212,7 @@ export default function OPDModule({ patient }) {
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center border-b border-gray-300 pb-2">
-        <h2 className="text-xl font-bold">Prescription for: {patient.patient.name} (P{patient.patient._id.slice(-4)})</h2>
+        <h2 className="text-xl font-bold">Prescription for: {patient.patient.name} </h2>
         <div className="space-x-2">
           <Button className="font-semibold" size="sm" variant="outline" onClick={() => setShowPDFPreview(true)}>
             Preview PDF
