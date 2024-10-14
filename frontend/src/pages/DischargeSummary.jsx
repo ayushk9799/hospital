@@ -308,6 +308,7 @@ export default function DischargeSummary() {
       toast({
         title: "Success",
         description: "Patient discharged successfully",
+        variant:"success"
       });
       navigate("/patients");
     } catch (error) {

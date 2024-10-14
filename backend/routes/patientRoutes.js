@@ -6,6 +6,7 @@ import { IPDAdmission } from "../models/IPDAdmission.js";
 import { ServicesBill } from "../models/ServicesBill.js";
 import { getHospitalId } from "../utils/asyncLocalStorage.js";
 import { Service } from "../models/Services.js";
+import { Payment } from "../models/Payment.js";
 import { checkPermission, verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 
@@ -32,40 +33,53 @@ router.post(
       const patient = new Patient({ ...patientData });
       await patient.save({ session });
 
-      let admissionRecord;
+      let admissionRecord, bill;
 
-      let consultationFee = await Service.findOne({
-        name: "Consultation Fee",
-      }).session(session);
-
-      if (!consultationFee) {
-        // throw new Error("Consultation Fee service not found");
-        consultationFee = new Service({
+      if(visit?.consultationFee){
+        let consultationFee = await Service.findOne({
           name: "Consultation Fee",
-          rate: 500,
-          category: "General",
-        });
-        await consultationFee.save({ session });
-      }
-      // Create a bill for the patient
-      const bill = new ServicesBill({
-        services: [
-          {
-            name: consultationFee.name,
-            quantity: 1,
-            rate: consultationFee.rate,
-            category: consultationFee.category,
+        }).session(session);
+
+        if (!consultationFee) {
+          consultationFee = new Service({
+            name: "Consultation Fee",
+            rate: 500,
+            category: "General",
+          });
+          await consulatitonFee.save({ session });
+        }
+        // Create a bill for the patient
+        bill = new ServicesBill({
+          services: [
+            {
+              name: consultationFee.name,
+              quantity: 1,
+              rate: consultationFee.rate,
+              category: consultationFee.category,
+            },
+          ],
+          patient: patient._id,
+          patientInfo: {
+            name: patient.name,
+            phone: patient?.contactNumber,
           },
-        ],
-        patient: patient._id,
-        patientInfo: {
-          name: patient.name,
-          phone: patient?.contactNumber,
-        },
-        totalAmount: consultationFee.rate,
-        subtotal: consultationFee.rate,
-        createdBy: user._id,
-      });
+          totalAmount: consultationFee.rate,
+          subtotal: consultationFee.rate,
+          createdBy: user._id,
+        });
+        if(visit.paymentMethod !== "" && visit.paymentMethod !== "Due"){
+          const payment = new Payment({
+            amount: consultationFee.rate,
+            paymentMethod: visit.paymentMethod,
+            paymentType: { name: "Services", id: bill._id },
+            type: "Income",
+            createdBy: user._id,
+          });
+          await payment.save({ session });
+          bill.payments.push(payment._id);
+          bill.amountPaid = consultationFee.rate;
+        }
+      }
 
       if (patientType === "OPD") {
         if (!visit) {
@@ -81,8 +95,8 @@ router.post(
           patient: patient._id,
         });
         patient.visits.push(admissionRecord._id);
-        bill.patientType = "OPD";
-        admissionRecord.bills.services.push(bill._id);
+        // bill.patientType = "OPD";
+        // admissionRecord.bills.services.push(bill._id);
       } else if (patientType === "IPD") {
         if (!admission) {
           throw new Error("Admission details are required for IPD patients");
@@ -96,12 +110,8 @@ router.post(
           patient: patient._id,
         });
         patient.admissionDetails.push(admissionRecord._id);
-        bill.patientType = "IPD";
-        admissionRecord.bills.services.push(bill._id);
         if (admission.assignedRoom) {
-          const room = await Room.findById(admission.assignedRoom).session(
-            session
-          );
+          const room = await Room.findById(admission.assignedRoom).session(session);
           if (!room) {
             throw new Error("Room not found");
           }
@@ -117,22 +127,36 @@ router.post(
           room.beds[bedIndex].currentPatient = patient._id;
           room.currentOccupancy += 1;
 
-          bill.services.push({
-            name: "Room Charge",
-            quantity: 1,
-            rate: room.ratePerDay,
-            category: "Room Rent",
+          bill = new ServicesBill({
+            services: [
+              {
+                name: "Room Charge",
+                quantity: 1,
+                rate: room.ratePerDay,
+                category: "Room Rent",
+              },
+            ],
+            patient: patient._id,
+            patientInfo: {
+              name: patient.name,
+              phone: patient?.contactNumber,
+            },
+            totalAmount: room.ratePerDay,
+            subtotal: room.ratePerDay,
+            createdBy: user._id,
           });
-          bill.totalAmount += room.ratePerDay;
-          bill.subtotal += room.ratePerDay;
-
+          
           // This will trigger the pre-save hook
           await room.save({ session });
         }
       }
-      await admissionRecord.save({ session });
-      await bill.save({ session });
 
+      if(visit?.consultationFee || patientType === "IPD"){
+        bill.patientType = patientType;
+        admissionRecord.bills.services.push(bill._id);
+        await bill.save({ session });
+      }
+      await admissionRecord.save({ session });
       // Add admission reference to patient
       await patient.save({ session });
 
@@ -253,7 +277,6 @@ router.get("/details", verifyToken, async (req, res) => {
       treatment: admission.treatment,
       conditionOnAdmission: admission.conditionOnAdmission,
       conditionOnDischarge: admission.conditionOnDischarge,
-      comorbidities: admission.comorbidities,
       medications: admission.medications,
       additionalInstructions: admission.additionalInstructions,
       labTests: admission.labTests,

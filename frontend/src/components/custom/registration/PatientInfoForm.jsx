@@ -9,7 +9,7 @@ import {
 } from "../../ui/select";
 
 // Updated FloatingLabelSelect component
-const FloatingLabelSelect = ({ id, label, value, onValueChange, error, children }) => {
+export const FloatingLabelSelect = ({ id, label, value, onValueChange, error, children }) => {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
@@ -110,7 +110,7 @@ export default function PatientInfoForm({
               
             />
           </div>
-          <div className="w-20 relative">
+          <div className="w-30 relative">
             <MemoizedInput
               id="age"
               label="Age"

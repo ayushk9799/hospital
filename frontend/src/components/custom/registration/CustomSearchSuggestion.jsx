@@ -84,7 +84,7 @@ export const SearchSuggestion = forwardRef(({ suggestions=[], placeholder, value
         >
           {filteredSuggestions.map((suggestion, index) => (
             <li
-              key={suggestion.name}
+              key={suggestion._id}
               onClick={() => handleSuggestionClick(suggestion)}
               className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
                 index === selectedIndex ? 'bg-gray-100' : ''

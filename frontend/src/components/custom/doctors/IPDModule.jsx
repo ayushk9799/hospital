@@ -15,6 +15,7 @@ import { X } from "lucide-react";
 import { comorbodities } from "../../../assets/Data";
 import MultiSelectInput from "../MultiSelectInput";
 import { ScrollArea } from "../../ui/scroll-area";
+import { Loader2 } from "lucide-react";
 
 // Add this at the top of the file, outside the component
 const allLabTests = labCategories.flatMap((category) =>
@@ -24,6 +25,7 @@ const allLabTests = labCategories.flatMap((category) =>
 const comorbiditiesList = comorbodities.map((name) => ({ name }));
 
 export default function IPDModule({ patient }) {
+  console.log('patient', patient);
   const [ipdAdmission, setIpdAdmission] = useState({
     bookingDate: patient.bookingDate,
     bookingNumber: patient.bookingNumber,
@@ -34,9 +36,7 @@ export default function IPDModule({ patient }) {
     diagnosis: patient.diagnosis || "",
     notes: patient.notes || "",
     clinicalSummary: patient.clinicalSummary,
-    comorbidities:
-      patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) ||
-      [],
+    comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [],
     comorbidityHandling: "separate",
     conditionOnAdmission: patient.conditionOnAdmission || "",
     conditionOnDischarge: patient.conditionOnDischarge || "",
@@ -88,9 +88,7 @@ export default function IPDModule({ patient }) {
       patientName: patient.patient.name,
       contactNumber: patient.patient.contactNumber,
       registrationNumber: patient.patient._id,
-      comorbidities:
-        patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) ||
-        [],
+      comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [],
       patient: patient.patient._id,
       diagnosis: patient.diagnosis || "",
       notes: patient.notes || "",
@@ -140,6 +138,7 @@ export default function IPDModule({ patient }) {
   const { toast } = useToast();
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
+  const prescriptionUpdateStatus = useSelector((state) => state.patients.prescriptionUpdateStatus);
 
   useEffect(() => {
     if (itemsStatus === "idle") {
@@ -158,16 +157,29 @@ export default function IPDModule({ patient }) {
 
   const handleVitalChange = (e, type) => {
     const { name, value } = e.target;
-    setIpdAdmission((prev) => ({
-      ...prev,
-      vitals: {
+    setIpdAdmission((prev) => {
+      const newVitals = {
         ...prev.vitals,
         [type]: {
           ...prev.vitals[type],
           [name]: value,
         },
-      },
-    }));
+      };
+
+      // Calculate BMI if height or weight changes
+      if (type === 'admission' && (name === 'height' || name === 'weight')) {
+        const height = name === 'height' ? parseFloat(value) : parseFloat(prev.vitals.admission.height);
+        const weight = name === 'weight' ? parseFloat(value) : parseFloat(prev.vitals.admission.weight);
+        
+        if (height && weight) {
+          const heightInMeters = height / 100;
+          const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
+          newVitals.admission.bmi = bmi;
+        }
+      }
+
+      return { ...prev, vitals: newVitals };
+    });
   };
 
   const handleMedicationChange = (index, field, value) => {
@@ -239,14 +251,15 @@ export default function IPDModule({ patient }) {
       ).unwrap();
 
       toast({
-        title: "Success",
-        description: "IPD Admission saved successfully!",
+        variant: "success",
+        title: "Saved Successfully!",
+        description: "IPD prescription saved successfully!",
       });
     } catch (error) {
-      console.error("Error saving IPD Admission:", error);
+      console.error("Error saving IPD prescription:", error);
       toast({
         title: "Error",
-        description: "Failed to save IPD Admission. Please try again.",
+        description: "Failed to save IPD prescription. Please try again.",
         variant: "destructive",
       });
     }
@@ -256,7 +269,7 @@ export default function IPDModule({ patient }) {
     setIpdAdmission((prev) => ({ ...prev, comorbidities: newComorbidities }));
   };
 
-  const handleRemoveSelected = (name) => {
+  const handleRemoveComorbidity = (name) => {
     setIpdAdmission((prev) => ({
       ...prev,
       comorbidities: prev.comorbidities.filter((val) => val.name !== name),
@@ -264,45 +277,149 @@ export default function IPDModule({ patient }) {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-2">
+    <div className="space-y-2">
+      <div className="flex justify-between items-center border-b border-gray-300 pb-2">
         <h2 className="text-xl font-bold">
           IPD Admission for: {ipdAdmission.patientName} (P
           {ipdAdmission.registrationNumber.slice(-4)})
         </h2>
         <div className="space-x-2">
-          <Button className="font-semibold" size="sm" onClick={handleSaveIPDAdmission}>
-            Save
+          <Button 
+            className="font-semibold" 
+            size="sm" 
+            onClick={handleSaveIPDAdmission}
+            disabled={prescriptionUpdateStatus === "loading"}
+          >
+            {prescriptionUpdateStatus === "loading" ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save"
+            )}
           </Button>
         </div>
       </div>
-      <ScrollArea className="h-[calc(100vh-115px)] pr-4">
+      <ScrollArea className="h-[calc(100vh-125px)] pr-4">
         {/* Admission Vitals */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+        <div className="px-1 bg-gray-50">
           <h3 className="text-lg font-semibold">Admission Vitals</h3>
           <div className="grid grid-cols-4 gap-3">
-            {Object.entries(ipdAdmission.vitals.admission).map(([key, value]) => (
-              <div key={key}>
-                <Label
-                  htmlFor={`admission-${key}`}
-                  className="text-xs font-semibold"
-                >
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
-                </Label>
-                <Input
-                  id={`admission-${key}`}
-                  name={key}
-                  value={value}
-                  onChange={(e) => handleVitalChange(e, "admission")}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-            ))}
+            <div>
+              <Label htmlFor="admission-temperature" className="text-xs font-semibold">Temperature (°C)</Label>
+              <Input
+                id="admission-temperature"
+                name="temperature"
+                value={ipdAdmission.vitals.admission.temperature}
+                onChange={(e) => handleVitalChange(e, "admission")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="admission-heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
+              <Input
+                id="admission-heartRate"
+                name="heartRate"
+                value={ipdAdmission.vitals.admission.heartRate}
+                onChange={(e) => handleVitalChange(e, "admission")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="admission-bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
+              <Input
+                id="admission-bloodPressure"
+                name="bloodPressure"
+                value={ipdAdmission.vitals.admission.bloodPressure}
+                onChange={(e) => handleVitalChange(e, "admission")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="admission-respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
+              <Input
+                id="admission-respiratoryRate"
+                name="respiratoryRate"
+                value={ipdAdmission.vitals.admission.respiratoryRate}
+                onChange={(e) => handleVitalChange(e, "admission")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="admission-height" className="text-xs font-semibold">Height (cm)</Label>
+              <Input
+                id="admission-height"
+                name="height"
+                value={ipdAdmission.vitals.admission.height}
+                onChange={(e) => handleVitalChange(e, "admission")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="admission-weight" className="text-xs font-semibold">Weight (kg)</Label>
+              <Input
+                id="admission-weight"
+                name="weight"
+                value={ipdAdmission.vitals.admission.weight}
+                onChange={(e) => handleVitalChange(e, "admission")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="admission-bmi" className="text-xs font-semibold">BMI</Label>
+              <Input
+                id="admission-bmi"
+                name="bmi"
+                value={ipdAdmission.vitals.admission.bmi || ''}
+                readOnly
+                className="h-8 text-sm font-medium bg-gray-100"
+              />
+            </div>
+            <div>
+              <Label htmlFor="admission-oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
+              <Input
+                id="admission-oxygenSaturation"
+                name="oxygenSaturation"
+                value={ipdAdmission.vitals.admission.oxygenSaturation}
+                onChange={(e) => handleVitalChange(e, "admission")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Clinical Summary */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg mt-4">
+        {/* Diagnosis and Treatment (moved up) */}
+        <div className="pt-4 p-1 bg-gray-50">
+          <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
+              <Textarea 
+                id="diagnosis" 
+                name="diagnosis" 
+                value={ipdAdmission.diagnosis} 
+                onChange={handleInputChange} 
+                placeholder="Enter patient's diagnosis" 
+                className="min-h-[100px] text-sm font-medium" 
+              />
+            </div>
+            <div>
+              <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
+              <Textarea 
+                id="treatment" 
+                name="treatment" 
+                value={ipdAdmission.treatment} 
+                onChange={handleInputChange} 
+                placeholder="Enter recommended treatment" 
+                className="min-h-[100px] text-sm font-medium" 
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Clinical Summary (moved down) */}
+        <div className="pt-4 p-1 bg-gray-50">
           <h3 className="text-lg font-semibold">Clinical Summary</h3>
           <Textarea
             name="clinicalSummary"
@@ -313,186 +430,181 @@ export default function IPDModule({ patient }) {
           />
         </div>
 
-        {/* Comorbidities */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg mt-4">
-          <h3 className="text-lg font-semibold">Comorbidities</h3>
-          <div className="mt-1 space-y-2">
-            <div className="flex gap-2">
-              <MultiSelectInput
-                suggestions={comorbiditiesList}
-                selectedValues={ipdAdmission.comorbidities}
-                setSelectedValues={handleComorbiditiesChange}
-                placeholder="Select comorbidities"
-              />
-            </div>
-            <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-              {ipdAdmission.comorbidities.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {ipdAdmission.comorbidities.map((val, index) => (
-                    <Badge
-                      key={index}
-                      variant="primary"
-                      className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
-                    >
-                      {val.name}
-                      <X
-                        className="ml-1 h-3 w-3 cursor-pointer"
-                        onClick={() => handleRemoveSelected(val.name)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No comorbidities selected</p>
-              )}
+        {/* Lab Tests and Comorbidities */}
+        <div className="grid grid-cols-2 gap-4 px-1 pt-4 bg-gray-50">
+          {/* Lab Tests */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Lab Tests</h3>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <MultiSelectInput
+                  suggestions={allLabTests}
+                  selectedValues={ipdAdmission.labTests}
+                  setSelectedValues={(newLabTests) => setIpdAdmission(prev => ({ ...prev, labTests: newLabTests }))}
+                  placeholder="Select lab tests"
+                />
+              </div>
+              <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                {ipdAdmission.labTests.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {ipdAdmission.labTests.map((test, index) => (
+                      <Badge
+                        key={index}
+                        variant="primary"
+                        className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                      >
+                        {test.name}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => removeLabTest(index)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No lab tests selected</p>
+                )}
+              </div>
             </div>
           </div>
-        </div>
 
-        {/* Diagnosis and Treatment */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg mt-4">
-          <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="diagnosis" className="text-xs font-semibold">
-                Diagnosis
-              </Label>
-              <Textarea
-                id="diagnosis"
-                name="diagnosis"
-                value={ipdAdmission.diagnosis}
-                onChange={handleInputChange}
-                placeholder="Enter patient's diagnosis"
-                className="min-h-[100px] text-sm font-medium"
-              />
-            </div>
-            <div>
-              <Label htmlFor="treatment" className="text-xs font-semibold">
-                Treatment
-              </Label>
-              <Textarea
-                id="treatment"
-                name="treatment"
-                value={ipdAdmission.treatment}
-                onChange={handleInputChange}
-                placeholder="Enter recommended treatment"
-                className="min-h-[100px] text-sm font-medium"
-              />
+          {/* Comorbidities */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Comorbidities</h3>
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <MultiSelectInput
+                  suggestions={comorbiditiesList}
+                  selectedValues={ipdAdmission.comorbidities}
+                  setSelectedValues={handleComorbiditiesChange}
+                  placeholder="Select comorbidities"
+                />
+              </div>
+              <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                {ipdAdmission.comorbidities.length > 0 ? (
+                  <div className="flex flex-wrap gap-1">
+                    {ipdAdmission.comorbidities.map((val, index) => (
+                      <Badge
+                        key={index}
+                        variant="primary"
+                        className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
+                      >
+                        {val.name}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => handleRemoveComorbidity(val.name)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 text-sm">No comorbidities selected</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Medications */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg mt-4">
+        <div className="pt-4 px-1 bg-gray-50">
           <h3 className="text-lg font-semibold">Medications</h3>
-          {ipdAdmission.medications.map((medication, index) => (
-            <div key={index} className="grid grid-cols-4 gap-2 mb-2">
-              <SearchSuggestion
-                suggestions={commonMedications}
-                placeholder="Select medicine"
-                value={medication.name}
-                setValue={(value) => handleMedicationChange(index, "name", value)}
-                onSuggestionSelect={(suggestion) =>
-                  handleMedicationSuggestionSelect(index, suggestion)
-                }
-              />
-              <Input
-                placeholder="Frequency"
-                value={medication.frequency}
-                onChange={(e) =>
-                  handleMedicationChange(index, "frequency", e.target.value)
-                }
-                className="font-medium"
-              />
-              <Input
-                placeholder="Duration"
-                value={medication.duration}
-                onChange={(e) =>
-                  handleMedicationChange(index, "duration", e.target.value)
-                }
-                className="font-medium"
-              />
-              <Button
-                variant="destructive"
-                size="icon"
-                onClick={() => removeMedication(index)}
-                disabled={ipdAdmission.medications.length === 1}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            onClick={addMedication}
-            variant="outline"
-            className="mt-2 font-semibold"
-          >
-            <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
-          </Button>
-        </div>
-
-        {/* Lab Tests */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg mt-4">
-          <h3 className="text-lg font-semibold">Lab Tests</h3>
-          <div className="space-y-2">
-            <div className="flex gap-2">
-              <MultiSelectInput
-                suggestions={allLabTests}
-                selectedValues={ipdAdmission.labTests}
-                setSelectedValues={(newLabTests) => setIpdAdmission(prev => ({ ...prev, labTests: newLabTests }))}
-                placeholder="Select lab tests"
-              />
-            </div>
-            <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-              {ipdAdmission.labTests.length > 0 ? (
-                <div className="flex flex-wrap gap-1">
-                  {ipdAdmission.labTests.map((test, index) => (
-                    <Badge
-                      key={index}
-                      variant="primary"
-                      className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
-                    >
-                      {test.name}
-                      <X
-                        className="ml-1 h-3 w-3 cursor-pointer"
-                        onClick={() => removeLabTest(index)}
-                      />
-                    </Badge>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-gray-500 text-sm">No lab tests selected</p>
-              )}
-            </div>
+          <div>
+            {ipdAdmission.medications?.map((medication, index) => (
+              <div key={index} className="grid grid-cols-4 gap-2 mb-2">
+                <SearchSuggestion
+                  suggestions={commonMedications}
+                  placeholder="Select medicine"
+                  value={medication.name}
+                  setValue={(value) => handleMedicationChange(index, "name", value)}
+                  onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+                />
+                <Input
+                  placeholder="Frequency"
+                  value={medication.frequency}
+                  onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                  className="font-medium"
+                />
+                <Input
+                  placeholder="Duration"
+                  value={medication.duration}
+                  onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                  className="font-medium"
+                />
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => removeMedication(index)}
+                  disabled={ipdAdmission.medications.length === 1}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </div>
+            ))}
+            <Button onClick={addMedication} variant="outline" className="mt-2 font-semibold">
+              <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
+            </Button>
           </div>
         </div>
 
         {/* Discharge Vitals */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg mt-4">
+        <div className="pt-4 px-1 bg-gray-50">
           <h3 className="text-lg font-semibold">Discharge Vitals</h3>
           <div className="grid grid-cols-4 gap-3">
-            {Object.entries(ipdAdmission.vitals.discharge).map(([key, value]) => (
-              <div key={key}>
-                <Label
-                  htmlFor={`discharge-${key}`}
-                  className="text-xs font-semibold"
-                >
-                  {key.charAt(0).toUpperCase() + key.slice(1)}
-                </Label>
-                <Input
-                  id={`discharge-${key}`}
-                  name={key}
-                  value={value}
-                  onChange={(e) => handleVitalChange(e, "discharge")}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-            ))}
+            <div>
+              <Label htmlFor="discharge-temperature" className="text-xs font-semibold">Temperature (°C)</Label>
+              <Input
+                id="discharge-temperature"
+                name="temperature"
+                value={ipdAdmission.vitals.discharge.temperature}
+                onChange={(e) => handleVitalChange(e, "discharge")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="discharge-heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
+              <Input
+                id="discharge-heartRate"
+                name="heartRate"
+                value={ipdAdmission.vitals.discharge.heartRate}
+                onChange={(e) => handleVitalChange(e, "discharge")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="discharge-bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
+              <Input
+                id="discharge-bloodPressure"
+                name="bloodPressure"
+                value={ipdAdmission.vitals.discharge.bloodPressure}
+                onChange={(e) => handleVitalChange(e, "discharge")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="discharge-respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
+              <Input
+                id="discharge-respiratoryRate"
+                name="respiratoryRate"
+                value={ipdAdmission.vitals.discharge.respiratoryRate}
+                onChange={(e) => handleVitalChange(e, "discharge")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
+            <div>
+              <Label htmlFor="discharge-oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
+              <Input
+                id="discharge-oxygenSaturation"
+                name="oxygenSaturation"
+                value={ipdAdmission.vitals.discharge.oxygenSaturation}
+                onChange={(e) => handleVitalChange(e, "discharge")}
+                className="h-8 text-sm font-medium"
+              />
+            </div>
           </div>
         </div>
 
         {/* Notes */}
-        <div className="space-y-4 p-4 bg-gray-50 rounded-lg mt-4">
+        <div className="space-y-2 px-1 pt-4 mb-4 bg-gray-50">
           <h3 className="text-lg font-semibold">Additional Notes</h3>
           <Textarea
             name="notes"

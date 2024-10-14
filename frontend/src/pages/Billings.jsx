@@ -256,6 +256,7 @@ const Billings = () => {
                 <TableHead className="font-semibold">Patient Type</TableHead>
                 <TableHead className="font-semibold">Date & Time</TableHead>
                 <TableHead className="font-semibold">Total Amount</TableHead>
+                <TableHead className="font-semibold">Due Amount</TableHead>
                 <TableHead className="font-semibold">Status</TableHead>
                 <TableHead className="font-semibold">Actions</TableHead>
               </TableRow>
@@ -268,7 +269,8 @@ const Billings = () => {
                   <TableCell>{bill.patientInfo.phone}</TableCell>
                   <TableCell>{bill.patientType}</TableCell>
                   <TableCell>{formatDateOrTime(bill.createdAt)}</TableCell>
-                  <TableCell>₹{bill.totalAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
+                  <TableCell>₹{bill.totalAmount.toLocaleString('en-IN')}</TableCell>
+                  <TableCell>₹{(bill.totalAmount - bill.amountPaid).toLocaleString('en-IN')}</TableCell>
                   <TableCell>
                     <Badge variant={getBadgeVariant(getBillStatus(bill))}>
                       {getBillStatus(bill)}
