@@ -43,7 +43,7 @@ import { SearchSuggestion } from "../components/custom/registration/CustomSearch
 import CreateLabReport from "./CreateLabReport";
 import { PDFViewer } from "@react-pdf/renderer";
 import DischargeSummaryPDF from "../components/custom/reports/DischargeSummaryPDF";
-import { dischargePatient } from "../redux/slices/dischargeSlice";
+import { dischargePatient, saveDischargeData } from "../redux/slices/dischargeSlice";
 import { useToast } from "../hooks/use-toast";
 import {
   Table,
@@ -273,7 +273,8 @@ export default function DischargeSummary() {
   };
 
   const { toast } = useToast();
-  const dischargeStatus = useSelector((state) => state.discharge.status);
+  const {status:dischargeStatus,savingStatus} = useSelector((state) => state.discharge);
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -313,6 +314,48 @@ export default function DischargeSummary() {
       toast({
         title: "Error",
         description: "Failed to discharge patient. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+
+    const dischargeData = {
+      patientId: patientId,
+      dateDischarged: formData.dateDischarged,
+      conditionOnAdmission: formData.conditionOnAdmission,
+      conditionOnDischarge: formData.conditionOnDischarge,
+      comorbidities: formData.comorbidities.map((c) => c.name),
+      clinicalSummary: formData.clinicalSummary,
+      diagnosis: formData.diagnosis,
+      treatment: formData.treatment,
+      medicineAdvice: formData.medicineAdvice.map((m) => ({
+        name: m.name,
+        duration: m.duration,
+        frequency: m.dosage,
+      })),
+      labReports: formData.investigations.map((i) => ({
+        name: i.name,
+        report: i.report,
+        date: i.date,
+      })),
+      vitals: formData.vitals,
+      notes: formData.notes,
+    };
+
+    try {
+      await dispatch(saveDischargeData(dischargeData)).unwrap();
+      toast({
+        title: "Success",
+        description: "Discharge data saved successfully",
+        variant:"success"
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save discharge data. Please try again.",
         variant: "destructive",
       });
     }
@@ -503,7 +546,6 @@ export default function DischargeSummary() {
         name={name}
         value={formData[name]}
         onChange={handleInputChange}
-        required
         className="mt-1 min-h-[6rem] leading-tight"
       />
     </div>
@@ -819,10 +861,13 @@ export default function DischargeSummary() {
                 <Button type="button" onClick={handlePreviewPDF}>
                   Preview Discharge Summary
                 </Button>
+                <Button type="button" onClick={handleSave} variant="outline" disabled={savingStatus==="loading"}>
+                  {savingStatus==="loading"?"Saving...":"Save"}
+                </Button>
                 <Button type="submit" disabled={dischargeStatus === "loading"}>
                   {dischargeStatus === "loading"
                     ? "Discharging..."
-                    : "Submit Discharge Summary"}
+                    : "Discharge"}
                 </Button>
               </div>
             </div>

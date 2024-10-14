@@ -29,7 +29,7 @@ router.post(
       }
 
       // Create patient
-      const patient = new Patient({ ...patientData, patientType });
+      const patient = new Patient({ ...patientData });
       await patient.save({ session });
 
       let admissionRecord;
@@ -797,14 +797,64 @@ router.post(
       }
 
       // Update patient status
-      const patient = await Patient.findById(admission.patient).session(
-        session
-      );
-      if (patient) {
-        patient.patientType = "OPD";
-        await patient.save({ session });
+     
+      await session.commitTransaction();
+      res.json({ message: "Patient discharged successfully", admission });
+    } catch (error) {
+      await session.abortTransaction();
+      res.status(400).json({ error: error.message });
+    } finally {
+      session.endSession();
+    }
+  }
+);
+router.post(
+  "/SaveButNotDischarge/:id",
+  verifyToken,
+  checkPermission("write:patients"),
+  async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const { id } = req.params;
+      const {
+        dateDischarged,
+        conditionOnAdmission,
+        conditionOnDischarge,
+        comorbidities,
+        clinicalSummary,
+        diagnosis,
+        treatment,
+        medicineAdvice,
+        labReports,
+        vitals,
+        notes,
+      } = req.body;
+
+      const admission = await IPDAdmission.findById(id).session(session);
+      if (!admission) {
+        throw new Error("Admission not found");
       }
 
+      // Update admission details
+      admission.dateDischarged = dateDischarged;
+      admission.conditionOnAdmission = conditionOnAdmission;
+      admission.conditionOnDischarge = conditionOnDischarge;
+      admission.comorbidities = comorbidities;
+      admission.clinicalSummary = clinicalSummary;
+      admission.diagnosis = diagnosis;
+      admission.treatment = treatment;
+      admission.medicineAdvice = medicineAdvice;
+      admission.labReports = labReports;
+      admission.vitals = vitals;
+      admission.notes = notes;
+     
+
+      await admission.save({ session });
+
+      
+     
       await session.commitTransaction();
       res.json({ message: "Patient discharged successfully", admission });
     } catch (error) {

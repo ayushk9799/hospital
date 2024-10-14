@@ -272,18 +272,17 @@ const patientSlice = createSlice({
         state.addLabReportStatus = "succeeded";
         // Update the patient in the patientlist with the new lab report
         const updatedPatient = action.payload.visit;
+        const {labReports} = updatedPatient;
         const index = state.patientlist.findIndex(
           (patient) => patient._id === updatedPatient._id
         );
         if (index !== -1) {
-          state.patientlist[index] = updatedPatient;
+          state.patientlist[index] = { ...state.patientlist[index], labReports };
+          console.log(state.patientlist[index]);
         }
         // If the updated patient is the currently selected patient, update it as well
-        if (
-          state.selectedPatient &&
-          state.selectedPatient._id === updatedPatient._id
-        ) {
-          state.selectedPatient = updatedPatient;
+        if (state.selectedPatient && state.selectedPatient._id === updatedPatient._id) {
+          state.selectedPatient = { ...state.selectedPatient, ...updatedPatient };
         }
       })
       .addCase(addLabReport.rejected, (state, action) => {

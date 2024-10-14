@@ -22,12 +22,7 @@ const patientSchema = new mongoose.Schema(
     email: String,
     address: String,
     bloodType: String,
-    patientType: {
-      type: String,
-      enum: ["IPD", "OPD"],
-      required: true,
-      default: "OPD",
-    },
+   
     admissionDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "ipdAdmission" },
     ],

@@ -1,0 +1,34 @@
+config:
+  target: "https://thehospital.in" # Replace with your actual server URL
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: Warm up
+   
+  variables:
+    username: "admin-ksucbhagalpur"
+    password: "password"
+
+scenarios:
+  - name: "Login and fetch patient details"
+    flow:
+      - post:
+          url: "/api/auth/login"
+          json:
+            username: "{{ username }}"
+            password: "{{ password }}"
+            hospitalId: "ksucbhagalpur"
+          capture:
+            - header: "set-cookie"
+              expression: "hospitalId=([^;]+)"
+              as: "hospitalId"
+            - header: "set-cookie"
+              expression: "jwtaccesstoken=([^;]+)"
+              as: "jwtaccesstoken"
+      - think: 2
+      - get:
+          url: "/api/patients/details"
+          headers:
+            Cookie: "hospitalId={{ hospitalId }}; jwtaccesstoken={{ jwtAccessToken }}"
+          expect:
+            - statusCode: 200

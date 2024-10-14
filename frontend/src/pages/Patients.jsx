@@ -72,13 +72,16 @@ export default function Patients() {
     if(status==="idle"){
       dispatch(fetchPatients())
     }
-  },[status])
+  },[status, dispatch])
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
 useEffect(()=>{
   if(billsStatus==="idle"){
     dispatch(fetchBills())
   }
-},[billsStatus])
+},[billsStatus, dispatch])
+
+  // Add this effect to refetch patients when the status changes
+ 
   const filteredPatients = patients.filter((patient) => {
     const nameMatch = patient.patient?.name
       .toLowerCase()
@@ -247,7 +250,7 @@ useEffect(()=>{
                     >
                       Create New Bill
                     </DropdownMenuItem>
-                    {type === "IPD" && patient.status !== "Discharged" && (
+                    {type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
                       >

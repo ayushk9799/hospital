@@ -27,11 +27,38 @@ export const dischargePatient = createAsyncThunk(
   }
 );
 
+// New saveDischargeData thunk
+export const saveDischargeData = createAsyncThunk(
+  'discharge/saveDischargeData',
+  async (dischargeData, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/SaveButNotDischarge/${dischargeData.patientId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(dischargeData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const dischargeSlice = createSlice({
   name: 'discharge',
   initialState: {
     status: 'idle',
     error: null,
+    savingStatus: 'idle',
     dischargeData: null,
   },
   reducers: {},
@@ -46,6 +73,17 @@ const dischargeSlice = createSlice({
       })
       .addCase(dischargePatient.rejected, (state, action) => {
         state.status = 'failed';
+        state.error = action.payload;
+      })
+      .addCase(saveDischargeData.pending, (state) => {
+        state.savingStatus = 'loading';
+      })
+      .addCase(saveDischargeData.fulfilled, (state, action) => {
+        state.savingStatus = 'succeeded';
+        state.dischargeData = action.payload;
+      })
+      .addCase(saveDischargeData.rejected, (state, action) => {
+        state.savingStatus = 'failed';
         state.error = action.payload;
       });
   },
