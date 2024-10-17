@@ -13,11 +13,7 @@ import mongoose from "mongoose";
 const router = express.Router();
 
 // Create a new patient (All authenticated staff)
-router.post(
-  "/",
-  verifyToken,
-  checkPermission("write:patients"),
-  async (req, res) => {
+router.post("/", verifyToken, checkPermission("write:patients"), async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -219,6 +215,8 @@ router.post("/search", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// all patients details for patient
 router.get("/details", verifyToken, async (req, res) => {
   //
   try {
@@ -310,10 +308,8 @@ router.get("/details", verifyToken, async (req, res) => {
   }
 });
 
-router.delete(
-  "/admissions",
 
-  async (req, res) => {
+router.delete("/admissions", async (req, res) => {
     try {
       const result = await Visit.deleteMany();
 
@@ -332,6 +328,7 @@ router.delete(
     }
   }
 );
+
 // Get a specific patient by ID (All authenticated staff)
 router.get("/:id", verifyToken, async (req, res) => {
   try {
@@ -347,11 +344,7 @@ router.get("/:id", verifyToken, async (req, res) => {
   }
 });
 
-router.put(
-  "/:id",
-  verifyToken,
-  checkPermission("write:patients"),
-  async (req, res) => {
+router.put( "/:id", verifyToken, checkPermission("write:patients"), async (req, res) => {
     try {
       // could be changed according to frontend
       const patient = await Patient.findByIdAndUpdate(req.params.id, req.body, {
@@ -370,11 +363,7 @@ router.put(
   }
 );
 
-router.delete(
-  "/:id",
-  verifyToken,
-  checkPermission("write:patients"),
-  async (req, res) => {
+router.delete( "/:id", verifyToken, checkPermission("write:patients"), async (req, res) => {
     try {
       const patient = await Patient.findByIdAndDelete(req.params.id);
       if (!patient) {
@@ -388,11 +377,7 @@ router.delete(
 );
 
 // Move patient from OPD to IPD
-router.post(
-  "/:id/admit",
-  verifyToken,
-  checkPermission("write:patients"),
-  async (req, res) => {
+router.post( "/:id/admit", verifyToken, checkPermission("write:patients"), async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -490,11 +475,7 @@ router.post(
 // Add medical history to a patient (All authenticated staff)
 
 // Handle patient revisit
-router.post(
-  "/:id/revisit",
-  verifyToken,
-  checkPermission("write:patients"),
-  async (req, res) => {
+router.post( "/:id/revisit", verifyToken, checkPermission("write:patients"), async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -705,6 +686,8 @@ router.post("/complexsearch", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// add lab report
 router.post("/addLabReport", async (req, res) => {
   try {
     const { visitId, labReport, searchWhere } = req.body;
@@ -888,39 +871,5 @@ router.post(
     }
   }
 );
-// ... existing imports ...
-
-// Add this new route after the existing routes
-router.post("/search", verifyToken, async (req, res) => {
-  try {
-    const { name, registrationNumber, contactNumber } = req.body;
-
-    if (!name && !registrationNumber && !contactNumber) {
-      return res
-        .status(400)
-        .json({ error: "Please provide at least one search parameter" });
-    }
-
-    let query = {};
-
-    if (name) {
-      query.name = { $regex: name, $options: "i" };
-    } else if (registrationNumber) {
-      query.registrationNumber = registrationNumber;
-    } else if (contactNumber) {
-      query.contactNumber = contactNumber;
-    }
-
-    const patients = await Patient.find(query);
-
-    if (patients.length === 0) {
-      return res.status(404).json({ message: "No patients found" });
-    }
-
-    res.json(patients);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
 
 export default router;

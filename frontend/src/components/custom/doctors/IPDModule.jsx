@@ -12,7 +12,7 @@ import { fetchItems } from "../../../redux/slices/pharmacySlice";
 import { labCategories } from "../../../assets/Data";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
-import { comorbodities } from "../../../assets/Data";
+import { comorbidities } from "../../../assets/Data";
 import MultiSelectInput from "../MultiSelectInput";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Loader2 } from "lucide-react";
@@ -22,7 +22,7 @@ const allLabTests = labCategories.flatMap((category) =>
   category.types.map((type) => ({ name: type }))
 );
 
-const comorbiditiesList = comorbodities.map((name) => ({ name }));
+const comorbiditiesList = comorbidities.map((name) => ({ name }));
 
 export default function IPDModule({ patient }) {
   console.log('patient', patient);

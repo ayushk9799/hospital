@@ -1,8 +1,4 @@
-import {
-  createSlice,
-  createAsyncThunk,
-  createSelector,
-} from "@reduxjs/toolkit";
+import { createSlice, createSelector } from "@reduxjs/toolkit";
 import { Backend_URL } from "../../assets/Data";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 import { dischargePatient } from "./dischargeSlice"; // Import the dischargePatient thunk
@@ -84,6 +80,7 @@ export const revisitPatient = createLoadingAsyncThunk(
     }
   }
 );
+
 export const savePrescription = createLoadingAsyncThunk(
   "patients/savePrescription",
   async ({
@@ -279,7 +276,6 @@ const patientSlice = createSlice({
         );
         if (index !== -1) {
           state.patientlist[index] = { ...state.patientlist[index], labReports };
-          console.log(state.patientlist[index]);
         }
         // If the updated patient is the currently selected patient, update it as well
         if (state.selectedPatient && state.selectedPatient._id === updatedPatient._id) {
@@ -291,7 +287,6 @@ const patientSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(dischargePatient.fulfilled, (state, action) => {
-        console.log("patkhbc")
         const updatedPatient = action.payload;
         const {assignedRoom, assignedBed, department,patient,...rest} = updatedPatient;
         const index = state.patientlist.findIndex(
@@ -311,6 +306,7 @@ const patientSlice = createSlice({
 
 export const { setSelectedPatient, setSelectedPatientForBill } =
   patientSlice.actions;
+
 export const selectPatientDetails = createSelector(
   [
     (state) => state.patients.selectedPatient,

@@ -13,7 +13,7 @@ import { savePrescription } from "../../../redux/slices/patientSlice";
 import { useToast } from "../../../hooks/use-toast";
 import { PDFViewer } from "@react-pdf/renderer";
 import OPDPrescriptionPDF from "../reports/OPDPrescriptionPDF";
-import { comorbodities } from "../../../assets/Data";
+import { comorbidities } from "../../../assets/Data";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
 import MultiSelectInput from "../MultiSelectInput";
@@ -329,7 +329,7 @@ export default function OPDModule({ patient }) {
             <div className=" space-y-2">
               <div className="flex gap-2">
                 <MultiSelectInput
-                  suggestions={comorbodities.map(name => ({ name }))}
+                  suggestions={comorbidities.map(name => ({ name }))}
                   selectedValues={selectedComorbidities}
                   setSelectedValues={handleComorbiditiesChange}
                   placeholder="Select comorbidities"

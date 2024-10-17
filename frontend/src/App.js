@@ -41,6 +41,7 @@ import AboutPage from './pages/About';
 import ContactPage from './pages/ContactUs';
 import Expenses from './pages/Expenses';
 import Customization from './pages/Customization';
+import PatientSearch from './pages/PatientSearch';
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -130,6 +131,7 @@ const AppContent = () => {
                 <Route path="/settings/hospital-info" element={<HospitalInfo />} />
                 <Route path="/expenses" element={<Expenses />} />
                 <Route path="/settings/customization" element={<Customization />} />
+                <Route path="/search/:searchQuery" element={<PatientSearch />} />
               </>
             )}
           </Routes>

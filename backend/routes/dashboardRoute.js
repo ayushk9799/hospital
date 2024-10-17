@@ -4,67 +4,8 @@ import { Patient } from "../models/Patient.js";
 import { Visit } from "../models/Visits.js";
 import { IPDAdmission } from "../models/IPDAdmission.js";
 import { Payment } from "../models/Payment.js";
-import { ServicesBill } from "../models/ServicesBill.js";
-import { PharmacyBill } from "../models/PharmacyBill.js";
 
 const router = express.Router();
-
-// New dashboard route
-router.get("/stats", async (req, res) => {
-  try {
-    const { from, to } = req.query;
-
-    // Convert date strings to Date objects
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-
-    // Calculate total revenue
-    const totalRevenue = await Payment.hospitalAwareAggregate([
-      {
-        $match: {
-          createdAt: { $gte: fromDate, $lte: toDate },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: { $sum: "$amount" },
-        },
-      },
-    ]);
-
-    // Count appointments for today
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const appointmentsToday = await Visit.countDocuments({
-      date: {
-        $gte: today,
-        $lt: new Date(today.getTime() + 24 * 60 * 60 * 1000),
-      },
-    });
-
-    // Format dates for response
-    const formatDate = (date) => {
-      return date
-        .toLocaleDateString("en-GB", {
-          day: "2-digit",
-          month: "2-digit",
-          year: "2-digit",
-        })
-        .replace(/\//g, "-");
-    };
-
-    res.json({
-      fromDate: formatDate(fromDate),
-      toDate: formatDate(toDate),
-      totalRevenue: totalRevenue[0]?.total || 0,
-      appointmentsToday,
-    });
-  } catch (error) {
-    console.error("Dashboard route error:", error);
-    res.status(500).json({ message: "Error fetching dashboard data" });
-  }
-});
 
 // Updated route to get daily stats for the entire hospital using MongoDB session
 router.get("/daily-stats", async (req, res) => {
@@ -324,6 +265,27 @@ router.get("/daily-stats", async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.error("Daily stats route error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
+router.get('/search/:searchQuery', async (req, res) => {
+  try {
+    const { searchQuery } = req.params;
+    const searchRegex = new RegExp(searchQuery, 'i');
+
+    const patients = await Patient.find({
+      $or: [
+        { name: searchRegex },
+        { contactNumber: searchRegex }
+      ],
+    }).limit(10);
+
+    res.status(200).json(patients);
+
+  } catch (error) {
+    console.error("Patient search route error:", error);
     res.status(500).json({ error: error.message });
   }
 });

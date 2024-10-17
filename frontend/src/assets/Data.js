@@ -23,7 +23,7 @@ import {
 import { cn } from "../lib/utils";
 
 // backend url
-export const Backend_URL = "https://thehospital.in";
+export const Backend_URL = "http://localhost:3000";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -1308,7 +1308,7 @@ export function numberToWords(number) {
 }
 
 export const s3Domain="https://thousandwayshospital.s3.ap-south-1.amazonaws.com"
-export const comorbodities=[
+export const comorbidities=[
   "Hypertension",
   "Diabetes mellitus",
   "Obesity",
