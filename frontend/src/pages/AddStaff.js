@@ -194,8 +194,8 @@ export default function AddStaff() {
       <h2 className="text-xl font-bold mb-0">{editMode ? 'Edit' : 'Add New'} Staff Member</h2>
       <p className="text-gray-600 mb-4">Fill in the details of the {editMode ? 'existing' : 'new'} staff member</p>
       <form onSubmit={handleSubmit}>
-        <div className="grid grid-cols-4 gap-4">
-          <div className="grid grid-cols-3 col-span-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:col-span-2 lg:col-span-3 gap-4">
             <div>
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -326,24 +326,27 @@ export default function AddStaff() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <Label htmlFor="shift.hours.start">Start Time</Label>
-                <Input
-                  id="shift.hours.start"
-                  type="time"
-                  value={formData?.shift?.hours?.start}
-                  onChange={handleInputChange}
-                />
-              </div>
-              <div>
-                <Label htmlFor="shift.hours.end">End Time</Label>
-                <Input
-                  id="shift.hours.end"
-                  type="time"
-                  value={formData?.shift?.hours?.end}
-                  onChange={handleInputChange}
-                />
+            <div className="sm:col-span-2 md:col-span-1">
+              <Label>Shift Hours</Label>
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <Label htmlFor="shift.hours.start">Start Time</Label>
+                  <Input
+                    id="shift.hours.start"
+                    type="time"
+                    value={formData?.shift?.hours?.start}
+                    onChange={handleInputChange}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="shift.hours.end">End Time</Label>
+                  <Input
+                    id="shift.hours.end"
+                    type="time"
+                    value={formData?.shift?.hours?.end}
+                    onChange={handleInputChange}
+                  />
+                </div>
               </div>
             </div>
             <div>
@@ -384,7 +387,7 @@ export default function AddStaff() {
               />
             </div>
           </div>
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 md:col-span-1">
             <div>
               <Label>Roles</Label>
               <div className="grid grid-cols-2 gap-2">

@@ -37,7 +37,7 @@ export default function StaffProfile() {
   const staffMember = location.state?.staffData || {};
 
   return (
-    <div className="div my-2 space-y-2">
+    <div className="space-y-2 px-4 ">
       <div className="flex justify-between items-center">
         <div className="flex items-center">
           <Button
@@ -52,8 +52,8 @@ export default function StaffProfile() {
         </div>
       </div>
 
-      <div className="grid grid-cols-5 gap-4">
-        <Card className="md:col-span-2">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <Card className="lg:col-span-2">
           <CardHeader></CardHeader>
           <CardContent className="grid gap-4">
             <div className="flex items-center space-x-4">
@@ -97,7 +97,7 @@ export default function StaffProfile() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-2">
+        <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Current Status</CardTitle>
           </CardHeader>
@@ -121,7 +121,7 @@ export default function StaffProfile() {
           </CardContent>
         </Card>
 
-        <Card className="md:col-span-1">
+        <Card className="lg:col-span-1">
           <CardHeader>
             <CardTitle>Employee Info</CardTitle>
           </CardHeader>
@@ -138,12 +138,21 @@ export default function StaffProfile() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Tabs defaultValue="personal" className="w-full">
-          <TabsList className="mb-2">
-            <TabsTrigger value="personal">Personal Info</TabsTrigger>
-            <TabsTrigger value="payroll">Payroll Info</TabsTrigger>
-            <TabsTrigger value="education">Education & Certifications</TabsTrigger>
+          <TabsList className="mb-2 flex flex-wrap">
+            <TabsTrigger value="personal" className="flex-grow">
+              <span className="hidden sm:inline">Personal Info</span>
+              <span className="sm:hidden">Personal</span>
+            </TabsTrigger>
+            <TabsTrigger value="payroll" className="flex-grow">
+              <span className="hidden sm:inline">Payroll Info</span>
+              <span className="sm:hidden">Payroll</span>
+            </TabsTrigger>
+            <TabsTrigger value="education" className="flex-grow">
+              <span className="hidden sm:inline">Education & Certifications</span>
+              <span className="sm:hidden">Education</span>
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="personal">
             <Card>
@@ -253,7 +262,9 @@ export default function StaffProfile() {
             </Card>
           </TabsContent>
         </Tabs>
-        <StaffMonthlyCalender />
+        <div className="w-full">
+          <StaffMonthlyCalender />
+        </div>
       </div>
     </div>
   );

@@ -194,7 +194,7 @@ const Billings = () => {
                 <DropdownMenuItem onSelect={() => setFilterStatus('Paid')}>Paid</DropdownMenuItem>
                 <DropdownMenuItem onSelect={() => setFilterStatus('Due')}>Due</DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+            </DropdownMenu> 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">

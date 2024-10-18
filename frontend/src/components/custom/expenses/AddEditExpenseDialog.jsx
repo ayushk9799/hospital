@@ -105,7 +105,7 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className=" sm:max-w-[425px] max-w-[90vw]">
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">
             {expenseToEdit ? 'Edit Expense' : 'Add New Expense'}

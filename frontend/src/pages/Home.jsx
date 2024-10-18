@@ -3,12 +3,20 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { CardContent, Card } from "../components/ui/card";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Users, BarChart, Pill, Loader2, Eye, EyeOff } from "lucide-react";
+import { ShieldCheck, Users, BarChart, Pill, Loader2, Eye, EyeOff, Menu, LogIn } from "lucide-react";
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchUserData, loginUser } from "../redux/slices/userSlice";
 import { useToast } from "../hooks/use-toast";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "../components/ui/sheet";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
@@ -28,6 +36,8 @@ export default function LandingPage() {
 
   // Add a new ref for the Hospital ID input
   const hospitalIdRef = useRef(null);
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (location.state?.scrollToFeatures && featuresRef.current) {
@@ -92,42 +102,114 @@ export default function LandingPage() {
     navigate('/about');
   };
 
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+  };
+
+  const handleNavLinkClick = (e, action) => {
+    closeDrawer();
+    if (action === 'scrollToFeatures') {
+      scrollToFeatures(e);
+    }
+  };
+
+  const scrollToLoginForm = () => {
+    if (hospitalIdRef.current) {
+      hospitalIdRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <header className="px-4 lg:px-6 h-16 flex items-center bg-white shadow-sm">
-        <Link className="flex items-center justify-center" to="/">
-          <ColorfulLogo className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-          <span className="ml-2 text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-            The Hospital
-          </span>
-        </Link>
-        <nav className="ml-auto flex gap-2 sm:gap-4">
+      <header className="px-2 lg:px-6 h-16 flex items-center justify-between bg-white shadow-sm">
+        <div className="flex items-center">
+          <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden mr-0">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              {/* <SheetHeader>
+                <SheetTitle>Menu</SheetTitle>
+                <SheetDescription>Navigation options</SheetDescription>
+              </SheetHeader> */}
+              <nav className="flex flex-col gap-4 mt-4">
+                <Link
+                  className="text-sm font-medium hover:underline underline-offset-4"
+                  to="/"
+                  onClick={closeDrawer}
+                >
+                  Home
+                </Link>
+                <a
+                  href="#features"
+                  className="text-sm font-medium hover:underline underline-offset-4 cursor-pointer"
+                  onClick={(e) => handleNavLinkClick(e, 'scrollToFeatures')}
+                >
+                  Features
+                </a>
+                <Link
+                  className="text-sm font-medium hover:underline underline-offset-4"
+                  to="/about"
+                  onClick={closeDrawer}
+                >
+                  About
+                </Link>
+                <Link
+                  className="text-sm font-medium hover:underline underline-offset-4"
+                  to="/contact"
+                  onClick={closeDrawer}
+                >
+                  Contact
+                </Link>
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <Link className="flex items-center justify-center" to="/">
+            <ColorfulLogo className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+            <span className="ml-2 text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
+              The Hospital
+            </span>
+          </Link>
+        </div>
+        <nav className="hidden md:flex items-center space-x-4">
           <Link
-            className="text-xs sm:text-sm font-medium hover:underline underline-offset-4"
+            className="text-sm font-medium hover:underline underline-offset-4"
             to="/"
           >
             Home
           </Link>
           <a
             href="#features"
-            className="text-xs sm:text-sm font-medium hover:underline underline-offset-4 cursor-pointer"
+            className="text-sm font-medium hover:underline underline-offset-4 cursor-pointer"
             onClick={scrollToFeatures}
           >
             Features
           </a>
           <Link
-            className="text-xs sm:text-sm font-medium hover:underline underline-offset-4"
+            className="text-sm font-medium hover:underline underline-offset-4"
             to="/about"
           >
             About
           </Link>
           <Link
-            className="text-xs sm:text-sm font-medium hover:underline underline-offset-4"
+            className="text-sm font-medium hover:underline underline-offset-4"
             to="/contact"
           >
             Contact
           </Link>
         </nav>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="md:hidden mr-2"
+          onClick={scrollToLoginForm}
+        >
+          <LogIn className="h-4 w-4 mr-2" />
+          Login
+        </Button>
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-24 lg:py-32 bg-white">
@@ -144,7 +226,7 @@ export default function LandingPage() {
                     management.
                   </p>
                 </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                <div className="hidden md:flex lg:flex flex-col gap-2 min-[400px]:flex-row">
                   <Button 
                     className="w-full sm:w-auto inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 sm:px-8 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-700 disabled:pointer-events-none disabled:opacity-50"
                     onClick={handleGetStarted}

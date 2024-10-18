@@ -297,6 +297,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
   }, []);
 
   const handleDialogClose = useCallback(() => {
+   
     setIsOldPatient(false);
     onOpenChange(false);
     setFormData(initialFormData);
@@ -358,7 +359,7 @@ export default function OPDRegDialog({ open, onOpenChange }) {
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogClose}>
+    <Dialog open={open} onOpenChange={(ev)=>{handleDialogClose(ev)}}>
       <DialogContent
         className={
           isOldPatient

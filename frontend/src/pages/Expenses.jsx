@@ -23,7 +23,9 @@ import {
   AlertDialogTitle,
 } from "../components/ui/alert-dialog"
 import PaymentDialog from "../components/custom/expenses/PaymentDialog"
-
+import { useMediaQuery } from '../hooks/useMediaQuery'
+import { motion, AnimatePresence } from "framer-motion"
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select'
 
 const Expenses = () => {
   const dispatch = useDispatch();
@@ -40,6 +42,9 @@ const Expenses = () => {
   const [expenseToDelete, setExpenseToDelete] = useState(null)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedExpenseForPayment, setSelectedExpenseForPayment] = useState(null);
+
+  const isSmallScreen = useMediaQuery("(max-width: 640px)")
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false)
 
   useEffect(() => {
     if(expensesStatus === "idle") {
@@ -154,134 +159,202 @@ const Expenses = () => {
   };
 
   return (
-    <Card className="w-full">
+    <Card className="w-full mx-auto border-0 shadow-none">
       <CardHeader>
-        <CardTitle>Expenses List</CardTitle>
-        <CardDescription>Manage and view hospital expenses</CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="font-semibold">Expenses List</CardTitle>
+            <CardDescription>Manage and view hospital expenses</CardDescription>
+          </div>
+          {isSmallScreen && (
+            <Button
+              size="icon"
+              onClick={handleAddExpense}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardHeader>
-      <CardContent>
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search expenses..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 w-[300px]"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+      <CardContent className='px-4'>
+        <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0 md:space-x-2 mb-4">
+          <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0">
+            <div className="flex w-full space-x-2">
+              <div className="relative flex-grow">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search expenses..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 w-full"
+                />
+              </div>
+              {isSmallScreen && (
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
                 >
-                  <X className="h-4 w-4" />
-                </button>
+                  <Filter className="h-4 w-4" />
+                </Button>
               )}
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  <Filter className="mr-2 h-4 w-4" /> 
-                  {filterStatus === 'All' ? 'Status' : filterStatus}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setFilterStatus('All')}>All</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setFilterStatus('Paid')}>Paid</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setFilterStatus('Due')}>Due</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <CalendarIcon className="mr-2 h-4 w-4" /> 
-                  {dateFilter === 'All' ? 'All Time' : dateFilter}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {dateFilter === 'Custom' && (
-              <DateRangePicker
-                from={tempDateRange.from}
-                to={tempDateRange.to}
-                onSelect={(range) => setTempDateRange(range)}
-                onSearch={handleDateRangeSearch}
-                onCancel={handleDateRangeCancel}
-              />
+            {isSmallScreen ? (
+              <AnimatePresence>
+                {isFilterExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden w-full"
+                  >
+                    <div className="pt-2 space-y-2">
+                      <Select onValueChange={(value) => setFilterStatus(value)} defaultValue="All">
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Filter by Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All</SelectItem>
+                          <SelectItem value="Paid">Paid</SelectItem>
+                          <SelectItem value="Due">Due</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select onValueChange={(value) => setDateFilter(value)} defaultValue="All">
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Time Filter Options" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="All">All Time</SelectItem>
+                          <SelectItem value="Today">Today</SelectItem>
+                          <SelectItem value="Yesterday">Yesterday</SelectItem>
+                          <SelectItem value="This Week">This Week</SelectItem>
+                          <SelectItem value="Custom">Custom Range</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {dateFilter === 'Custom' && (
+                        <DateRangePicker
+                          from={tempDateRange.from}
+                          to={tempDateRange.to}
+                          onSelect={(range) => setTempDateRange(range)}
+                          onSearch={handleDateRangeSearch}
+                          onCancel={handleDateRangeCancel}
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            ) : (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="ml-auto">
+                      <Filter className="mr-2 h-4 w-4" /> 
+                      {filterStatus === 'All' ? 'Status' : filterStatus}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setFilterStatus('All')}>All</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setFilterStatus('Paid')}>Paid</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setFilterStatus('Due')}>Due</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <CalendarIcon className="mr-2 h-4 w-4" /> 
+                      {dateFilter === 'All' ? 'All Time' : dateFilter}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {dateFilter === 'Custom' && (
+                  <DateRangePicker
+                    from={tempDateRange.from}
+                    to={tempDateRange.to}
+                    onSelect={(range) => setTempDateRange(range)}
+                    onSearch={handleDateRangeSearch}
+                    onCancel={handleDateRangeCancel}
+                  />
+                )}
+              </>
             )}
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={handleAddExpense}>
-              <Plus className="mr-2 h-4 w-4" /> Add Expense
-            </Button>
-            {/* <Button variant="outline">
-              <FileDown className="mr-2 h-4 w-4" /> Export
-            </Button> */}
-          </div>
+          {!isSmallScreen && (
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={handleAddExpense}>
+                <Plus className="mr-2 h-4 w-4" /> Add Expense
+              </Button>
+            </div>
+          )}
         </div>
-        {filteredExpenses.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="font-semibold">Expense ID</TableHead>
-                <TableHead className="font-semibold">Category</TableHead>
-                <TableHead className="font-semibold">Description</TableHead>
-                <TableHead className="font-semibold">Amount</TableHead>
-                <TableHead className="font-semibold">Date & Time</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold">Created By</TableHead>
-                <TableHead className="font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredExpenses.map((expense) => (
-                <TableRow key={expense._id}>
-                  <TableCell>{`E${expense._id?.slice(-6)}`}</TableCell>
-                  <TableCell>{expense.category}</TableCell>
-                  <TableCell>{expense.description}</TableCell>
-                  <TableCell>₹{expense.amount?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</TableCell>
-                  <TableCell>{formatDate(expense.date)}</TableCell>
-                  <TableCell>
-                    <Badge variant={getBadgeVariant(expense.amount, expense.amountPaid)}>
-                      {expense.amount === expense.amountPaid ? 'Paid' : 'Due'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{expense.createdByName ?? 'N/A'}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEditExpense(expense)}>Edit Expense</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handlePayments(expense)}>Payments</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(expense)}>Delete Expense</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
+        {filteredExpenses.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10">
             <FileX className="h-16 w-16 text-gray-400 mb-4" />
             <p className="text-xl font-semibold text-gray-600">No expenses found</p>
             <p className="text-gray-500 mt-2">There are no expenses matching your search criteria.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="font-semibold hidden md:table-cell">Expense ID</TableHead>
+                  <TableHead className="font-semibold">Description</TableHead>
+                  <TableHead className="font-semibold hidden md:table-cell">Category</TableHead>
+                  <TableHead className="font-semibold">Amount</TableHead>
+                  <TableHead className="font-semibold md:hidden">Date</TableHead>
+                  <TableHead className="font-semibold hidden md:table-cell">Date</TableHead>
+                  <TableHead className="font-semibold hidden md:table-cell">Status</TableHead>
+                  <TableHead className="font-semibold hidden md:table-cell">Created By</TableHead>
+                  <TableHead className="font-semibold">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredExpenses.map((expense) => (
+                  <TableRow key={expense._id}>
+                    <TableCell className="hidden md:table-cell">{`E${expense._id?.slice(-6)}`}</TableCell>
+                    <TableCell>{expense.description}</TableCell>
+                    <TableCell className="hidden md:table-cell">{expense.category}</TableCell>
+                    <TableCell>₹{expense.amount?.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="md:hidden">{format(new Date(expense.date), 'dd MMM')}</TableCell>
+                    <TableCell className="hidden md:table-cell">{formatDate(expense.date)}</TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <Badge variant={getBadgeVariant(expense.amount, expense.amountPaid)}>
+                        {expense.amount === expense.amountPaid ? 'Paid' : 'Due'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">{expense.createdByName ?? 'N/A'}</TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditExpense(expense)}>Edit Expense</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePayments(expense)}>Payments</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(expense)}>Delete Expense</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </div>
         )}
       </CardContent>
@@ -291,16 +364,17 @@ const Expenses = () => {
         expenseToEdit={expenseToEdit}
       />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] w-full sm:max-w-[425px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Expense?</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-lg sm:text-xl">Delete Expense?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm sm:text-base">
               Are you sure you want to delete this expense? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+            <AlertDialogCancel className="w-full sm:w-auto">Cancel</AlertDialogCancel>
             <AlertDialogAction
+              className="w-full sm:w-auto"
               onClick={confirmDelete}
               disabled={deleteExpenseStatus === "loading"}
             >

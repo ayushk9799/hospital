@@ -9,7 +9,7 @@ import { fetchStaffMembers } from './redux/slices/staffSlice';
 import  CreateRoom  from './pages/CreateRoom';
 import Home from './pages/Home';
 
-import VerticalNav from './components/custom/Navigations/VerticalNav';
+import VerticalNav, { navItems } from './components/custom/Navigations/VerticalNav';
 import HorizontalNav from './components/custom/Navigations/HorizontalNav';
 import Dashboard from './pages/Dashboard';
 import Billings from './pages/Billings';
@@ -89,14 +89,15 @@ const AppContent = () => {
         <HorizontalNav
           isCollapsed={isCollapsed}
           setIsCollapsed={setIsCollapsed}
+          navItems={navItems}
         />
       )}
       <div className="flex">
         {isAuthenticated && <VerticalNav isCollapsed={isCollapsed} />}
         <main
           className={`${
-            isAuthenticated ? (isCollapsed ? "ml-16" : "ml-56") : ""
-          } pl-4 pr-4 w-full h-full bg-gray-50 transition-all duration-300`}
+            isAuthenticated ? (isCollapsed ? "md:ml-16" : "md:ml-56") : ""
+          } px-0 sm:px-4 w-full h-full bg-gray-50 transition-all duration-300`}
         >
           <Routes>
             <Route path="/" element={isAuthenticated ? <Dashboard /> : <Home />} />

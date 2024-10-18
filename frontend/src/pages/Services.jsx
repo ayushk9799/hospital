@@ -20,6 +20,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../components/ui/alert-dialog";
+import { useMediaQuery } from '../hooks/useMediaQuery';
+import { motion, AnimatePresence } from "framer-motion";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
 
 const Services = () => {
   const dispatch = useDispatch();
@@ -33,6 +36,8 @@ const Services = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   useEffect(() => {
     if (servicesStatus === "idle") {
@@ -91,42 +96,93 @@ const Services = () => {
     .filter(service => categoryFilter === "All" || service.category === categoryFilter);
 
   return (
-    <Card className="w-full mx-auto">
+    <Card className="w-full mx-auto border-0 shadow-none">
       <CardHeader>
-        <CardTitle className="font-semibold">Services</CardTitle>
-        <CardDescription>Manage and view service information</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
-          <div className="flex items-center space-x-2">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search services..." value={searchTerm} onChange={handleSearch} className="pl-8" />
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <ListFilter className="mr-2 h-4 w-4" />
-                  {categoryFilter === "All" ? "Select category" : categoryFilter}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                {categories.map((category) => (
-                  <DropdownMenuItem key={category} onClick={() => handleCategoryChange(category)}>
-                    {category}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="font-semibold">Services</CardTitle>
+            <CardDescription>Manage and view service information</CardDescription>
           </div>
-          <div className="flex space-x-2">
-            <Button variant="outline" onClick={() => setIsAddServiceDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Add Service
+          {isSmallScreen && (
+            <Button
+              size="icon"
+              onClick={() => setIsAddServiceDialogOpen(true)}
+            >
+              <Plus className="h-4 w-4" />
             </Button>
-            {/* <Button variant="outline">
-              <FileDown className="mr-2 h-4 w-4" /> Export
-            </Button> */}
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className='px-4'>
+        <div className="flex flex-col space-y-4 md:flex-row md:justify-between md:items-center md:space-y-0 md:space-x-2 mb-4">
+          <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0">
+            <div className="flex w-full space-x-2">
+              <div className="relative flex-grow">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search services..." value={searchTerm} onChange={handleSearch} className="pl-8 w-full" />
+              </div>
+              {isSmallScreen && (
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                >
+                  <ListFilter className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            {isSmallScreen ? (
+              <AnimatePresence>
+                {isFilterExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden w-full"
+                  >
+                    <div className="pt-2 space-y-2">
+                      <Select onValueChange={(value) => handleCategoryChange(value)} defaultValue="All">
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="w-full md:w-auto">
+                    <ListFilter className="mr-2 h-4 w-4" />
+                    {categoryFilter === "All" ? "Select category" : categoryFilter}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {categories.map((category) => (
+                    <DropdownMenuItem key={category} onClick={() => handleCategoryChange(category)}>
+                      {category}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
+          {!isSmallScreen && (
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={() => setIsAddServiceDialogOpen(true)} className="w-full md:w-auto">
+                <Plus className="mr-2 h-4 w-4" /> Add Service
+              </Button>
+            </div>
+          )}
         </div>
         {filteredServices.length === 0 ? (
           <div className="text-center py-12">
@@ -134,58 +190,53 @@ const Services = () => {
             <p className="mt-2 text-sm text-muted-foreground">Try adjusting your search or filter to find what you're looking for.</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Rate</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredServices.map((service) => (
-                <TableRow key={service._id}>
-                  <TableCell className='capitalize'>{service.name}</TableCell>
-                  <TableCell>{service.category}</TableCell>
-                  <TableCell>₹{service.rate.toFixed(2)}</TableCell>
-                  <TableCell className="flex">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(service)}>
-                      <Pencil className="h-3 w-3" />
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(service)}>
-                      <Trash className="h-3 w-3" />
-                    </Button>
-                  </TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="hidden md:table-cell">Category</TableHead>
+                  <TableHead>Rate</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredServices.map((service) => (
+                  <TableRow key={service._id}>
+                    <TableCell className='capitalize'>{service.name}</TableCell>
+                    <TableCell className="hidden md:table-cell">{service.category}</TableCell>
+                    <TableCell>₹{service.rate.toFixed(2)}</TableCell>
+                    <TableCell className="flex">
+                      <Button variant="ghost" size="sm" onClick={() => handleEdit(service)}>
+                        <Pencil className="h-3 w-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDelete(service)}>
+                        <Trash className="h-3 w-3" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         )}
       </CardContent>
       <AddServiceDialog isOpen={isAddServiceDialogOpen} onClose={() => setIsAddServiceDialogOpen(false)} />
       <EditServiceDialog isOpen={isEditServiceDialogOpen} onClose={() => setIsEditServiceDialogOpen(false)} service={serviceToEdit} />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="max-w-[90vw] w-full sm:max-w-[425px]">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {serviceToDelete?.name}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will permanently delete the service.
+            <AlertDialogTitle className="text-lg sm:text-xl">Delete {serviceToDelete?.name}?</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm sm:text-base">
+              This action cannot be undone. This will permanently delete the service.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div>
-            <p className="text-sm mb-1">Please type <span className="font-semibold">{serviceToDelete?.name}</span> to permanently delete the service.</p>
-            <Input
-              placeholder="Type service name"
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-            />
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>Cancel</AlertDialogCancel>
+          <AlertDialogFooter className="flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+            <AlertDialogCancel className="w-full sm:w-auto" onClick={() => setIsDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
             <AlertDialogAction
+              className="w-full sm:w-auto"
               onClick={confirmDelete}
-              disabled={deleteConfirmation !== serviceToDelete?.name || deleteServiceStatus === "loading"}
+              disabled={deleteServiceStatus === "loading"}
             >
               {deleteServiceStatus === "loading" ? "Deleting..." : "Delete"}
             </AlertDialogAction>

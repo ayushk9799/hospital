@@ -10,6 +10,7 @@ import { useToast } from "../../../hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
 import { Separator } from "../../ui/separator";
 import { AlertCircle, CreditCard } from 'lucide-react';
+import {useMediaQuery} from '../../../hooks/useMediaQuery';
 
 const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
   const dispatch = useDispatch();
@@ -17,6 +18,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
   const [paymentAmount, setPaymentAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 640px)');
 
   useEffect(() => {
     if (isOpen) {
@@ -79,16 +81,16 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="w-[425px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[90vw] max-w-[425px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Add Payment</DialogTitle>
           <DialogDescription>Manage payments for the expense.</DialogDescription>
         </DialogHeader>
         
         <div className="space-y-1">
-          <div className="flex justify-between text-sm font-medium">
-            <span>Total Amount: <span className="text-primary">₹{totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></span>
-            <span>Due Amount: <span className="text-red-600">₹{dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></span>
+          <div className="flex flex-col sm:flex-row justify-between text-sm font-medium">
+            <span>Total Amount: <span className="text-primary">₹{totalAmount.toLocaleString('en-IN')}</span></span>
+            <span>Due Amount: <span className="text-red-600">₹{dueAmount.toLocaleString('en-IN')}</span></span>
           </div>
           
           <Separator />
@@ -138,28 +140,32 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
         <div className="space-y-0">
           <h4 className="text-sm font-semibold">Recent Payments</h4>
           {expenseData?.payments && expenseData?.payments?.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[80px]">Date</TableHead>
-                  <TableHead className="w-[80px]">Time</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Method</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {expenseData.payments.map((payment, index) => (
-                  <TableRow key={index}>
-                    <TableCell className="text-xs">{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-xs">
-                      {new Date(payment.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
-                    </TableCell>
-                    <TableCell className="text-xs font-medium">₹{payment.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                    <TableCell className="text-xs">{payment.paymentMethod}</TableCell>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[80px]">Date</TableHead>
+                    {!isMobile && <TableHead className="w-[80px]">Time</TableHead>}
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Method</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {expenseData.payments.map((payment, index) => (
+                    <TableRow key={index}>
+                      <TableCell className="text-xs">{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
+                      {!isMobile && (
+                        <TableCell className="text-xs">
+                          {new Date(payment.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
+                        </TableCell>
+                      )}
+                      <TableCell className="text-xs font-medium">₹{payment.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                      <TableCell className="text-xs">{payment.paymentMethod}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           ) : (
             <div className="flex items-center justify-center space-x-2 text-gray-500 py-4">
               <AlertCircle size={18} />
@@ -168,11 +174,11 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
           )}
         </div>
         
-        <DialogFooter className="mt-6">
-          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading}>
+        <DialogFooter className="mt-6 flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading} className="w-full sm:w-auto">
             Cancel
           </Button>
-          <Button onClick={handleAddPayment} disabled={isLoading || isFullyPaid}>
+          <Button onClick={handleAddPayment} disabled={isLoading || isFullyPaid} className="w-full sm:w-auto">
             {isLoading ? "Processing..." : isFullyPaid ? "Fully Paid" : "Add Payment"}
           </Button>
         </DialogFooter>

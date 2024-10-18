@@ -184,7 +184,7 @@ useEffect(()=>{
         </TableHeader>
         <TableBody>
           {patients.map((patient) => (
-            <TableRow key={patient.bookingNumber}>
+            <TableRow key={patient._id}>
               <TableCell>{patient.bookingNumber}</TableCell>
               <TableCell>
                 <Button

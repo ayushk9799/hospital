@@ -33,17 +33,16 @@ import { Loader2 } from "lucide-react";
 import MemoizedInput from "./MemoizedInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { fetchBills } from "../../../redux/slices/BillingSlice";
+
 export default function IPDRegDialog({ open, onOpenChange }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const registerPatientStatus = useSelector(
     (state) => state.patients.registerPatientStatus
   );
-  const { departments, rooms, doctors } = useSelector((state) => ({
-    departments: state.departments.departments,
-    rooms: state.rooms.rooms,
-    doctors: state.staff.doctors,
-  }));
+  const departments = useSelector((state) => state.departments.departments);
+  const rooms = useSelector((state) => state.rooms.rooms);
+  const doctors = useSelector((state) => state.staff.doctors);
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});

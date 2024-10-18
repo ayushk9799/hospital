@@ -190,9 +190,9 @@ const HospitalInfo = () => {
   return (
     <Card className="w-full">
       <CardHeader className="border-b pb-3">
-        <div className="flex justify-between items-center">
-          <div>
-            <CardTitle className="text-2xl font-bold">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+          <div className="mb-4 sm:mb-0">
+            <CardTitle className="text-xl sm:text-2xl font-bold">
               Hospital Information Management
             </CardTitle>
             <CardDescription className="text-gray-500">
@@ -202,7 +202,7 @@ const HospitalInfo = () => {
           <Button
             onClick={handleSubmit}
             disabled={updateStatus === "loading"}
-            // className="bg-blue-600 hover:bg-blue-700 text-white"
+            className="w-full sm:w-auto"
           >
             {updateStatus === "loading" ? "Saving..." : "Save Changes"}
           </Button>
@@ -210,18 +210,20 @@ const HospitalInfo = () => {
       </CardHeader>
       <CardContent className="pt-6">
         <Tabs defaultValue="hospital" className="w-full">
-          <TabsList className="grid w-1/2 grid-cols-2 mb-6">
+          <TabsList className="grid w-full sm:w-1/2 grid-cols-2 mb-6">
             <TabsTrigger value="hospital" className="text-sm font-medium">
-              Hospital Information
+              <span className="hidden sm:inline">Hospital Information</span>
+              <span className="sm:hidden">Hospital</span>
             </TabsTrigger>
             <TabsTrigger value="pharmacy" className="text-sm font-medium">
-              Pharmacy Information
+              <span className="hidden sm:inline">Pharmacy Information</span>
+              <span className="sm:hidden">Pharmacy</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="hospital">
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <InputField
                   label="Hospital ID"
                   name="hospitalId"
@@ -277,12 +279,14 @@ const HospitalInfo = () => {
                   onChange={handleChange}
                   required
                 />
-                <div className="col-span-1">
+              </div>
+              <div className="col-span-1">
+                <div className="mb-6">
                   <Label htmlFor="logo-upload" className="text-sm font-medium">
                     Hospital Logo
                   </Label>
                   <div
-                    className="mt-2 flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-40 h-40 cursor-pointer"
+                    className="mt-2 flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-full sm:w-40 h-40 cursor-pointer"
                     onClick={triggerLogoUpload}
                   >
                     <div className="text-center">
@@ -314,8 +318,6 @@ const HospitalInfo = () => {
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="col-span-1">
                 <CategoryField
                   label="Hospital Service Categories"
                   categories={formData.hospitalServiceCategories}
@@ -331,8 +333,8 @@ const HospitalInfo = () => {
           </TabsContent>
 
           <TabsContent value="pharmacy">
-            <div className="grid grid-cols-3 gap-6">
-              <div className="col-span-2 grid grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="sm:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <InputField
                   label="Pharmacy Name"
                   name="pharmacyName"

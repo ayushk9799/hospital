@@ -52,23 +52,30 @@ export default function AddServiceDialog({ isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[400px]">
+      <DialogContent className="sm:max-w-[425px] max-w-[90vw]">
         <DialogHeader>
-          <DialogTitle>Add New Service</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-lg sm:text-xl">Add New Service</DialogTitle>
+          <DialogDescription className="text-sm sm:text-base">
             Fill in the details to add a new service
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => { e.preventDefault(); handleAddService(); }}>
+        <form onSubmit={(e) => { e.preventDefault(); handleAddService(); }} >
           <div className="grid gap-4">
-            <div>
-              <Label htmlFor="name">Service Name</Label>
-              <Input id="name" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-sm font-medium">Service Name</Label>
+              <Input 
+                id="name" 
+                placeholder="Name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+                className="w-full"
+              />
             </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
+            <div className="space-y-2">
+              <Label htmlFor="category" className="text-sm font-medium">Category</Label>
               <Select onValueChange={(value) => setCategory(value)} required>
-                <SelectTrigger id="category">
+                <SelectTrigger id="category" className="w-full">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -78,15 +85,23 @@ export default function AddServiceDialog({ isOpen, onClose }) {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="rate">Rate</Label>
-              <Input id="rate" placeholder="Rate" type="number" value={rate} onChange={(e) => setRate(e.target.value)} required />
+            <div className="space-y-2">
+              <Label htmlFor="rate" className="text-sm font-medium">Rate</Label>
+              <Input 
+                id="rate" 
+                placeholder="Rate" 
+                type="number" 
+                value={rate} 
+                onChange={(e) => setRate(e.target.value)} 
+                required 
+                className="w-full"
+              />
             </div>
           </div>
-          <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={handleReset}>Reset</Button>
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={createServiceStatus === "loading"}>
+          <DialogFooter className="mt-6 flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+            <Button type="button" variant="outline" onClick={handleReset} className="w-full sm:w-auto">Reset</Button>
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">Cancel</Button>
+            <Button type="submit" disabled={createServiceStatus === "loading"} className="w-full sm:w-auto">
               {createServiceStatus === "loading" ? "Adding..." : "Add Service"}
             </Button>
           </DialogFooter>

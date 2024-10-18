@@ -37,7 +37,7 @@ const labReportTypes = [
   { name: "MRI", path: "/lab/mri" },
 ];
 
-const navItems = [
+export const navItems = [
   { name: "Dashboard", icon: Home, path: "/" },
   { name: "Patients", icon: Users, path: "/patients" },
   { name: "Billings", icon: ReceiptText, path: "/billings" },
@@ -101,7 +101,7 @@ export default function VerticalNav({ isCollapsed }) {
   return (
     <div
       className={cn(
-        "flex flex-col h-full bg-white border-r transition-all duration-300 fixed top-19 left-0 z-5",
+        "hidden md:flex flex-col h-full bg-white border-r transition-all duration-300 fixed top-19 left-0 z-10",
         isCollapsed ? "w-16" : "w-56"
       )}
     >

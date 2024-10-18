@@ -7,6 +7,7 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from ".
 import { useDispatch, useSelector } from "react-redux";
 import { updateService } from "../../../redux/slices/serviceSlice";
 import { useToast } from "../../../hooks/use-toast";
+import { cn } from "../../../lib/utils";
 
 const categoryOptions = ['Lab', 'General', 'Consultation', 'Other'];
 
@@ -56,23 +57,30 @@ export default function EditServiceDialog({ isOpen, onClose, service }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[400px]">
+      <DialogContent className="sm:max-w-[425px] max-w-[95vw]">
         <DialogHeader>
-          <DialogTitle>Edit Service</DialogTitle>
-          <DialogDescription>
+          <DialogTitle className="text-xl sm:text-2xl">Edit Service</DialogTitle>
+          <DialogDescription className="text-sm sm:text-base">
             Update the service details
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={(e) => { e.preventDefault(); handleEditService(); }}>
+        <form onSubmit={(e) => { e.preventDefault(); handleEditService(); }} className="mt-4">
           <div className="grid gap-4">
-            <div>
-              <Label htmlFor="name">Service Name</Label>
-              <Input id="name" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
+            <div className="grid gap-2">
+              <Label htmlFor="name" className="text-sm font-medium">Service Name</Label>
+              <Input 
+                id="name" 
+                placeholder="Name" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                required 
+                className="w-full"
+              />
             </div>
-            <div>
-              <Label htmlFor="category">Category</Label>
+            <div className="grid gap-2">
+              <Label htmlFor="category" className="text-sm font-medium">Category</Label>
               <Select onValueChange={(value) => setCategory(value)} value={category}>
-                <SelectTrigger id="category">
+                <SelectTrigger id="category" className="w-full">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -82,14 +90,34 @@ export default function EditServiceDialog({ isOpen, onClose, service }) {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label htmlFor="rate">Rate</Label>
-              <Input id="rate" placeholder="Rate" type="number" value={rate} onChange={(e) => setRate(e.target.value)} required />
+            <div className="grid gap-2">
+              <Label htmlFor="rate" className="text-sm font-medium">Rate</Label>
+              <Input 
+                id="rate" 
+                placeholder="Rate" 
+                type="number" 
+                value={rate} 
+                onChange={(e) => setRate(e.target.value)} 
+                required 
+                className="w-full"
+              />
             </div>
           </div>
-          <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button type="submit" disabled={updateServiceStatus === "loading"}>
+          <DialogFooter className="mt-6 flex-col sm:flex-row gap-2">
+            <Button 
+              type="button" 
+              variant="outline" 
+              onClick={onClose}
+              className={cn("w-full sm:w-auto", updateServiceStatus === "loading" && "opacity-50 cursor-not-allowed")}
+              disabled={updateServiceStatus === "loading"}
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="submit" 
+              className="w-full sm:w-auto"
+              disabled={updateServiceStatus === "loading"}
+            >
               {updateServiceStatus === "loading" ? "Saving..." : "Save Changes"}
             </Button>
           </DialogFooter>

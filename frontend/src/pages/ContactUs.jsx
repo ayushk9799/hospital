@@ -1,17 +1,24 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from "../components/ui/button"
 import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { CardContent, Card } from "../components/ui/card"
 import { Link } from "react-router-dom"
-import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin } from "lucide-react"
+import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin, LogIn } from "lucide-react"
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
 import { useNavigate, useLocation } from 'react-router-dom';
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "../components/ui/sheet";
+import { Menu } from "lucide-react";
 
 export default function ContactPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const contactFormRef = useRef(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   useEffect(() => {
     if (location.state?.scrollToContact && contactFormRef.current) {
@@ -24,31 +31,109 @@ export default function ContactPage() {
     navigate('/', { state: { scrollToFeatures: true } });
   };
 
+  const closeDrawer = () => {
+    setIsDrawerOpen(false);
+  };
+
+  const handleNavLinkClick = (e, action) => {
+    e.preventDefault();
+    closeDrawer();
+    if (action === 'scrollToFeatures') {
+      setTimeout(() => {
+        navigate('/', { state: { scrollToFeatures: true } });
+      }, 300); // 300ms delay, adjust if needed
+    }
+  };
+
+  const scrollToLoginForm = () => {
+    navigate('/', { state: { scrollToLogin: true } });
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
-      <header className="px-4 lg:px-6 h-16 flex items-center bg-white shadow-sm">
-        <Link className="flex items-center justify-center" to="/">
-          <ColorfulLogo className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
-          <span className="ml-2 text-lg sm:text-xl md:text-2xl font-bold text-gray-900">The Hospital</span>
-        </Link>
-        <nav className="ml-auto flex gap-2 sm:gap-4">
-          <Link className="text-xs sm:text-sm font-medium hover:underline underline-offset-4" to="/">
+      <header className="px-2 lg:px-6 h-16 flex items-center justify-between bg-white shadow-sm">
+        <div className="flex items-center">
+          <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden mr-0">
+                <Menu className="h-6 w-6" />
+                <span className="sr-only">Toggle menu</span>
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+              <nav className="flex flex-col gap-4 mt-4">
+                <Link
+                  className="text-sm font-medium hover:underline underline-offset-4"
+                  to="/"
+                  onClick={closeDrawer}
+                >
+                  Home
+                </Link>
+                <a
+                  href="#features"
+                  className="text-sm font-medium hover:underline underline-offset-4 cursor-pointer"
+                  onClick={(e) => handleNavLinkClick(e, 'scrollToFeatures')}
+                >
+                  Features
+                </a>
+                <Link
+                  className="text-sm font-medium hover:underline underline-offset-4"
+                  to="/about"
+                  onClick={closeDrawer}
+                >
+                  About
+                </Link>
+                <Link
+                  className="text-sm font-medium hover:underline underline-offset-4"
+                  to="/contact"
+                  onClick={closeDrawer}
+                >
+                  Contact
+                </Link>
+              </nav>
+            </SheetContent>
+          </Sheet>
+          <Link className="flex items-center justify-center" to="/">
+            <ColorfulLogo className="h-6 w-6 sm:h-7 sm:w-7 text-blue-600" />
+            <span className="ml-2 text-lg sm:text-xl md:text-2xl font-bold text-gray-900">The Hospital</span>
+          </Link>
+        </div>
+        <nav className="hidden md:flex items-center space-x-4">
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
+            to="/"
+          >
             Home
           </Link>
-          <a 
-            href="/#features" 
-            className="text-xs sm:text-sm font-medium hover:underline underline-offset-4"
+          <a
+            href="#features"
+            className="text-sm font-medium hover:underline underline-offset-4 cursor-pointer"
             onClick={handleFeaturesClick}
           >
             Features
           </a>
-          <Link className="text-xs sm:text-sm font-medium hover:underline underline-offset-4" to="/about">
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
+            to="/about"
+          >
             About
           </Link>
-          <Link className="text-xs sm:text-sm font-medium hover:underline underline-offset-4" to="/contact">
+          <Link
+            className="text-sm font-medium hover:underline underline-offset-4"
+            to="/contact"
+          >
             Contact
           </Link>
         </nav>
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className="md:hidden mr-2"
+          onClick={scrollToLoginForm}
+        >
+          <LogIn className="h-4 w-4 mr-2" />
+          Login
+        </Button>
       </header>
       <main className="flex-1">
         <section className="w-full py-6 sm:py-8 md:py-12 bg-white">

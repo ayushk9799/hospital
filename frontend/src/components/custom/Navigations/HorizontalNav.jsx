@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { ChevronDown, LogOut, Bell, Menu, Clock, Search } from "lucide-react";
 import { Input } from "../../ui/input";
 import { useSelector, useDispatch } from "react-redux";
@@ -15,7 +15,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar"
 import { ColorfulLogo } from "./VerticalNav";
 import { clearUserData } from "../../../redux/slices/userSlice";
 import { Backend_URL } from "../../../assets/Data";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../../hooks/use-toast";
 import {
   Popover,
@@ -23,12 +23,19 @@ import {
   PopoverTrigger,
 } from "../../ui/popover";
 import { Separator } from "../../ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "../../ui/sheet";
 
-const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
+const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const user = useSelector((state) => state.user.userData);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  const [isOpen, setIsOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -65,46 +72,79 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
     }
   };
 
+  const handleNavigation = (path) => {
+    navigate(path);
+    setIsOpen(false);  // Close the drawer after navigation
+  };
+
   // Sample notifications array (empty for now)
   const notifications = [];
 
   return (
-    <header className="flex items-center justify-between px-4 py-2 bg-white z-50 sticky top-0">
+    <header className="flex items-center justify-between px-2 sm:px-4 py-2 bg-white z-50 sticky top-0">
       <div className="flex items-center">
+        <Sheet open={isOpen} onOpenChange={setIsOpen}>
+          <SheetTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="mr-2 sm:mr-3 md:hidden"
+            >
+              <Menu className="h-5 w-5 sm:h-10 sm:w-10" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[250px] sm:w-[250px] pt-10 px-4">
+            <nav className="flex flex-col space-y-1">
+              {navItems.map((item) => (
+                <Button
+                  key={item.name}
+                  variant="ghost"
+                  className={`justify-start ${location.pathname === item.path ? 'bg-blue-100 text-blue-900' : ''}`}
+                  onClick={() => handleNavigation(item.path)}
+                >
+                  <item.icon className="mr-2 h-4 w-4" />
+                  {item.name}
+                </Button>
+              ))}
+            </nav>
+          </SheetContent>
+        </Sheet>
         <Button
           variant="ghost"
           size="sm"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="mr-3"
+          className="mr-2 sm:mr-3 hidden md:flex"
         >
           <Menu className="h-4 w-4" />
         </Button>
-        <ColorfulLogo className="h-6 w-6" />
-        <span className="ml-2 text-lg font-bold text-gray-800">The Hospital</span>
+        <div className="hidden sm:flex items-center">
+          <ColorfulLogo className="h-5 w-5 sm:h-6 sm:w-6" />
+          <span className="ml-2 text-base sm:text-lg font-bold text-gray-800">The Hospital</span>
+        </div>
       </div>
-      <div className="flex items-center">
+      <div className="mx-2 sm:mx-4 flex-grow max-w-xl">
         <div className="flex">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
+          <div className="relative flex-grow">
+            <Search className="flex absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
             <Input 
               type="search" 
-              placeholder="Enter Patient ID or Name" 
-              className="w-96 pl-10 pr-4 py-2 rounded-l-full border-r-0 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 focus:border-gray-300 focus:outline-none"
+              placeholder="Patient ID/Name" 
+              className="w-full pl-8 sm:pl-10 pr-2 sm:pr-4 py-1 sm:py-2 text-sm sm:text-base rounded-l-full border-r-0 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 focus:border-gray-300 focus:outline-none"
             />
           </div>
           <Button 
             type="submit"
             variant="outline" 
-            className="px-4 rounded-r-full border-l-0 bg-gray-100 hover:bg-gray-200 focus:ring-0 focus:outline-none"
+            className="px-2 sm:px-4 rounded-r-full border-l-0 bg-gray-100 hover:bg-gray-200 focus:ring-0 focus:outline-none"
           >
-            <Search className="h-4 w-4 mr-2" />
+            <Search className="h-4 w-4" />
           </Button>
         </div>
       </div>
       <div className="flex items-center">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="relative">
+            <Button variant="ghost" size="sm" className="relative hidden sm:inline-flex">
               <Bell className="h-4 w-4" />
               {notifications.length > 0 && (
                 <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
@@ -143,13 +183,13 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed }) => {
         </Popover>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="ml-3 flex items-center">
-              <Avatar className="h-6 w-6 mr-2">
+            <Button variant="ghost" size="sm" className="ml-2 sm:ml-3 flex items-center justify-end ">
+              <Avatar className="h-6 w-6 sm:h-10 sm:w-10">
                 <AvatarImage src="/placeholder.svg?height=24&width=24" alt="User" />
                 <AvatarFallback>{(user?.name?.charAt(0))?.toUpperCase()}</AvatarFallback>
               </Avatar>
-              <span className="text-sm capitalize">{user?.name}</span>
-              <ChevronDown className="ml-1 h-3 w-3" />
+              <span className="text-sm capitalize ml-2 hidden lg:inline">{user?.name}</span>
+              <ChevronDown className="ml-1 h-3 w-3 hidden lg:inline" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

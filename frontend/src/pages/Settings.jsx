@@ -154,16 +154,16 @@ export default function Settings() {
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Settings</h1>
-      <div className="space-x-4">
-        <Button onClick={handleAddStaff}>Add Staff</Button>
-        <Button onClick={handleCreateRoom}>Create Room</Button>
-        <Button onClick={handleHospitalInfo}>Hospital Info</Button>
-        <Button onClick={handleCustomization}>Customization</Button>
+    <div className="p-4 sm:p-6">
+      <h1 className="text-xl sm:text-2xl font-bold mb-4">Settings</h1>
+      <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
+        <Button onClick={handleAddStaff} className="w-full sm:w-auto">Add Staff</Button>
+        <Button onClick={handleCreateRoom} className="w-full sm:w-auto">Create Room</Button>
+        <Button onClick={handleHospitalInfo} className="w-full sm:w-auto">Hospital Info</Button>
+        <Button onClick={handleCustomization} className="w-full sm:w-auto">Customization</Button>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
-            <Button>Create Test Template</Button>
+            <Button className="w-full sm:w-auto">Create Test Template</Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
