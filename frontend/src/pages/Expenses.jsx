@@ -42,6 +42,7 @@ const Expenses = () => {
   const [expenseToDelete, setExpenseToDelete] = useState(null)
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedExpenseForPayment, setSelectedExpenseForPayment] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)")
   const [isFilterExpanded, setIsFilterExpanded] = useState(false)
@@ -100,7 +101,7 @@ const Expenses = () => {
     return format(expenseDate, 'MMM dd, yyyy');
   }
 
-  const handleDateRangeSearch = () => {
+  const handleDateRangeSearch = () => { 
     setDateRange(tempDateRange)
     setDateFilter('Custom')
   }
@@ -113,21 +114,25 @@ const Expenses = () => {
   const handleAddExpense = () => {
     setExpenseToEdit(null)
     setIsAddEditDialogOpen(true)
+    setOpenDropdownId(null);
   }
 
   const handleEditExpense = (expense) => {
     setExpenseToEdit(expense)
     setIsAddEditDialogOpen(true)
+    setOpenDropdownId(null);
   }
 
   const handleCloseDialog = () => {
     setIsAddEditDialogOpen(false)
     setExpenseToEdit(null)
+    setOpenDropdownId(null);
   }
 
   const handleDelete = (expense) => {
     setExpenseToDelete(expense)
     setIsDeleteDialogOpen(true)
+    setOpenDropdownId(null);
   }
 
   const confirmDelete = () => {
@@ -156,6 +161,11 @@ const Expenses = () => {
   const handlePayments = (expense) => {
     setSelectedExpenseForPayment(expense);
     setIsPaymentDialogOpen(true);
+    setOpenDropdownId(null);
+  };
+
+  const handleDropdownOpenChange = (id) => {
+    setOpenDropdownId(openDropdownId === id ? null : id);
   };
 
   return (
@@ -337,7 +347,7 @@ const Expenses = () => {
                     </TableCell>
                     <TableCell className="hidden md:table-cell">{expense.createdByName ?? 'N/A'}</TableCell>
                     <TableCell>
-                      <DropdownMenu>
+                      <DropdownMenu open={openDropdownId === expense._id} onOpenChange={() => handleDropdownOpenChange(expense._id)}>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
                             <ChevronDown className="h-4 w-4" />

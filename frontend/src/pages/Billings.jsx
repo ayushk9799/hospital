@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
-import { fetchBills } from '../redux/slices/BillingSlice'
+import { fetchBills, deleteBill } from '../redux/slices/BillingSlice'
 import { format, isToday, subDays, isWithinInterval, startOfDay, endOfDay, startOfWeek } from 'date-fns'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table"
 import { Input } from "../components/ui/input"
@@ -13,9 +13,10 @@ import { useNavigate } from 'react-router-dom'
 import { DateRangePicker } from '../assets/Data'
 import ViewBillDialog from "../components/custom/billing/ViewBillDialog"
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../components/ui/alert-dialog"
-import { deleteBill } from '../redux/slices/BillingSlice'
 import { useToast } from "../hooks/use-toast"
 import PaymentDialog from "../components/custom/billing/PaymentDialog"
+import { useMediaQuery } from "../hooks/useMediaQuery"
+import { motion, AnimatePresence } from "framer-motion"
 
 const Billings = () => {
   const dispatch = useDispatch()
@@ -34,7 +35,11 @@ const Billings = () => {
   const [patientTypeFilter, setPatientTypeFilter] = useState('All')
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
   const { toast } = useToast()
+  const isSmallScreen = useMediaQuery("(max-width: 640px)")
+  const isMediumScreen = useMediaQuery("(max-width: 1024px)")
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false)
 
   useEffect(() => {
     if(billsStatus === 'idle') dispatch(fetchBills())
@@ -116,15 +121,18 @@ const Billings = () => {
   const handleViewBill = (bill) => {
     setSelectedBill(bill);
     setIsViewDialogOpen(true);
+    setOpenDropdownId(null);
   };
 
   const handleEditBill = (bill) => {
     navigate(`/billings/edit/${bill._id}`, { state: { billData: bill } });
+    setOpenDropdownId(null);
   };
 
   const handleDeleteBill = (bill) => {
     setBillToDelete(bill);
     setIsDeleteDialogOpen(true);
+    setOpenDropdownId(null);
   };
 
   const confirmDelete = () => {
@@ -152,150 +160,312 @@ const Billings = () => {
   const handlePayments = (bill) => {
     setSelectedBillForPayment(bill);
     setIsPaymentDialogOpen(true);
+    setOpenDropdownId(null);
   };
 
-  return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Billing List</CardTitle>
-        <CardDescription>Manage and view services billing information</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search bills..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8 w-[300px]"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
+  const handleDropdownOpenChange = (id) => {
+    setOpenDropdownId(openDropdownId === id ? null : id);
+  };
+
+  const BillCard = ({ bill }) => (
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-stretch">
+          <div className="flex-grow">
+            <div className="flex items-center mb-1">
+              <h3 className="text-lg font-semibold capitalize">{bill.patientInfo.name}</h3>
+              <Badge variant="outline" className="ml-2 text-xs">
+                {bill.patientType}
+              </Badge>
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="ml-auto">
-                  <Filter className="mr-2 h-4 w-4" /> 
-                  {filterStatus === 'All' ? 'Status' : filterStatus}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setFilterStatus('All')}>All</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setFilterStatus('Paid')}>Paid</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setFilterStatus('Due')}>Due</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu> 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <ListFilter className="mr-2 h-4 w-4" /> 
-                  {patientTypeFilter === 'All' ? 'Patient Type' : patientTypeFilter}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuLabel>Filter by Patient Type</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setPatientTypeFilter('All')}>All</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setPatientTypeFilter('IPD')}>IPD</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setPatientTypeFilter('OPD')}>OPD</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <CalendarIcon className="mr-2 h-4 w-4" /> 
-                  {dateFilter === 'All' ? 'All Time' : dateFilter}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {dateFilter === 'Custom' && (
-              <DateRangePicker
-                from={tempDateRange.from}
-                to={tempDateRange.to}
-                onSelect={(range) => setTempDateRange(range)}
-                onSearch={handleDateRangeSearch}
-                onCancel={handleDateRangeCancel}
-              />
-            )}
+            <p className="text-sm text-muted-foreground mb-2">Bill ID: B{bill._id.slice(-6)}</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">Total:</p>
+                <p className="font-medium">₹{bill.totalAmount.toLocaleString('en-IN')}</p>
+              </div>
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">Due:</p>
+                <p className="font-medium text-red-500">₹{(bill.totalAmount - bill.amountPaid).toLocaleString('en-IN')}</p>
+              </div>
+              <div className='flex gap-2 items-center col-span-2'>
+                <p className="text-sm text-muted-foreground">Date:</p>
+                <p className="font-medium">{formatDateOrTime(bill.createdAt)}</p>
+              </div>
+            </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={() => navigate('/billings/create-service-bill')}>
-              <Plus className="mr-2 h-4 w-4" /> Create Bill
-            </Button>
-            {/* <Button variant="outline">
-              <FileDown className="mr-2 h-4 w-4" /> Export
-            </Button> */}
+          <div className="flex flex-col justify-between items-end ml-4">
+            <Badge variant={getBadgeVariant(getBillStatus(bill))}>
+              {getBillStatus(bill)}
+            </Badge>
+            <div className="flex-grow flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleViewBill(bill)}>View Details</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleEditBill(bill)}>Edit Bill</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handlePayments(bill)}>Payments</DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteBill(bill)}>Delete Bill</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  )
+
+  return (
+    <Card className="w-full mx-auto border-0 shadow-none">
+      <CardHeader className='px-4 pb-2'>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Billing List</CardTitle>
+            <CardDescription>Manage and view services billing information</CardDescription>
+          </div>
+          {isSmallScreen && (
+            <Button variant="outline" size="icon" onClick={() => navigate('/billings/create-service-bill')}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className='px-4'>
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
+          <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0">
+            <div className="flex w-full space-x-2">
+              <div className="relative flex-grow">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search bills..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-8 w-full"
+                />
+              </div>
+              {isSmallScreen && (
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            {isSmallScreen ? (
+              <AnimatePresence>
+                {isFilterExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden w-full"
+                  >
+                    <div className="pt-2 space-y-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <Filter className="mr-2 h-4 w-4" /> 
+                            {filterStatus === 'All' ? 'Status' : filterStatus}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-[200px]">
+                          <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => setFilterStatus('All')}>All</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setFilterStatus('Paid')}>Paid</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setFilterStatus('Due')}>Due</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <ListFilter className="mr-2 h-4 w-4" /> 
+                            {patientTypeFilter === 'All' ? 'Patient Type' : patientTypeFilter}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-[200px]">
+                          <DropdownMenuLabel>Filter by Patient Type</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => setPatientTypeFilter('All')}>All</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setPatientTypeFilter('IPD')}>IPD</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setPatientTypeFilter('OPD')}>OPD</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <CalendarIcon className="mr-2 h-4 w-4" /> 
+                            {dateFilter === 'All' ? 'All Time' : dateFilter}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-[200px]">
+                          <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {dateFilter === 'Custom' && (
+                        <DateRangePicker
+                          from={tempDateRange.from}
+                          to={tempDateRange.to}
+                          onSelect={(range) => setTempDateRange(range)}
+                          onSearch={handleDateRangeSearch}
+                          onCancel={handleDateRangeCancel}
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            ) : (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="ml-auto">
+                      <Filter className="mr-2 h-4 w-4" /> 
+                      {filterStatus === 'All' ? 'Status' : filterStatus}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setFilterStatus('All')}>All</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setFilterStatus('Paid')}>Paid</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setFilterStatus('Due')}>Due</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu> 
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <ListFilter className="mr-2 h-4 w-4" /> 
+                      {patientTypeFilter === 'All' ? 'Patient Type' : patientTypeFilter}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>Filter by Patient Type</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setPatientTypeFilter('All')}>All</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setPatientTypeFilter('IPD')}>IPD</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setPatientTypeFilter('OPD')}>OPD</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <CalendarIcon className="mr-2 h-4 w-4" /> 
+                      {dateFilter === 'All' ? 'All Time' : dateFilter}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {dateFilter === 'Custom' && (
+                  <DateRangePicker
+                    from={tempDateRange.from}
+                    to={tempDateRange.to}
+                    onSelect={(range) => setTempDateRange(range)}
+                    onSearch={handleDateRangeSearch}
+                    onCancel={handleDateRangeCancel}
+                  />
+                )}
+              </>
+            )}
+          </div>
+          {!isSmallScreen && (
+            <div className="flex items-center space-x-2">
+              <Button variant="outline" onClick={() => navigate('/billings/create-service-bill')}>
+                <Plus className="mr-2 h-4 w-4" /> Create Bill
+              </Button>
+            </div>
+          )}
+        </div>
         {filteredBills.length > 0 ? (
-          <Table>
-            <TableHeader className="">
-              <TableRow>
-                <TableHead className="font-semibold">Bill ID</TableHead>
-                <TableHead className="font-semibold">Patient Name</TableHead>
-                <TableHead className="font-semibold">Phone</TableHead>
-                <TableHead className="font-semibold">Patient Type</TableHead>
-                <TableHead className="font-semibold">Date & Time</TableHead>
-                <TableHead className="font-semibold">Total Amount</TableHead>
-                <TableHead className="font-semibold">Due Amount</TableHead>
-                <TableHead className="font-semibold">Status</TableHead>
-                <TableHead className="font-semibold">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+          isSmallScreen ? (
+            <div>
               {filteredBills.map((bill) => (
-                <TableRow key={bill._id}>
-                  <TableCell>B{bill._id.slice(-6)}</TableCell>
-                  <TableCell>{bill.patientInfo.name}</TableCell>
-                  <TableCell>{bill.patientInfo.phone}</TableCell>
-                  <TableCell>{bill.patientType}</TableCell>
-                  <TableCell>{formatDateOrTime(bill.createdAt)}</TableCell>
-                  <TableCell>₹{bill.totalAmount.toLocaleString('en-IN')}</TableCell>
-                  <TableCell>₹{(bill.totalAmount - bill.amountPaid).toLocaleString('en-IN')}</TableCell>
-                  <TableCell>
-                    <Badge variant={getBadgeVariant(getBillStatus(bill))}>
-                      {getBillStatus(bill)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="h-8 w-8 p-0">
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleViewBill(bill)}>View Details</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleEditBill(bill)}>Edit Bill</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handlePayments(bill)}>Payments</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteBill(bill)}>Delete Bill</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
+                <BillCard key={bill._id} bill={bill} />
               ))}
-            </TableBody>
-          </Table>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="font-semibold">Bill ID</TableHead>
+                    <TableHead className="font-semibold">Patient Name</TableHead>
+                    <TableHead className="font-semibold">Phone</TableHead>
+                    {!isMediumScreen && (
+                      <>
+                        <TableHead className="font-semibold">Patient Type</TableHead>
+                        <TableHead className="font-semibold">Date & Time</TableHead>
+                      </>
+                    )}
+                    <TableHead className="font-semibold">Total Amount</TableHead>
+                    <TableHead className="font-semibold">Due Amount</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredBills.map((bill) => (
+                    <TableRow key={bill._id}>
+                      <TableCell>B{bill._id.slice(-6)}</TableCell>
+                      <TableCell>{bill.patientInfo.name}</TableCell>
+                      <TableCell>{bill.patientInfo.phone}</TableCell>
+                      {!isMediumScreen && (
+                        <>
+                          <TableCell>{bill.patientType}</TableCell>
+                          <TableCell>{formatDateOrTime(bill.createdAt)}</TableCell>
+                        </>
+                      )}
+                      <TableCell>₹{bill.totalAmount.toLocaleString('en-IN')}</TableCell>
+                      <TableCell>₹{(bill.totalAmount - bill.amountPaid).toLocaleString('en-IN')}</TableCell>
+                      <TableCell>
+                        <Badge variant={getBadgeVariant(getBillStatus(bill))}>
+                          {getBillStatus(bill)}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu open={openDropdownId === bill._id} onOpenChange={() => handleDropdownOpenChange(bill._id)}>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <ChevronDown className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleViewBill(bill)}>View Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditBill(bill)}>Edit Bill</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handlePayments(bill)}>Payments</DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteBill(bill)}>Delete Bill</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )
         ) : (
           <div className="flex flex-col items-center justify-center py-10">
             <FileX className="h-16 w-16 text-gray-400 mb-4" />
