@@ -49,6 +49,9 @@ import { setSelectedPatient } from "../redux/slices/patientSlice";
 import { startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
 import { format } from "date-fns";
 import { fetchPatients } from "../redux/slices/patientSlice";
+import { useMediaQuery } from "../hooks/useMediaQuery"
+import { motion, AnimatePresence } from "framer-motion"
+import { Badge } from "../components/ui/badge";
 
 // Add this selector function at the top of your file, outside of the component
 
@@ -63,6 +66,10 @@ export default function Patients() {
   const [activeTab, setActiveTab] = useState("OPD");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
+
+  const isSmallScreen = useMediaQuery("(max-width: 640px)")
+  const isMediumScreen = useMediaQuery("(max-width: 1024px)")
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false)
 
   // Use the useSelector hook to get the patients from the Redux store
   const {patientlist:patients,status} = useSelector((state) => state.patients);
@@ -139,6 +146,10 @@ useEffect(()=>{
   const createServiceBill = (patient) => {
     dispatch(setSelectedPatient(patient));
     navigate("/billings/create-service-bill");
+  };
+
+  const handleDischarge = (patient) => {
+    navigate(`/patients/discharge/${patient._id}`, { state: { patient } });
   };
 
   const PatientTable = ({ patients, type }) => {
@@ -279,170 +290,274 @@ useEffect(()=>{
     setDateFilter("All");
   };
 
+  const PatientCard = ({ patient }) => (
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-stretch">
+          <div className="flex-grow">
+            <div className="flex items-center mb-1">
+              <h3 className="text-lg font-semibold capitalize">{patient.patient.name}</h3>
+              <Badge variant="outline" className="ml-2 text-xs">
+                {patient.type}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">Booking Number: {patient.bookingNumber}</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">Date:</p>
+                <p className="font-medium">{format(new Date(patient.bookingDate), "dd-MM-yyyy")}</p>
+              </div>
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">Doctor:</p>
+                <p className="font-medium">{patient.doctor?.name || "--"}</p>
+              </div>
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">Mobile:</p>
+                <p className="font-medium">{patient.patient.contactNumber}</p>
+              </div>
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">Gender:</p>
+                <p className="font-medium">{patient.patient.gender}</p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col justify-between items-end ml-4">
+            <Badge variant={patient.type === "IPD" ? "secondary" : "primary"}>
+              {patient.type}
+            </Badge>
+            <div className="flex-grow flex items-center">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    <ChevronDown className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => navigate(`/patients/${patient.patient._id}`)}>
+                    View Details
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleExistingBills(patient)}>
+                    Existing Bill
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => createServiceBill(patient)}>
+                    Create New Bill
+                  </DropdownMenuItem>
+                  {patient.type === "IPD" && (
+                    <DropdownMenuItem onClick={() => handleDischarge(patient)}>
+                      {patient.status === "Discharged" ? "View Discharge Summary" : "Discharge Patient"}
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Patient List</CardTitle>
-        <CardDescription>Manage and view patient information</CardDescription>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Patient List</CardTitle>
+            <CardDescription>Manage and view patient information</CardDescription>
+          </div>
+          {isSmallScreen && (
+            <Button variant="outline" size="icon" onClick={() => setIsDialogOpen(true)}>
+              <UserPlus className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <OPDRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-        <IPDRegDialog
-          open={isIPDDialogOpen}
-          onOpenChange={setIsIPDDialogOpen}
-        />
-        <Tabs
-          defaultValue="OPD"
-          className="w-full"
-          onValueChange={setActiveTab}
-        >
+        <IPDRegDialog open={isIPDDialogOpen} onOpenChange={setIsIPDDialogOpen} />
+        <Tabs defaultValue="OPD" className="w-full" onValueChange={setActiveTab}>
           <TabsList>
             <TabsTrigger value="OPD">OPD</TabsTrigger>
             <TabsTrigger value="IPD">IPD</TabsTrigger>
           </TabsList>
           <div className="flex flex-col space-y-4 mb-4 mt-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search patients..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 w-[300px]"
-                  />
-                  {searchTerm && (
-                    <button
-                      onClick={() => setSearchTerm("")}
-                      className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+            <div className="flex flex-col md:flex-row md:justify-between md:items-center">
+              <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0">
+                <div className="flex w-full space-x-2">
+                  <div className="relative flex-grow">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search patients..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-8 w-full"
+                    />
+                    {searchTerm && (
+                      <button
+                        onClick={() => setSearchTerm("")}
+                        className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {isSmallScreen && (
+                    <Button
+                      variant="outline"
+                      className="shrink-0"
+                      onClick={() => setIsFilterExpanded(!isFilterExpanded)}
                     >
-                      <X className="h-4 w-4" />
-                    </button>
+                      <Filter className="h-4 w-4" />
+                    </Button>
                   )}
                 </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="ml-auto">
-                      <Filter className="mr-2 h-4 w-4" />
-                      {filterStatus === "All" ? "Filter" : filterStatus}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px]">
-                    <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>Status</DropdownMenuLabel>
-                    <DropdownMenuItem onSelect={() => setFilterStatus("All")}>
-                      All
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setFilterStatus("Active")}
-                    >
-                      Active
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setFilterStatus("Admitted")}
-                    >
-                      Admitted
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setFilterStatus("Discharged")}
-                    >
-                      Discharged
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setFilterStatus("Critical")}
-                    >
-                      Critical
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setFilterStatus("Pending")}
-                    >
-                      Pending
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateFilter === "All" ? "All Time" : dateFilter}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start" className="w-[200px]">
-                    <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onSelect={() => setDateFilter("Today")}>
-                      Today
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setDateFilter("Yesterday")}
-                    >
-                      Yesterday
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setDateFilter("This Week")}
-                    >
-                      This Week
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDateFilter("All")}>
-                      All Time
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>
-                      Custom Range
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                {dateFilter === "Custom" && (
-                  <DateRangePicker
-                    from={tempDateRange.from}
-                    to={tempDateRange.to}
-                    onSelect={(range) => setTempDateRange(range)}
-                    onSearch={handleDateRangeSearch}
-                    onCancel={handleDateRangeCancel}
-                  />
+                {isSmallScreen ? (
+                  <AnimatePresence>
+                    {isFilterExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3 }}
+                        className="overflow-hidden w-full"
+                      >
+                        <div className="pt-2 space-y-2">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" className="w-full">
+                                <Filter className="mr-2 h-4 w-4" />
+                                {filterStatus === "All" ? "Filter" : filterStatus}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-[200px]">
+                              <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuLabel>Status</DropdownMenuLabel>
+                              <DropdownMenuItem onSelect={() => setFilterStatus("All")}>All</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setFilterStatus("Active")}>Active</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setFilterStatus("Admitted")}>Admitted</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setFilterStatus("Discharged")}>Discharged</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setFilterStatus("Critical")}>Critical</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setFilterStatus("Pending")}>Pending</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" className="w-full">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {dateFilter === "All" ? "All Time" : dateFilter}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start" className="w-[200px]">
+                              <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onSelect={() => setDateFilter("Today")}>Today</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>Yesterday</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>This Week</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setDateFilter("All")}>All Time</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>Custom Range</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                          {dateFilter === "Custom" && (
+                            <DateRangePicker
+                              from={tempDateRange.from}
+                              to={tempDateRange.to}
+                              onSelect={(range) => setTempDateRange(range)}
+                              onSearch={handleDateRangeSearch}
+                              onCancel={handleDateRangeCancel}
+                            />
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                ) : (
+                  <>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="ml-auto">
+                          <Filter className="mr-2 h-4 w-4" />
+                          {filterStatus === "All" ? "Filter" : filterStatus}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-[200px]">
+                        <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel>Status</DropdownMenuLabel>
+                        <DropdownMenuItem onSelect={() => setFilterStatus("All")}>All</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setFilterStatus("Active")}>Active</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setFilterStatus("Admitted")}>Admitted</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setFilterStatus("Discharged")}>Discharged</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setFilterStatus("Critical")}>Critical</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setFilterStatus("Pending")}>Pending</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline">
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {dateFilter === "All" ? "All Time" : dateFilter}
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start" className="w-[200px]">
+                        <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onSelect={() => setDateFilter("Today")}>Today</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>Yesterday</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>This Week</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setDateFilter("All")}>All Time</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>Custom Range</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                    {dateFilter === "Custom" && (
+                      <DateRangePicker
+                        from={tempDateRange.from}
+                        to={tempDateRange.to}
+                        onSelect={(range) => setTempDateRange(range)}
+                        onSearch={handleDateRangeSearch}
+                        onCancel={handleDateRangeCancel}
+                      />
+                    )}
+                  </>
                 )}
               </div>
-              <div className="flex items-center space-x-2">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <UserPlus className="mr-2 h-4 w-4" /> Add Patient
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setIsDialogOpen(true);
-                      }}
-                    >
-                      OPD
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => {
-                        setIsIPDDialogOpen(true);
-                      }}
-                    >
-                      IPD
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                {/* <Button variant="outline">
-                  <FileDown className="mr-2 h-4 w-4" /> Export
-                </Button> */}
-              </div>
+              {!isSmallScreen && (
+                <div className="flex items-center space-x-2 mt-4 md:mt-0">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <UserPlus className="mr-2 h-4 w-4" /> Add Patient
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>OPD</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setIsIPDDialogOpen(true)}>IPD</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              )}
             </div>
           </div>
           <TabsContent value="OPD">
-            <PatientTable
-              patients={filteredPatients.filter((p) => p.type === "OPD")}
-              type="OPD"
-            />
+            {isSmallScreen ? (
+              <div>
+                {filteredPatients.filter((p) => p.type === "OPD").map((patient) => (
+                  <PatientCard key={patient._id} patient={patient} />
+                ))}
+              </div>
+            ) : (
+              <PatientTable patients={filteredPatients.filter((p) => p.type === "OPD")} type="OPD" />
+            )}
           </TabsContent>
           <TabsContent value="IPD">
-            <PatientTable
-              patients={filteredPatients.filter((p) => p.type === "IPD")}
-              type="IPD"
-            />
+            {isSmallScreen ? (
+              <div>
+                {filteredPatients.filter((p) => p.type === "IPD").map((patient) => (
+                  <PatientCard key={patient._id} patient={patient} />
+                ))}
+              </div>
+            ) : (
+              <PatientTable patients={filteredPatients.filter((p) => p.type === "IPD")} type="IPD" />
+            )}
           </TabsContent>
         </Tabs>
       </CardContent>
