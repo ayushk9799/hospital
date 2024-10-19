@@ -290,4 +290,55 @@ router.post("/:id/payments", verifyToken, async (req, res) => {
   }
 });
 
+// Create a new OPD Procedure bill
+router.post("/create-opd-procedure-bill", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const {
+      services,
+      patient,
+      totalAmount,
+      subtotal,
+      patientInfo,
+      department,
+    } = req.body;
+    const user = req.user;
+
+    if (!services || !Array.isArray(services)) {
+      throw new Error("Invalid services data");
+    }
+
+    const opdProcedureBill = new ServicesBill({
+      services,
+      totalAmount,
+      subtotal,
+      patientType: "OPD",
+      patient,
+      patientInfo,
+      department,
+      createdBy: user._id,
+    });
+
+    await opdProcedureBill.save({ session });
+
+    // If you want to associate this bill with a visit, you can do so here
+    // For example:
+    // const visit = await Visit.findOne({ patient: patient }).sort({ createdAt: -1 }).session(session);
+    // if (visit) {
+    //   visit.bills.services.push(opdProcedureBill._id);
+    //   await visit.save({ session });
+    // }
+
+    await session.commitTransaction();
+    res.status(201).json(opdProcedureBill);
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ message: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
 export default router;

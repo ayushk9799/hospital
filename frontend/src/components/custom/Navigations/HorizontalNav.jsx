@@ -126,7 +126,12 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
               <Menu className="h-5 w-5 sm:h-10 sm:w-10" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[250px] sm:w-[250px] pt-10 px-4">
+          <SheetContent side="left" className="w-[250px] sm:w-[250px] pt-6 px-4">
+            <div className="flex items-center mb-4">
+              <ColorfulLogo className="h-6 w-6 sm:h-8 sm:w-8" />
+              <span className="ml-2 text-lg sm:text-xl font-bold text-gray-800">The Hospital</span>
+            </div>
+            <Separator className="mb-4" />
             <nav className="flex flex-col space-y-1">
               {navItems.map((item) => (
                 <Button

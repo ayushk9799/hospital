@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useMediaQuery } from "../../../hooks/use-media-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { Button } from "../../ui/button";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Label } from "recharts";
@@ -12,6 +13,7 @@ import { fetchPharmacyDashboardData, fetchItems } from "../../../redux/slices/ph
 import { startOfDay, endOfDay, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isWithinInterval, format, isEqual } from 'date-fns';
 
 const PharmacyDashboard = () => {
+  const isMobile = useMediaQuery('(max-width: 767px)');
   const [dateFilter, setDateFilter] = useState("Today");
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const navigate = useNavigate();
@@ -171,7 +173,7 @@ const PharmacyDashboard = () => {
               <DropdownMenuItem onSelect={() => handleDateFilterChange("This Week")}>This Week</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => handleDateFilterChange("This Month")}>This Month</DropdownMenuItem>
               <DropdownMenuItem onSelect={() => handleDateFilterChange("All")}>All Time</DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("Custom")}>Custom Range</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleDateFilterChange("Custom")}>Custom Range</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           {/* <Button variant="outline" size="sm">
@@ -180,11 +182,11 @@ const PharmacyDashboard = () => {
           </Button> */}
         </div>
       </div>
-      <div className="space-y-4 mt-2">
-        <div className="grid grid-cols-4 gap-4">
-          <div className="col-span-3">
-            <div className="grid grid-cols-3 gap-4 mb-4">
-              <Card className="bg-blue-100">
+      <div className="space-y-4 mt-2 mx-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="col-span-1 md:col-span-3">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+              <Card className="bg-blue-100 col-span-1">
                 <CardContent className="p-4">
                   <Pill className="w-8 h-8 text-blue-600 mb-2" />
                   <p className="text-2xl font-bold text-blue-600">{dashboardTotals.totalPrescriptions}</p>
@@ -194,7 +196,7 @@ const PharmacyDashboard = () => {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="bg-green-100">
+              <Card className="bg-green-100 col-span-1">
                 <CardContent className="p-4">
                   <DollarSign className="w-8 h-8 text-green-600 mb-2" />
                   <p className="text-2xl font-bold text-green-600">₹{parseInt(dashboardTotals.totalRevenue).toLocaleString()}</p>
@@ -204,36 +206,69 @@ const PharmacyDashboard = () => {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="bg-yellow-100">
-                <CardContent className="p-4">
-                  <Package className="w-8 h-8 text-yellow-600 mb-2" />
-                  <p className="text-2xl font-bold text-yellow-600">{itemsInStock.toLocaleString()}</p>
-                  <p className="text-sm text-gray-600">Items in Stock</p>
-                  {/* <p className="text-xs text-red-600 mt-1">-2% from last week</p> */}
+              {!isMobile && (
+                <Card className="bg-yellow-100 col-span-1">
+                  <CardContent className="p-4">
+                    <Package className="w-8 h-8 text-yellow-600 mb-2" />
+                    <p className="text-2xl font-bold text-yellow-600">{itemsInStock.toLocaleString()}</p>
+                    <p className="text-sm text-gray-600">Items in Stock</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+            {isMobile && (
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <Card className="bg-yellow-100">
+                  <CardContent className="p-4">
+                    <Package className="w-8 h-8 text-yellow-600 mb-2" />
+                    <p className="text-2xl font-bold text-yellow-600">{itemsInStock.toLocaleString()}</p>
+                    <p className="text-sm text-gray-600">Items in Stock</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="grid grid-cols-1 gap-2 px-3">
+                    <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/sales")}>
+                      <Users className="mr-2 h-4 w-4" />
+                      Sales
+                    </Button>
+                    <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/items-master")}>
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      Inventory
+                    </Button>
+                    <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/reports")}>
+                      <Activity className="mr-2 h-4 w-4" />
+                      Reports
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+            {!isMobile && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="grid grid-cols-3 gap-4">
+                  <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/sales")}>
+                    <Users className="mr-2 h-4 w-4" />
+                    Pharmacy Sales
+                  </Button>
+                  <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/items-master")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    Manage Inventory
+                  </Button>
+                  <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/reports")}>
+                    <Activity className="mr-2 h-4 w-4" />
+                    View Reports
+                  </Button>
                 </CardContent>
               </Card>
-            </div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="grid grid-cols-3 gap-4">
-                <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/sales")}>
-                  <Users className="mr-2 h-4 w-4" />
-                  Pharmacy Sales
-                </Button>
-                <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/items-master")}>
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  Manage Inventory
-                </Button>
-                <Button className="w-full justify-center" variant="outline" onClick={() => navigate("/pharmacy/reports")}>
-                  <Activity className="mr-2 h-4 w-4" />
-                  View Reports
-                </Button>
-              </CardContent>
-            </Card>
+            )}
           </div>
-           <Card>
+          <Card className="col-span-1">
             <CardHeader className='pb-0'>
               <CardTitle>Payment Methods</CardTitle>
               <CardDescription>Distribution of payment methods used</CardDescription>
@@ -287,17 +322,19 @@ const PharmacyDashboard = () => {
             <CardDescription>Sales and prescriptions filled in the last 7 days</CardDescription>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={weeklyPerformanceData}>
-                <XAxis dataKey="formattedDate" />
-                <YAxis yAxisId="left" orientation="left" stroke="#3b82f6" />
-                <YAxis yAxisId="right" orientation="right" stroke="#10b981" />
-                <Tooltip />
-                <Legend />
-                <Bar yAxisId="left" dataKey="sales" fill="#3b82f6" name="Sales (₹)" />
-                <Bar yAxisId="right" dataKey="prescriptions" fill="#10b981" name="Prescriptions" />
-              </BarChart>
-            </ResponsiveContainer>
+            <div className="h-[300px] sm:h-[400px] md:h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyPerformanceData}>
+                  <XAxis dataKey="formattedDate" />
+                  <YAxis yAxisId="left" orientation="left" stroke="#3b82f6" />
+                  <YAxis yAxisId="right" orientation="right" stroke="#10b981" />
+                  <Tooltip />
+                  <Legend />
+                  <Bar yAxisId="left" dataKey="sales" fill="#3b82f6" name="Sales (₹)" />
+                  <Bar yAxisId="right" dataKey="prescriptions" fill="#10b981" name="Prescriptions" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </CardContent>
         </Card>
       </div>

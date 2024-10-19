@@ -156,8 +156,8 @@ const PharmacyReports = () => {
           </Button> */}
         </div>
       </div>
-      <main className="flex-1 overflow-y-auto mt-2">
-        <div className="grid gap-4 grid-cols-4 mb-4">
+      <main className="flex-1 overflow-y-auto mt-2 mx-2 md:mx-0">
+        <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 mb-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
@@ -218,28 +218,27 @@ const PharmacyReports = () => {
             </CardContent>
           </Card>
         </div>
-        <Tabs defaultValue="expiring">
-          <TabsList className="grid w-1/3 grid-cols-3 mb-4">
+        <Tabs defaultValue="expiring" className="space-y-4">
+          <TabsList className="grid w-full lg:w-1/3 grid-cols-3 sm:grid-cols-3 mb-4">
             <TabsTrigger value="expiring">Expiring Items</TabsTrigger>
             <TabsTrigger value="lowstock">Low Stock</TabsTrigger>
-            {/* <TabsTrigger value="topselling">Top Selling</TabsTrigger> */}
-            <TabsTrigger value="bills">Recent Bills</TabsTrigger>
+            <TabsTrigger value="bills" >Recent Bills</TabsTrigger>
           </TabsList>
           <TabsContent value="expiring">
             <Card>
               <CardHeader>
                 <CardTitle>Items Expiring Soon</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Item Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Expiry Date</TableHead>
-                      <TableHead>Quantity</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead className="whitespace-nowrap">Item Name</TableHead>
+                      <TableHead className="whitespace-nowrap">Type</TableHead>
+                      <TableHead className="whitespace-nowrap">Supplier</TableHead>
+                      <TableHead className="whitespace-nowrap">Expiry Date</TableHead>
+                      <TableHead className="whitespace-nowrap">Quantity</TableHead>
+                      <TableHead className="whitespace-nowrap">Status</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -304,14 +303,14 @@ const PharmacyReports = () => {
               <CardHeader>
                 <CardTitle>Low Stock Items</CardTitle>
               </CardHeader>
-              <CardContent>
+              <CardContent className="overflow-x-auto">
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Item Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Supplier</TableHead>
-                      <TableHead>Current Stock</TableHead>
+                      <TableHead className="whitespace-nowrap">Item Name</TableHead>
+                      <TableHead className="whitespace-nowrap">Type</TableHead>
+                      <TableHead className="whitespace-nowrap">Supplier</TableHead>
+                      <TableHead className="whitespace-nowrap">Current Stock</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -345,42 +344,9 @@ const PharmacyReports = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* <TabsContent value="topselling">
-            <Card>
-              <CardHeader>
-                <CardTitle>Top 5 Most Sold Items</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Item Name</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead>Units Sold</TableHead>
-                      <TableHead>Revenue</TableHead>
-                      <TableHead>Trend</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {topSellingArray.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.name}</TableCell>
-                        <TableCell>{item.category}</TableCell>
-                        <TableCell>{item.unitsSold.toLocaleString()}</TableCell>
-                        <TableCell>${item.revenue.toFixed(2)}</TableCell>
-                        <TableCell className={item.trend.direction === "up" ? "text-green-500" : "text-red-500"}>
-                          {item.trend.direction === "up" ? "↑" : "↓"} {item.trend.percentage}%
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-          </TabsContent> */}
           <TabsContent value="bills">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
                 <CardTitle>Recent Bills Generated</CardTitle>
                 <Button
                   variant="outline"

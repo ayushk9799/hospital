@@ -612,7 +612,7 @@ const CreateServiceBill = () => {
       </Card>
 
       <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
-        <div className="flex w-full sm:w-auto">
+        <div className="flex w-full sm:w-auto gap-4">
           <Button 
             variant="outline" 
             onClick={handleReset} 

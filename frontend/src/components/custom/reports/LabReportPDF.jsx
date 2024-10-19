@@ -4,6 +4,8 @@ import { Document, Page, Text, View, StyleSheet, Font, Image } from '@react-pdf/
 import { format } from 'date-fns';
 import tinosRegular from '../../../fonts/Tinos-Regular.ttf';
 import tinosBold from '../../../fonts/Tinos-Bold.ttf';
+import nabhLogo from './nabh.png';
+
 Font.register({
     family: "Tinos",
     fonts: [
@@ -124,14 +126,13 @@ export const styles = StyleSheet.create({
 });
 
 export const HeaderTemplate = ({ hospital }) => {
- 
   return (
     <>
       <View style={styles.header}>
         <View>
           <Text style={styles.clinicName}>{hospital.name}</Text>
         </View>
-        <View style={{ display: "flex", flexDirection: "row" }}>
+        <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between" }}>
           <View style={{ marginLeft: 50 }}>
             <Image
               src={hospital.logo}
@@ -148,6 +149,12 @@ export const HeaderTemplate = ({ hospital }) => {
             </Text>
             <Text style={styles.clinicInfo}>Consultant Urologist</Text>
             <Text style={styles.clinicInfo}>Mob : {hospital.contactNumber}</Text>
+          </View>
+          <View style={{ marginRight: 50 }}>
+            <Image
+              src={nabhLogo}
+              style={{ height: 70 }}
+            />
           </View>
         </View>
       </View>

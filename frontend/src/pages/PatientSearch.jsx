@@ -67,14 +67,11 @@ export default function PatientSearch() {
     },
     { name: "IPD", icon: Bed, action: () => setIsIPDRegDialogOpen(true) },
     { 
-      name: "Service", 
+      name: "OPD Procedure", 
       icon: FileText, 
       action: () => navigate(`/opd-procedure/${selectedPatient._id}`, { state: { patient: selectedPatient } })
     },
-    { name: "Time Slot Booking", icon: Calendar },
-    { name: "EHR - General", icon: Heart },
-    { name: "OT Booking", icon: Stethoscope },
-    { name: "Pharmacy Sales", icon: Pill },
+   
   ];
 
   const getLatestDate = (patient) => {

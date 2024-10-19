@@ -1,22 +1,24 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../../ui/dialog"
 import { Input } from "../../../ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../../ui/table"
 import { Search, X, RefreshCw } from 'lucide-react'
-import { setSelectedPatient } from '../../../../redux/slices/patientSlice'
-import { fetchPatients } from '../../../../redux/slices/patientSlice'
+import { setSelectedPatient, fetchPatients } from '../../../../redux/slices/patientSlice'
 import { Button } from "../../../ui/button"
 import { ScrollArea } from "../../../ui/scroll-area"
+import {useMediaQuery} from '../../../../hooks/use-media-query'
 
 export default function PatientListDialog({ isOpen, setIsOpen, onPatientSelect }) {
   const [searchTerm, setSearchTerm] = useState("")
-  // const [filteredPatients, setFilteredPatients] = useState([])
   const patients = useSelector((state) => state.patients.patientlist)
   const dispatch = useDispatch()
   const patientsStatus = useSelector((state) => state.patients.status)
   const filteredPatients = patients.filter(p => p.patient.name.toLowerCase().includes(searchTerm.toLowerCase()))
   
+  const isSmallScreen = useMediaQuery('(max-width: 640px)')
+  const isMediumScreen = useMediaQuery('(max-width: 768px)')
+
   const handlePatientSelect = (patient) => {
     dispatch(setSelectedPatient(patient))
     setIsOpen(false)
@@ -29,19 +31,19 @@ export default function PatientListDialog({ isOpen, setIsOpen, onPatientSelect }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col">
+      <DialogContent className={`${isSmallScreen ? 'w-full' : 'max-w-3xl'} max-h-[90vh] flex flex-col`}>
         <DialogHeader>
           <DialogTitle>Patient List</DialogTitle>
           <DialogDescription>Select a patient to continue</DialogDescription>
         </DialogHeader>
-        <div className="flex justify-between items-center">
-          <div className="relative flex-grow mr-4">
+        <div className={`flex ${isSmallScreen ? 'flex-col' : 'flex-row'} justify-between items-center gap-2`}>
+          <div className="relative flex-grow">
             <Search className="absolute left-2 top-2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search patients..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8 pr-8 h-8 text-sm"
+              className="pl-8 pr-8 h-8 text-sm w-full"
             />
             {searchTerm && (
               <button
@@ -71,13 +73,13 @@ export default function PatientListDialog({ isOpen, setIsOpen, onPatientSelect }
             )}
           </Button>
         </div>
-        <ScrollArea className="flex-grow h-[calc(80vh-200px)] pr-2">
+        <ScrollArea className="flex-grow h-[calc(90vh-200px)] pr-2">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Mobile</TableHead>
-                <TableHead>Gender</TableHead>
+                {!isSmallScreen && <TableHead>Mobile</TableHead>}
+                {!isMediumScreen && <TableHead>Gender</TableHead>}
                 <TableHead>Medications</TableHead>
               </TableRow>
             </TableHeader>
@@ -89,8 +91,8 @@ export default function PatientListDialog({ isOpen, setIsOpen, onPatientSelect }
                   onClick={() => handlePatientSelect(patient)}
                 >
                   <TableCell>{patient?.patient?.name}</TableCell>
-                  <TableCell>{patient?.patient?.contactNumber}</TableCell>
-                  <TableCell>{patient?.patient?.gender}</TableCell>
+                  {!isSmallScreen && <TableCell>{patient?.patient?.contactNumber}</TableCell>}
+                  {!isMediumScreen && <TableCell>{patient?.patient?.gender}</TableCell>}
                   <TableCell>{patient?.medications?.length}</TableCell>
                 </TableRow>
               ))}

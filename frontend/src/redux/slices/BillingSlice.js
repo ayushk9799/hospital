@@ -129,6 +129,36 @@ export const addPayment = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new import at the top of the file
+
+// Add this new async thunk after the other thunks and before the slice definition
+export const createOPDProcedureBill = createLoadingAsyncThunk(
+  'billing/createOPDProcedureBill',
+  async (billData, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/billing/create-opd-procedure-bill`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(billData),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const billingSlice = createSlice({
   name: 'bills',
   initialState: {
@@ -137,6 +167,7 @@ const billingSlice = createSlice({
     createBillStatus: "idle",
     updateBillStatus: "idle",
     error: null,
+    createOPDProcedureBillStatus: "idle",
   },
   reducers: {
     setCreateBillStatusIdle: (state) => {
@@ -199,6 +230,18 @@ const billingSlice = createSlice({
         if (index !== -1) {
           state.bills[index] = action.payload;
         }
+      })
+      .addCase(createOPDProcedureBill.pending, (state) => {
+        state.createOPDProcedureBillStatus = "loading";
+        state.error = null;
+      })
+      .addCase(createOPDProcedureBill.fulfilled, (state, action) => {
+        state.createOPDProcedureBillStatus = "succeeded";
+        state.bills.unshift(action.payload);
+      })
+      .addCase(createOPDProcedureBill.rejected, (state, action) => {
+        state.createOPDProcedureBillStatus = "failed";
+        state.error = action.payload;
       });
   },
 });

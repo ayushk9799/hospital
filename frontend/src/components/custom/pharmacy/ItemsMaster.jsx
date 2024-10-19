@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
 import { fetchItems, deleteInventoryItem } from "../../../redux/slices/pharmacySlice";
-import { Search, ChevronLeft, ChevronRight, Pencil, Trash, FileDown, Plus, ListFilter, PackageX } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Pencil, Trash, FileDown, Plus, ListFilter, PackageX, ChevronDown, Filter } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
@@ -24,6 +24,8 @@ import {
   AlertDialogTitle,
 } from "../../ui/alert-dialog";
 import { Loader2 } from "lucide-react";
+import { useMediaQuery } from "../../../hooks/useMediaQuery"
+import { motion, AnimatePresence } from "framer-motion"
 
 export default function ItemsMaster() {
   const dispatch = useDispatch();
@@ -40,6 +42,9 @@ export default function ItemsMaster() {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const isSmallScreen = useMediaQuery("(max-width: 640px)")
+  const isMediumScreen = useMediaQuery("(max-width: 1024px)")
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false)
 
   const types = ["All", ...new Set(items.map((item) => item.type))];
 
@@ -125,126 +130,242 @@ export default function ItemsMaster() {
     setIsAddItemDialogOpen(false);
   };
 
-  return (
-    <Card className="w-full mx-auto">
-      <CardHeader>
-        <CardTitle className="font-semibold">Pharmacy Inventory</CardTitle>
-        <CardDescription>Manage and view item information</CardDescription>
-      </CardHeader>
-      <CardContent>
-        {itemsStatus === "succeeded" && (
-          <>
-            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 space-y-2 sm:space-y-0 sm:space-x-2">
-              <div className="flex items-center space-x-2">
-                <div className="relative w-full sm:w-64">
-                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input placeholder="Search items..." value={searchTerm} onChange={handleSearch} className="pl-8" />
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline">
-                      <ListFilter className="mr-2 h-4 w-4" />
-                      {typeFilter === "All" ? "Select type" : typeFilter}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    {types.map((type) => (
-                      <DropdownMenuItem key={type} onClick={() => handleTypeChange(type)}>
-                        {type}
-                      </DropdownMenuItem>
-                    ))}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+  const ItemCard = ({ item }) => (
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-stretch">
+          <div className="flex-grow">
+            <div className="flex items-center mb-1">
+              <h3 className="text-lg font-semibold capitalize">{item.name}</h3>
+              <Badge variant="outline" className="ml-2 text-xs">
+                {item.type}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mb-2">Supplier: {item?.supplier?.name || "-"}</p>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">CP:</p>
+                <p className="font-medium">₹{item.CP.toFixed(2)}</p>
               </div>
-              <div className="flex space-x-2">
-                <Button variant="outline" onClick={handleOpenAddItemDialog}>
-                  <Plus className="mr-2 h-4 w-4" /> Add Item
-                </Button>
-                {/* <Button variant="outline">
-                  <FileDown className="mr-2 h-4 w-4" /> Export
-                </Button> */}
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">MRP:</p>
+                <p className="font-medium">₹{item.MRP.toFixed(2)}</p>
+              </div>
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">Stock:</p>
+                <Badge
+                  variant={
+                    item.quantity <= 100
+                      ? "destructive"
+                      : item.quantity <= 200
+                      ? "secondary"
+                      : "success"
+                  }
+                >
+                  {item.quantity}
+                </Badge>
+              </div>
+              <div className='flex gap-2 items-center'>
+                <p className="text-sm text-muted-foreground">Expiry:</p>
+                <p className="font-medium">{item.expiryDate ? format(new Date(item.expiryDate), 'MMM, yyyy') : "-"}</p>
               </div>
             </div>
-            {filteredItems.length === 0 ? (
-              <div className="text-center py-12">
-                <PackageX className="mx-auto h-12 w-12 text-muted-foreground" />
-                <p className="mt-4 text-lg font-medium text-muted-foreground">No items found</p>
-                <p className="mt-2 text-sm text-muted-foreground">Try adjusting your search or filter to find what you're looking for.</p>
+          </div>
+          <div className="flex flex-col justify-between items-end ml-4">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <ChevronDown className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => handleEdit(item)}>Edit</DropdownMenuItem>
+                <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item)}>Delete</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  return (
+    <Card className="w-full mx-auto shadow-none border-none">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle className="font-semibold">Pharmacy Inventory</CardTitle>
+            <CardDescription>Manage and view item information</CardDescription>
+          </div>
+          {isSmallScreen && (
+            <Button variant="outline" size="icon" onClick={handleOpenAddItemDialog}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="px-4">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4">
+          <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0">
+            <div className="flex w-full space-x-2">
+              <div className="relative flex-grow">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input placeholder="Search items..." value={searchTerm} onChange={handleSearch} className="pl-8 w-full" />
               </div>
+              {isSmallScreen && (
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                >
+                  <Filter className="h-4 w-4" />
+                </Button>
+              )}
+            </div>
+            {isSmallScreen ? (
+              <AnimatePresence>
+                {isFilterExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden w-full"
+                  >
+                    <div className="pt-2 space-y-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <ListFilter className="mr-2 h-4 w-4" /> 
+                            {typeFilter === 'All' ? 'Select type' : typeFilter}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-[200px]">
+                          {types.map((type) => (
+                            <DropdownMenuItem key={type} onClick={() => handleTypeChange(type)}>
+                              {type}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             ) : (
-              <>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Supplier Name</TableHead>
-                      <TableHead>CP</TableHead>
-                      <TableHead>MRP</TableHead>
-                      <TableHead>Stock</TableHead>
-                      <TableHead>Expiry Date</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {paginatedItems.map((item) => (
-                      <TableRow key={item._id}>
-                        <TableCell className='capitalize'>{item.name}</TableCell>
-                        <TableCell>{item.type}</TableCell>
-                        <TableCell className="capitalize">{item?.supplier?.name || "-"}</TableCell>
-                        <TableCell>₹{item.CP.toFixed(2)}</TableCell>
-                        <TableCell>₹{item.MRP.toFixed(2)}</TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              item.quantity <= 100
-                                ? "destructive"
-                                : item.quantity <= 200
-                                ? "secondary"
-                                : "success"
-                            }
-                          >
-                            {item.quantity}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{item.expiryDate ? format(new Date(item.expiryDate), 'MMM, yyyy') : "-"}</TableCell>
-                        <TableCell className="flex">
-                          <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
-                            <Pencil className="h-3 w-3" />
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
-                            <Trash className="h-3 w-3" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-                <div className="flex justify-between items-center mt-2">
-                  <p className="text-sm text-muted-foreground">
-                    Showing{" "}
-                    {Math.min(
-                      (currentPage - 1) * itemsPerPage + 1,
-                      filteredItems.length
-                    )}{" "}
-                    to {Math.min(currentPage * itemsPerPage, filteredItems.length)} of{" "}
-                    {filteredItems.length} items
-                  </p>
-                  <div className="flex items-center space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handlePageChange("prev")} disabled={currentPage === 1}>
-                      <ChevronLeft className="h-4 w-4" />
-                      Previous
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handlePageChange("next")} disabled={currentPage === totalPages}>
-                      Next
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <ListFilter className="mr-2 h-4 w-4" />
+                    {typeFilter === "All" ? "Select type" : typeFilter}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  {types.map((type) => (
+                    <DropdownMenuItem key={type} onClick={() => handleTypeChange(type)}>
+                      {type}
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-          </>
+          </div>
+          {!isSmallScreen && (
+            <div className="flex space-x-2">
+              <Button variant="outline" onClick={handleOpenAddItemDialog}>
+                <Plus className="mr-2 h-4 w-4" /> Add Item
+              </Button>
+            </div>
+          )}
+        </div>
+        {filteredItems.length === 0 ? (
+          <div className="text-center py-12">
+            <PackageX className="mx-auto h-12 w-12 text-muted-foreground" />
+            <p className="mt-4 text-lg font-medium text-muted-foreground">No items found</p>
+            <p className="mt-2 text-sm text-muted-foreground">Try adjusting your search or filter to find what you're looking for.</p>
+          </div>
+        ) : (
+          isSmallScreen ? (
+            <div>
+              {paginatedItems.map((item) => (
+                <ItemCard key={item._id} item={item} />
+              ))}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Type</TableHead>
+                    {!isMediumScreen && (
+                      <>
+                        <TableHead>Supplier Name</TableHead>
+                        <TableHead>CP</TableHead>
+                      </>
+                    )}
+                    <TableHead>MRP</TableHead>
+                    <TableHead>Stock</TableHead>
+                    <TableHead>Expiry Date</TableHead>
+                    <TableHead>Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedItems.map((item) => (
+                    <TableRow key={item._id}>
+                      <TableCell className='capitalize'>{item.name}</TableCell>
+                      <TableCell>{item.type}</TableCell>
+                      {!isMediumScreen && (
+                        <>
+                          <TableCell className="capitalize">{item?.supplier?.name || "-"}</TableCell>
+                          <TableCell>₹{item.CP.toFixed(2)}</TableCell>
+                        </>
+                      )}
+                      <TableCell>₹{item.MRP.toFixed(2)}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            item.quantity <= 100
+                              ? "destructive"
+                              : item.quantity <= 200
+                              ? "secondary"
+                              : "success"
+                          }
+                        >
+                          {item.quantity}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{item.expiryDate ? format(new Date(item.expiryDate), 'MMM, yyyy') : "-"}</TableCell>
+                      <TableCell className="flex">
+                        <Button variant="ghost" size="sm" onClick={() => handleEdit(item)}>
+                          <Pencil className="h-3 w-3" />
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => handleDelete(item)}>
+                          <Trash className="h-3 w-3" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )
         )}
+        <div className="flex justify-between items-center mt-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {Math.min((currentPage - 1) * itemsPerPage + 1, filteredItems.length)} to {Math.min(currentPage * itemsPerPage, filteredItems.length)} of {filteredItems.length} items
+          </p>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={() => handlePageChange("prev")} disabled={currentPage === 1}>
+              <ChevronLeft className="h-4 w-4" />
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => handlePageChange("next")} disabled={currentPage === totalPages}>
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
       </CardContent>
       <EditItemDialog isOpen={isEditItemDialogOpen} onClose={handleCloseEditItemDialog} item={itemToEdit} />
       <AddItemDialog isOpen={isAddItemDialogOpen} onClose={handleCloseAddItemDialog} />

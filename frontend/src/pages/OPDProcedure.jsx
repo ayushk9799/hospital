@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -14,19 +15,31 @@ import {
 import { Card, CardContent } from "../components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
-import { CalendarDays, Phone, Plus, Trash2, ArrowLeft, AlertCircle, Loader2 } from "lucide-react";
+import { CalendarDays, Phone, Plus, Trash2, ArrowLeft, AlertCircle, Loader2, Pencil } from "lucide-react";
 import { Separator } from "../components/ui/separator";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { format } from "date-fns";
+import { fetchServices, createService } from "../redux/slices/serviceSlice";
+import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
+import { createOPDProcedureBill } from "../redux/slices/BillingSlice";
 
 export default function OPDProcedure() {
   const { patientId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const patient = location.state?.patient;
-  const [services, setServices] = useState([]);
+  const [addedServices, setAddedServices] = useState([]);
   const [newService, setNewService] = useState({ name: '', quantity: 1, rate: 0, category: '' });
   const [isLoading, setIsLoading] = useState(false);
+  const [serviceName, setServiceName] = useState("");
+
+  const { services, servicesStatus } = useSelector((state) => state.services);
+  const { createOPDProcedureBillStatus } = useSelector((state) => state.bills);
+
+  useEffect(() => {
+    if (servicesStatus === "idle") dispatch(fetchServices());
+  }, [dispatch, servicesStatus]);
 
   useEffect(() => {
     if (!patient) {
@@ -38,49 +51,110 @@ export default function OPDProcedure() {
   const handleAddService = (e) => {
     e.preventDefault();
     if (newService.name && newService.rate > 0) {
-      setServices([...services, { ...newService, id: Date.now(), total: newService.quantity * newService.rate }]);
+      setAddedServices([...addedServices, { 
+        ...newService, 
+        id: Date.now(), 
+        total: newService.quantity * newService.rate 
+      }]);
       setNewService({ name: '', quantity: 1, rate: 0, category: '' });
+      setServiceName("");
     }
   };
 
   const handleRemoveService = (id) => {
-    setServices(services.filter(service => service.id !== id));
+    setAddedServices(addedServices.filter(service => service.id !== id));
+  };
+
+  const handleEditService = (id) => {
+    const serviceToEdit = addedServices.find((service) => service.id === id);
+    if (serviceToEdit) {
+      setNewService({
+        name: serviceToEdit.name,
+        quantity: serviceToEdit.quantity,
+        rate: serviceToEdit.rate,
+        category: serviceToEdit.category,
+      });
+      setServiceName(serviceToEdit.name);
+      setAddedServices((prev) => prev.filter((service) => service.id !== id));
+    }
+  };
+
+  const handleQuantityChange = (e) => {
+    const quantity = parseInt(e.target.value);
+    setNewService(prev => ({
+      ...prev,
+      quantity,
+      total: quantity * prev.rate
+    }));
+  };
+
+  const handleRateChange = (e) => {
+    const rate = parseFloat(e.target.value);
+    setNewService(prev => ({
+      ...prev,
+      rate,
+      total: prev.quantity * rate
+    }));
   };
 
   const calculateTotals = useMemo(() => {
-    const subtotal = services.reduce((total, service) => total + (service.quantity * service.rate), 0);
+    const subtotal = addedServices.reduce((total, service) => total + (service.quantity * service.rate), 0);
     return {
       subtotal,
       totalAmount: subtotal,
     };
-  }, [services]);
+  }, [addedServices]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    const servicesBill = {
-      services,
+    const opdProcedureBill = {
+      services: addedServices.map(service => ({
+        name: service.name,
+        quantity: service.quantity,
+        rate: service.rate,
+        category: service.category
+      })),
       totalAmount: calculateTotals.totalAmount,
       subtotal: calculateTotals.subtotal,
-      patientType: 'OPD',
       patient: patientId,
       patientInfo: {
         name: patient.name,
         phone: patient.contactNumber
-      }
+      },
+    
     };
     
-    // Submit the servicesBill to your API
-    console.log('Submitting service bill:', servicesBill);
-    // Simulating API call
-    setTimeout(() => {
+    try {
+      const resultAction = await dispatch(createOPDProcedureBill(opdProcedureBill));
+      if (createOPDProcedureBill.fulfilled.match(resultAction)) {
+        console.log('OPD Procedure bill created successfully:', resultAction.payload);
+        setAddedServices([]);
+        // Optionally, show a success message to the user or navigate to a success page
+        navigate('/billing'); // Adjust this route as needed
+      } else if (createOPDProcedureBill.rejected.match(resultAction)) {
+        console.error('Failed to create OPD Procedure bill:', resultAction.error);
+        // Optionally, show an error message to the user
+      }
+    } catch (error) {
+      console.error('An error occurred:', error);
+      // Optionally, show an error message to the user
+    } finally {
       setIsLoading(false);
-      // Handle response here
-    }, 2000);
+    }
   };
 
   const handleGoBack = () => {
     navigate(-1);
+  };
+
+  const handleServiceSuggestionSelect = (suggestion) => {
+    setNewService((prev) => ({
+      ...prev,
+      name: suggestion.name,
+      rate: suggestion.rate,
+      category: suggestion.category,
+    }));
   };
 
   if (!patient) return <div>Loading...</div>;
@@ -131,12 +205,12 @@ export default function OPDProcedure() {
           <form onSubmit={handleAddService} className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end mb-4">
             <div className="col-span-full sm:col-span-1 md:col-span-2">
               <Label htmlFor="serviceName">Service Name</Label>
-              <Input
-                id="serviceName"
-                value={newService.name}
-                onChange={(e) => setNewService({...newService, name: e.target.value})}
+              <SearchSuggestion
+                suggestions={services}
                 placeholder="Enter service name"
-                required
+                value={serviceName}
+                setValue={setServiceName}
+                onSuggestionSelect={handleServiceSuggestionSelect}
               />
             </div>
             <div className="col-span-full sm:col-span-1 md:col-span-3 lg:col-span-3">
@@ -147,7 +221,7 @@ export default function OPDProcedure() {
                     type="number"
                     id="quantity"
                     value={newService.quantity}
-                    onChange={(e) => setNewService({...newService, quantity: parseInt(e.target.value)})}
+                    onChange={handleQuantityChange}
                     placeholder="Qty *"
                     required
                     min="1"
@@ -159,7 +233,7 @@ export default function OPDProcedure() {
                     type="number"
                     id="rate"
                     value={newService.rate}
-                    onChange={(e) => setNewService({...newService, rate: parseFloat(e.target.value)})}
+                    onChange={handleRateChange}
                     placeholder="Rate"
                     required
                     min="0"
@@ -196,21 +270,31 @@ export default function OPDProcedure() {
           </form>
           <Separator className="my-2" />
           <h3 className="font-semibold text-lg mb-2">Added Services</h3>
-          {services.length > 0 ? (
+          {addedServices.length > 0 ? (
             <div className="sm:hidden">
-              {services.map((service, index) => (
+              {addedServices.map((service) => (
                 <Card key={service.id} className="mb-2">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center mb-2">
                       <span className="font-semibold">{service.name}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleRemoveService(service.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 mr-2"
+                          onClick={() => handleEditService(service.id)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleRemoveService(service.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>Category: {service.category}</div>
@@ -243,7 +327,7 @@ export default function OPDProcedure() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {services.map((service, index) => (
+                  {addedServices.map((service, index) => (
                     <TableRow key={service.id}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{service.name}</TableCell>
@@ -252,15 +336,24 @@ export default function OPDProcedure() {
                       <TableCell>{service.rate.toLocaleString("en-IN")}</TableCell>
                       <TableCell>{(service.quantity * service.rate).toLocaleString("en-IN")}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleRemoveService(service.id)}
-                        >
-                          <span className="sr-only">Remove</span>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        <div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 mr-2"
+                            onClick={() => handleEditService(service.id)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleRemoveService(service.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -292,7 +385,7 @@ export default function OPDProcedure() {
         <div className="flex w-full sm:w-auto">
           <Button 
             variant="outline" 
-            onClick={() => setServices([])} 
+            onClick={() => setAddedServices([])} 
             disabled={isLoading} 
             className="w-1/2 sm:w-auto mr-2 sm:mr-0"
           >
@@ -300,10 +393,10 @@ export default function OPDProcedure() {
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={isLoading} 
+            disabled={createOPDProcedureBillStatus === "loading"} 
             className="w-1/2 sm:w-auto"
           >
-            {isLoading ? (
+            {createOPDProcedureBillStatus === "loading" ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Submitting...
