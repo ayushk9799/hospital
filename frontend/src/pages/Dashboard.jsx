@@ -512,61 +512,51 @@ const Dashboard = () => {
             {getStatsHeaderText()}
           </h2>
           <p className="text-gray-600 mb-2 text-sm">Patients summary</p>
-          <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-            <Card className="bg-pink-100 transition-all hover:shadow-lg">
+          <section className="grid gap-4 grid-cols-2 md:grid-cols-3">
+            <Card className="bg-pink-100 transition-all hover:shadow-lg col-span-1">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <UserIcon className="w-10 h-10 text-pink-600" />
-                    <p className="text-2xl font-bold text-pink-600">
+                    <UserIcon className="w-8 h-8 md:w-10 md:h-10 text-pink-600" />
+                    <p className="text-xl md:text-2xl font-bold text-pink-600">
                       {dashboardTotals.totalPatients}
                     </p>
-                    <p className="text-sm text-gray-600">Total Patients</p>
+                    <p className="text-xs md:text-sm text-gray-600">Total Patients</p>
                     {calculatePercentageChanges.totalPatients !== null &&
                       dateFilter !== "Custom" &&
                       dateFilter !== "All" && (
-                        <p
-                          className={`text-xs ${
-                            calculatePercentageChanges.totalPatients >= 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          } mt-1`}
-                        >
-                          {calculatePercentageChanges.totalPatients >= 0
-                            ? "+"
-                            : ""}
-                          {calculatePercentageChanges.totalPatients}%{" "}
-                          {getComparisonText()}
+                        <p className={`text-xs ${
+                          calculatePercentageChanges.totalPatients >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                          } mt-1`}>
+                          {calculatePercentageChanges.totalPatients >= 0 ? "+" : ""}
+                          {calculatePercentageChanges.totalPatients}% {getComparisonText()}
                         </p>
                       )}
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <Card className="bg-orange-100 transition-all hover:shadow-lg">
+            <Card className="bg-orange-100 transition-all hover:shadow-lg col-span-1">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Calendar className="w-10 h-10 text-orange-600" />
-                    <p className="text-2xl font-bold text-orange-600">
+                    <Calendar className="w-8 h-8 md:w-10 md:h-10 text-orange-600" />
+                    <p className="text-xl md:text-2xl font-bold text-orange-600">
                       {dashboardTotals.totalAppointments}
                     </p>
-                    <p className="text-sm text-gray-600">Total Appointments</p>
+                    <p className="text-xs md:text-sm text-gray-600">Total Appointments</p>
                     {calculatePercentageChanges.totalAppointments !== null &&
                       dateFilter !== "Custom" &&
                       dateFilter !== "All" && (
-                        <p
-                          className={`text-xs ${
-                            calculatePercentageChanges.totalAppointments >= 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          } mt-1`}
-                        >
-                          {calculatePercentageChanges.totalAppointments >= 0
-                            ? "+"
-                            : ""}
-                          {calculatePercentageChanges.totalAppointments}%{" "}
-                          {getComparisonText()}
+                        <p className={`text-xs ${
+                          calculatePercentageChanges.totalAppointments >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                          } mt-1`}>
+                          {calculatePercentageChanges.totalAppointments >= 0 ? "+" : ""}
+                          {calculatePercentageChanges.totalAppointments}% {getComparisonText()}
                         </p>
                       )}
                   </div>
@@ -574,30 +564,25 @@ const Dashboard = () => {
               </CardContent>
             </Card>
 
-            <Card className="bg-purple-100 transition-all hover:shadow-lg">
+            <Card className="bg-purple-100 transition-all hover:shadow-lg col-span-2 md:col-span-1">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <ChartLine className="w-10 h-10 text-purple-600" />
-                    <p className="text-2xl font-bold text-purple-600">
+                    <ChartLine className="w-8 h-8 md:w-10 md:h-10 text-purple-600" />
+                    <p className="text-xl md:text-2xl font-bold text-purple-600">
                       ₹{parseInt(dashboardTotals.totalRevenue).toLocaleString()}
                     </p>
-                    <p className="text-sm text-gray-600">Total Revenue</p>
+                    <p className="text-xs md:text-sm text-gray-600">Total Revenue</p>
                     {calculatePercentageChanges.totalRevenue !== null &&
                       dateFilter !== "Custom" &&
                       dateFilter !== "All" && (
-                        <p
-                          className={`text-xs ${
-                            calculatePercentageChanges.totalRevenue >= 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          } mt-1`}
-                        >
-                          {calculatePercentageChanges.totalRevenue >= 0
-                            ? "+"
-                            : ""}
-                          {calculatePercentageChanges.totalRevenue}%{" "}
-                          {getComparisonText()}
+                        <p className={`text-xs ${
+                          calculatePercentageChanges.totalRevenue >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                          } mt-1`}>
+                          {calculatePercentageChanges.totalRevenue >= 0 ? "+" : ""}
+                          {calculatePercentageChanges.totalRevenue}% {getComparisonText()}
                         </p>
                       )}
                   </div>
@@ -606,34 +591,26 @@ const Dashboard = () => {
             </Card>
           </section>
           {/* Add new cards for Service and Pharmacy Collections */}
-          <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 mt-4">
+          <section className="grid gap-4 grid-cols-2 mt-4">
             <Card className="bg-blue-100 transition-all hover:shadow-lg">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Activity className="w-10 h-10 text-blue-600" />
-                    <p className="text-2xl font-bold text-blue-600">
-                      ₹
-                      {parseInt(
-                        calculateCollections.serviceCollection
-                      ).toLocaleString()}
+                    <Activity className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
+                    <p className="text-xl md:text-2xl font-bold text-blue-600">
+                      ₹{parseInt(calculateCollections.serviceCollection).toLocaleString()}
                     </p>
-                    <p className="text-sm text-gray-600">Service Collection</p>
+                    <p className="text-xs md:text-sm text-gray-600">Service Collection</p>
                     {calculatePercentageChanges.serviceCollection !== null &&
                       dateFilter !== "Custom" &&
                       dateFilter !== "All" && (
-                        <p
-                          className={`text-xs ${
-                            calculatePercentageChanges.serviceCollection >= 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          } mt-1`}
-                        >
-                          {calculatePercentageChanges.serviceCollection >= 0
-                            ? "+"
-                            : ""}
-                          {calculatePercentageChanges.serviceCollection}%{" "}
-                          {getComparisonText()}
+                        <p className={`text-xs ${
+                          calculatePercentageChanges.serviceCollection >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                          } mt-1`}>
+                          {calculatePercentageChanges.serviceCollection >= 0 ? "+" : ""}
+                          {calculatePercentageChanges.serviceCollection}% {getComparisonText()}
                         </p>
                       )}
                   </div>
@@ -644,29 +621,21 @@ const Dashboard = () => {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <Pill className="w-10 h-10 text-green-600" />
-                    <p className="text-2xl font-bold text-green-600">
-                      ₹
-                      {parseInt(
-                        calculateCollections.pharmacyCollection
-                      ).toLocaleString()}
+                    <Pill className="w-8 h-8 md:w-10 md:h-10 text-green-600" />
+                    <p className="text-xl md:text-2xl font-bold text-green-600">
+                      ₹{parseInt(calculateCollections.pharmacyCollection).toLocaleString()}
                     </p>
-                    <p className="text-sm text-gray-600">Pharmacy Collection</p>
+                    <p className="text-xs md:text-sm text-gray-600">Pharmacy Collection</p>
                     {calculatePercentageChanges.pharmacyCollection !== null &&
                       dateFilter !== "Custom" &&
                       dateFilter !== "All" && (
-                        <p
-                          className={`text-xs ${
-                            calculatePercentageChanges.pharmacyCollection >= 0
-                              ? "text-green-600"
-                              : "text-red-600"
-                          } mt-1`}
-                        >
-                          {calculatePercentageChanges.pharmacyCollection >= 0
-                            ? "+"
-                            : ""}
-                          {calculatePercentageChanges.pharmacyCollection}%{" "}
-                          {getComparisonText()}
+                        <p className={`text-xs ${
+                          calculatePercentageChanges.pharmacyCollection >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                          } mt-1`}>
+                          {calculatePercentageChanges.pharmacyCollection >= 0 ? "+" : ""}
+                          {calculatePercentageChanges.pharmacyCollection}% {getComparisonText()}
                         </p>
                       )}
                   </div>
@@ -727,7 +696,7 @@ const Dashboard = () => {
       </div>
 
       {/* New row for Payment Method Distribution */}
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           {/* Recent Patients */}
           <Card className="h-full">
