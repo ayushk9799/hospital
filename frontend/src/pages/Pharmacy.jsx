@@ -24,14 +24,16 @@ const Pharmacy = () => {
   return (
     <div className="flex flex-col flex-1 mt-1 h-[calc(100vh-52px)]">
       <Tabs value={tab || "sales"} onValueChange={handleTabChange} className="w-full h-full">
-        <TabsList>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="sales">Sales</TabsTrigger>
-          <TabsTrigger value="supplier">Supplier</TabsTrigger>
-          <TabsTrigger value="purchases">Purchases</TabsTrigger>
-          <TabsTrigger value="items-master">Items Master</TabsTrigger>
-          <TabsTrigger value="reports">Reports</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto pb-2 md:pb-0 scrollbar-hide">
+          <TabsList className="inline-flex md:flex w-max md:w-full justify-start">
+            <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+            <TabsTrigger value="sales">Sales</TabsTrigger>
+            <TabsTrigger className="hidden md:block" value="supplier">Supplier</TabsTrigger>
+            <TabsTrigger className="hidden md:block" value="purchases">Purchases</TabsTrigger>
+            <TabsTrigger value="items-master">Items Master</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
+          </TabsList>
+        </div>
         <TabsContent value="dashboard"><PharmacyDashboard /></TabsContent>
         <TabsContent value="sales"><Sales /></TabsContent>
         <TabsContent value="supplier"><Supplier /></TabsContent>

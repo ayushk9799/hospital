@@ -27,7 +27,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../../ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "../../../ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "../../../ui/card";
 import { Label } from "../../../ui/label";
 import { Plus, Pencil, Trash, Package } from "lucide-react";
 import { SearchSuggestion } from "../../registration/CustomSearchSuggestion";
@@ -44,6 +44,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../../ui/alert-dialog";
+import { useMediaQuery } from "../../../../hooks/use-media-query";
+import { Separator } from "../../../ui/separator";
 
 export default function SalesMain({
   clearTrigger,
@@ -90,6 +92,7 @@ export default function SalesMain({
   const [isMedicineSuggDialogOpen, setIsMedicineSuggDialogOpen] =
     useState(false);
   const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   // patient list modified for search suggestion
   const patientListModified = useMemo(() => {
@@ -356,172 +359,12 @@ export default function SalesMain({
   };
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col px-2 md:px-0">
       {/* Main Content */}
       <div className="flex-1">
-        <div className="flex space-x-2 h-[calc(100vh-220px)]">
-          {/* Sales Order Details and Item Table */}
-          <div className="w-3/4 space-y-2 h-full">
-            {/* Item Table */}
-            <Card className="h-full pt-2">
-              <ScrollArea className="h-[calc(100vh-235px)]">
-                <CardContent className="px-4 h-full">
-                  <form onSubmit={handleAddItemInTable} className="h-full">
-                    <Table className="w-full h-full ">
-                      <TableHeader>
-                        <TableRow className=" bg-blue-200 border-2 border-blue-300 hover:bg-blue-200">
-                          <TableHead className="h-7">Sr.</TableHead>
-                          <TableHead className="h-7 ">Item Name</TableHead>
-                          <TableHead className="h-7">Quantity</TableHead>
-                          <TableHead className="h-7">MRP</TableHead>
-                          <TableHead className="h-7">Discount (%)</TableHead>
-                          <TableHead className="h-7">Total</TableHead>
-                          <TableHead className="h-7">Action</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        <TableRow className="border-2 border-blue-300 overflow-visible ">
-                          <TableCell></TableCell>
-                          <TableCell className="overflow-visible">
-                            <SearchSuggestion
-                              suggestions={sampleItems}
-                              placeholder="Enter Item name"
-                              value={itemName}
-                              setValue={setItemName}
-                              ref={itemNameInputRef}
-                              showStock={true}
-                              onSuggestionSelect={handleItemSuggestionSelect}
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              name="quantity"
-                              value={newItem.quantity}
-                              onChange={handleNewItemChange}
-                              placeholder="0"
-                              className="h-7 text-sm w-20"
-                              required
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              name="mrp"
-                              value={newItem.mrp}
-                              onChange={handleNewItemChange}
-                              placeholder="0.00"
-                              className="h-7 text-sm w-24"
-                              required
-                            />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type="number"
-                              name="discount"
-                              value={newItem.discount}
-                              onChange={handleNewItemChange}
-                              placeholder="0"
-                              className="h-7 text-sm w-20"
-                            />
-                          </TableCell>
-                          <TableCell className="w-20">
-                            {newItem.quantity && newItem.mrp
-                              ? `₹${newItem.total.toLocaleString()}`
-                              : "₹0.00"}
-                          </TableCell>
-                          <TableCell>
-                            <Button
-                              type="submit"
-                              size="icon"
-                              variant="outline"
-                              className="h-7 w-7 mr-1"
-                            >
-                              <Plus className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              type="button"
-                              size="icon"
-                              variant="outline"
-                              className="h-7 w-7"
-                              onClick={clearNewItem}
-                            >
-                              <Trash className="h-4 w-4" />
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                        {items.length === 0 ? (
-                          <TableRow className="hover:bg-white border-b-0">
-                            <TableCell colSpan={8} className="text-center py-8">
-                              <div className="flex flex-col items-center text-gray-500">
-                                <Package className="h-12 w-12 mb-2" />
-                                <span>No items added yet.</span>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : (
-                          items.map((item, index) => (
-                            <TableRow key={item.id}>
-                              <TableCell>{index + 1}</TableCell>
-                              <TableCell>{item.name}</TableCell>
-                              <TableCell>{item.quantity}</TableCell>
-                              <TableCell>₹{item.mrp.toFixed(2)}</TableCell>
-                              <TableCell>{item.discount}%</TableCell>
-                              <TableCell>₹{item.total.toFixed(2)}</TableCell>
-                              <TableCell>
-                                <Button
-                                  size="icon"
-                                  variant="outline"
-                                  className="h-7 w-7 mr-1"
-                                  onClick={() => editItem(item.id)}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  size="icon"
-                                  variant="outline"
-                                  className="h-7 w-7"
-                                  onClick={() => deleteItem(item.id)}
-                                >
-                                  <Trash className="h-4 w-4" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
-                        )}
-                        <TableRow
-                          style={{
-                            height: `${250 - items.length * 40}px`,
-                            display: items.length <= 5 ? "block" : "none",
-                          }}
-                          className="w-full"
-                        ></TableRow>
-                      </TableBody>
-                    </Table>
-                  </form>
-                </CardContent>
-              </ScrollArea>
-            </Card>
-          </div>
-
-          {/* Customer Information at footer */}
-          <div className="w-1/4 space-y-2">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="p-0 font-semibold ">
-                  Search Patients
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pb-2">
-                <SearchSuggestion
-                  suggestions={patientListModified}
-                  placeholder="Enter patient name or mobile"
-                  value={patientName}
-                  setValue={setPatientName}
-                  onSuggestionSelect={handlePatientSuggestionSelect}
-                />
-              </CardContent>
-            </Card>
+        {/* Mobile Customer Information - Moved to the top */}
+        {!isDesktop && (
+          <div className="w-full mb-4">
             <Card>
               <CardHeader>
                 <CardTitle className="font-semibold">
@@ -549,44 +392,342 @@ export default function SalesMain({
                 </div>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="font-semibold">Recent Bills</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Customer Name</TableHead>
-                      <TableHead>Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {salesBills.slice(0, 4).map((bill) => (
-                      <TableRow
-                        key={bill._id}
-                        className="cursor-pointer hover:bg-gray-100"
-                        onClick={() => handleViewBill(bill)}
-                      >
-                        <TableCell>{bill.patientInfo.name}</TableCell>
-                        <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
+          </div>
+        )}
+
+        <div className={`${isDesktop ? 'flex space-x-2' : 'space-y-4'} md:h-[calc(100vh-220px)]`}>
+          {/* Sales Order Details and Item List */}
+          <div className={isDesktop ? "w-3/4" : "w-full"}>
+            {/* Item List */}
+            <Card className="h-full pt-2">
+              <ScrollArea className={isDesktop ? "h-[calc(100vh-235px)]" : ""}>
+                <CardContent className="px-4 h-full">
+                  <form onSubmit={handleAddItemInTable} className="h-full">
+                    {isDesktop ? (
+                      // Desktop view: Table
+                      <Table className="w-full h-full">
+                        <TableHeader>
+                          <TableRow className="bg-blue-200 border-2 border-blue-300 hover:bg-blue-200">
+                            <TableHead className="h-7 hidden lg:table-cell">Sr.</TableHead>
+                            <TableHead className="h-7">Item Name</TableHead>
+                            <TableHead className="h-7">Quantity</TableHead>
+                            <TableHead className="h-7">MRP</TableHead>
+                            <TableHead className="h-7 hidden lg:table-cell">Discount (%)</TableHead>
+                            <TableHead className="h-7">Total</TableHead>
+                            <TableHead className="h-7">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          <TableRow className="border-2 border-blue-300 overflow-visible">
+                            <TableCell className="hidden lg:table-cell"></TableCell>
+                            <TableCell className="overflow-visible">
+                              <SearchSuggestion
+                                suggestions={sampleItems}
+                                placeholder="Enter Item name"
+                                value={itemName}
+                                setValue={setItemName}
+                                ref={itemNameInputRef}
+                                showStock={true}
+                                onSuggestionSelect={handleItemSuggestionSelect}
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                name="quantity"
+                                value={newItem.quantity}
+                                onChange={handleNewItemChange}
+                                placeholder="0"
+                                className="h-7 text-sm w-20"
+                                required
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <Input
+                                type="number"
+                                name="mrp"
+                                value={newItem.mrp}
+                                onChange={handleNewItemChange}
+                                placeholder="0.00"
+                                className="h-7 text-sm w-24"
+                                required
+                              />
+                            </TableCell>
+                            <TableCell className="hidden lg:table-cell">
+                              <Input
+                                type="number"
+                                name="discount"
+                                value={newItem.discount}
+                                onChange={handleNewItemChange}
+                                placeholder="0"
+                                className="h-7 text-sm w-20"
+                              />
+                            </TableCell>
+                            <TableCell className="w-20">
+                              {newItem.quantity && newItem.mrp
+                                ? `₹${newItem.total.toLocaleString()}`
+                                : "₹0.00"}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                type="submit"
+                                size="icon"
+                                variant="outline"
+                                className="h-7 w-7 mr-1"
+                              >
+                                <Plus className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                type="button"
+                                size="icon"
+                                variant="outline"
+                                className="h-7 w-7"
+                                onClick={clearNewItem}
+                              >
+                                <Trash className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                          {items.length === 0 ? (
+                            <TableRow className="hover:bg-white border-b-0">
+                              <TableCell colSpan={8} className="text-center py-8">
+                                <div className="flex flex-col items-center text-gray-500">
+                                  <Package className="h-12 w-12 mb-2" />
+                                  <span>No items added yet.</span>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            items.map((item, index) => (
+                              <TableRow key={item.id}>
+                                <TableCell>{index + 1}</TableCell>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell>{item.quantity}</TableCell>
+                                <TableCell>₹{item.mrp.toFixed(2)}</TableCell>
+                                <TableCell>{item.discount}%</TableCell>
+                                <TableCell>₹{item.total.toFixed(2)}</TableCell>
+                                <TableCell>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-7 w-7 mr-1"
+                                    onClick={() => editItem(item.id)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-7 w-7"
+                                    onClick={() => deleteItem(item.id)}
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                          <TableRow
+                            style={{
+                              height: `${250 - items.length * 40}px`,
+                              display: items.length <= 5 ? "block" : "none",
+                            }}
+                            className="w-full"
+                          ></TableRow>
+                        </TableBody>
+                      </Table>
+                    ) : (
+                      // Mobile view: Cards
+                      <div className="space-y-4">
+                        {/* New Item Form */}
+                        <Card>
+                          <CardContent className="p-4">
+                            <div className="space-y-2">
+                              <SearchSuggestion
+                                suggestions={sampleItems}
+                                placeholder="Enter Item name"
+                                value={itemName}
+                                setValue={setItemName}
+                                ref={itemNameInputRef}
+                                showStock={true}
+                                onSuggestionSelect={handleItemSuggestionSelect}
+                              />
+                              <div className="flex gap-2"> 
+                                <Input
+                                  type="number"
+                                  name="quantity"
+                                  value={newItem.quantity}
+                                  onChange={handleNewItemChange}
+                                  placeholder="Quantity"
+                                  className="w-full"
+                                  required
+                                />
+                                <Input
+                                  type="number"
+                                  name="mrp"
+                                  value={newItem.mrp}
+                                  onChange={handleNewItemChange}
+                                  placeholder="MRP"
+                                  className="w-full"
+                                  required
+                                />
+                                <Input
+                                  type="number"
+                                    name="discount"
+                                    value={newItem.discount}
+                                    onChange={handleNewItemChange}
+                                    placeholder="Dis(%)"
+                                    className="w-full"
+                                  />
+                                </div>
+                              <div className="flex justify-between items-center">
+                                <span>Total: ₹{newItem.total ? newItem.total.toLocaleString() : '0.00'}</span>
+                                <Button type="submit" size="sm">
+                                  Add Item
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Separator className="my-2" />
+                        <h1 className="text-lg font-semibold">Items Added:</h1>
+                        {/* Item Cards */}
+                        {items.length === 0 ? (
+                          <Card className="py-8">
+                            <CardContent className="flex flex-col items-center text-gray-500">
+                              <Package className="h-12 w-12 mb-2" />
+                              <span>No items added yet.</span>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          items.map((item, index) => (
+                            <Card key={item.id}>
+                              <CardHeader>
+                                <CardTitle>{item.name}</CardTitle>
+                              </CardHeader>
+                              <CardContent className="grid grid-cols-5 px-4">
+                                <div className="grid grid-cols-2 gap-2 col-span-4">
+                                  <div>Qty: {item.quantity}</div>
+                                  <div>MRP: ₹{item.mrp.toFixed(2)}</div>
+                                  <div>Dis: {item.discount}%</div>
+                                  <div>Total: ₹{item.total.toFixed(2)}</div>
+                                </div>
+                                <div className="w-full flex flex-col items-end">
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => editItem(item.id)}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    size="icon"
+                                    variant="outline"
+                                    onClick={() => deleteItem(item.id)}
+                                  >
+                                    <Trash className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))
+                        )}
+                      </div>
+                    )}
+                  </form>
+                </CardContent>
+              </ScrollArea>
             </Card>
           </div>
+
+          {/* Desktop Customer Information */}
+          {isDesktop && (
+            <div className="w-1/4">
+              {/* Desktop layout for customer info */}
+              <Card className="mb-4">
+                <CardHeader className="pb-2">
+                  <CardTitle className="p-0 font-semibold">
+                    Search Patients
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="pb-2">
+                  <SearchSuggestion
+                    suggestions={patientListModified}
+                    placeholder="Enter patient name or mobile"
+                    value={patientName}
+                    setValue={setPatientName}
+                    onSuggestionSelect={handlePatientSuggestionSelect}
+                  />
+                </CardContent>
+              </Card>
+              
+              <Card className="mb-4">
+                <CardHeader>
+                  <CardTitle className="font-semibold">
+                    Customer Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <div>
+                    <Label htmlFor="name">Customer Name</Label>
+                    <Input
+                      id="name"
+                      placeholder="Enter Customer name"
+                      value={customerInfo.name}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Phone</Label>
+                    <Input
+                      id="phone"
+                      placeholder="Phone Number"
+                      value={customerInfo.phone}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="font-semibold">Recent Bills</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Customer Name</TableHead>
+                        <TableHead>Amount</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {salesBills.slice(0, 4).map((bill) => (
+                        <TableRow
+                          key={bill._id}
+                          className="cursor-pointer hover:bg-gray-100"
+                          onClick={() => handleViewBill(bill)}
+                        >
+                          <TableCell>{bill.patientInfo.name}</TableCell>
+                          <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* Totals footer */}
-        <Card className="mt-2 flex items-center">
-          <CardContent className=" w-full p-2">
+        <Card className="mt-2">
+          <CardContent className="p-2">
             <form
-              className="grid grid-cols-4 gap-4 p-2"
+              className={`grid ${isDesktop ? 'grid-cols-4' : 'grid-cols-1'} gap-4 p-2`}
               onSubmit={handleCreateSalesOrder}
             >
-              <div className="grid col-span-3 grid-cols-4 gap-4">
+              <div className={`grid ${isDesktop ? 'col-span-3 grid-cols-4' : 'grid-cols-1'} gap-4`}>
                 <div className="h-full flex items-center">
                   <Select
                     onValueChange={handlePaymentMethodChange}
@@ -632,8 +773,8 @@ export default function SalesMain({
                   className="w-full"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4 items-center">
-                <Button variant="outline" size="sm" onClick={handleSaveDraft} disabled={true}>
+              <div className={`grid ${isDesktop ? 'grid-cols-2' : 'grid-cols-1'} gap-4 items-center`}>
+                <Button variant="outline" size="sm" className="hidden md:block" onClick={handleSaveDraft} disabled={true}>
                   Save Draft
                 </Button>
                 <Button

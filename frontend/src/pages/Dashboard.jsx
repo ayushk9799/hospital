@@ -53,6 +53,7 @@ import {
 } from "date-fns";
 import { Pill } from "lucide-react";
 import { PieChart, Pie, Cell, Label } from "recharts";
+import { useMediaQuery } from "../hooks/use-media-query";
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -66,6 +67,7 @@ const Dashboard = () => {
     from: null,
     to: null,
   });
+  const isMobile = useMediaQuery("(max-width: 767px)");
 
   const recentPatients = useMemo(() => {
     return [...patientlist]
@@ -448,9 +450,9 @@ const Dashboard = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center my-2">
-        <h2 className="font-bold text-xl text-gray-800">Dashboard</h2>
-        <div className="flex items-center space-x-4">
+      <div className="flex justify-between items-center my-2 flex-wrap mx-2 md:mx-0">
+        <h2 className="font-bold text-xl text-gray-800 mb-2 md:mb-0">Dashboard</h2>
+        <div className="flex items-center space-x-4 flex-wrap">
           {dateFilter === "Custom" && (
             <DateRangePicker
               from={tempDateRange.from}
@@ -503,14 +505,14 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col md:flex-row gap-4">
         {/* Stats summary */}
-        <div className="bg-white p-4 rounded-xl shadow w-1/2">
+        <div className="bg-white p-4 rounded-xl shadow w-full md:w-1/2">
           <h2 className="font-bold text-xl text-violet-950 mb-2">
             {getStatsHeaderText()}
           </h2>
           <p className="text-gray-600 mb-2 text-sm">Patients summary</p>
-          <section className="grid gap-6 lg:grid-cols-3">
+          <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <Card className="bg-pink-100 transition-all hover:shadow-lg">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -604,7 +606,7 @@ const Dashboard = () => {
             </Card>
           </section>
           {/* Add new cards for Service and Pharmacy Collections */}
-          <section className="grid gap-6 lg:grid-cols-2 mt-4">
+          <section className="grid gap-6 grid-cols-1 sm:grid-cols-2 mt-4">
             <Card className="bg-blue-100 transition-all hover:shadow-lg">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -675,7 +677,7 @@ const Dashboard = () => {
         </div>
 
         {/* Weekly Performance Graph */}
-        <div className="w-1/2">
+        <div className="w-full md:w-1/2">
           <Card className="border border-gray-200 rounded-lg shadow-sm">
             <CardHeader>
               <CardTitle>Weekly Performance</CardTitle>
@@ -725,7 +727,7 @@ const Dashboard = () => {
       </div>
 
       {/* New row for Payment Method Distribution */}
-      <div className="mt-4 grid grid-cols-3 gap-4 mb-4">
+      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           {/* Recent Patients */}
           <Card className="h-full">

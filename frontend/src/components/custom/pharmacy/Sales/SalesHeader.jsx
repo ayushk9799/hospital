@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { Button } from "../../../ui/button"
-import { ChevronRight, BriefcaseMedicalIcon, Eraser } from "lucide-react"
+import { ChevronRight, BriefcaseMedicalIcon, Eraser, DollarSign, Users } from "lucide-react"
 import SalesTodayDialog from './SalesTodayDialog'
 import PatientListDialog from './PatientListDialog'
+import { useMediaQuery } from '../../../../hooks/use-media-query'
 
 export default function Component({ onClearScreen, onPatientSelect }) {
   const [isSalesTodayOpen, setIsSalesTodayOpen] = useState(false)
   const [isPatientListOpen, setIsPatientListOpen] = useState(false)
+  const isMobile = useMediaQuery('(max-width: 640px)')
 
   return (
     <header className="flex items-center justify-between p-1 bg-gray-100 border-b">
@@ -24,7 +26,7 @@ export default function Component({ onClearScreen, onPatientSelect }) {
           className="bg-blue-600 hover:bg-blue-700 text-white text-xs"
           onClick={() => setIsSalesTodayOpen(true)}
         >
-          Sales Today
+          {isMobile ? <DollarSign className="h-4 w-4" /> : "Sales Today"}
         </Button>
         <Button 
           variant="default" 
@@ -32,7 +34,7 @@ export default function Component({ onClearScreen, onPatientSelect }) {
           className="bg-cyan-600 hover:bg-cyan-700 text-white text-xs"
           onClick={() => setIsPatientListOpen(true)}
         >
-          Patient List
+          {isMobile ? <Users className="h-4 w-4" /> : "Patient List"}
         </Button>
         <Button 
           variant="default" 
@@ -40,8 +42,7 @@ export default function Component({ onClearScreen, onPatientSelect }) {
           className="bg-red-600 hover:bg-red-700 text-white text-xs"
           onClick={onClearScreen}
         >
-          {/* <Eraser className="h-4 w-4 mr-1" /> */}
-          Clear Screen
+          {isMobile ? <Eraser className="h-4 w-4" /> : "Clear Screen"}
         </Button>
       </div>
       <SalesTodayDialog isOpen={isSalesTodayOpen} setIsOpen={setIsSalesTodayOpen} />
