@@ -183,6 +183,34 @@ export const addLabReport = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new thunk for patient readmission
+export const readmitPatient = createLoadingAsyncThunk(
+  "patients/readmitPatient",
+  async ({ patientId, admission}, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/${patientId}/readmission`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(admission),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -300,6 +328,28 @@ const patientSlice = createSlice({
         if (state.selectedPatient && state.selectedPatient._id === updatedPatient._id) {
           state.selectedPatient = { ...state.selectedPatient, ...updatedPatient };
         }
+      })
+      .addCase(readmitPatient.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(readmitPatient.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Update the patient in the patientlist
+        const updatedPatient = action.payload.patient;
+        const index = state.patientlist.findIndex(
+          (patient) => patient._id === updatedPatient._id
+        );
+        if (index !== -1) {
+          state.patientlist[index] = updatedPatient;
+        }
+        // If the readmitted patient is the currently selected patient, update it as well
+        if (state.selectedPatient && state.selectedPatient._id === updatedPatient._id) {
+          state.selectedPatient = updatedPatient;
+        }
+      })
+      .addCase(readmitPatient.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
       });
   },
 });

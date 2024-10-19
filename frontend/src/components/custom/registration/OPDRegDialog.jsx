@@ -91,7 +91,7 @@ const initialFormData = {
 
 const initialErrors = {};
 
-export default function OPDRegDialog({ open, onOpenChange }) {
+export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const registerPatientStatus = useSelector(
@@ -349,12 +349,30 @@ export default function OPDRegDialog({ open, onOpenChange }) {
   }, [formData, validateForm, dispatch, toast, onOpenChange]);
 
   useEffect(() => {
+    if (patientData) {
+      setFormData({
+        ...initialFormData,
+        followUp: true,
+        _id: patientData._id,
+        name: patientData.name,
+        age: patientData.age,
+        gender: patientData.gender,
+        contactNumber: patientData.contactNumber,
+        registrationNumber: patientData.registrationNumber,
+      });
+    }
+  }, [patientData]);
+
+  useEffect(() => {
     if (!open) {
       setFormData(initialFormData);
       setErrors(initialErrors);
       setIsOldPatient(false);
       setSearchType("");
       setSearchQuery({});
+      setTimeout(()=>{
+       document.body.style=""
+      },500)
     }
   }, [open]);
 

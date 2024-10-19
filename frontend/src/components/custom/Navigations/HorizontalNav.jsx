@@ -36,6 +36,8 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const location = useLocation();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
 
   const handleLogout = async () => {
     try {
@@ -75,6 +77,37 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const handleNavigation = (path) => {
     navigate(path);
     setIsOpen(false);  // Close the drawer after navigation
+  };
+
+  const handleSearch = async (e) => {
+    e.preventDefault();
+    if (!searchQuery.trim()) return;
+
+    try {
+      const response = await fetch(`${Backend_URL}/api/dashboard/search/${searchQuery}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Navigate to the PatientSearch page with the search results
+        navigate(`/search/${searchQuery}`, { state: { searchResults: data } });
+      } else {
+        toast({
+          title: "Search failed",
+          description: "There was an error performing the search. Please try again.",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Search error:", error);
+      toast({
+        title: "Search failed",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   // Sample notifications array (empty for now)
@@ -123,13 +156,15 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
         </div>
       </div>
       <div className="mx-2 sm:mx-4 flex-grow max-w-xl">
-        <div className="flex">
+        <form onSubmit={handleSearch} className="flex">
           <div className="relative flex-grow">
             <Search className="flex absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
             <Input 
               type="search" 
               placeholder="Patient ID/Name" 
               className="w-full pl-8 sm:pl-10 pr-2 sm:pr-4 py-1 sm:py-2 text-sm sm:text-base rounded-l-full border-r-0 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 focus:border-gray-300 focus:outline-none"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button 
@@ -139,7 +174,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
           >
             <Search className="h-4 w-4" />
           </Button>
-        </div>
+        </form>
       </div>
       <div className="flex items-center">
         <Popover>

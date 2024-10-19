@@ -278,9 +278,13 @@ router.get('/search/:searchQuery', async (req, res) => {
     const patients = await Patient.find({
       $or: [
         { name: searchRegex },
-        { contactNumber: searchRegex }
+        { contactNumber: searchRegex },
+        { registrationNumber: searchRegex }
       ],
-    }).limit(10);
+    })
+    .populate('visits', 'bookingDate')
+    .populate('admissionDetails', 'bookingDate')
+    .limit(10);
 
     res.status(200).json(patients);
 

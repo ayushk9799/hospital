@@ -21,6 +21,7 @@ import { Textarea } from "../../ui/textarea";
 import {
   fetchPatients,
   registerPatient,
+  readmitPatient,
 } from "../../../redux/slices/patientSlice";
 import { fetchRooms } from "../../../redux/slices/roomSlice";
 import {
@@ -34,7 +35,7 @@ import MemoizedInput from "./MemoizedInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { fetchBills } from "../../../redux/slices/BillingSlice";
 
-export default function IPDRegDialog({ open, onOpenChange }) {
+export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const registerPatientStatus = useSelector(
@@ -46,12 +47,35 @@ export default function IPDRegDialog({ open, onOpenChange }) {
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
+ console.log(patientData)
+  // Function to reset form data
+  const resetFormData = useCallback(() => {
+    if (patientData) {
+      setFormData({
+        ...initialFormData,
+        name: patientData.name || '',
+        age: patientData.age || '',
+        gender: patientData.gender || '',
+        contactNumber: patientData.contactNumber || '',
+        email: patientData.email || '',
+        address: patientData.address || '',
+        registrationNumber: patientData.registrationNumber || '',
+        dateOfBirth: patientData.dateOfBirth || '',
+        bloodType: patientData.bloodType || '',
+        // Add any other fields you want to pre-fill
+      });
+    } else {
+      setFormData(initialFormData);
+    }
+    setErrors({});
+  }, [patientData]);
 
   useEffect(() => {
     if (open) {
       dispatch(fetchRooms());
+      resetFormData();
     }
-  }, [open, dispatch]);
+  }, [open, dispatch, resetFormData]);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
@@ -93,37 +117,66 @@ export default function IPDRegDialog({ open, onOpenChange }) {
     e.preventDefault();
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
-      dispatch(registerPatient(submissionData))
-        .unwrap()
-        .then(() => {
-          toast({
-            title: "Patient registered successfully",
-            description: "The new patient has been added.",
-            variant: "success",
+      console.log(submissionData);
+      if (patientData) {
+        // This is a readmission
+        dispatch(readmitPatient({ patientId: patientData._id, admission: submissionData }))
+          .unwrap()
+          .then(() => {
+            toast({
+              title: "Patient admitted successfully",
+              description: "The patient has been admitted.",
+              variant: "success",
+            });
+            dispatch(fetchPatients());
+            dispatch(fetchRooms());
+            dispatch(fetchBills());
+          })
+          .catch((error) => {
+            toast({
+              title: "Failed to admit patient",
+              description:
+                error.message ||
+                "There was an error admitting the patient. Please try again.",
+              variant: "destructive",
+            });
+          })
+          .finally(() => {
+            onOpenChange(false);
           });
-          dispatch(fetchPatients());
-          dispatch(fetchRooms());
-          dispatch(fetchBills());
-        })
-        .catch((error) => {
-          toast({
-            title: "Failed to register patient",
-            description:
-              error.message ||
-              "There was an error registering the patient. Please try again.",
-            variant: "destructive",
+      } else {
+        // This is a new patient registration
+        dispatch(registerPatient(submissionData))
+          .unwrap()
+          .then(() => {
+            toast({
+              title: "Patient registered successfully",
+              description: "The new patient has been added.",
+              variant: "success",
+            });
+            dispatch(fetchPatients());
+            dispatch(fetchRooms());
+            dispatch(fetchBills());
+          })
+          .catch((error) => {
+            toast({
+              title: "Failed to register patient",
+              description:
+                error.message ||
+                "There was an error registering the patient. Please try again.",
+              variant: "destructive",
+            });
+          })
+          .finally(() => {
+            onOpenChange(false);
           });
-        })
-        .finally(() => {
-          onOpenChange(false);
-        });
+      }
     }
   };
 
   const handleDialogClose = () => {
     onOpenChange(false);
-    setErrors({});
-    setFormData(initialFormData);
+    resetFormData();
   };
 
   const handleReset = () => {
@@ -135,9 +188,13 @@ export default function IPDRegDialog({ open, onOpenChange }) {
     <Dialog open={open} onOpenChange={handleDialogClose}>
       <DialogContent className="max-w-[1000px] h-[60vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Register New IPD Patient</DialogTitle>
+          <DialogTitle>
+            {patientData ? "Admit IPD Patient" : "Register New IPD Patient"}
+          </DialogTitle>
           <DialogDescription>
-            Fill basic details of patient for new IPD registration
+            {patientData
+              ? "Fill details for patient Admission"
+              : "Fill basic details of patient for new IPD registration"}
           </DialogDescription>
         </DialogHeader>
         <form
@@ -213,6 +270,7 @@ export default function IPDRegDialog({ open, onOpenChange }) {
                   <div className="grid grid-cols-2 gap-4">
                     <Select
                       id="gender"
+                      value={formData.gender}
                       onValueChange={(value) =>
                         handleInputChange({ target: { id: "gender", value } })
                       }
@@ -497,10 +555,10 @@ export default function IPDRegDialog({ open, onOpenChange }) {
               {registerPatientStatus === "loading" ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Registering...
+                  {patientData ? "Readmitting..." : "Registering..."}
                 </>
               ) : (
-                "Register Patient"
+                patientData ? "Readmit Patient" : "Register Patient"
               )}
             </Button>
           </DialogFooter>

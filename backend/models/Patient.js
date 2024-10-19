@@ -22,7 +22,7 @@ const patientSchema = new mongoose.Schema(
     email: String,
     address: String,
     bloodType: String,
-   
+    
     admissionDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "ipdAdmission" },
     ],

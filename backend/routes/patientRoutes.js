@@ -872,4 +872,88 @@ router.post(
   }
 );
 
+// Add this route after the existing routes
+router.post(
+  "/:id/readmission",
+  verifyToken,
+  checkPermission("write:patients"),
+  async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const { id } = req.params;
+      const { admission, ...patientData } = req.body;
+  console.log(req.body)
+      const patient = await Patient.findById(id).session(session);
+      if (!patient) {
+        throw new Error("Patient not found");
+      }
+
+      // Update patient data if provided
+      if (Object.keys(patientData).length > 0) {
+        Object.assign(patient, patientData);
+        await patient.save({ session });
+      }
+
+      // Create new IPD admission
+      const newAdmission = new IPDAdmission({
+        patient: patient._id,
+        patientName: patient.name,
+        contactNumber: patient.contactNumber,
+        registrationNumber: patient.registrationNumber || null,
+        bookingDate: admission.bookingDate || new Date(),
+        reasonForAdmission: admission.reasonForAdmission || "Not specified",
+        assignedDoctor: admission.assignedDoctor || null,
+        assignedRoom: admission.assignedRoom || null,
+        assignedBed: admission.assignedBed || null,
+        diagnosis: admission.diagnosis || null,
+        conditionOnAdmission: admission.conditionOnAdmission || null,
+        department: admission.department || null,
+        timeSlot: admission.timeSlot || null,
+        vitals: admission.vitals || null,
+        comorbidities: admission.comorbidities || [],
+      });
+
+      await newAdmission.save({ session });
+
+      // Update patient's admissionDetails array
+      patient.admissionDetails.push(newAdmission._id);
+      patient.patientType = "IPD";
+      await patient.save({ session });
+
+      // If a room and bed are assigned, update their status
+      if (admission.assignedRoom && admission.assignedBed) {
+        const room = await Room.findById(admission.assignedRoom).session(session);
+        if (room) {
+          const bedIndex = room.beds.findIndex(
+            (bed) => bed._id.toString() === admission.assignedBed.toString()
+          );
+          if (bedIndex !== -1) {
+            room.beds[bedIndex].status = "Occupied";
+            room.beds[bedIndex].currentPatient = patient._id;
+            room.currentOccupancy += 1;
+            await room.save({ session });
+          }
+        }
+      }
+
+      await session.commitTransaction();
+      session.endSession();
+
+      res.status(201).json({
+        message: "Readmission recorded successfully",
+        patient: patient,
+        admission: newAdmission,
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      res.status(400).json({ error: error.message });
+    }
+  }
+);
+
+// ... remaining code ...
+
 export default router;

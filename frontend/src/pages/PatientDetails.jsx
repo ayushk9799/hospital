@@ -98,9 +98,9 @@ export default function PatientDetails() {
           data: admission,
         })),
       ].sort((a, b) => new Date(b.date) - new Date(a.date));
-
+console.log(allDates);
       if (allDates.length > 0) {
-        setSelectedVisit(allDates[0].date);
+        setSelectedVisit(allDates[0]);
         setActiveTab(
           allDates[0].data.reasonForVisit
             ? "reason"
@@ -141,22 +141,22 @@ export default function PatientDetails() {
   ].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const selectedItem = selectedVisit
-    ? allDates.find((item) => item.date === selectedVisit)
+    ? allDates.find((item) => item.date === selectedVisit.date && item.type === selectedVisit.type)
     : null;
+    console.log(selectedItem);
 
   const renderVisitDetails = () => {
     if (!selectedVisit || !patientDetails) return null;
 
     const visitData =
-      patientDetails.visits?.find((v) => v.bookingDate === selectedVisit) ||
+      patientDetails.visits?.find((v) => v.bookingDate === selectedVisit?.date) ||
       patientDetails.admissionDetails?.find(
-        (a) => a.bookingDate === selectedVisit
+        (a) => a.bookingDate === selectedVisit?.date
       );
 
     if (!visitData) return null;
 
     const isIPD = selectedItem?.type === "admission" ? true : false;
-
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground mb-4">
@@ -519,13 +519,13 @@ export default function PatientDetails() {
         <div className="flex flex-wrap gap-2 mb-4">
           {allDates.map((item) => (
             <Button
-              key={item.date}
-              variant={selectedVisit === item.date ? "default" : "outline"}
+              key={item}
+              variant={selectedVisit?.date === item.date && item.type === selectedVisit?.type ? "default" : "outline"}
               size="sm"
               className={`${
-                selectedVisit === item.date ? "ring-2 ring-primary" : ""
+                selectedVisit?.date === item.date && item.type === selectedVisit?.type ? "ring-2 ring-primary" : ""
               }`}
-              onClick={() => setSelectedVisit(item.date)}
+              onClick={() => setSelectedVisit(item)}
             >
               <span className="mr-1">
                 {format(new Date(item.date), "dd MMM yyyy")}
