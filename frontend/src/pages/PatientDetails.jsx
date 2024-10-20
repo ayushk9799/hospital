@@ -43,6 +43,7 @@ import {
   TabsTrigger,
 } from "../components/ui/tabs";
 import { useToast } from "../hooks/use-toast";
+import { cn } from "../lib/utils";
 
 // Move VitalItem component definition here
 const VitalItem = ({ icon, label, value, unit }) => (
@@ -98,7 +99,6 @@ export default function PatientDetails() {
           data: admission,
         })),
       ].sort((a, b) => new Date(b.date) - new Date(a.date));
-console.log(allDates);
       if (allDates.length > 0) {
         setSelectedVisit(allDates[0]);
         setActiveTab(
@@ -159,29 +159,34 @@ console.log(allDates);
     const isIPD = selectedItem?.type === "admission" ? true : false;
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground mb-4">
-          <TabsTrigger value="reason" className="px-3">
-            Reason
-          </TabsTrigger>
-          <TabsTrigger value="diagnosis" className="px-3">
-            Diagnosis
-          </TabsTrigger>
-          <TabsTrigger value="treatment" className="px-3">
-            Treatment
-          </TabsTrigger>
-          <TabsTrigger value="medications" className="px-3">
-            Medications
-          </TabsTrigger>
-          <TabsTrigger value="labTests" className="px-3">
-            Lab Tests
-          </TabsTrigger>
-          <TabsTrigger value="vitals" className="px-3">
-            Vitals
-          </TabsTrigger>
-          <TabsTrigger value="labReports" className="px-3">
-            Lab Reports
-          </TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto scrollbar-hide">
+          <TabsList className={cn(
+            "inline-flex h-9 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground mb-4",
+            "w-max min-w-full"
+          )}>
+            <TabsTrigger value="reason" className="px-3">
+              Reason
+            </TabsTrigger>
+            <TabsTrigger value="diagnosis" className="px-3">
+              Diagnosis
+            </TabsTrigger>
+            <TabsTrigger value="treatment" className="px-3">
+              Treatment
+            </TabsTrigger>
+            <TabsTrigger value="medications" className="px-3">
+              Medications
+            </TabsTrigger>
+            <TabsTrigger value="labTests" className="px-3">
+              Lab Tests
+            </TabsTrigger>
+            <TabsTrigger value="vitals" className="px-3">
+              Vitals
+            </TabsTrigger>
+            <TabsTrigger value="labReports" className="px-3">
+              Lab Reports
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="reason">
           <Card>
@@ -472,7 +477,6 @@ console.log(allDates);
         <CardContent className="grid md:grid-cols-3 gap-4 p-3">
           <div className="flex items-center space-x-3">
             <Avatar className="h-14 w-14 ring-2 ring-primary ring-offset-2">
-              {/* <AvatarImage src="/placeholder.svg" alt={patientDetails.name} /> */}
               <AvatarFallback >{patientDetails.name.charAt(0).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div>

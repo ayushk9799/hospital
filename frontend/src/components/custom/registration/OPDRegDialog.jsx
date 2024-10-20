@@ -42,6 +42,7 @@ import { Label } from "../../ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { Checkbox } from "../../ui/checkbox";
 import { FloatingLabelSelect } from "./PatientInfoForm";
+import { useMediaQuery } from "../../../hooks/use-media-query";
 
 const initialFormData = {
   name: "",
@@ -92,6 +93,7 @@ const initialFormData = {
 const initialErrors = {};
 
 export default function OPDRegDialog({ open, onOpenChange, patientData }) {
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const dispatch = useDispatch();
   const { toast } = useToast();
   const registerPatientStatus = useSelector(
@@ -377,24 +379,24 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [open]);
 
   return (
-    <Dialog open={open} onOpenChange={(ev)=>{handleDialogClose(ev)}}>
+    <Dialog open={open} onOpenChange={(ev)=>{handleDialogClose(ev)}} >
       <DialogContent
         className={
           isOldPatient
             ? "max-w-[800px] h-[30vh] overflow-y-hidden"
-            : "max-w-[1000px] min-h-[70vh] max-h-[80vh] overflow-y-auto"
+            : "md:max-w-[1000px] md:min-h-[70vh] md:max-h-[80vh] overflow-y-auto w-[95vw] p-4 md:p-6 gap-0 md:gap-4 rounded-lg"
         }
       >
-        <DialogHeader>
-          <DialogTitle>Patient Registration</DialogTitle>
-          <DialogDescription>
+        <DialogHeader >
+          <DialogTitle className="mb-2 md:mb-0">Patient Registration</DialogTitle>
+          <DialogDescription className="hidden md:block">
             {isOldPatient
               ? "Search for existing patient"
               : "Register new patient"}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className={isOldPatient?"h-[30vh]":"h-[calc(70vh-100px)]"}>
-          <div className="space-y-4 mb-4">
+        <form onSubmit={handleSubmit} className={`${isOldPatient ? "h-[30vh]" : "h-[calc(70vh-100px)]"} ${isMobile ? "mb-8" : ""}`}>
+          <div className="space-y-4 mb-2">
             <div className="flex items-center space-x-2">
               <Switch
                 id="patient-type"
@@ -472,12 +474,14 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           {!isOldPatient && (
             <Tabs defaultValue="basic-info" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="basic-info">Basic Information</TabsTrigger>
+                <TabsTrigger value="basic-info">
+                  {isMobile ? "Basic" : "Basic Information"}
+                </TabsTrigger>
                 <TabsTrigger value="vitals">Vitals</TabsTrigger>
                 <TabsTrigger value="insurance">Insurance</TabsTrigger>
               </TabsList>
               <TabsContent value="basic-info">
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <PatientInfoForm
                     formData={formData}
                     handleInputChange={handleInputChange}
@@ -490,8 +494,8 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                     handleSelectChange={handleSelectChange}
                     errors={errors}
                   />
-                  <div className="grid grid-cols-3 col-span-3 gap-4">
-                    <div className="flex-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 col-span-1 sm:col-span-2 lg:col-span-3 gap-4">
+                    <div className="flex-1 hidden sm:block">
                       <Textarea
                         id="visit.reasonForVisit"
                         placeholder="Reason for Visit"
@@ -506,7 +510,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                         placeholder="Address: 123 Main St, Anytown USA"
                         value={formData.address}
                         onChange={handleInputChange}
-                        className="h-[80px]"
+                        className="h-[50px] md:h-[80px]"
                       />
                     </div>
                     <div className="flex flex-col gap-2">
@@ -546,7 +550,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                 </div>
               </TabsContent>
               <TabsContent value="vitals">
-               <div className="grid grid-cols-3 gap-4">
+               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                <VitalsForm
                   formData={formData}
                   handleSelectChange={handleSelectChange}
@@ -565,46 +569,56 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           )}
 
           {!isOldPatient && (
-            <DialogFooter className="mt-4">
-              <Button type="button" variant="outline" onClick={handleReset}>
-                Reset
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleDialogClose}
-              >
-                Cancel
-              </Button>
-              {formData.followUp && (
+            <DialogFooter className={`mt-4 ${isMobile ? "mb-8" : ""}`}>
+              <div className="w-full flex flex-row justify-between sm:justify-end sm:space-x-2 space-x-1">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={handleReset} 
+                  className="flex-1 sm:flex-none text-xs sm:text-sm px-2 sm:px-4"
+                >
+                  Reset
+                </Button>
                 <Button
                   type="button"
-                  onClick={handleFollowUp}
-                  disabled={registerPatientStatus === "loading"}
+                  variant="outline"
+                  onClick={handleDialogClose}
+                  className="flex-1 sm:flex-none text-xs sm:text-sm px-2 sm:px-4"
+                >
+                  Cancel
+                </Button>
+                {formData.followUp && (
+                  <Button
+                    type="button"
+                    onClick={handleFollowUp}
+                    disabled={registerPatientStatus === "loading"}
+                    className="flex-1 sm:flex-none text-xs sm:text-sm px-2 sm:px-4"
+                  >
+                    {registerPatientStatus === "loading" ? (
+                      <>
+                        <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      "Follow-up"
+                    )}
+                  </Button>
+                )}
+                <Button
+                  type="submit"
+                  disabled={registerPatientStatus === "loading" || formData.followUp}
+                  className="flex-1 sm:flex-none text-xs sm:text-sm px-2 sm:px-4"
                 >
                   {registerPatientStatus === "loading" ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Processing...
+                      <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                      Registering...
                     </>
                   ) : (
-                    "Follow-up"
+                    "Register"
                   )}
                 </Button>
-              )}
-              <Button
-                type="submit"
-                disabled={registerPatientStatus === "loading" || formData.followUp}
-              >
-                {registerPatientStatus === "loading" ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Registering...
-                  </>
-                ) : (
-                  "Register"
-                )}
-              </Button>
+              </div>
             </DialogFooter>
           )}
         </form>

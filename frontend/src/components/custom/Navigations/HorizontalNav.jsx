@@ -224,8 +224,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="ml-2 sm:ml-3 flex items-center justify-end ">
-              <Avatar className="h-6 w-6 sm:h-10 sm:w-10">
-                <AvatarImage src="/placeholder.svg?height=24&width=24" alt="User" />
+              <Avatar className="h-6 w-6 ring-2 ring-primary ring-offset-2 md:ring-0 md:ring-offset-0">
                 <AvatarFallback>{(user?.name?.charAt(0))?.toUpperCase()}</AvatarFallback>
               </Avatar>
               <span className="text-sm capitalize ml-2 hidden lg:inline">{user?.name}</span>

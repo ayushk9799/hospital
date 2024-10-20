@@ -7,6 +7,7 @@ import {
   SelectItem,
   SelectContent,
 } from "../../ui/select";
+import { useMediaQuery } from "../../../hooks/use-media-query";
 
 // Updated FloatingLabelSelect component
 export const FloatingLabelSelect = ({ id, label, value, onValueChange, error, children }) => {
@@ -56,6 +57,8 @@ export default function PatientInfoForm({
   handleSelectChange,
   errors,
 }) {
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
   const handleDobChange = useCallback(
     (e) => {
       const dateOfBirth = e.target.value;
@@ -79,7 +82,7 @@ export default function PatientInfoForm({
 
   return (
     <>
-    <MemoizedInput
+      <MemoizedInput
         id="name"
         label="Full Name"
         value={formData.name}
@@ -87,56 +90,98 @@ export default function PatientInfoForm({
         error={errors.name}
       />
 
-      <MemoizedInput
-        id="registrationNumber"
-        label="Registration Number"
-        value={formData.registrationNumber}
-        onChange={handleInputChange}
-        error={errors.registrationNumber}
-      />
-    
-     
-
-      <div className="flex flex-col gap-2">
-        
-        <div className="flex items-end gap-4">
-          <div className="flex-grow relative">
-            <MemoizedInput
-              id="dateOfBirth"
-              label="Date of Birth"
-              type="date"
-              value={formData.dateOfBirth}
-              onChange={handleDobChange}
-              
-            />
-          </div>
-          <div className="w-30 relative">
-            <MemoizedInput
-              id="age"
-              label="Age"
-              type="number"
-              value={formData.age}
-              onChange={handleAgeChange}
-              error={errors.age}
-            />
-          </div>
+      <div className={`${isMobile ? 'flex gap-2' : ''}`}>
+        <div className={isMobile ? 'w-1/2' : 'w-full'}>
+          <MemoizedInput
+            id="registrationNumber"
+            label="Registration Number"
+            value={formData.registrationNumber}
+            onChange={handleInputChange}
+            error={errors.registrationNumber}
+          />
         </div>
-       
+        {isMobile && (
+          <div className="w-1/2">
+            <MemoizedInput
+              type="date"
+              id="visit.bookingDate"
+              label="Booking Date"
+              value={formData.visit.bookingDate}
+              onChange={handleInputChange}
+              error={errors["visit.bookingDate"]}
+            />
+          </div>
+        )}
       </div>
-
-      <FloatingLabelSelect
-        id="gender"
-        label="Gender"
-        value={formData.gender}
-        onValueChange={(value) => handleSelectChange("gender", value)}
-        error={errors.gender}
-      >
-        {["Male", "Female", "Other"].map((gender) => (
-          <SelectItem key={gender} value={gender}>
-            {gender}
-          </SelectItem>
-        ))}
-      </FloatingLabelSelect>
+    
+      {isMobile ? (
+        <>
+          <div className="flex gap-2">
+            <div className="w-1/2">
+              <FloatingLabelSelect
+                id="gender"
+                label="Gender"
+                value={formData.gender}
+                onValueChange={(value) => handleSelectChange("gender", value)}
+                error={errors.gender}
+              >
+                {["Male", "Female", "Other"].map((gender) => (
+                  <SelectItem key={gender} value={gender}>
+                    {gender}
+                  </SelectItem>
+                ))}
+              </FloatingLabelSelect>
+            </div>
+            <div className="w-1/2">
+              <MemoizedInput
+                id="age"
+                label="Age"
+                type="number"
+                value={formData.age}
+                onChange={handleAgeChange}
+                error={errors.age}
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="flex items-end gap-4">
+            <div className="w-full sm:w-30 relative">
+              <MemoizedInput
+                id="age"
+                label="Age"
+                type="number"
+                value={formData.age}
+                onChange={handleAgeChange}
+                error={errors.age}
+              />
+            </div>
+            <div className="flex-grow relative hidden sm:block">
+              <MemoizedInput
+                id="dateOfBirth"
+                label="Date of Birth"
+                type="date"
+                value={formData.dateOfBirth}
+                onChange={handleDobChange}
+              />
+            </div>
+          </div>
+          <FloatingLabelSelect
+            id="gender"
+            label="Gender"
+            value={formData.gender}
+            onValueChange={(value) => handleSelectChange("gender", value)}
+            error={errors.gender}
+          >
+            {["Male", "Female", "Other"].map((gender) => (
+              <SelectItem key={gender} value={gender}>
+                {gender}
+              </SelectItem>
+            ))}
+          </FloatingLabelSelect>
+        </>
+      )}
 
       <MemoizedInput
         id="contactNumber"
@@ -147,28 +192,32 @@ export default function PatientInfoForm({
         error={errors.contactNumber}
       />
 
-      <MemoizedInput
-        id="email"
-        label="Email"
-        type="email"
-        value={formData.email}
-        onChange={handleInputChange}
-        error={errors.email}
-      />
+      <div className="hidden sm:block">
+        <MemoizedInput
+          id="email"
+          label="Email"
+          type="email"
+          value={formData.email}
+          onChange={handleInputChange}
+          error={errors.email}
+        />
+      </div>
 
-      <FloatingLabelSelect
-        id="bloodType"
-        label="Blood Type"
-        value={formData.bloodType}
-        onValueChange={(value) => handleSelectChange("bloodType", value)}
-        error={errors.bloodType}
-      >
-        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type) => (
-          <SelectItem key={type} value={type}>
-            {type}
-          </SelectItem>
-        ))}
-      </FloatingLabelSelect>
+      <div className="hidden sm:block">
+        <FloatingLabelSelect
+          id="bloodType"
+          label="Blood Type"
+          value={formData.bloodType}
+          onValueChange={(value) => handleSelectChange("bloodType", value)}
+          error={errors.bloodType}
+        >
+          {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map((type) => (
+            <SelectItem key={type} value={type}>
+              {type}
+            </SelectItem>
+          ))}
+        </FloatingLabelSelect>
+      </div>
     </>
   );
 }

@@ -38,6 +38,11 @@ import {
   Calendar as CalendarIcon,
   X,
   UserX,
+  Phone,
+  Clock,
+  BedDouble,
+  User,
+  MoreVertical,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
@@ -60,7 +65,7 @@ export default function Patients() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [dateFilter, setDateFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("Today");
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [activeTab, setActiveTab] = useState("OPD");
@@ -293,63 +298,62 @@ useEffect(()=>{
   const PatientCard = ({ patient }) => (
     <Card className="mb-4 hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <div className="flex justify-between items-stretch">
-          <div className="flex-grow">
-            <div className="flex items-center mb-1">
-              <h3 className="text-lg font-semibold capitalize">{patient.patient.name}</h3>
-              <Badge variant="outline" className="ml-2 text-xs">
-                {patient.type}
-              </Badge>
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center flex-grow">
+              <span className="text-sm font-semibold text-primary mr-2">
+                #{patient.bookingNumber}
+              </span>
+              <h3 className="text-lg font-semibold capitalize">
+                {patient.patient.name}
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  ({patient.type})
+                </span>
+              </h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-2">Booking Number: {patient.bookingNumber}</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              <div className='flex gap-2 items-center'>
-                <p className="text-sm text-muted-foreground">Date:</p>
-                <p className="font-medium">{format(new Date(patient.bookingDate), "dd-MM-yyyy")}</p>
-              </div>
-              <div className='flex gap-2 items-center'>
-                <p className="text-sm text-muted-foreground">Doctor:</p>
-                <p className="font-medium">{patient.doctor?.name || "--"}</p>
-              </div>
-              <div className='flex gap-2 items-center'>
-                <p className="text-sm text-muted-foreground">Mobile:</p>
-                <p className="font-medium">{patient.patient.contactNumber}</p>
-              </div>
-              <div className='flex gap-2 items-center'>
-                <p className="text-sm text-muted-foreground">Gender:</p>
-                <p className="font-medium">{patient.patient.gender}</p>
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => navigate(`/patients/${patient.patient._id}`)}>
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExistingBills(patient)}>
+                  Existing Bill
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => createServiceBill(patient)}>
+                  Create New Bill
+                </DropdownMenuItem>
+                {patient.type === "IPD" && (
+                  <DropdownMenuItem onClick={() => handleDischarge(patient)}>
+                    {patient.status === "Discharged" ? "View Discharge Summary" : "Discharge Patient"}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          <div className="flex flex-col justify-between items-end ml-4">
-            <Badge variant={patient.type === "IPD" ? "secondary" : "primary"}>
-              {patient.type}
-            </Badge>
-            <div className="flex-grow flex items-center">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => navigate(`/patients/${patient.patient._id}`)}>
-                    View Details
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExistingBills(patient)}>
-                    Existing Bill
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => createServiceBill(patient)}>
-                    Create New Bill
-                  </DropdownMenuItem>
-                  {patient.type === "IPD" && (
-                    <DropdownMenuItem onClick={() => handleDischarge(patient)}>
-                      {patient.status === "Discharged" ? "View Discharge Summary" : "Discharge Patient"}
-                    </DropdownMenuItem>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+            <div className="flex items-center">
+              <CalendarIcon className="h-4 w-4 text-muted-foreground mr-2" />
+              <span className="text-sm">{format(new Date(patient.bookingDate), "dd MMM yyyy")}</span>
             </div>
+            <div className="flex items-center">
+              <Phone className="h-4 w-4 text-muted-foreground mr-2" />
+              <span className="text-sm">{patient.patient.contactNumber}</span>
+            </div>
+            <div className="flex items-center">
+              <User className="h-4 w-4 text-muted-foreground mr-2" />
+              <span className="text-sm capitalize">{patient.patient.gender}</span>
+            </div>
+            {patient.type === "IPD" && (
+              <div className="flex items-center">
+                <BedDouble className="h-4 w-4 text-muted-foreground mr-2" />
+                <span className="text-sm">{patient.assignedRoom?.roomNumber || "Not assigned"}</span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>
@@ -357,7 +361,7 @@ useEffect(()=>{
   )
 
   return (
-    <Card className="w-full">
+    <Card className="w-full border-none shadow-none">
       <CardHeader>
         <div className="flex justify-between items-center">
           <div>
@@ -365,13 +369,21 @@ useEffect(()=>{
             <CardDescription>Manage and view patient information</CardDescription>
           </div>
           {isSmallScreen && (
-            <Button variant="outline" size="icon" onClick={() => setIsDialogOpen(true)}>
-              <UserPlus className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon">
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>OPD</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsIPDDialogOpen(true)}>IPD</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className='px-4'>
         <OPDRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
         <IPDRegDialog open={isIPDDialogOpen} onOpenChange={setIsIPDDialogOpen} />
         <Tabs defaultValue="OPD" className="w-full" onValueChange={setActiveTab}>
@@ -539,22 +551,42 @@ useEffect(()=>{
           </div>
           <TabsContent value="OPD">
             {isSmallScreen ? (
-              <div>
-                {filteredPatients.filter((p) => p.type === "OPD").map((patient) => (
-                  <PatientCard key={patient._id} patient={patient} />
-                ))}
-              </div>
+              filteredPatients.filter((p) => p.type === "OPD").length > 0 ? (
+                <div>
+                  {filteredPatients.filter((p) => p.type === "OPD").map((patient) => (
+                    <PatientCard key={patient._id} patient={patient} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <UserX className="h-16 w-16 text-gray-400 mb-4" />
+                  <p className="text-xl font-semibold text-gray-600">
+                    No OPD patients found
+                  </p>
+                  <p className="text-gray-500">Try adjusting your search or filters</p>
+                </div>
+              )
             ) : (
               <PatientTable patients={filteredPatients.filter((p) => p.type === "OPD")} type="OPD" />
             )}
           </TabsContent>
           <TabsContent value="IPD">
             {isSmallScreen ? (
-              <div>
-                {filteredPatients.filter((p) => p.type === "IPD").map((patient) => (
-                  <PatientCard key={patient._id} patient={patient} />
-                ))}
-              </div>
+              filteredPatients.filter((p) => p.type === "IPD").length > 0 ? (
+                <div>
+                  {filteredPatients.filter((p) => p.type === "IPD").map((patient) => (
+                    <PatientCard key={patient._id} patient={patient} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12">
+                  <UserX className="h-16 w-16 text-gray-400 mb-4" />
+                  <p className="text-xl font-semibold text-gray-600">
+                    No IPD patients found
+                  </p>
+                  <p className="text-gray-500">Try adjusting your search or filters</p>
+                </div>
+              )
             ) : (
               <PatientTable patients={filteredPatients.filter((p) => p.type === "IPD")} type="IPD" />
             )}

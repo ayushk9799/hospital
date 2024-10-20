@@ -8,7 +8,8 @@ import {
   FileDown,
   Eye,
   Calendar as CalendarIcon,
-  FileX
+  FileX,
+  Filter
 } from "lucide-react";
 import {
   Card,
@@ -45,6 +46,8 @@ import {
 import { Calendar } from "../components/ui/calendar";
 import { cn } from "../lib/utils";
 import ViewBillDialog from "../components/custom/pharmacy/reports/ViewBillDialog";
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { motion, AnimatePresence } from "framer-motion";
 
 const PharmacyAllBills = () => {
   const dispatch = useDispatch();
@@ -57,6 +60,9 @@ const PharmacyAllBills = () => {
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [selectedBill, setSelectedBill] = useState(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
+  const isMediumScreen = useMediaQuery("(max-width: 1024px)");
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   useEffect(() => {
     if (salesBillsStatus === 'idle') {
@@ -126,6 +132,43 @@ const PharmacyAllBills = () => {
     setDateFilter('All');
   };
 
+  const BillCard = ({ bill }) => (
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold">{`#B${bill._id.slice(-6)}`}</h3>
+            <Badge variant={bill?.amountPaid === bill?.totalAmount ? "success" : "destructive"}>
+              {bill?.amountPaid === bill?.totalAmount ? "Paid" : "Due"}
+            </Badge>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+            <div className="flex items-center">
+              <span className="text-sm font-semibold capitalize">{bill.patientInfo.name}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm">₹{bill.totalAmount.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm">{format(new Date(bill.createdAt), "MMM dd, hh:mm a")}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm">{bill?.payment?.paymentMethod || "__"}</span>
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleViewBill(bill)}
+            className="w-full mt-2"
+          >
+            <Eye className="h-3 w-3 mr-2" /> View Details
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <Card className="w-full mx-auto">
       <CardHeader>
@@ -133,42 +176,98 @@ const PharmacyAllBills = () => {
         <CardDescription>View and manage all pharmacy bills</CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex justify-between items-center mb-4 space-x-2">
-          <div className="flex items-center space-x-2">
-            <div className="relative w-full sm:w-64">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search bills..."
-                value={searchTerm}
-                onChange={handleSearch}
-                className="pl-8"
-              />
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  <CalendarIcon className="mr-2 h-4 w-4" /> 
-                  {dateFilter === 'All' ? 'All Time' : dateFilter}
+        <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-4 space-y-2 md:space-y-0">
+          <div className="flex flex-col space-y-2 md:flex-row md:items-center md:space-x-2 md:space-y-0">
+            <div className="flex w-full space-x-2">
+              <div className="relative flex-grow">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search bills..."
+                  value={searchTerm}
+                  onChange={handleSearch}
+                  className="pl-8 w-full"
+                />
+              </div>
+              {isSmallScreen && (
+                <Button
+                  variant="outline"
+                  className="shrink-0"
+                  onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+                >
+                  <Filter className="h-4 w-4" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-[200px]">
-                <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {dateFilter === 'Custom' && (
-              <DateRangePicker
-                from={tempDateRange.from}
-                to={tempDateRange.to}
-                onSelect={(range) => setTempDateRange(range)}
-                onSearch={handleDateRangeSearch}
-                onCancel={handleDateRangeCancel}
-              />
+              )}
+            </div>
+            {isSmallScreen ? (
+              <AnimatePresence>
+                {isFilterExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="overflow-hidden w-full"
+                  >
+                    <div className="pt-2 space-y-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {dateFilter === 'All' ? 'All Time' : dateFilter}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start" className="w-[200px]">
+                          <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
+                          <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {dateFilter === 'Custom' && (
+                        <DateRangePicker
+                          from={tempDateRange.from}
+                          to={tempDateRange.to}
+                          onSelect={(range) => setTempDateRange(range)}
+                          onSearch={handleDateRangeSearch}
+                          onCancel={handleDateRangeCancel}
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            ) : (
+              <>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {dateFilter === 'All' ? 'All Time' : dateFilter}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onSelect={() => setDateFilter('Today')}>Today</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('Yesterday')}>Yesterday</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('This Week')}>This Week</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('All')}>All Time</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setDateFilter('Custom')}>Custom Range</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                {dateFilter === 'Custom' && (
+                  <DateRangePicker
+                    from={tempDateRange.from}
+                    to={tempDateRange.to}
+                    onSelect={(range) => setTempDateRange(range)}
+                    onSearch={handleDateRangeSearch}
+                    onCancel={handleDateRangeCancel}
+                  />
+                )}
+              </>
             )}
           </div>
           {/* <Button variant="outline">
@@ -177,46 +276,56 @@ const PharmacyAllBills = () => {
         </div>
         {filteredBills.length > 0 ? (
           <>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Bill No</TableHead>
-                  <TableHead>Customer</TableHead>
-                  <TableHead>Date & Time</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Method</TableHead>
-                  <TableHead>Action</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+            {isSmallScreen ? (
+              <div>
                 {paginatedBills.map((bill) => (
-                  <TableRow key={bill._id}>
-                    <TableCell>{`#B${bill._id.slice(-6)}`}</TableCell>
-                    <TableCell className='capitalize'>{bill.patientInfo.name}</TableCell>
-                    <TableCell>
-                      {format(new Date(bill.createdAt), "MMM dd, hh:mm a")}
-                    </TableCell>
-                    <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
-                    <TableCell>
-                      <Badge variant={bill?.amountPaid === bill?.totalAmount ? "success" : "destructive"}>
-                        {bill?.amountPaid === bill?.totalAmount ? "Paid" : "Due"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{bill?.payment?.paymentMethod || "__"}</TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleViewBill(bill)}
-                      >
-                        <Eye className="h-3 w-3 mr-2" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <BillCard key={bill._id} bill={bill} />
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Bill No</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Date & Time</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Method</TableHead>
+                      <TableHead>Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {paginatedBills.map((bill) => (
+                      <TableRow key={bill._id}>
+                        <TableCell>{`#B${bill._id.slice(-6)}`}</TableCell>
+                        <TableCell className='capitalize'>{bill.patientInfo.name}</TableCell>
+                        <TableCell>
+                          {format(new Date(bill.createdAt), "MMM dd, hh:mm a")}
+                        </TableCell>
+                        <TableCell>₹{bill.totalAmount.toFixed(2)}</TableCell>
+                        <TableCell>
+                          <Badge variant={bill?.amountPaid === bill?.totalAmount ? "success" : "destructive"}>
+                            {bill?.amountPaid === bill?.totalAmount ? "Paid" : "Due"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{bill?.payment?.paymentMethod || "__"}</TableCell>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleViewBill(bill)}
+                          >
+                            <Eye className="h-3 w-3 mr-2" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
             <div className="flex justify-between items-center mt-3">
               <p className="text-sm text-muted-foreground">
                 Showing {Math.min((currentPage - 1) * billsPerPage + 1, filteredBills.length)} to{" "}
@@ -230,7 +339,7 @@ const PharmacyAllBills = () => {
                   disabled={currentPage === 1}
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
+                  {!isSmallScreen && "Previous"}
                 </Button>
                 <Button
                   variant="outline"
@@ -238,7 +347,7 @@ const PharmacyAllBills = () => {
                   onClick={() => handlePageChange("next")}
                   disabled={currentPage === totalPages}
                 >
-                  Next
+                  {!isSmallScreen && "Next"}
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

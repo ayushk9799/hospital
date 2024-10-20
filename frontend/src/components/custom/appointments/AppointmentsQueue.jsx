@@ -76,7 +76,8 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
         <TabsList className="h-20 grid grid-cols-3 gap-2">
           <TabsTrigger value="all">
             <div className="flex flex-col justify-between items-center py-1 gap-1">
-              <span>All Bookings</span>
+              <span className="hidden lg:block">All Bookings</span>
+              <span className="lg:hidden">All</span>
               <span className="bg-blue-500 text-white rounded-lg w-10 h-6 flex items-center justify-center">
                 {patientlist.length}
               </span>

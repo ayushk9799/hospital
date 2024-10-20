@@ -94,7 +94,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent onOpenChange={setIsOpen} className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <div 
           ref={componentRef}
           className={isPrinting ? 'print-content' : ''}
