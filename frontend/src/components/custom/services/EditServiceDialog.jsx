@@ -57,7 +57,7 @@ export default function EditServiceDialog({ isOpen, onClose, service }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] max-w-[95vw]">
+      <DialogContent className="sm:max-w-[425px] max-w-[95vw] rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-xl sm:text-2xl">Edit Service</DialogTitle>
           <DialogDescription className="text-sm sm:text-base">

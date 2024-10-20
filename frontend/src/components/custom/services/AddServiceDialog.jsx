@@ -52,7 +52,7 @@ export default function AddServiceDialog({ isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px] max-w-[90vw]">
+      <DialogContent className="sm:max-w-[425px] max-w-[90vw] rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-lg sm:text-xl">Add New Service</DialogTitle>
           <DialogDescription className="text-sm sm:text-base">

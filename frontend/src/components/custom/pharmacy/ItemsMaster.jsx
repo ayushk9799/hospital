@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { format } from "date-fns";
 import { fetchItems, deleteInventoryItem } from "../../../redux/slices/pharmacySlice";
-import { Search, ChevronLeft, ChevronRight, Pencil, Trash, FileDown, Plus, ListFilter, PackageX, ChevronDown, Filter } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, Pencil, Trash, FileDown, Plus, ListFilter, PackageX, ChevronDown, Filter, MoreVertical, Package } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../../ui/card";
 import { Input } from "../../ui/input";
 import { Button } from "../../ui/button";
@@ -133,49 +133,20 @@ export default function ItemsMaster() {
   const ItemCard = ({ item }) => (
     <Card className="mb-4 hover:shadow-md transition-shadow">
       <CardContent className="p-4">
-        <div className="flex justify-between items-stretch">
-          <div className="flex-grow">
-            <div className="flex items-center mb-1">
-              <h3 className="text-lg font-semibold capitalize">{item.name}</h3>
-              <Badge variant="outline" className="ml-2 text-xs">
-                {item.type}
-              </Badge>
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <div className="flex items-center flex-grow">
+              <h3 className="text-lg font-semibold capitalize">
+                {item.name}
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  ({item.type})
+                </span>
+              </h3>
             </div>
-            <p className="text-sm text-muted-foreground mb-2">Supplier: {item?.supplier?.name || "-"}</p>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-              <div className='flex gap-2 items-center'>
-                <p className="text-sm text-muted-foreground">CP:</p>
-                <p className="font-medium">₹{item.CP.toFixed(2)}</p>
-              </div>
-              <div className='flex gap-2 items-center'>
-                <p className="text-sm text-muted-foreground">MRP:</p>
-                <p className="font-medium">₹{item.MRP.toFixed(2)}</p>
-              </div>
-              <div className='flex gap-2 items-center'>
-                <p className="text-sm text-muted-foreground">Stock:</p>
-                <Badge
-                  variant={
-                    item.quantity <= 100
-                      ? "destructive"
-                      : item.quantity <= 200
-                      ? "secondary"
-                      : "success"
-                  }
-                >
-                  {item.quantity}
-                </Badge>
-              </div>
-              <div className='flex gap-2 items-center'>
-                <p className="text-sm text-muted-foreground">Expiry:</p>
-                <p className="font-medium">{item.expiryDate ? format(new Date(item.expiryDate), 'MMM, yyyy') : "-"}</p>
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col justify-between items-end ml-4">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <ChevronDown className="h-4 w-4" />
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -183,6 +154,25 @@ export default function ItemsMaster() {
                 <DropdownMenuItem className="text-red-600" onClick={() => handleDelete(item)}>Delete</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+            <div className="flex items-center">
+              <Package className="h-4 w-4 text-muted-foreground mr-2" />
+              <span className="text-sm">Stock: {item.quantity}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm font-semibold">MRP: ₹{item.MRP.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm">CP: ₹{item.CP.toFixed(2)}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm">Expiry: {item.expiryDate ? format(new Date(item.expiryDate), 'MMM, yyyy') : "-"}</span>
+            </div>
+          </div>
+          <div className="flex items-center">
+            <span className="text-sm text-muted-foreground mr-2">Supplier:</span>
+            <span className="text-sm capitalize">{item?.supplier?.name || "-"}</span>
           </div>
         </div>
       </CardContent>
@@ -370,33 +360,27 @@ export default function ItemsMaster() {
       <EditItemDialog isOpen={isEditItemDialogOpen} onClose={handleCloseEditItemDialog} item={itemToEdit} />
       <AddItemDialog isOpen={isAddItemDialogOpen} onClose={handleCloseAddItemDialog} />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-lg w-[95vw]">
           <AlertDialogHeader>
             <AlertDialogTitle>Delete {itemToDelete?.name}?</AlertDialogTitle>
-            <AlertDialogDescription className="">
-              This will permanently delete the item from your inventory.
+            <AlertDialogDescription>
+              This will permanently delete the item from your inventory. This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="">
-            <p className="text-sm mb-1">Please type <span className="font-semibold">{itemToDelete?.name}</span> to permanently delete the item.</p>
-            <Input
-              placeholder="Type item name"
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-            />
-          </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deleteConfirmation !== itemToDelete?.name || deleteInventoryItemStatus === "loading"}
+              disabled={deleteInventoryItemStatus === "loading"}
             >
-              {deleteInventoryItemStatus === "loading" ? (<>
+              {deleteInventoryItemStatus === "loading" ? (
+                <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Deleting...
-              </>) : (
-              "Delete"
-            )}
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

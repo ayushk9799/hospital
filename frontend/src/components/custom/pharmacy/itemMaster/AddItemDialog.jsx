@@ -71,7 +71,7 @@ export default function AddItemDialog({ isOpen, onClose }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[800px]">
+      <DialogContent className="max-w-[800px] w-[90vw] rounded-lg overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add New Item</DialogTitle>
           <DialogDescription>
@@ -79,7 +79,7 @@ export default function AddItemDialog({ isOpen, onClose }) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); handleAddItem(); }}>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 md:gap-4 gap-1">
             <div>
               <Label htmlFor="name">Item Name</Label>
               <Input id="name" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required />
@@ -119,21 +119,21 @@ export default function AddItemDialog({ isOpen, onClose }) {
                 onChange={(e) => setExpiryDate(e.target.value)}
               />
             </div>
-            <div>
+            <div className="hidden sm:block">
               <Label htmlFor="supplierName">Supplier Name</Label> {/* New field for supplier name */}
               <Input id="supplierName" placeholder="Supplier Name" value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
             </div>
-            <div>
+            <div className="hidden sm:block">
               <Label htmlFor="supplierPhone">Supplier Phone</Label>
               <Input id="supplierPhone" placeholder="Supplier Phone" value={supplierPhone} onChange={(e) => setSupplierPhone(e.target.value)} />
             </div>
-            <div>
+            <div className="hidden sm:block">
               <Label htmlFor="supplierAddress">Supplier Address</Label>
               <Input id="supplierAddress" placeholder="Supplier Address" value={supplierAddress} onChange={(e) => setSupplierAddress(e.target.value)} />
             </div>
           </div>
-          <DialogFooter className="mt-4">
-            <Button type="button" size="sm" variant="outline" onClick={handleReset}>Reset</Button>
+          <DialogFooter className="mt-4 flex-col-reverse sm:flex-row gap-2">
+            <Button className="hidden md:block" type="button" size="sm" variant="outline" onClick={handleReset}>Reset</Button>
             <Button type="button" size="sm" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit" size="sm" disabled={createInventoryItemStatus === "loading"}>
               {createInventoryItemStatus === "loading" ? "Adding..." : "Add Item"}

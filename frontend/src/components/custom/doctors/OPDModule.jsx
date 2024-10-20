@@ -18,6 +18,7 @@ import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
 import MultiSelectInput from "../MultiSelectInput";
 import { Separator } from "../../ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 
 // Flatten the lab categories
 const allLabTests = labCategories.flatMap((category) =>
@@ -212,9 +213,10 @@ export default function OPDModule({ patient }) {
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center border-b border-gray-300 pb-2">
-        <h2 className="text-xl font-bold">Prescription for: {patient.patient.name} </h2>
-        <div className="space-x-2">
-          <Button className="font-semibold" size="sm" variant="outline" onClick={() => setShowPDFPreview(true)}>
+        <h2 className="text-xl font-bold hidden lg:block">Prescription for: {patient.patient.name} </h2>
+        <h2 className="text-md font-bold lg:hidden">{patient.patient.name} </h2>
+        <div className="space-x-2 flex">
+          <Button className="font-semibold hidden lg:block" size="sm" variant="outline" onClick={() => setShowPDFPreview(true)}>
             Preview PDF
           </Button>
           <Button className="font-semibold" size="sm" disabled={prescriptionUpdateStatus === "loading"} onClick={handleSavePrescription}>
@@ -222,192 +224,400 @@ export default function OPDModule({ patient }) {
           </Button>
         </div>
       </div>
-      {/* <Separator className="mt-0" /> */}
-      <ScrollArea className="h-[calc(100vh-125px)] pr-4 ">
-        <div className=" px-1 bg-gray-50">
-          <h3 className="text-lg font-semibold">Vitals</h3>
-          <div className="grid grid-cols-4 gap-3">
-            <div>
-              <Label htmlFor="temperature" className="text-xs font-semibold">Temperature (°C)</Label>
-              <Input id="temperature" name="temperature" value={vitals.temperature} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
-            </div>
-            <div>
-              <Label htmlFor="heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
-              <Input id="heartRate" name="heartRate" value={vitals.heartRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
-            </div>
-            <div>
-              <Label htmlFor="bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
-              <Input id="bloodPressure" name="bloodPressure" value={vitals.bloodPressure} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
-            </div>
-            <div>
-              <Label htmlFor="respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
-              <Input id="respiratoryRate" name="respiratoryRate" value={vitals.respiratoryRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
-            </div>
-            <div>
-              <Label htmlFor="height" className="text-xs font-semibold">Height (cm)</Label>
-              <Input id="height" name="height" value={vitals.height} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
-            </div>
-            <div>
-              <Label htmlFor="weight" className="text-xs font-semibold">Weight (kg)</Label>
-              <Input id="weight" name="weight" value={vitals.weight} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
-            </div>
-            <div>
-              <Label htmlFor="bmi" className="text-xs font-semibold">BMI</Label>
-              <Input id="bmi" name="bmi" value={vitals.bmi} readOnly className="h-8 text-sm font-medium bg-gray-100" />
-            </div>
-            <div>
-              <Label htmlFor="oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
-              <Input id="oxygenSaturation" name="oxygenSaturation" value={vitals.oxygenSaturation} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
-            </div>
-          </div>
-        </div>
-        <div className="pt-4 p-1 bg-gray-50 ">
-          <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
-              <Textarea 
-                id="diagnosis" 
-                name="diagnosis" 
-                value={prescription.diagnosis} 
-                onChange={handlePrescriptionChange} 
-                placeholder="Enter patient's diagnosis" 
-                className="min-h-[100px] text-sm font-medium" 
-              />
-            </div>
-            <div>
-              <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
-              <Textarea 
-                id="treatment" 
-                name="treatment" 
-                value={prescription.treatment} 
-                onChange={handlePrescriptionChange} 
-                placeholder="Enter recommended treatment" 
-                className="min-h-[100px] text-sm font-medium" 
-              />
-            </div>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 px-1 gap-4 bg-gray-50">
-          <div className="pt-2 bg-gray-50">
-            <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
-            <div className="space-y-2">
-              <div className="flex gap-2">
-                <MultiSelectInput
-                  suggestions={allLabTests}
-                  selectedValues={selectedLabTests}
-                  setSelectedValues={handleLabTestsChange}
-                  placeholder="Select lab tests"
-                />
+      <ScrollArea className="h-[calc(100vh-125px)] md:pr-4">
+        <Tabs defaultValue="vitals" className="w-full lg:hidden">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="vitals">Vitals</TabsTrigger>
+            <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
+            <TabsTrigger value="tests">Tests</TabsTrigger>
+            <TabsTrigger className="px-2" value="medications">Medications</TabsTrigger>
+          </TabsList>
+          <TabsContent value="vitals">
+            <div className="px-1 bg-gray-50">
+              <h3 className="text-lg font-semibold">Vitals</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div>
+                  <Label htmlFor="temperature" className="text-xs font-semibold">Temperature (°C)</Label>
+                  <Input id="temperature" name="temperature" value={vitals.temperature} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                </div>
+                <div>
+                  <Label htmlFor="heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
+                  <Input id="heartRate" name="heartRate" value={vitals.heartRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                </div>
+                <div>
+                  <Label htmlFor="bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
+                  <Input id="bloodPressure" name="bloodPressure" value={vitals.bloodPressure} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                </div>
+                <div>
+                  <Label htmlFor="respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
+                  <Input id="respiratoryRate" name="respiratoryRate" value={vitals.respiratoryRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                </div>
+                <div>
+                  <Label htmlFor="height" className="text-xs font-semibold">Height (cm)</Label>
+                  <Input id="height" name="height" value={vitals.height} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                </div>
+                <div>
+                  <Label htmlFor="weight" className="text-xs font-semibold">Weight (kg)</Label>
+                  <Input id="weight" name="weight" value={vitals.weight} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                </div>
+                <div>
+                  <Label htmlFor="bmi" className="text-xs font-semibold">BMI</Label>
+                  <Input id="bmi" name="bmi" value={vitals.bmi} readOnly className="h-8 text-sm font-medium bg-gray-100" />
+                </div>
+                <div>
+                  <Label htmlFor="oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
+                  <Input id="oxygenSaturation" name="oxygenSaturation" value={vitals.oxygenSaturation} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                </div>
               </div>
-              <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                {selectedLabTests.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {selectedLabTests.map((test, index) => (
-                      <Badge
-                        key={index}
-                        variant="primary"
-                        className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
-                      >
-                        {test.name}
-                        <X
-                          className="ml-1 h-3 w-3 cursor-pointer"
-                          onClick={() => handleRemoveLabTest(test.name)}
-                        />
-                      </Badge>
-                    ))}
+            </div>
+          </TabsContent>
+          <TabsContent value="diagnosis">
+            <div className="pt-4 p-1 bg-gray-50">
+              <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
+                  <Textarea 
+                    id="diagnosis" 
+                    name="diagnosis" 
+                    value={prescription.diagnosis} 
+                    onChange={handlePrescriptionChange} 
+                    placeholder="Enter patient's diagnosis" 
+                    className="min-h-[100px] text-sm font-medium" 
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
+                  <Textarea 
+                    id="treatment" 
+                    name="treatment" 
+                    value={prescription.treatment} 
+                    onChange={handlePrescriptionChange} 
+                    placeholder="Enter recommended treatment" 
+                    className="min-h-[100px] text-sm font-medium" 
+                  />
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+          <TabsContent value="tests">
+            <div className="grid grid-cols-1 px-1 gap-4 bg-gray-50">
+              <div className="pt-2 bg-gray-50">
+                <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <MultiSelectInput
+                      suggestions={allLabTests}
+                      selectedValues={selectedLabTests}
+                      setSelectedValues={handleLabTestsChange}
+                      placeholder="Select lab tests"
+                    />
                   </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">No lab tests selected</p>
-                )}
+                  <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                    {selectedLabTests.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedLabTests.map((test, index) => (
+                          <Badge
+                            key={index}
+                            variant="primary"
+                            className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                          >
+                            {test.name}
+                            <X
+                              className="ml-1 h-3 w-3 cursor-pointer"
+                              onClick={() => handleRemoveLabTest(test.name)}
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">No lab tests selected</p>
+                    )}
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div className="pt-2 bg-gray-50">
-            <h3 className="text-lg font-semibold">Comorbidities</h3>
-            <div className=" space-y-2">
-              <div className="flex gap-2">
-                <MultiSelectInput
-                  suggestions={comorbidities.map(name => ({ name }))}
-                  selectedValues={selectedComorbidities}
-                  setSelectedValues={handleComorbiditiesChange}
-                  placeholder="Select comorbidities"
-                />
-              </div>
-              <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                {selectedComorbidities.length > 0 ? (
-                  <div className="flex flex-wrap gap-1">
-                    {selectedComorbidities.map((comorbidity, index) => (
-                      <Badge
-                        key={index}
-                        variant="primary"
-                        className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
-                      >
-                        {comorbidity.name}
-                        <X
-                          className="ml-1 h-3 w-3 cursor-pointer"
-                          onClick={() => handleRemoveComorbidity(comorbidity.name)}
-                        />
-                      </Badge>
-                    ))}
+              <div className="pt-2 bg-gray-50">
+                <h3 className="text-lg font-semibold">Comorbidities</h3>
+                <div className=" space-y-2">
+                  <div className="flex gap-2">
+                    <MultiSelectInput
+                      suggestions={comorbidities.map(name => ({ name }))}
+                      selectedValues={selectedComorbidities}
+                      setSelectedValues={handleComorbiditiesChange}
+                      placeholder="Select comorbidities"
+                    />
                   </div>
-                ) : (
-                  <p className="text-gray-500 text-sm">No comorbidities selected</p>
-                )}
+                  <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                    {selectedComorbidities.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedComorbidities.map((comorbidity, index) => (
+                          <Badge
+                            key={index}
+                            variant="primary"
+                            className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
+                          >
+                            {comorbidity.name}
+                            <X
+                              className="ml-1 h-3 w-3 cursor-pointer"
+                              onClick={() => handleRemoveComorbidity(comorbidity.name)}
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">No comorbidities selected</p>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-        <div className="pt-4 px-1 bg-gray-50">
-          <h3 className="text-lg font-semibold">Medications</h3>
-          <div>
-            {prescription.medications?.map((medication, index) => (
-              <div key={index} className="grid grid-cols-4 gap-2 mb-2">
-                <SearchSuggestion
-                  suggestions={commonMedications}
-                  placeholder="Select medicine"
-                  value={medication.name}
-                  setValue={(value) => handleMedicationChange(index, "name", value)}
-                  onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
-                />
-                <Input
-                  placeholder="0-0-0"
-                  value={medication.frequency}
-                  onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
-                  className="font-medium"
-                />
-                <Input
-                  placeholder="Duration"
-                  value={medication.duration}
-                  onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
-                  className="font-medium"
-                />
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => removeMedication(index)}
-                  disabled={prescription.medications.length === 1}
-                >
-                  <Trash2 className="h-4 w-4" />
+          </TabsContent>
+          <TabsContent value="medications">
+            <div className="pt-0 px-1 bg-gray-50">
+              <h3 className="text-lg font-semibold mb-2">Medications</h3>
+              <div className="space-y-4">
+                {prescription.medications?.map((medication, index) => (
+                  <div key={index} className="bg-white p-3 rounded-md shadow-sm">
+                    <div className="grid grid-cols-1 gap-2 mb-2">
+                      <SearchSuggestion
+                        suggestions={commonMedications}
+                        placeholder="Select medicine"
+                        value={medication.name}
+                        setValue={(value) => handleMedicationChange(index, "name", value)}
+                        onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+                      />
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          placeholder="Frequency (e.g., 1-0-1)"
+                          value={medication.frequency}
+                          onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                          className="font-medium"
+                        />
+                        <Input
+                          placeholder="Duration"
+                          value={medication.duration}
+                          onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                          className="font-medium"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => removeMedication(index)}
+                      disabled={prescription.medications.length === 1}
+                      className="w-full mt-2"
+                    >
+                      <Trash2 className="h-4 w-4 mr-2" /> Remove
+                    </Button>
+                  </div>
+                ))}
+                <Button onClick={addMedication} variant="outline" className="w-full font-semibold">
+                  <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
                 </Button>
               </div>
-            ))}
-            <Button onClick={addMedication} variant="outline" className="mt-2 font-semibold">
-              <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
-            </Button>
+              <div className="space-y-2 pt-6">
+                <h3 className="text-lg font-semibold">Additional Instructions</h3>
+                <Textarea
+                  id="additionalInstructions"
+                  name="additionalInstructions"
+                  value={prescription.additionalInstructions}
+                  onChange={handlePrescriptionChange}
+                  placeholder="Any additional instructions or notes"
+                  className="min-h-[100px] text-sm font-medium"
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+
+        <div className="hidden lg:block">
+          <div className="px-1 bg-gray-50">
+            <h3 className="text-lg font-semibold">Vitals</h3>
+            <div className="grid grid-cols-4 gap-3">
+              <div>
+                <Label htmlFor="temperature" className="text-xs font-semibold">Temperature (°F)</Label>
+                <Input id="temperature" name="temperature" value={vitals.temperature} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+              </div>
+              <div>
+                <Label htmlFor="heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
+                <Input id="heartRate" name="heartRate" value={vitals.heartRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+              </div>
+              <div>
+                <Label htmlFor="bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
+                <Input id="bloodPressure" name="bloodPressure" value={vitals.bloodPressure} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+              </div>
+              <div>
+                <Label htmlFor="respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
+                <Input id="respiratoryRate" name="respiratoryRate" value={vitals.respiratoryRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+              </div>
+              <div>
+                <Label htmlFor="height" className="text-xs font-semibold">Height (cm)</Label>
+                <Input id="height" name="height" value={vitals.height} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+              </div>
+              <div>
+                <Label htmlFor="weight" className="text-xs font-semibold">Weight (kg)</Label>
+                <Input id="weight" name="weight" value={vitals.weight} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+              </div>
+              <div>
+                <Label htmlFor="bmi" className="text-xs font-semibold">BMI</Label>
+                <Input id="bmi" name="bmi" value={vitals.bmi} readOnly className="h-8 text-sm font-medium bg-gray-100" />
+              </div>
+              <div>
+                <Label htmlFor="oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
+                <Input id="oxygenSaturation" name="oxygenSaturation" value={vitals.oxygenSaturation} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="space-y-2 px-1 pt-4 mb-4 bg-gray-50">
-          <h3 className="text-lg font-semibold">Additional Instructions</h3>
-          <Textarea
-            id="additionalInstructions"
-            name="additionalInstructions"
-            value={prescription.additionalInstructions}
-            onChange={handlePrescriptionChange}
-            placeholder="Any additional instructions or notes"
-            className="min-h-[100px] text-sm font-medium"
-          />
+          <div className="pt-4 p-1 bg-gray-50">
+            <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
+                <Textarea 
+                  id="diagnosis" 
+                  name="diagnosis" 
+                  value={prescription.diagnosis} 
+                  onChange={handlePrescriptionChange} 
+                  placeholder="Enter patient's diagnosis" 
+                  className="min-h-[100px] text-sm font-medium" 
+                />
+              </div>
+              <div>
+                <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
+                <Textarea 
+                  id="treatment" 
+                  name="treatment" 
+                  value={prescription.treatment} 
+                  onChange={handlePrescriptionChange} 
+                  placeholder="Enter recommended treatment" 
+                  className="min-h-[100px] text-sm font-medium" 
+                />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 px-1 gap-4 bg-gray-50">
+            <div className="pt-2 bg-gray-50">
+              <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <MultiSelectInput
+                    suggestions={allLabTests}
+                    selectedValues={selectedLabTests}
+                    setSelectedValues={handleLabTestsChange}
+                    placeholder="Select lab tests"
+                  />
+                </div>
+                <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                  {selectedLabTests.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {selectedLabTests.map((test, index) => (
+                        <Badge
+                          key={index}
+                          variant="primary"
+                          className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
+                        >
+                          {test.name}
+                          <X
+                            className="ml-1 h-3 w-3 cursor-pointer"
+                            onClick={() => handleRemoveLabTest(test.name)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No lab tests selected</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 bg-gray-50">
+              <h3 className="text-lg font-semibold">Comorbidities</h3>
+              <div className=" space-y-2">
+                <div className="flex gap-2">
+                  <MultiSelectInput
+                    suggestions={comorbidities.map(name => ({ name }))}
+                    selectedValues={selectedComorbidities}
+                    setSelectedValues={handleComorbiditiesChange}
+                    placeholder="Select comorbidities"
+                  />
+                </div>
+                <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                  {selectedComorbidities.length > 0 ? (
+                    <div className="flex flex-wrap gap-1">
+                      {selectedComorbidities.map((comorbidity, index) => (
+                        <Badge
+                          key={index}
+                          variant="primary"
+                          className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
+                        >
+                          {comorbidity.name}
+                          <X
+                            className="ml-1 h-3 w-3 cursor-pointer"
+                            onClick={() => handleRemoveComorbidity(comorbidity.name)}
+                          />
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-sm">No comorbidities selected</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="pt-4 px-1 bg-gray-50">
+            <h3 className="text-lg font-semibold">Medications</h3>
+            <div>
+              {prescription.medications?.map((medication, index) => (
+                <div key={index} className="grid grid-cols-4 gap-2 mb-2">
+                  <SearchSuggestion
+                    suggestions={commonMedications}
+                    placeholder="Select medicine"
+                    value={medication.name}
+                    setValue={(value) => handleMedicationChange(index, "name", value)}
+                    onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+                  />
+                  <Input
+                    placeholder="0-0-0"
+                    value={medication.frequency}
+                    onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                    className="font-medium"
+                  />
+                  <Input
+                    placeholder="Duration"
+                    value={medication.duration}
+                    onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                    className="font-medium"
+                  />
+                  <Button
+                    variant="destructive"
+                    size="icon"
+                    onClick={() => removeMedication(index)}
+                    disabled={prescription.medications.length === 1}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
+              <Button onClick={addMedication} variant="outline" className="mt-2 font-semibold">
+                <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2 px-1 pt-4 mb-4 bg-gray-50">
+            <h3 className="text-lg font-semibold">Additional Instructions</h3>
+            <Textarea
+              id="additionalInstructions"
+              name="additionalInstructions"
+              value={prescription.additionalInstructions}
+              onChange={handlePrescriptionChange}
+              placeholder="Any additional instructions or notes"
+              className="min-h-[100px] text-sm font-medium"
+            />
+          </div>
         </div>
       </ScrollArea>
       {showPDFPreview && (

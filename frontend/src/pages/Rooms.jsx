@@ -75,7 +75,7 @@ export default function RoomManagementDashboard() {
           <Info className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[95vw] max-w-[800px] max-h-[90vh]">
+      <DialogContent className="sm:max-w-[425px] max-w-[90vw] rounded-lg">
         <DialogHeader>
           <DialogTitle>Bed Details - Room {room.roomNumber}</DialogTitle>
           <DialogDescription>

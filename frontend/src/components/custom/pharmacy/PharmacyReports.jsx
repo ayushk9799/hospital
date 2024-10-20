@@ -9,6 +9,7 @@ import {
   Download,
   TrendingUp,
   FileX,
+  Package,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "../../ui/card";
 import {
@@ -36,6 +37,7 @@ import {
   differenceInDays,
 } from "date-fns";
 import { Badge } from "../../ui/badge"; // Add this import
+import { useMediaQuery } from "../../../hooks/useMediaQuery";
 
 const topSellingArray = [
   {
@@ -82,6 +84,7 @@ const PharmacyReports = () => {
     (state) => state.pharmacy
   );
   const { hospitalInfo } = useSelector((state) => state.hospital);
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
 
   useEffect(() => {
     if (salesBillsStatus === "idle") {
@@ -135,6 +138,74 @@ const PharmacyReports = () => {
     } else {
       return { status: "OK", variant: "default", daysLeft };
     }
+  };
+
+  const LowStockItemCard = ({ item }) => (
+    <Card className="mb-4 hover:shadow-md transition-shadow">
+      <CardContent className="p-4">
+        <div className="flex flex-col">
+          <div className="flex justify-between items-center mb-2">
+            <h3 className="text-lg font-semibold capitalize">
+              {item.name}
+              <span className="text-sm font-normal text-muted-foreground ml-2">
+                ({item.type})
+              </span>
+            </h3>
+          </div>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+            <div className="flex items-center">
+              <Package className="h-4 w-4 text-muted-foreground mr-2" />
+              <span className="text-sm">Stock: {item.quantity}</span>
+            </div>
+            <div className="flex items-center">
+              <span className="text-sm capitalize">Supplier: {item?.supplier?.name || "—"}</span>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const ExpiringItemCard = ({ item }) => {
+    const { status, variant, daysLeft } = getExpiryStatus(item.expiryDate);
+    return (
+      <Card className="mb-4 hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex flex-col">
+            <div className="flex justify-between items-center mb-2">
+              <h3 className="text-lg font-semibold capitalize">
+                {item.name}
+                <span className="text-sm font-normal text-muted-foreground ml-2">
+                  ({item.type})
+                </span>
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+              <div className="flex items-center">
+                <Package className="h-4 w-4 text-muted-foreground mr-2" />
+                <span className="text-sm">Stock: {item.quantity}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-sm capitalize">Supplier: {item?.supplier?.name || "—"}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-sm">
+                  Expiry: {item.expiryDate ? format(new Date(item.expiryDate), 'MMM dd, yyyy') : "—"}
+                </span>
+              </div>
+              <div className="flex items-center">
+                {status && (
+                  <Badge variant={variant}>
+                    {status}
+                    {status === "Expiring Soon" && ` (${daysLeft} ${daysLeft === 1 ? "day" : "days"})`}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
   };
 
   return (
@@ -222,79 +293,82 @@ const PharmacyReports = () => {
           <TabsList className="grid w-full lg:w-1/3 grid-cols-3 sm:grid-cols-3 mb-4">
             <TabsTrigger value="expiring">Expiring Items</TabsTrigger>
             <TabsTrigger value="lowstock">Low Stock</TabsTrigger>
-            <TabsTrigger value="bills" >Recent Bills</TabsTrigger>
+            <TabsTrigger value="bills">Recent Bills</TabsTrigger>
           </TabsList>
           <TabsContent value="expiring">
             <Card>
               <CardHeader>
                 <CardTitle>Items Expiring Soon</CardTitle>
               </CardHeader>
-              <CardContent className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="whitespace-nowrap">Item Name</TableHead>
-                      <TableHead className="whitespace-nowrap">Type</TableHead>
-                      <TableHead className="whitespace-nowrap">Supplier</TableHead>
-                      <TableHead className="whitespace-nowrap">Expiry Date</TableHead>
-                      <TableHead className="whitespace-nowrap">Quantity</TableHead>
-                      <TableHead className="whitespace-nowrap">Status</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <CardContent className="overflow-x-auto px-4">
+                {isSmallScreen ? (
+                  <div>
                     {itemsExpiringInTwoMonths.length > 0 ? (
-                      itemsExpiringInTwoMonths.map((item, index) => {
-                        const { status, variant, daysLeft } = getExpiryStatus(
-                          item.expiryDate
-                        );
-                        return (
-                          <TableRow key={index}>
-                            <TableCell className="capitalize">
-                              {item.name}
-                            </TableCell>
-                            <TableCell>{item.type}</TableCell>
-                            <TableCell className="capitalize">
-                              {item?.supplier?.name || "——"}
-                            </TableCell>
-                            <TableCell>
-                              {item.expiryDate
-                                ? format(
-                                    new Date(item.expiryDate),
-                                    "MMM dd, yyyy"
-                                  )
-                                : "—"}
-                            </TableCell>
-                            <TableCell>{item.quantity}</TableCell>
-                            <TableCell>
-                              {status ? (
-                                <Badge variant={variant}>
-                                  {status}
-                                  {status === "Expiring Soon" &&
-                                    ` (${daysLeft} ${
-                                      daysLeft === 1 ? "day" : "days"
-                                    })`}
-                                </Badge>
-                              ) : (
-                                "—"
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })
+                      itemsExpiringInTwoMonths.map((item, index) => (
+                        <ExpiringItemCard key={index} item={item} />
+                      ))
                     ) : (
-                      <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
-                          <div className="flex flex-col items-center justify-center text-gray-500">
-                            <FileX className="w-8 h-8 mb-2" />
-                            <p className="font-semibold">
-                              No items expiring in the next 2 months
-                            </p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <div className="flex flex-col items-center justify-center text-gray-500 py-8">
+                        <FileX className="w-12 h-12 mb-2" />
+                        <p className="font-semibold text-center">
+                          No items expiring in the next 2 months
+                        </p>
+                      </div>
                     )}
-                  </TableBody>
-                </Table>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">Item Name</TableHead>
+                        <TableHead className="whitespace-nowrap">Type</TableHead>
+                        <TableHead className="whitespace-nowrap">Supplier</TableHead>
+                        <TableHead className="whitespace-nowrap">Expiry Date</TableHead>
+                        <TableHead className="whitespace-nowrap">Quantity</TableHead>
+                        <TableHead className="whitespace-nowrap">Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {itemsExpiringInTwoMonths.length > 0 ? (
+                        itemsExpiringInTwoMonths.map((item, index) => {
+                          const { status, variant, daysLeft } = getExpiryStatus(item.expiryDate);
+                          return (
+                            <TableRow key={index}>
+                              <TableCell className="capitalize">{item.name}</TableCell>
+                              <TableCell>{item.type}</TableCell>
+                              <TableCell className="capitalize">{item?.supplier?.name || "——"}</TableCell>
+                              <TableCell>
+                                {item.expiryDate ? format(new Date(item.expiryDate), "MMM dd, yyyy") : "—"}
+                              </TableCell>
+                              <TableCell>{item.quantity}</TableCell>
+                              <TableCell>
+                                {status ? (
+                                  <Badge variant={variant}>
+                                    {status}
+                                    {status === "Expiring Soon" && ` (${daysLeft} ${daysLeft === 1 ? "day" : "days"})`}
+                                  </Badge>
+                                ) : (
+                                  "—"
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={6} className="h-24 text-center">
+                            <div className="flex flex-col items-center justify-center text-gray-500">
+                              <FileX className="w-8 h-8 mb-2" />
+                              <p className="font-semibold">
+                                No items expiring in the next 2 months
+                              </p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
@@ -303,51 +377,68 @@ const PharmacyReports = () => {
               <CardHeader>
                 <CardTitle>Low Stock Items</CardTitle>
               </CardHeader>
-              <CardContent className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="whitespace-nowrap">Item Name</TableHead>
-                      <TableHead className="whitespace-nowrap">Type</TableHead>
-                      <TableHead className="whitespace-nowrap">Supplier</TableHead>
-                      <TableHead className="whitespace-nowrap">Current Stock</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+              <CardContent className="overflow-x-auto px-4">
+                {isSmallScreen ? (
+                  <div>
                     {lowStockItems.length > 0 ? (
                       lowStockItems.map((item, index) => (
-                        <TableRow key={index}>
-                          <TableCell className="capitalize">
-                            {item.name}
-                          </TableCell>
-                          <TableCell>{item?.type}</TableCell>
-                          <TableCell className="capitalize">
-                            {item?.supplier?.name || "—"}
-                          </TableCell>
-                          <TableCell>{item?.quantity}</TableCell>
-                        </TableRow>
+                        <LowStockItemCard key={index} item={item} />
                       ))
                     ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
-                          <div className="flex flex-col items-center justify-center text-gray-500">
-                            <FileX className="w-8 h-8 mb-2" />
-                            <p className="font-semibold">
-                              No low stock items available
-                            </p>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                      <div className="flex flex-col items-center justify-center text-gray-500 py-8">
+                        <FileX className="w-12 h-12 mb-2" />
+                        <p className="font-semibold text-center">
+                          No low stock items available
+                        </p>
+                      </div>
                     )}
-                  </TableBody>
-                </Table>
+                  </div>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="whitespace-nowrap">Item Name</TableHead>
+                        <TableHead className="whitespace-nowrap">Type</TableHead>
+                        <TableHead className="whitespace-nowrap">Supplier</TableHead>
+                        <TableHead className="whitespace-nowrap">Current Stock</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {lowStockItems.length > 0 ? (
+                        lowStockItems.map((item, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="capitalize">
+                              {item.name}
+                            </TableCell>
+                            <TableCell>{item?.type}</TableCell>
+                            <TableCell className="capitalize">
+                              {item?.supplier?.name || "—"}
+                            </TableCell>
+                            <TableCell>{item?.quantity}</TableCell>
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell colSpan={5} className="h-24 text-center">
+                            <div className="flex flex-col items-center justify-center text-gray-500">
+                              <FileX className="w-8 h-8 mb-2" />
+                              <p className="font-semibold">
+                                No low stock items available
+                              </p>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
           <TabsContent value="bills">
             <Card>
-              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-2 sm:space-y-0">
-                <CardTitle>Recent Bills Generated</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between space-y-2 sm:space-y-0 space-x-2">
+                <h1 className="text-lg font-semibold">Recent Bills Generated</h1>
                 <Button
                   variant="outline"
                   size="sm"
@@ -356,7 +447,7 @@ const PharmacyReports = () => {
                   View All
                 </Button>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4">
                 <BillsTableWithDialog bills={salesBills.slice(0, 5)} />
               </CardContent>
             </Card>

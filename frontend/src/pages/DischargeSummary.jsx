@@ -563,7 +563,7 @@ export default function DischargeSummary() {
             <h2 className="text-lg font-semibold mb-2 text-primary">
               Patient Information
             </h2>
-            <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
               <div className="flex items-center">
                 <Label htmlFor="name" className="w-24 font-bold">
                   Name:
@@ -730,8 +730,8 @@ export default function DischargeSummary() {
                 <Label htmlFor="investigations">Investigations</Label>
                 <div className="space-y-2 mt-2">
                   {formData.investigations.map((investigation, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <div className="w-1/2 flex items-center space-x-2">
+                    <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                      <div className="w-full sm:w-1/2 flex items-center space-x-2">
                         <SearchSuggestion
                           suggestions={allLabTests}
                           placeholder="Select investigation"
@@ -749,24 +749,26 @@ export default function DischargeSummary() {
                           </span>
                         )}
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleOpenLabReport(investigation)}
-                        aria-label="Open Lab Report"
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => handleRemoveInvestigation(index)}
-                        disabled={formData.investigations.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex space-x-2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleOpenLabReport(investigation)}
+                          aria-label="Open Lab Report"
+                        >
+                          <ChevronRight className="h-5 w-5" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="icon"
+                          onClick={() => handleRemoveInvestigation(index)}
+                          disabled={formData.investigations.length === 1}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                   <Button
@@ -797,7 +799,7 @@ export default function DischargeSummary() {
                 <Label htmlFor="medicineAdvice">Medicine/Advice</Label>
                 <div className="space-y-2 mt-2">
                   {formData.medicineAdvice.map((item, index) => (
-                    <div key={index} className="grid grid-cols-4 gap-2 mb-2">
+                    <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2">
                       <SearchSuggestion
                         suggestions={medicines.map((item) => ({
                           name: item.name,
@@ -858,14 +860,14 @@ export default function DischargeSummary() {
                 </div>
               </div>
 
-              <div className="flex justify-end mt-4 space-x-2">
-                <Button type="button" onClick={handlePreviewPDF}>
-                  Preview Discharge Summary
+              <div className="flex flex-col sm:flex-row justify-end mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
+                <Button type="button" variant="outline" onClick={handlePreviewPDF} className="w-full sm:w-auto">
+                  Preview
                 </Button>
-                <Button type="button" onClick={handleSave} variant="outline" disabled={savingStatus==="loading"}>
+                <Button type="button" onClick={handleSave} variant="outline" disabled={savingStatus==="loading"} className="w-full sm:w-auto">
                   {savingStatus==="loading"?"Saving...":"Save"}
                 </Button>
-                <Button type="submit" disabled={dischargeStatus === "loading"}>
+                <Button type="submit" disabled={dischargeStatus === "loading"} className="w-full sm:w-auto">
                   {dischargeStatus === "loading"
                     ? "Discharging..."
                     : "Discharge"}

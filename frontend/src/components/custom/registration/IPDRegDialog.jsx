@@ -34,6 +34,7 @@ import { Loader2 } from "lucide-react";
 import MemoizedInput from "./MemoizedInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { fetchBills } from "../../../redux/slices/BillingSlice";
+import { useMediaQuery } from "../../../hooks/use-media-query";
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const dispatch = useDispatch();
@@ -47,7 +48,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
- console.log(patientData)
+  const isMobile = useMediaQuery("(max-width: 640px)");
+
   // Function to reset form data
   const resetFormData = useCallback(() => {
     if (patientData) {
@@ -187,14 +189,23 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     setErrors({});
   };
 
+  useEffect(() => {
+    if (!open) {
+      setTimeout(()=>{
+       document.body.style=""
+      },500)
+    }
+  }, [open]);
+
+
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className="max-w-[1000px] h-[60vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className={` ${isMobile ? "w-[95vw] p-4 rounded-lg gap-0 " : "max-w-[1000px]"} h-[${isMobile ? "70vh" : "60vh"}] overflow-y-auto`}>
+        <DialogHeader className='mb-4 md:mb-0'>
+          <DialogTitle >
             {patientData ? "Admit IPD Patient" : "Register New IPD Patient"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className={isMobile ? "hidden" : ""}>
             {patientData
               ? "Fill details for patient Admission"
               : "Fill basic details of patient for new IPD registration"}
@@ -202,17 +213,19 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         </DialogHeader>
         <form
           onSubmit={handleSubmit}
-          className="space-y-4 h-[calc(60vh-115px)]"
+          className={`space-y-4 h-[calc(${isMobile ? "70vh" : "60vh"}-115px)]`}
         >
           <Tabs defaultValue="basic-info" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basic-info">Basic Information</TabsTrigger>
+            <TabsList className={`grid w-full ${isMobile ? "grid-cols-3" : "grid-cols-3"}`}>
+              <TabsTrigger value="basic-info">
+                {isMobile ? "Basic" : "Basic Information"}
+              </TabsTrigger>
               <TabsTrigger value="vitals">Vitals</TabsTrigger>
               <TabsTrigger value="insurance">Insurance</TabsTrigger>
             </TabsList>
 
             <TabsContent value="basic-info">
-              <div className="grid grid-cols-3 mt-4 gap-4">
+              <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} mt-4 gap-4`}>
                 <div className="space-y-4">
                   <MemoizedInput
                     id="name"
@@ -221,23 +234,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                     onChange={handleInputChange}
                     error={errors.name}
                   />
-                  <MemoizedInput
-                    id="registrationNumber"
-                    label="Registration Number"
-                    value={formData.registrationNumber}
-                    onChange={handleInputChange}
-                  />
-                  <div className="flex items-end gap-4">
-                    <div className="flex-grow relative">
-                      <MemoizedInput
-                        id="dateOfBirth"
-                        label="Date of Birth"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={handleDobChange}
-                      />
-                    </div>
-                    <div className="w-30 relative">
+                  {isMobile ? (
+                    <div className="grid grid-cols-2 gap-2">
                       <MemoizedInput
                         id="age"
                         label="Age"
@@ -246,8 +244,44 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         onChange={handleAgeChange}
                         error={errors.age}
                       />
+                      <MemoizedInput
+                        id="registrationNumber"
+                        label="Reg Number"
+                        value={formData.registrationNumber}
+                        onChange={handleInputChange}
+                      />
                     </div>
-                  </div>
+                  ) : (
+                    <>
+                      <MemoizedInput
+                        id="registrationNumber"
+                        label="Registration Number"
+                        value={formData.registrationNumber}
+                        onChange={handleInputChange}
+                      />
+                      <div className="flex items-end gap-4">
+                        <div className="flex-grow relative">
+                          <MemoizedInput
+                            id="dateOfBirth"
+                            label="Date of Birth"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={handleDobChange}
+                          />
+                        </div>
+                        <div className="w-30 relative">
+                          <MemoizedInput
+                            id="age"
+                            label="Age"
+                            type="number"
+                            value={formData.age}
+                            onChange={handleAgeChange}
+                            error={errors.age}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 <div className="space-y-4">
@@ -261,16 +295,18 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                       error={errors.contactNumber}
                     />
                   </div>
-                  <div>
-                    <MemoizedInput
-                      id="email"
-                      label="Email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  {!isMobile && (
+                    <div>
+                      <MemoizedInput
+                        id="email"
+                        label="Email"
+                        type="email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                  )}
+                  <div className={`grid grid-cols-2 gap-2`}>
                     <Select
                       id="gender"
                       value={formData.gender}
@@ -319,57 +355,104 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                 </div>
 
                 <div className="space-y-4">
-                  <Select
-                    id="admission.department"
-                    onValueChange={(value) =>
-                      handleInputChange({
-                        target: { id: "admission.department", value },
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept._id} value={dept._id}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors["admission.department"] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors["admission.department"]}
-                    </p>
-                  )}
+                  {isMobile ? (
+                    <>
+                      <div className={`grid grid-cols-2 gap-2`}>
+                        <Select
+                          id="admission.department"
+                          onValueChange={(value) =>
+                            handleInputChange({
+                              target: { id: "admission.department", value },
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Department" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {departments.map((dept) => (
+                              <SelectItem key={dept._id} value={dept._id}>
+                                {dept.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Select
+                          id="admission.assignedDoctor"
+                          onValueChange={(value) =>
+                            handleInputChange({
+                              target: { id: "admission.assignedDoctor", value },
+                            })
+                          }
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Assigned Doctor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {doctors.map((doctor) => (
+                              <SelectItem key={doctor._id} value={doctor._id}>
+                                {doctor.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <Select
+                        id="admission.department"
+                        onValueChange={(value) =>
+                          handleInputChange({
+                            target: { id: "admission.department", value },
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {departments.map((dept) => (
+                            <SelectItem key={dept._id} value={dept._id}>
+                              {dept.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {errors["admission.department"] && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors["admission.department"]}
+                        </p>
+                      )}
 
-                  <Select
-                    id="admission.assignedDoctor"
-                    onValueChange={(value) =>
-                      handleInputChange({
-                        target: { id: "admission.assignedDoctor", value },
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Assigned Doctor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {doctors.map((doctor) => (
-                        <SelectItem key={doctor._id} value={doctor._id}>
-                          {doctor.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                      <Select
+                        id="admission.assignedDoctor"
+                        onValueChange={(value) =>
+                          handleInputChange({
+                            target: { id: "admission.assignedDoctor", value },
+                          })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Assigned Doctor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {doctors.map((doctor) => (
+                            <SelectItem key={doctor._id} value={doctor._id}>
+                              {doctor.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </>
+                  )}
                   {errors["admission.assignedDoctor"] && (
                     <p className="text-red-500 text-xs mt-1">
                       {errors["admission.assignedDoctor"]}
                     </p>
                   )}
 
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className={`grid grid-cols-2 gap-2`}>
                     <Select
                       id="admission.assignedRoom"
                       onValueChange={(value) => {
@@ -446,7 +529,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
             <TabsContent value="vitals">
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-4`}>
                   <Textarea
                     id="admission.diagnosis"
                     placeholder="Diagnosis"
@@ -482,7 +565,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                 </div>
 
                 <h4 className="font-semibold text-sm mt-4">Admission Vitals</h4>
-                <div className="grid grid-cols-3 gap-4">
+                <div className={`grid ${isMobile ? "grid-cols-2" : "grid-cols-3"} gap-4`}>
                   <Input
                     id="admission.vitals.admission.weight"
                     placeholder="Weight"
@@ -529,41 +612,51 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
               </div>
             </TabsContent>
 
-            <TabsContent value="insurance">
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <MemoizedInput
-                  id="admission.insuranceDetails.provider"
-                  label="Insurance Provider"
-                  value={formData.admission.insuranceDetails.provider}
-                  onChange={handleInputChange}
-                />
-                <MemoizedInput
-                  id="admission.insuranceDetails.policyNumber"
-                  label="Policy Number"
-                  value={formData.admission.insuranceDetails.policyNumber}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </TabsContent>
+            
+              <TabsContent value="insurance">
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <MemoizedInput
+                    id="admission.insuranceDetails.provider"
+                    label="Insurance Provider"
+                    value={formData.admission.insuranceDetails.provider}
+                    onChange={handleInputChange}
+                  />
+                  <MemoizedInput
+                    id="admission.insuranceDetails.policyNumber"
+                    label="Policy Number"
+                    value={formData.admission.insuranceDetails.policyNumber}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </TabsContent>
+          
           </Tabs>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleReset}>
-              Reset
-            </Button>
-            <Button
-              type="submit"
-              disabled={registerPatientStatus === "loading"}
-            >
-              {registerPatientStatus === "loading" ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {patientData ? "Readmitting..." : "Registering..."}
-                </>
-              ) : (
-                patientData ? "Readmit Patient" : "Register Patient"
-              )}
-            </Button>
+          <DialogFooter className={`mt-4 ${isMobile ? "mb-8" : ""}`}>
+            <div className={`w-full flex ${isMobile ? "flex-col-reverse" : "flex-row"} justify-between sm:justify-end sm:space-x-2 space-y-2 sm:space-y-0`}>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={handleReset}
+                className={`${isMobile ? "w-full mt-2" : ""}`}
+              >
+                Reset
+              </Button>
+              <Button
+                type="submit"
+                disabled={registerPatientStatus === "loading"}
+                className={`${isMobile ? "w-full" : ""}`}
+              >
+                {registerPatientStatus === "loading" ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {patientData ? "Readmitting..." : "Registering..."}
+                  </>
+                ) : (
+                  patientData ? "Readmit Patient" : "Register Patient"
+                )}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

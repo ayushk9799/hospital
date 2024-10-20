@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../../ui/select";
+import { useMediaQuery } from "../../../hooks/use-media-query";
 
 const hours = Array.from({ length: 12 }, (_, i) =>
   String(i + 1).padStart(2, "0")
@@ -23,6 +24,7 @@ export default function VisitDetailsForm({
   handleInputChange,
   errors,
 }) {
+  const isMobile = useMediaQuery("(max-width: 640px)");
   const doctors = useSelector((state) => state.staff.doctors);
   const departments = useSelector((state) => state.departments.departments);
 
@@ -74,7 +76,7 @@ export default function VisitDetailsForm({
 
   return (
     <>
-      <div className="relative">
+      <div className="relative hidden sm:block">
         <Select
           id="visit.department"
           onValueChange={(value) =>
@@ -94,7 +96,7 @@ export default function VisitDetailsForm({
         </Select>
       </div>
 
-      <div className="relative">
+      <div className="relative hidden sm:block">
         <Select
           id="visit.doctor"
           onValueChange={(value) => handleSelectChange("visit.doctor", value)}
@@ -112,32 +114,34 @@ export default function VisitDetailsForm({
         </Select>
       </div>
 
-      <div className="relative col-span-1">
-        <Input
-          type="date"
-          id="visit.bookingDate"
-          value={formData.visit.bookingDate}
-          onChange={handleInputChange}
-          className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
-            errors["visit.bookingDate"] ? "border-red-500" : "border-gray-300"
-          }`}
-        />
-        <Label
-          htmlFor="visit.bookingDate"
-          className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
-            errors["visit.bookingDate"] ? "text-red-500" : "text-gray-500"
-          }`}
-        >
-          Booking Date{" "}
-          {errors["visit.bookingDate"] && (
-            <span className="text-red-500 ml-1">*Required</span>
-          )}
-        </Label>
-      </div>
+      {!isMobile && (
+        <div className="relative col-span-1">
+          <Input
+            type="date"
+            id="visit.bookingDate"
+            value={formData.visit.bookingDate}
+            onChange={handleInputChange}
+            className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+              errors["visit.bookingDate"] ? "border-red-500" : "border-gray-300"
+            }`}
+          />
+          <Label
+            htmlFor="visit.bookingDate"
+            className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
+              errors["visit.bookingDate"] ? "text-red-500" : "text-gray-500"
+            }`}
+          >
+            Booking Date{" "}
+            {errors["visit.bookingDate"] && (
+              <span className="text-red-500 ml-1">*Required</span>
+            )}
+          </Label>
+        </div>
+      )}
 
-      <div className="grid grid-cols-4 items-center mb-2">
-        <Label>Start Time:</Label>
-        <div className="flex space-x-2 ">
+      <div className="grid-cols-1 sm:grid-cols-4 items-center mb-2 gap-2 hidden sm:grid">
+        <Label className="sm:col-span-1">Start Time:</Label>
+        <div className="flex space-x-2 sm:col-span-3">
           <Select
             value={startTime.hour}
             onValueChange={(value) => handleTimeChange("start", "hour", value)}
@@ -185,9 +189,9 @@ export default function VisitDetailsForm({
         </div>
       </div>
 
-      <div className="grid grid-cols-4 items-center gap-2 mb-2">
-        <Label>End Time:</Label>
-        <div className="flex space-x-2">
+      <div className="grid-cols-1 sm:grid-cols-4 items-center gap-2 mb-2 hidden sm:grid">
+        <Label className="sm:col-span-1">End Time:</Label>
+        <div className="flex space-x-2 sm:col-span-3">
           <Select
             value={endTime.hour}
             onValueChange={(value) => handleTimeChange("end", "hour", value)}

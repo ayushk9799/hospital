@@ -224,7 +224,7 @@ const Services = () => {
       <AddServiceDialog isOpen={isAddServiceDialogOpen} onClose={() => setIsAddServiceDialogOpen(false)} />
       <EditServiceDialog isOpen={isEditServiceDialogOpen} onClose={() => setIsEditServiceDialogOpen(false)} service={serviceToEdit} />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent className="max-w-[90vw] w-full sm:max-w-[425px]">
+        <AlertDialogContent className="max-w-[90vw] w-full sm:max-w-[425px] rounded-lg">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-lg sm:text-xl">Delete {serviceToDelete?.name}?</AlertDialogTitle>
             <AlertDialogDescription className="text-sm sm:text-base">

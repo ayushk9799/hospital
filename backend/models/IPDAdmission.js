@@ -7,17 +7,6 @@ const CounterSchema = new mongoose.Schema({
 CounterSchema.plugin(hospitalPlugin);
 const Counter = mongoose.model("IPDCounter", CounterSchema);
 
-function formatDate(date, number) {
-  const day = String(date.getDate()).padStart(2, "0");
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const year = date.getFullYear();
-
-  if (number === 1) {
-    return `${day}-${month}-${year}`;
-  } else {
-    return `${day}/${month}/${year % 100}`;
-  }
-}
 
 const ipdAdmissionSchema = new mongoose.Schema(
   {

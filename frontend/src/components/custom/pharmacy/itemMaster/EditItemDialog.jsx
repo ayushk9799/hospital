@@ -69,7 +69,7 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-[800px]">
+      <DialogContent className="sm:max-w-[600px] md:max-w-[800px] w-[95vw] rounded-lg">
         <DialogHeader>
           <DialogTitle>Edit Item</DialogTitle>
           <DialogDescription>
@@ -77,7 +77,7 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={(e) => { e.preventDefault(); handleEditItem(); }}>
-          <div className="grid grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <Label htmlFor="name">Item Name</Label>
               <Input id="name" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} />
@@ -117,21 +117,21 @@ export default function EditItemDialog({ isOpen, onClose, item }) {
                 onChange={(e) => setExpiryDate(e.target.value)} 
               />
             </div>
-            <div>
+            <div className="sm:col-span-2 md:col-span-3">
               <Label htmlFor="supplierName">Supplier Name</Label>
               <Input disabled id="supplierName" placeholder="Supplier Name" readOnly value={supplierName} onChange={(e) => setSupplierName(e.target.value)} />
             </div>
           </div>
-          <DialogFooter className="mt-4">
-            <Button type="button" size="sm" variant="outline" onClick={handleReset}>Reset</Button>
+          <DialogFooter className="mt-4 flex-col-reverse sm:flex-row gap-2">
+            <Button className="hidden md:block" type="button" size="sm" variant="outline" onClick={handleReset}>Reset</Button>
             <Button type="button" size="sm" variant="outline" onClick={onClose}>Cancel</Button>
             <Button type="submit" size="sm" disabled={updateInventoryStatus === "loading"}>
               {updateInventoryStatus === "loading" ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
                 "Save Changes"
               )}  
             </Button>

@@ -31,7 +31,7 @@ export default function PatientListDialog({ isOpen, setIsOpen, onPatientSelect }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className={`${isSmallScreen ? 'w-full' : 'max-w-3xl'} max-h-[90vh] flex flex-col`}>
+      <DialogContent className={`${isSmallScreen ? 'w-[95vw]' : 'max-w-3xl'} max-h-[90vh] flex flex-col rounded-lg`}>
         <DialogHeader>
           <DialogTitle>Patient List</DialogTitle>
           <DialogDescription>Select a patient to continue</DialogDescription>
