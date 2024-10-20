@@ -25,6 +25,7 @@ export const hospitalPlugin = (schema) => {
     "findOneAndUpdate",
     "delete",
     "deleteMany",
+    "findByIdAndUpdate",
   ].forEach((method) => {
     schema.pre(method, setHospitalCondition);
   });

@@ -4,6 +4,7 @@ import { Service } from "../models/Services.js";
 import { ServicesBill } from "../models/ServicesBill.js";
 import { IPDAdmission } from "../models/IPDAdmission.js";
 import { Visit } from "../models/Visits.js";
+import { Patient } from "../models/Patient.js";
 import { Payment } from "../models/Payment.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
 
@@ -302,7 +303,7 @@ router.post("/create-opd-procedure-bill", verifyToken, async (req, res) => {
       totalAmount,
       subtotal,
       patientInfo,
-      department,
+     
     } = req.body;
     const user = req.user;
 
@@ -317,20 +318,13 @@ router.post("/create-opd-procedure-bill", verifyToken, async (req, res) => {
       patientType: "OPD",
       patient,
       patientInfo,
-      department,
+      
       createdBy: user._id,
     });
-
+ console.log(opdProcedureBill);
     await opdProcedureBill.save({ session });
 
-    // If you want to associate this bill with a visit, you can do so here
-    // For example:
-    // const visit = await Visit.findOne({ patient: patient }).sort({ createdAt: -1 }).session(session);
-    // if (visit) {
-    //   visit.bills.services.push(opdProcedureBill._id);
-    //   await visit.save({ session });
-    // }
-
+    await Patient.findByIdAndUpdate(patient, { $push: { opdProcedureBills: opdProcedureBill._id } }, { session });
     await session.commitTransaction();
     res.status(201).json(opdProcedureBill);
   } catch (error) {

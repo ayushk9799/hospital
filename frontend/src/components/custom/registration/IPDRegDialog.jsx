@@ -71,9 +71,12 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   }, [patientData]);
 
   useEffect(() => {
-    if (open) {
+    if (!open) {
       dispatch(fetchRooms());
       resetFormData();
+      setTimeout(()=>{
+        document.body.style=""
+       },500)
     }
   }, [open, dispatch, resetFormData]);
 

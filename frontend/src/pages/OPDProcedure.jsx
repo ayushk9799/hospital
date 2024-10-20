@@ -30,7 +30,7 @@ export default function OPDProcedure() {
   const dispatch = useDispatch();
   const patient = location.state?.patient;
   const [addedServices, setAddedServices] = useState([]);
-  const [newService, setNewService] = useState({ name: '', quantity: 1, rate: 0, category: '' });
+  const [newService, setNewService] = useState({ name: '', quantity: 1, rate: "", total: "" });
   const [isLoading, setIsLoading] = useState(false);
   const [serviceName, setServiceName] = useState("");
 
@@ -50,13 +50,14 @@ export default function OPDProcedure() {
 
   const handleAddService = (e) => {
     e.preventDefault();
+    console.log(newService);
     if (newService.name && newService.rate > 0) {
       setAddedServices([...addedServices, { 
         ...newService, 
         id: Date.now(), 
-        total: newService.quantity * newService.rate 
+        total: newService.total
       }]);
-      setNewService({ name: '', quantity: 1, rate: 0, category: '' });
+      setNewService({ name: '', quantity: 1, rate: 0, total: 0 });
       setServiceName("");
     }
   };
@@ -72,7 +73,7 @@ export default function OPDProcedure() {
         name: serviceToEdit.name,
         quantity: serviceToEdit.quantity,
         rate: serviceToEdit.rate,
-        category: serviceToEdit.category,
+        total: serviceToEdit.total,
       });
       setServiceName(serviceToEdit.name);
       setAddedServices((prev) => prev.filter((service) => service.id !== id));
@@ -80,7 +81,7 @@ export default function OPDProcedure() {
   };
 
   const handleQuantityChange = (e) => {
-    const quantity = parseInt(e.target.value);
+    const quantity = parseInt(e.target.value) || 0;
     setNewService(prev => ({
       ...prev,
       quantity,
@@ -89,7 +90,7 @@ export default function OPDProcedure() {
   };
 
   const handleRateChange = (e) => {
-    const rate = parseFloat(e.target.value);
+    const rate = parseFloat(e.target.value) || 0;
     setNewService(prev => ({
       ...prev,
       rate,
@@ -97,8 +98,16 @@ export default function OPDProcedure() {
     }));
   };
 
+  const handleTotalChange = (e) => {
+    const total = parseFloat(e.target.value) || 0;
+    setNewService(prev => ({
+      ...prev,
+      total
+    }));
+  };
+
   const calculateTotals = useMemo(() => {
-    const subtotal = addedServices.reduce((total, service) => total + (service.quantity * service.rate), 0);
+    const subtotal = addedServices.reduce((total, service) => total + service.total , 0);
     return {
       subtotal,
       totalAmount: subtotal,
@@ -113,7 +122,7 @@ export default function OPDProcedure() {
         name: service.name,
         quantity: service.quantity,
         rate: service.rate,
-        category: service.category
+        total: service.total
       })),
       totalAmount: calculateTotals.totalAmount,
       subtotal: calculateTotals.subtotal,
@@ -131,7 +140,7 @@ export default function OPDProcedure() {
         console.log('OPD Procedure bill created successfully:', resultAction.payload);
         setAddedServices([]);
         // Optionally, show a success message to the user or navigate to a success page
-        navigate('/billing'); // Adjust this route as needed
+        navigate('/billings'); // Adjust this route as needed
       } else if (createOPDProcedureBill.rejected.match(resultAction)) {
         console.error('Failed to create OPD Procedure bill:', resultAction.error);
         // Optionally, show an error message to the user
@@ -142,6 +151,8 @@ export default function OPDProcedure() {
     } finally {
       setIsLoading(false);
     }
+
+    console.log(opdProcedureBill);
   };
 
   const handleGoBack = () => {
@@ -153,7 +164,7 @@ export default function OPDProcedure() {
       ...prev,
       name: suggestion.name,
       rate: suggestion.rate,
-      category: suggestion.category,
+      total: suggestion.rate*prev.quantity
     }));
   };
 
@@ -213,43 +224,41 @@ export default function OPDProcedure() {
                 onSuggestionSelect={handleServiceSuggestionSelect}
               />
             </div>
-            <div className="col-span-full sm:col-span-1 md:col-span-3 lg:col-span-3">
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-1">
-                  <Label htmlFor="quantity" className="hidden sm:block">Quantity *</Label>
-                  <Input
-                    type="number"
-                    id="quantity"
-                    value={newService.quantity}
-                    onChange={handleQuantityChange}
-                    placeholder="Qty *"
-                    required
-                    min="1"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <Label htmlFor="rate" className="hidden sm:block">Rate</Label>
-                  <Input
-                    type="number"
-                    id="rate"
-                    value={newService.rate}
-                    onChange={handleRateChange}
-                    placeholder="Rate"
-                    required
-                    min="0"
-                    step="0.01"
-                  />
-                </div>
-                <div className="col-span-1">
-                  <Label htmlFor="category" className="hidden sm:block">Category</Label>
-                  <Input
-                    id="category"
-                    value={newService.category}
-                    onChange={(e) => setNewService({...newService, category: e.target.value})}
-                    placeholder="Category"
-                  />
-                </div>
-              </div>
+            <div>
+              <Label htmlFor="quantity" className="hidden sm:block">Quantity *</Label>
+              <Input
+                type="number"
+                id="quantity"
+                value={newService.quantity}
+                onChange={handleQuantityChange}
+                placeholder="Qty *"
+                required
+                min="1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rate" className="hidden sm:block">Rate</Label>
+              <Input
+                type="number"
+                id="rate"
+                value={newService.rate}
+                onChange={handleRateChange}
+                placeholder="Rate"
+                required
+                min="0"
+                step="1"
+              />
+            </div>
+            <div>
+              <Label htmlFor="total" className="hidden sm:block">Total</Label>
+              <Input
+                type="number"
+                id="total"
+                value={newService.total}
+                onChange={handleTotalChange}
+                placeholder="Total"
+                step="1"
+              />
             </div>
             <div className="col-span-full sm:col-span-1 flex items-center justify-center mt-2 sm:mt-0">
               <Button type="submit" variant="outline" size="sm" className="h-8 w-full sm:w-8 sm:p-0 mr-2">
@@ -261,7 +270,7 @@ export default function OPDProcedure() {
                 variant="outline"
                 size="sm"
                 className="h-8 w-full sm:w-8 sm:p-0"
-                onClick={() => setNewService({ name: '', quantity: 1, rate: 0, category: '' })}
+                onClick={() => setNewService({ name: '', quantity: 1, rate: "", total: "" })}
               >
                 <Trash2 className="h-4 w-4 sm:inline" />
                 <span className="sm:hidden">Clear</span>
@@ -297,10 +306,9 @@ export default function OPDProcedure() {
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>Category: {service.category}</div>
                       <div>Quantity: {service.quantity}</div>
                       <div>Rate: ₹{service.rate.toLocaleString("en-IN")}</div>
-                      <div>Total: ₹{(service.quantity * service.rate).toLocaleString("en-IN")}</div>
+                      <div className="col-span-2 font-semibold">Total: ₹{service.total.toLocaleString("en-IN")}</div>
                     </div>
                   </CardContent>
                 </Card>
@@ -319,7 +327,6 @@ export default function OPDProcedure() {
                   <TableRow>
                     <TableHead className="w-[50px]">#</TableHead>
                     <TableHead>Service</TableHead>
-                    <TableHead>Category</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Rate</TableHead>
                     <TableHead>Total</TableHead>
@@ -331,10 +338,9 @@ export default function OPDProcedure() {
                     <TableRow key={service.id}>
                       <TableCell>{index + 1}</TableCell>
                       <TableCell>{service.name}</TableCell>
-                      <TableCell>{service.category}</TableCell>
                       <TableCell>{service.quantity}</TableCell>
                       <TableCell>{service.rate.toLocaleString("en-IN")}</TableCell>
-                      <TableCell>{(service.quantity * service.rate).toLocaleString("en-IN")}</TableCell>
+                      <TableCell>{(service.total).toLocaleString("en-IN")}</TableCell>
                       <TableCell className="text-right">
                         <div>
                           <Button
