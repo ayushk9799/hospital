@@ -1,8 +1,9 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import  createLoadingAsyncThunk  from "./createLoadingAsyncThunk";
 import { Backend_URL } from "../../assets/Data";
 
 // Async thunk for fetching templates
-export const fetchTemplates = createAsyncThunk(
+export const fetchTemplates = createLoadingAsyncThunk(
   "templates/fetchTemplates",
   async (_, { rejectWithValue }) => {
     try {
@@ -25,26 +26,27 @@ export const fetchTemplates = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  }
+  },
+  { useGlobalLoader: true }
 );
 
-// Async thunk for updating diagnosis template
-export const updateDiagnosisTemplate = createAsyncThunk(
-  "templates/updateDiagnosisTemplate",
-  async (diagnosisTemplate, { rejectWithValue }) => {
+// Update the existing updateDiagnosisTemplate to handle both diagnosis and lab test templates
+export const updateTemplate = createLoadingAsyncThunk(
+  "templates/updateTemplate",
+  async (templateData, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `${Backend_URL}/api/hospitals/template/update`,
+        `${Backend_URL}/api/hospitals/template/create`,
         {
-          method: "PUT",
+          method: "POST",
           headers: { "Content-Type": "application/json" },
           credentials: "include",
-          body: JSON.stringify({ diagnosisTemplate }),
+          body: JSON.stringify(templateData),
         }
       );
 
       if (!response.ok) {
-        throw new Error("Failed to update diagnosis template");
+        throw new Error("Failed to update template");
       }
 
       const data = await response.json();
@@ -52,14 +54,15 @@ export const updateDiagnosisTemplate = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  }
+  },
+  { useGlobalLoader: true }
 );
 
 const initialState = {
   labTestsTemplate: [],
   headerTemplate: {},
   diagnosisTemplate: [],
-  status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
+  status: "idle", 
   error: null,
 };
 
@@ -82,8 +85,27 @@ const templatesSlice = createSlice({
         state.status = "failed";
         state.error = action.payload.message || "Failed to fetch templates";
       })
-      .addCase(updateDiagnosisTemplate.fulfilled, (state, action) => {
-        state.diagnosisTemplate = action.payload.diagnosisTemplate;
+      .addCase(updateTemplate.fulfilled, (state, action) => {
+        if (action.payload.diagnosisTemplate) {
+          state.diagnosisTemplate = action.payload.diagnosisTemplate;
+        }
+        if (action.payload.labTestsTemplate) {
+          // Check if the new template already exists
+          const existingTemplateIndex = state.labTestsTemplate.findIndex(
+            (template) => template.name === action.payload.labTestsTemplate.name
+          );
+
+          if (existingTemplateIndex !== -1) {
+            // Update existing template
+            state.labTestsTemplate[existingTemplateIndex] = action.payload.labTestsTemplate;
+          } else {
+            // Add new template
+            state.labTestsTemplate.push(action.payload.labTestsTemplate);
+          }
+        }
+        if (action.payload.headerTemplate) {
+          state.headerTemplate = action.payload.headerTemplate;
+        }
       });
   },
 });

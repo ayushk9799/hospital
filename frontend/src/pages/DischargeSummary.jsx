@@ -22,6 +22,7 @@ import {
   ChevronRight,
   PlusCircle,
   Trash2,
+  Plus,
 } from "lucide-react";
 import { Calendar } from "../components/ui/calendar";
 import {
@@ -38,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {fetchTemplates} from "../redux/slices/templatesSlice";
 import { labCategories, labReportFields } from "../assets/Data";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
 import CreateLabReport from "./CreateLabReport";
@@ -80,7 +82,6 @@ const allLabTests = labCategories.flatMap((category) =>
   category.types.map((type) => ({ name: type }))
 );
 
-// Add this new component to display the lab report data as a table
 const LabReportTable = ({ report }) => {
   return (
     <Table>
@@ -117,12 +118,17 @@ export default function DischargeSummary() {
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
+  const templateStatus = useSelector((state) => state.templates.status);
   useEffect(() => {
     if (itemsStatus === "idle") {
       dispatch(fetchItems());
     }
   }, [dispatch, itemsStatus]);
-
+useEffect(() => {
+  if(templateStatus === "idle"){
+    dispatch(fetchTemplates());
+  }
+}, [dispatch,templateStatus]);
   const [formData, setFormData] = useState({
     admissionDate: "",
     dateDischarged: "",
@@ -159,6 +165,7 @@ export default function DischargeSummary() {
   const [isLabReportOpen, setIsLabReportOpen] = useState(false); // State to manage modal visibility
   const [selectedInvestigation, setSelectedInvestigation] = useState(null); // State to track selected investigation
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
+  const diagnosisTemplate = useSelector((state) => state.templates.diagnosisTemplate);
 
   const [patientInfo, setPatientInfo] = useState({
     name: "",
@@ -227,7 +234,11 @@ export default function DischargeSummary() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "diagnosis") {
+      setCustomDiagnosis(value);
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleDateChange = (field, date) => {
@@ -243,7 +254,8 @@ export default function DischargeSummary() {
     setFormData((prev) => ({ ...prev, investigations: updatedInvestigations }));
   };
 
-  const handleAddInvestigation = () => {
+  const handleAddInvestigation = (e) => {
+    e.preventDefault(); // Prevent form submission
     setFormData((prev) => ({
       ...prev,
       investigations: [...prev.investigations, { name: "", category: "" }],
@@ -277,7 +289,7 @@ export default function DischargeSummary() {
   
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Prevent form submission on Enter key
 
     const dischargeData = {
       patientId: patientId,
@@ -532,6 +544,32 @@ export default function DischargeSummary() {
     </div>
   );
 
+  // Get the diagnosis template from the Redux store
+  // Add a new state for custom diagnosis input
+  const [customDiagnosis, setCustomDiagnosis] = useState("");
+
+  // Add a function to handle adding diagnosis (both from template and custom)
+  const handleAddDiagnosis = (diagnosis) => {
+    setFormData((prev) => ({
+      ...prev,
+      diagnosis: prev.diagnosis
+        ? `${prev.diagnosis}, ${diagnosis}`
+        : diagnosis,
+    }));
+    setCustomDiagnosis("");
+  };
+
+  // Add a function to handle removing diagnosis
+  const handleRemoveDiagnosis = (diagnosisToRemove) => {
+    setFormData((prev) => ({
+      ...prev,
+      diagnosis: prev.diagnosis
+        .split(", ")
+        .filter((d) => d !== diagnosisToRemove)
+        .join(", "),
+    }));
+  };
+
   if (!patient)
     return (
       <div className="flex justify-center items-center h-screen">
@@ -667,7 +705,60 @@ export default function DischargeSummary() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
-              <div>{renderTextArea("diagnosis", "Diagnosis")}</div>
+              <div>
+                <Label htmlFor="diagnosis">Diagnosis</Label>
+                <div className="mt-1 space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    {formData.diagnosis && formData.diagnosis.split(", ").filter(Boolean).map((diagnosis, index) => (
+                      <Badge
+                        key={index}
+                        variant="secondary"
+                        className="flex items-center px-3 py-1.5 text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                      >
+                        {diagnosis}
+                        <X
+                          className="ml-2 h-4 w-4 cursor-pointer hover:text-blue-200"
+                          onClick={() => handleRemoveDiagnosis(diagnosis)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      id="diagnosis"
+                      name="diagnosis"
+                      value={customDiagnosis}
+                      onChange={handleInputChange}
+                      placeholder="Enter custom diagnosis"
+                      className="flex-grow"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => handleAddDiagnosis(customDiagnosis)}
+                      disabled={!customDiagnosis}
+                      size="sm"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {diagnosisTemplate.map((diagnosis, index) => (
+                      <Badge
+                        key={index}
+                        variant="outline"
+                        className={`cursor-pointer px-3 py-1.5 text-sm font-medium transition-colors ${
+                          formData.diagnosis.includes(diagnosis)
+                            ? 'bg-green-500 text-white hover:bg-green-600'
+                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                        }`}
+                        onClick={() => handleAddDiagnosis(diagnosis)}
+                      >
+                        {diagnosis}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </div>
               <div>{renderTextArea("clinicalSummary", "Clinical Summary")}</div>
 
               <div>
@@ -775,6 +866,7 @@ export default function DischargeSummary() {
                     onClick={handleAddInvestigation}
                     variant="outline"
                     className="mt-2 font-semibold"
+                    type="button" // Change to type="button"
                   >
                     <PlusCircle className="h-4 w-4 mr-2" /> Add Investigation
                   </Button>

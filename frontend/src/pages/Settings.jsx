@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from 'react-redux';
+import { updateTemplate } from '../redux/slices/templatesSlice';
 import { Button } from "../components/ui/button";
 import {
   Dialog,
@@ -15,6 +17,7 @@ import { labCategories, labReportFields, Backend_URL } from "../assets/Data";
 
 export default function Settings() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTests, setSelectedTests] = useState({});
   const [selectedFields, setSelectedFields] = useState({});
@@ -112,13 +115,12 @@ export default function Settings() {
             Object.entries(fields)
               .filter(([_, field]) => field.isSelected)
               .forEach(([fieldName, field]) => {
-                // Remove the category from the key
                 acc[`${fieldName}`] = {
                   label: field.label,
                   value: field.value,
                   unit: field.unit,
                   normalRange: field.normalRange,
-                  options: field.options, // Add this line to include options
+                  options: field.options,
                 };
               });
           });
@@ -129,23 +131,13 @@ export default function Settings() {
     };
 
     try {
-      const response = await fetch(
-        `${Backend_URL}/api/hospitals/template/create`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          credentials: "include",
-          body: JSON.stringify({ labTestsTemplate: template }),
-        }
-      );
-      const data = await response.json();
-      // Handle the response data as needed
+      await dispatch(updateTemplate({ labTestsTemplate: template })).unwrap();
+      // Handle success (e.g., show a success message)
     } catch (error) {
-      // Handle any errors
       console.error("Error creating template:", error);
+      // Handle error (e.g., show an error message)
     }
+
     setIsOpen(false);
     setSelectedTests({});
     setSelectedFields({});

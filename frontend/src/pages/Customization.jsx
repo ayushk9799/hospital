@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { fetchTemplates, updateDiagnosisTemplate } from "../redux/slices/templatesSlice";
+import { fetchTemplates, updateTemplate } from "../redux/slices/templatesSlice";
 import { X, Plus } from "lucide-react";
 
 export default function Customization() {
@@ -33,7 +33,7 @@ export default function Customization() {
   };
 
   const handleSave = () => {
-    dispatch(updateDiagnosisTemplate(selectedDiagnoses));
+    dispatch(updateTemplate({ diagnosisTemplate: selectedDiagnoses }));
   };
 
   return (

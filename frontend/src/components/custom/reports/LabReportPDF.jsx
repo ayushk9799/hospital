@@ -126,6 +126,7 @@ export const styles = StyleSheet.create({
 });
 
 export const HeaderTemplate = ({ hospital }) => {
+  console.log(hospital);
   return (
     <>
       <View style={styles.header}>
