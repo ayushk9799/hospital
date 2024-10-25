@@ -10,6 +10,7 @@ const templateSchema = new mongoose.Schema({
   ],
   headerTemplate: mongoose.Schema.Types.Mixed,
   diagnosisTemplate: [String],
+  service_collections: [{ ref: "Service", type: mongoose.Schema.Types.ObjectId }],
 });
 
 templateSchema.plugin(hospitalPlugin);

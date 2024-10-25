@@ -91,7 +91,7 @@ export default function Settings() {
             value: field.value,
             unit: field.unit,
             normalRange: field.normalRange,
-            options: field.options, // Add this line to include options
+            options: field.options, 
             isSelected:
               !prev[formattedCategory]?.[formattedTest]?.[field.name]
                 ?.isSelected,

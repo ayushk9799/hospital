@@ -11,10 +11,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { revisitPatient } from "../../../redux/slices/patientSlice";
 import { fetchBills } from "../../../redux/slices/BillingSlice";
-import {
-  fetchPatients,
-  registerPatient,
-} from "../../../redux/slices/patientSlice";
+import {fetchPatients, registerPatient} from "../../../redux/slices/patientSlice";
 import { Textarea } from "../../ui/textarea";
 import PatientInfoForm from "./PatientInfoForm";
 import VisitDetailsForm from "./VisitDetailsForm";
@@ -32,18 +29,13 @@ import {
 } from "../../ui/select";
 import { useToast } from "../../../hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../../ui/tooltip";
 import { Label } from "../../ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { Checkbox } from "../../ui/checkbox";
 import { FloatingLabelSelect } from "./PatientInfoForm";
 import { useMediaQuery } from "../../../hooks/use-media-query";
-
+import MemoizedInput from "./MemoizedInput";
+import { fetchServices } from "../../../redux/slices/serviceSlice";
 const initialFormData = {
   name: "",
   registrationNumber: "",
@@ -86,6 +78,7 @@ const initialFormData = {
       policyNumber: "",
     },
     consultationFee: true,
+    consultationAmount: "", // We'll update this when the component mounts
     paymentMethod: "",
   },
 };
@@ -96,9 +89,9 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const registerPatientStatus = useSelector(
-    (state) => state.patients.registerPatientStatus
-  );
+  const registerPatientStatus = useSelector((state) => state.patients.registerPatientStatus);
+  const {services, servicesStatus} = useSelector((state)=>state.services);
+  const consultationService = services.find((service)=>service.name.toLowerCase().includes("consultation"))
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState(initialErrors);
@@ -121,6 +114,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       // Clear payment method when consultation fee is unchecked
       if (id === "visit.consultationFee" && value === false) {
         newState.visit.paymentMethod = "";
+        newState.visit.consultationAmount = "";
       }
 
       return newState;
@@ -255,7 +249,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
               ),
             },
           };
-          // console.log(submissionData);
           
           dispatch(registerPatient(submissionData))
             .unwrap()
@@ -278,19 +271,11 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                 variant: "destructive",
               });
             });
+          console.log(submissionData);
+          
         }
       }
-    },
-    [
-      isOldPatient,
-      searchType,
-      searchQuery,
-      formData,
-      validateForm,
-      dispatch,
-      toast,
-      onOpenChange,
-    ]
+    },[ isOldPatient, searchType, searchQuery, formData, validateForm, dispatch, toast, onOpenChange]
   );
 
   const handleReset = useCallback(() => {
@@ -299,11 +284,19 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, []);
 
   const handleDialogClose = useCallback(() => {
-   
     setIsOldPatient(false);
     onOpenChange(false);
-    setFormData(initialFormData);
-  }, [onOpenChange]);
+    setTimeout(()=>{
+      document.body.style=""
+     },500)
+    setFormData(prevData => ({
+      ...initialFormData,
+      visit: {
+        ...initialFormData.visit,
+        consultationAmount: consultationService ? consultationService.rate.toString() : ""
+      }
+    }));
+  }, [onOpenChange, consultationService]);
 
   const handleFollowUp = useCallback(async () => {
     if (validateForm()) {
@@ -366,7 +359,9 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [patientData]);
 
   useEffect(() => {
+    console.log("open",open)
     if (!open) {
+      console.log("closing")
       setFormData(initialFormData);
       setErrors(initialErrors);
       setIsOldPatient(false);
@@ -377,6 +372,32 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       },500)
     }
   }, [open]);
+
+  useEffect(()=>{
+    if(servicesStatus==="idle"){
+      dispatch(fetchServices())
+    }
+  },[dispatch, servicesStatus])
+
+  // Modify this useEffect to run when 'open' changes
+  useEffect(() => {
+    if (open && consultationService) {
+      setFormData(prevData => ({
+        ...prevData,
+        visit: {
+          ...prevData.visit,
+          consultationAmount: consultationService.rate.toString()
+        }
+      }));
+    }
+  }, [open, consultationService]);
+
+  // Add this new useEffect for cleanup
+  useEffect(() => {
+    return () => {
+      document.body.style = "";
+    };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={(ev)=>{handleDialogClose(ev)}} >
@@ -531,20 +552,30 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                           Add Consultation Fee
                         </label>
                       </div>
-                      <FloatingLabelSelect
-                        id="visit.paymentMethod"
-                        label="Payment Method"
-                        value={formData.visit.paymentMethod}
-                        onValueChange={(value) => handleSelectChange("visit.paymentMethod", value)}
-                        error={errors.paymentMethod}
-                        disabled={!formData.visit.consultationFee}
-                      >
-                        <SelectItem value="Cash">Cash</SelectItem>
-                        <SelectItem value="UPI">UPI</SelectItem>
-                        <SelectItem value="Card">Card</SelectItem>
-                        <SelectItem value="Due">Due</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </FloatingLabelSelect>
+                      <div className="grid grid-cols-2 gap-4">
+                        <FloatingLabelSelect
+                          id="visit.paymentMethod"
+                          label="Payment Method"
+                          value={formData.visit.paymentMethod}
+                          onValueChange={(value) => handleSelectChange("visit.paymentMethod", value)}
+                          error={errors.paymentMethod}
+                          disabled={!formData.visit.consultationFee}
+                        >
+                          <SelectItem value="Cash">Cash</SelectItem>
+                          <SelectItem value="UPI">UPI</SelectItem>
+                          <SelectItem value="Card">Card</SelectItem>
+                          <SelectItem value="Due">Due</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </FloatingLabelSelect>
+                        <MemoizedInput
+                          label="Amount (₹)"
+                          id="visit.consultationAmount"
+                          value={formData.visit.consultationAmount}
+                          onChange={handleInputChange}
+                          error={errors.consultationAmount}
+                          disabled={!formData.visit.consultationFee}
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>

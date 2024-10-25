@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
+import { Patient } from "./Patient.js";
 const CounterSchema = new mongoose.Schema({
   date: { type: Date },
   seq: { type: Number, default: 0 },
@@ -87,10 +88,16 @@ ipdAdmissionSchema.pre("save", async function (next) {
     );
     this.bookingNumber = counter.seq;
   }
-  if (!this.ipdNumber) {
-    //to be decided
+
+  if (!this.registrationNumber && this.patient) {
+    const patient = await Patient.findById(this.patient);
+    if (patient) {
+      this.registrationNumber = patient.registrationNumber;
+    }
   }
+
   next();
 });
+
 ipdAdmissionSchema.plugin(hospitalPlugin);
 export const IPDAdmission = mongoose.model("ipdAdmission", ipdAdmissionSchema);

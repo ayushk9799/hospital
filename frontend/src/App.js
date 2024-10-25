@@ -133,7 +133,7 @@ const AppContent = () => {
                 <Route path="/settings/hospital-info" element={<HospitalInfo />} />
                 <Route path="/expenses" element={<Expenses />} />
                 <Route path="/settings/customization" element={<Customization />} />
-                <Route path="/search/:searchQuery" element={<PatientSearch />} />
+                <Route path="/search" element={<PatientSearch />} />
                 <Route path="/opd-procedure/:patientId" element={<OPDProcedure />} />
               </>
             )}

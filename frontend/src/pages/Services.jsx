@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../co
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../components/ui/table';
 import { Input } from '../components/ui/input';
 import { Button } from '../components/ui/button';
-import { Search, Plus, ListFilter, FileDown, Pencil, Trash } from 'lucide-react';
+import { Search, Plus, ListFilter, FileDown, Pencil, Trash, Settings } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import { fetchServices, deleteService } from '../redux/slices/serviceSlice';
 import AddServiceDialog from '../components/custom/services/AddServiceDialog';
@@ -23,6 +23,7 @@ import {
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { motion, AnimatePresence } from "framer-motion";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../components/ui/select';
+import ManageServicesDialog from '../components/custom/services/ManageServicesDialog'; // Import the new dialog component
 
 const Services = () => {
   const dispatch = useDispatch();
@@ -35,9 +36,9 @@ const Services = () => {
   const [serviceToEdit, setServiceToEdit] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [serviceToDelete, setServiceToDelete] = useState(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const [isManageServicesDialogOpen, setIsManageServicesDialogOpen] = useState(false); // New state for manage dialog
 
   useEffect(() => {
     if (servicesStatus === "idle") {
@@ -83,7 +84,6 @@ const Services = () => {
       .finally(() => {
         setIsDeleteDialogOpen(false);
         setServiceToDelete(null);
-        setDeleteConfirmation("");
       });
   };
 
@@ -104,12 +104,21 @@ const Services = () => {
             <CardDescription>Manage and view service information</CardDescription>
           </div>
           {isSmallScreen && (
-            <Button
-              size="icon"
-              onClick={() => setIsAddServiceDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-            </Button>
+            <div className="flex space-x-2">
+              <Button
+                size="icon"
+                onClick={() => setIsAddServiceDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => setIsManageServicesDialogOpen(true)}
+              >
+                <Settings className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
       </CardHeader>
@@ -177,9 +186,12 @@ const Services = () => {
             )}
           </div>
           {!isSmallScreen && (
-            <div className="flex space-x-2">
+            <div className="flex-row-reverse space-x-2">
               <Button variant="outline" onClick={() => setIsAddServiceDialogOpen(true)} className="w-full md:w-auto">
                 <Plus className="mr-2 h-4 w-4" /> Add Service
+              </Button>
+              <Button variant="outline" onClick={() => setIsManageServicesDialogOpen(true)} className="w-full md:w-auto">
+                <Settings className="mr-2 h-4 w-4" /> Manage
               </Button>
             </div>
           )}
@@ -205,7 +217,7 @@ const Services = () => {
                   <TableRow key={service._id}>
                     <TableCell className='capitalize'>{service.name}</TableCell>
                     <TableCell className="hidden md:table-cell">{service.category}</TableCell>
-                    <TableCell>₹{service.rate.toFixed(2)}</TableCell>
+                    <TableCell>₹{service.rate.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="flex">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(service)}>
                         <Pencil className="h-3 w-3" />
@@ -223,6 +235,7 @@ const Services = () => {
       </CardContent>
       <AddServiceDialog isOpen={isAddServiceDialogOpen} onClose={() => setIsAddServiceDialogOpen(false)} />
       <EditServiceDialog isOpen={isEditServiceDialogOpen} onClose={() => setIsEditServiceDialogOpen(false)} service={serviceToEdit} />
+      <ManageServicesDialog isOpen={isManageServicesDialogOpen} onClose={() => setIsManageServicesDialogOpen(false)} services={services} />
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="max-w-[90vw] w-full sm:max-w-[425px] rounded-lg">
           <AlertDialogHeader>

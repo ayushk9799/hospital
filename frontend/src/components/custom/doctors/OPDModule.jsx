@@ -10,6 +10,7 @@ import SearchSuggestion from "../registration/CustomSearchSuggestion";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchItems } from "../../../redux/slices/pharmacySlice";
 import { savePrescription } from "../../../redux/slices/patientSlice";
+import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 import { useToast } from "../../../hooks/use-toast";
 import { PDFViewer } from "@react-pdf/renderer";
 import OPDPrescriptionPDF from "../reports/OPDPrescriptionPDF";
@@ -43,14 +44,26 @@ export default function OPDModule({ patient }) {
     additionalInstructions: "",
   });
   const [labTests, setLabTests] = useState([]);
+  const dispatch = useDispatch();
+
   const [selectedLabTests, setSelectedLabTests] = useState([]);
+
   // const [comorbidities, setComorbidities] = useState([]);
   const [selectedComorbidities, setSelectedComorbidities] = useState([]);
+  const { diagnosisTemplate, status } = useSelector((state) => state.templates);
 
-  const dispatch = useDispatch();
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchTemplates());
+    }
+  }, [status, dispatch]);
+  const [selectedDiagnoses, setSelectedDiagnoses] = useState([]);
+
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
-  const prescriptionUpdateStatus = useSelector((state) => state.patients.prescriptionUpdateStatus);
+  const prescriptionUpdateStatus = useSelector(
+    (state) => state.patients.prescriptionUpdateStatus
+  );
   const { toast } = useToast();
 
   const [showPDFPreview, setShowPDFPreview] = useState(false);
@@ -76,27 +89,34 @@ export default function OPDModule({ patient }) {
       setPrescription({
         diagnosis: patient.diagnosis || "",
         treatment: patient.treatment || "",
-        medications: patient.medications?.length > 0
-          ? patient.medications
-          : [{ name: "", frequency: "0-0-0", duration: "" }],
+        medications:
+          patient.medications?.length > 0
+            ? patient.medications
+            : [{ name: "", frequency: "0-0-0", duration: "" }],
         additionalInstructions: patient.additionalInstructions || "",
       });
       // Update labTests and selectedLabTests
-      const patientLabTests = patient.labTests?.map(test => ({ name: test })) || [];
+      const patientLabTests =
+        patient.labTests?.map((test) => ({ name: test })) || [];
       setLabTests(patientLabTests);
       setSelectedLabTests(patientLabTests);
-      
+
       // Update comorbidities and selectedComorbidities
-      const patientComorbidities = patient.comorbidities?.map(comorbidity => ({ name: comorbidity })) || [];
+      const patientComorbidities =
+        patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) ||
+        [];
       // setComorbidities(patientComorbidities);
       setSelectedComorbidities(patientComorbidities);
+      // Update selectedDiagnoses from patient data
+      const patientDiagnoses =
+        patient.diagnosis?.split(",").map((d) => ({ name: d.trim() })) || [];
+      setSelectedDiagnoses(patientDiagnoses);
     }
   }, [patient]);
 
   const commonMedications = useMemo(() => {
     return medicines.map((item) => ({ name: item.name }));
   }, [medicines]);
-
   const handleVitalChange = (e) => {
     const { name, value } = e.target;
     setVitals((prev) => {
@@ -105,7 +125,10 @@ export default function OPDModule({ patient }) {
       if (name === "height" || name === "weight") {
         if (newVitals.height && newVitals.weight) {
           const heightInMeters = newVitals.height / 100;
-          const bmi = (newVitals.weight / (heightInMeters * heightInMeters)).toFixed(1);
+          const bmi = (
+            newVitals.weight /
+            (heightInMeters * heightInMeters)
+          ).toFixed(1);
           newVitals.bmi = bmi;
         }
       }
@@ -164,7 +187,9 @@ export default function OPDModule({ patient }) {
   };
 
   const handleRemoveComorbidity = (name) => {
-    setSelectedComorbidities(selectedComorbidities.filter(c => c.name !== name));
+    setSelectedComorbidities(
+      selectedComorbidities.filter((c) => c.name !== name)
+    );
   };
 
   const handleLabTestsChange = (newLabTests) => {
@@ -172,7 +197,25 @@ export default function OPDModule({ patient }) {
   };
 
   const handleRemoveLabTest = (name) => {
-    setSelectedLabTests(selectedLabTests.filter(test => test.name !== name));
+    setSelectedLabTests(selectedLabTests.filter((test) => test.name !== name));
+  };
+
+  const handleDiagnosisChange = (newDiagnoses) => {
+    setSelectedDiagnoses(newDiagnoses);
+    // Update the prescription diagnosis field by joining the names
+    setPrescription((prev) => ({
+      ...prev,
+      diagnosis: newDiagnoses.map((d) => d.name).join(", "),
+    }));
+  };
+
+  const handleRemoveDiagnosis = (name) => {
+    const newDiagnoses = selectedDiagnoses.filter((d) => d.name !== name);
+    setSelectedDiagnoses(newDiagnoses);
+    setPrescription((prev) => ({
+      ...prev,
+      diagnosis: newDiagnoses.map((d) => d.name).join(", "),
+    }));
   };
 
   const handleSavePrescription = async () => {
@@ -186,14 +229,16 @@ export default function OPDModule({ patient }) {
     }
 
     try {
-      await dispatch(savePrescription({
-        selectedVisitId: patient.ID,
-        vitals,
-        prescription,
-        selectedPatientType: "OPD",
-        labTests: selectedLabTests.map(test => test.name),
-        comorbidities: selectedComorbidities.map(c => c.name),
-      })).unwrap();
+      await dispatch(
+        savePrescription({
+          selectedVisitId: patient.ID,
+          vitals,
+          prescription,
+          selectedPatientType: "OPD",
+          labTests: selectedLabTests.map((test) => test.name),
+          comorbidities: selectedComorbidities.map((c) => c.name),
+        })
+      ).unwrap();
 
       toast({
         variant: "success",
@@ -213,13 +258,25 @@ export default function OPDModule({ patient }) {
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center border-b border-gray-300 pb-2">
-        <h2 className="text-xl font-bold hidden lg:block">Prescription for: {patient.patient.name} </h2>
+        <h2 className="text-xl font-bold hidden lg:block">
+          Prescription for: {patient.patient.name}{" "}
+        </h2>
         <h2 className="text-md font-bold lg:hidden">{patient.patient.name} </h2>
         <div className="space-x-2 flex">
-          <Button className="font-semibold hidden lg:block" size="sm" variant="outline" onClick={() => setShowPDFPreview(true)}>
+          <Button
+            className="font-semibold hidden lg:block"
+            size="sm"
+            variant="outline"
+            onClick={() => setShowPDFPreview(true)}
+          >
             Preview PDF
           </Button>
-          <Button className="font-semibold" size="sm" disabled={prescriptionUpdateStatus === "loading"} onClick={handleSavePrescription}>
+          <Button
+            className="font-semibold"
+            size="sm"
+            disabled={prescriptionUpdateStatus === "loading"}
+            onClick={handleSavePrescription}
+          >
             {prescriptionUpdateStatus === "loading" ? "Saving..." : "Save"}
           </Button>
         </div>
@@ -230,43 +287,121 @@ export default function OPDModule({ patient }) {
             <TabsTrigger value="vitals">Vitals</TabsTrigger>
             <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
             <TabsTrigger value="tests">Tests</TabsTrigger>
-            <TabsTrigger className="px-2" value="medications">Medications</TabsTrigger>
+            <TabsTrigger className="px-2" value="medications">
+              Medications
+            </TabsTrigger>
           </TabsList>
           <TabsContent value="vitals">
             <div className="px-1 bg-gray-50">
               <h3 className="text-lg font-semibold">Vitals</h3>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
-                  <Label htmlFor="temperature" className="text-xs font-semibold">Temperature (°C)</Label>
-                  <Input id="temperature" name="temperature" value={vitals.temperature} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                  <Label
+                    htmlFor="temperature"
+                    className="text-xs font-semibold"
+                  >
+                    Temperature (°C)
+                  </Label>
+                  <Input
+                    id="temperature"
+                    name="temperature"
+                    value={vitals.temperature}
+                    onChange={handleVitalChange}
+                    className="h-8 text-sm font-medium"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
-                  <Input id="heartRate" name="heartRate" value={vitals.heartRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                  <Label htmlFor="heartRate" className="text-xs font-semibold">
+                    Heart Rate (bpm)
+                  </Label>
+                  <Input
+                    id="heartRate"
+                    name="heartRate"
+                    value={vitals.heartRate}
+                    onChange={handleVitalChange}
+                    className="h-8 text-sm font-medium"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
-                  <Input id="bloodPressure" name="bloodPressure" value={vitals.bloodPressure} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                  <Label
+                    htmlFor="bloodPressure"
+                    className="text-xs font-semibold"
+                  >
+                    Blood Pressure (mmHg)
+                  </Label>
+                  <Input
+                    id="bloodPressure"
+                    name="bloodPressure"
+                    value={vitals.bloodPressure}
+                    onChange={handleVitalChange}
+                    className="h-8 text-sm font-medium"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
-                  <Input id="respiratoryRate" name="respiratoryRate" value={vitals.respiratoryRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                  <Label
+                    htmlFor="respiratoryRate"
+                    className="text-xs font-semibold"
+                  >
+                    Respiratory Rate (bpm)
+                  </Label>
+                  <Input
+                    id="respiratoryRate"
+                    name="respiratoryRate"
+                    value={vitals.respiratoryRate}
+                    onChange={handleVitalChange}
+                    className="h-8 text-sm font-medium"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="height" className="text-xs font-semibold">Height (cm)</Label>
-                  <Input id="height" name="height" value={vitals.height} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                  <Label htmlFor="height" className="text-xs font-semibold">
+                    Height (cm)
+                  </Label>
+                  <Input
+                    id="height"
+                    name="height"
+                    value={vitals.height}
+                    onChange={handleVitalChange}
+                    className="h-8 text-sm font-medium"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="weight" className="text-xs font-semibold">Weight (kg)</Label>
-                  <Input id="weight" name="weight" value={vitals.weight} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                  <Label htmlFor="weight" className="text-xs font-semibold">
+                    Weight (kg)
+                  </Label>
+                  <Input
+                    id="weight"
+                    name="weight"
+                    value={vitals.weight}
+                    onChange={handleVitalChange}
+                    className="h-8 text-sm font-medium"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="bmi" className="text-xs font-semibold">BMI</Label>
-                  <Input id="bmi" name="bmi" value={vitals.bmi} readOnly className="h-8 text-sm font-medium bg-gray-100" />
+                  <Label htmlFor="bmi" className="text-xs font-semibold">
+                    BMI
+                  </Label>
+                  <Input
+                    id="bmi"
+                    name="bmi"
+                    value={vitals.bmi}
+                    readOnly
+                    className="h-8 text-sm font-medium bg-gray-100"
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
-                  <Input id="oxygenSaturation" name="oxygenSaturation" value={vitals.oxygenSaturation} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                  <Label
+                    htmlFor="oxygenSaturation"
+                    className="text-xs font-semibold"
+                  >
+                    O₂ Saturation (%)
+                  </Label>
+                  <Input
+                    id="oxygenSaturation"
+                    name="oxygenSaturation"
+                    value={vitals.oxygenSaturation}
+                    onChange={handleVitalChange}
+                    className="h-8 text-sm font-medium"
+                  />
                 </div>
               </div>
             </div>
@@ -276,25 +411,58 @@ export default function OPDModule({ patient }) {
               <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
-                  <Textarea 
-                    id="diagnosis" 
-                    name="diagnosis" 
-                    value={prescription.diagnosis} 
-                    onChange={handlePrescriptionChange} 
-                    placeholder="Enter patient's diagnosis" 
-                    className="min-h-[100px] text-sm font-medium" 
-                  />
+                  <Label htmlFor="diagnosis" className="text-xs font-semibold">
+                    Diagnosis
+                  </Label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <MultiSelectInput
+                        suggestions={diagnosisTemplate.map((item) => ({
+                          name: item
+                        }))}
+                        selectedValues={selectedDiagnoses}
+                        setSelectedValues={handleDiagnosisChange}
+                        placeholder="Select diagnoses"
+                      />
+                    </div>
+                    <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                      {selectedDiagnoses.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {selectedDiagnoses.map((diagnosis, index) => (
+                            <Badge
+                              key={index}
+                              variant="primary"
+                              className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
+                            >
+                              {diagnosis.name}
+                              <X
+                                className="ml-1 h-3 w-3 cursor-pointer"
+                                onClick={() =>
+                                  handleRemoveDiagnosis(diagnosis.name)
+                                }
+                              />
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">
+                          No diagnoses selected
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
-                  <Textarea 
-                    id="treatment" 
-                    name="treatment" 
-                    value={prescription.treatment} 
-                    onChange={handlePrescriptionChange} 
-                    placeholder="Enter recommended treatment" 
-                    className="min-h-[100px] text-sm font-medium" 
+                  <Label htmlFor="treatment" className="text-xs font-semibold">
+                    Treatment
+                  </Label>
+                  <Textarea
+                    id="treatment"
+                    name="treatment"
+                    value={prescription.treatment}
+                    onChange={handlePrescriptionChange}
+                    placeholder="Enter recommended treatment"
+                    className="min-h-[100px] text-sm font-medium"
                   />
                 </div>
               </div>
@@ -331,7 +499,9 @@ export default function OPDModule({ patient }) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500 text-sm">No lab tests selected</p>
+                      <p className="text-gray-500 text-sm">
+                        No lab tests selected
+                      </p>
                     )}
                   </div>
                 </div>
@@ -342,7 +512,7 @@ export default function OPDModule({ patient }) {
                 <div className=" space-y-2">
                   <div className="flex gap-2">
                     <MultiSelectInput
-                      suggestions={comorbidities.map(name => ({ name }))}
+                      suggestions={comorbidities.map((name) => ({ name }))}
                       selectedValues={selectedComorbidities}
                       setSelectedValues={handleComorbiditiesChange}
                       placeholder="Select comorbidities"
@@ -360,13 +530,17 @@ export default function OPDModule({ patient }) {
                             {comorbidity.name}
                             <X
                               className="ml-1 h-3 w-3 cursor-pointer"
-                              onClick={() => handleRemoveComorbidity(comorbidity.name)}
+                              onClick={() =>
+                                handleRemoveComorbidity(comorbidity.name)
+                              }
                             />
                           </Badge>
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500 text-sm">No comorbidities selected</p>
+                      <p className="text-gray-500 text-sm">
+                        No comorbidities selected
+                      </p>
                     )}
                   </div>
                 </div>
@@ -378,26 +552,45 @@ export default function OPDModule({ patient }) {
               <h3 className="text-lg font-semibold mb-2">Medications</h3>
               <div className="space-y-4">
                 {prescription.medications?.map((medication, index) => (
-                  <div key={index} className="bg-white p-3 rounded-md shadow-sm">
+                  <div
+                    key={index}
+                    className="bg-white p-3 rounded-md shadow-sm"
+                  >
                     <div className="grid grid-cols-1 gap-2 mb-2">
                       <SearchSuggestion
                         suggestions={commonMedications}
                         placeholder="Select medicine"
                         value={medication.name}
-                        setValue={(value) => handleMedicationChange(index, "name", value)}
-                        onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+                        setValue={(value) =>
+                          handleMedicationChange(index, "name", value)
+                        }
+                        onSuggestionSelect={(suggestion) =>
+                          handleMedicationSuggestionSelect(index, suggestion)
+                        }
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <Input
                           placeholder="Frequency (e.g., 1-0-1)"
                           value={medication.frequency}
-                          onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                          onChange={(e) =>
+                            handleMedicationChange(
+                              index,
+                              "frequency",
+                              e.target.value
+                            )
+                          }
                           className="font-medium"
                         />
                         <Input
                           placeholder="Duration"
                           value={medication.duration}
-                          onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                          onChange={(e) =>
+                            handleMedicationChange(
+                              index,
+                              "duration",
+                              e.target.value
+                            )
+                          }
                           className="font-medium"
                         />
                       </div>
@@ -413,12 +606,18 @@ export default function OPDModule({ patient }) {
                     </Button>
                   </div>
                 ))}
-                <Button onClick={addMedication} variant="outline" className="w-full font-semibold">
+                <Button
+                  onClick={addMedication}
+                  variant="outline"
+                  className="w-full font-semibold"
+                >
                   <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
                 </Button>
               </div>
               <div className="space-y-2 pt-6">
-                <h3 className="text-lg font-semibold">Additional Instructions</h3>
+                <h3 className="text-lg font-semibold">
+                  Additional Instructions
+                </h3>
                 <Textarea
                   id="additionalInstructions"
                   name="additionalInstructions"
@@ -437,36 +636,109 @@ export default function OPDModule({ patient }) {
             <h3 className="text-lg font-semibold">Vitals</h3>
             <div className="grid grid-cols-4 gap-3">
               <div>
-                <Label htmlFor="temperature" className="text-xs font-semibold">Temperature (°F)</Label>
-                <Input id="temperature" name="temperature" value={vitals.temperature} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                <Label htmlFor="temperature" className="text-xs font-semibold">
+                  Temperature (°F)
+                </Label>
+                <Input
+                  id="temperature"
+                  name="temperature"
+                  value={vitals.temperature}
+                  onChange={handleVitalChange}
+                  className="h-8 text-sm font-medium"
+                />
               </div>
               <div>
-                <Label htmlFor="heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
-                <Input id="heartRate" name="heartRate" value={vitals.heartRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                <Label htmlFor="heartRate" className="text-xs font-semibold">
+                  Heart Rate (bpm)
+                </Label>
+                <Input
+                  id="heartRate"
+                  name="heartRate"
+                  value={vitals.heartRate}
+                  onChange={handleVitalChange}
+                  className="h-8 text-sm font-medium"
+                />
               </div>
               <div>
-                <Label htmlFor="bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
-                <Input id="bloodPressure" name="bloodPressure" value={vitals.bloodPressure} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                <Label
+                  htmlFor="bloodPressure"
+                  className="text-xs font-semibold"
+                >
+                  Blood Pressure (mmHg)
+                </Label>
+                <Input
+                  id="bloodPressure"
+                  name="bloodPressure"
+                  value={vitals.bloodPressure}
+                  onChange={handleVitalChange}
+                  className="h-8 text-sm font-medium"
+                />
               </div>
               <div>
-                <Label htmlFor="respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
-                <Input id="respiratoryRate" name="respiratoryRate" value={vitals.respiratoryRate} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                <Label
+                  htmlFor="respiratoryRate"
+                  className="text-xs font-semibold"
+                >
+                  Respiratory Rate (bpm)
+                </Label>
+                <Input
+                  id="respiratoryRate"
+                  name="respiratoryRate"
+                  value={vitals.respiratoryRate}
+                  onChange={handleVitalChange}
+                  className="h-8 text-sm font-medium"
+                />
               </div>
               <div>
-                <Label htmlFor="height" className="text-xs font-semibold">Height (cm)</Label>
-                <Input id="height" name="height" value={vitals.height} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                <Label htmlFor="height" className="text-xs font-semibold">
+                  Height (cm)
+                </Label>
+                <Input
+                  id="height"
+                  name="height"
+                  value={vitals.height}
+                  onChange={handleVitalChange}
+                  className="h-8 text-sm font-medium"
+                />
               </div>
               <div>
-                <Label htmlFor="weight" className="text-xs font-semibold">Weight (kg)</Label>
-                <Input id="weight" name="weight" value={vitals.weight} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                <Label htmlFor="weight" className="text-xs font-semibold">
+                  Weight (kg)
+                </Label>
+                <Input
+                  id="weight"
+                  name="weight"
+                  value={vitals.weight}
+                  onChange={handleVitalChange}
+                  className="h-8 text-sm font-medium"
+                />
               </div>
               <div>
-                <Label htmlFor="bmi" className="text-xs font-semibold">BMI</Label>
-                <Input id="bmi" name="bmi" value={vitals.bmi} readOnly className="h-8 text-sm font-medium bg-gray-100" />
+                <Label htmlFor="bmi" className="text-xs font-semibold">
+                  BMI
+                </Label>
+                <Input
+                  id="bmi"
+                  name="bmi"
+                  value={vitals.bmi}
+                  readOnly
+                  className="h-8 text-sm font-medium bg-gray-100"
+                />
               </div>
               <div>
-                <Label htmlFor="oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
-                <Input id="oxygenSaturation" name="oxygenSaturation" value={vitals.oxygenSaturation} onChange={handleVitalChange} className="h-8 text-sm font-medium" />
+                <Label
+                  htmlFor="oxygenSaturation"
+                  className="text-xs font-semibold"
+                >
+                  O₂ Saturation (%)
+                </Label>
+                <Input
+                  id="oxygenSaturation"
+                  name="oxygenSaturation"
+                  value={vitals.oxygenSaturation}
+                  onChange={handleVitalChange}
+                  className="h-8 text-sm font-medium"
+                />
               </div>
             </div>
           </div>
@@ -474,25 +746,58 @@ export default function OPDModule({ patient }) {
             <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
-                <Textarea 
-                  id="diagnosis" 
-                  name="diagnosis" 
-                  value={prescription.diagnosis} 
-                  onChange={handlePrescriptionChange} 
-                  placeholder="Enter patient's diagnosis" 
-                  className="min-h-[100px] text-sm font-medium" 
-                />
+                <Label htmlFor="diagnosis" className="text-xs font-semibold">
+                  Diagnosis
+                </Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <MultiSelectInput
+                      suggestions={diagnosisTemplate.map((item) => ({
+                        name: item
+                      }))}
+                      selectedValues={selectedDiagnoses}
+                      setSelectedValues={handleDiagnosisChange}
+                      placeholder="Select diagnoses"
+                    />
+                  </div>
+                  <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                    {selectedDiagnoses.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedDiagnoses.map((diagnosis, index) => (
+                          <Badge
+                            key={index}
+                            variant="primary"
+                            className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
+                          >
+                            {diagnosis.name}
+                            <X
+                              className="ml-1 h-3 w-3 cursor-pointer"
+                              onClick={() =>
+                                handleRemoveDiagnosis(diagnosis.name)
+                              }
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">
+                        No diagnoses selected
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
               <div>
-                <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
-                <Textarea 
-                  id="treatment" 
-                  name="treatment" 
-                  value={prescription.treatment} 
-                  onChange={handlePrescriptionChange} 
-                  placeholder="Enter recommended treatment" 
-                  className="min-h-[100px] text-sm font-medium" 
+                <Label htmlFor="treatment" className="text-xs font-semibold">
+                  Treatment
+                </Label>
+                <Textarea
+                  id="treatment"
+                  name="treatment"
+                  value={prescription.treatment}
+                  onChange={handlePrescriptionChange}
+                  placeholder="Enter recommended treatment"
+                  className="min-h-[100px] text-sm font-medium"
                 />
               </div>
             </div>
@@ -527,7 +832,9 @@ export default function OPDModule({ patient }) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-sm">No lab tests selected</p>
+                    <p className="text-gray-500 text-sm">
+                      No lab tests selected
+                    </p>
                   )}
                 </div>
               </div>
@@ -538,7 +845,7 @@ export default function OPDModule({ patient }) {
               <div className=" space-y-2">
                 <div className="flex gap-2">
                   <MultiSelectInput
-                    suggestions={comorbidities.map(name => ({ name }))}
+                    suggestions={comorbidities.map((name) => ({ name }))}
                     selectedValues={selectedComorbidities}
                     setSelectedValues={handleComorbiditiesChange}
                     placeholder="Select comorbidities"
@@ -556,13 +863,17 @@ export default function OPDModule({ patient }) {
                           {comorbidity.name}
                           <X
                             className="ml-1 h-3 w-3 cursor-pointer"
-                            onClick={() => handleRemoveComorbidity(comorbidity.name)}
+                            onClick={() =>
+                              handleRemoveComorbidity(comorbidity.name)
+                            }
                           />
                         </Badge>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-sm">No comorbidities selected</p>
+                    <p className="text-gray-500 text-sm">
+                      No comorbidities selected
+                    </p>
                   )}
                 </div>
               </div>
@@ -577,19 +888,27 @@ export default function OPDModule({ patient }) {
                     suggestions={commonMedications}
                     placeholder="Select medicine"
                     value={medication.name}
-                    setValue={(value) => handleMedicationChange(index, "name", value)}
-                    onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+                    setValue={(value) =>
+                      handleMedicationChange(index, "name", value)
+                    }
+                    onSuggestionSelect={(suggestion) =>
+                      handleMedicationSuggestionSelect(index, suggestion)
+                    }
                   />
                   <Input
                     placeholder="0-0-0"
                     value={medication.frequency}
-                    onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                    onChange={(e) =>
+                      handleMedicationChange(index, "frequency", e.target.value)
+                    }
                     className="font-medium"
                   />
                   <Input
                     placeholder="Duration"
                     value={medication.duration}
-                    onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                    onChange={(e) =>
+                      handleMedicationChange(index, "duration", e.target.value)
+                    }
                     className="font-medium"
                   />
                   <Button
@@ -602,7 +921,11 @@ export default function OPDModule({ patient }) {
                   </Button>
                 </div>
               ))}
-              <Button onClick={addMedication} variant="outline" className="mt-2 font-semibold">
+              <Button
+                onClick={addMedication}
+                variant="outline"
+                className="mt-2 font-semibold"
+              >
                 <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
               </Button>
             </div>

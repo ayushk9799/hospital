@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
+import { RegistrationNumber } from "./RegistrationNumber.js";
+
 function formatDate(date) {
   const day = String(date.getDate()).padStart(2, "0");
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -27,8 +29,12 @@ const patientSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "ipdAdmission" },
     ],
     visits: [{ type: mongoose.Schema.Types.ObjectId, ref: "visit" }],
+   
   },
   { timestamps: true }
 );
+
+
+
 patientSchema.plugin(hospitalPlugin);
 export const Patient = mongoose.model("Patient", patientSchema);

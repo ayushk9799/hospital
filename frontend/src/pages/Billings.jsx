@@ -8,7 +8,7 @@ import { Button } from "../components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../components/ui/dropdown-menu"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card"
 import { Badge } from "../components/ui/badge"
-import { Search, FileDown, Filter, ChevronDown, Plus, FileX, Calendar as CalendarIcon, X, ListFilter } from 'lucide-react'
+import { Search,MoreVertical, Filter, ChevronDown, Plus, FileX, Calendar as CalendarIcon, X, ListFilter } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { DateRangePicker } from '../assets/Data'
 import ViewBillDialog from "../components/custom/billing/ViewBillDialog"
@@ -182,28 +182,26 @@ const Billings = () => {
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <div className='flex gap-2 items-center'>
                 <p className="text-sm text-muted-foreground">Total:</p>
-                <p className="font-medium">₹{bill.totalAmount.toLocaleString('en-IN')}</p>
+                <p className="font-sm">₹{bill.totalAmount.toLocaleString('en-IN')}</p>
               </div>
               <div className='flex gap-2 items-center'>
                 <p className="text-sm text-muted-foreground">Due:</p>
-                <p className="font-medium text-red-500">₹{(bill.totalAmount - bill.amountPaid).toLocaleString('en-IN')}</p>
+                <p className="font-sm text-red-500">₹{(bill.totalAmount - bill.amountPaid).toLocaleString('en-IN')}</p>
               </div>
               <div className='flex gap-2 items-center col-span-2'>
                 <p className="text-sm text-muted-foreground">Date:</p>
-                <p className="font-medium">{formatDateOrTime(bill.createdAt)}</p>
+                <p className="font-sm">{formatDateOrTime(bill.createdAt)}</p>
               </div>
             </div>
           </div>
           <div className="flex flex-col justify-between items-end ml-4">
-            <Badge variant={getBadgeVariant(getBillStatus(bill))}>
-              {getBillStatus(bill)}
-            </Badge>
-            <div className="flex-grow flex items-center">
+           
+            <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => handleViewBill(bill)}>View Details</DropdownMenuItem>
@@ -214,6 +212,10 @@ const Billings = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
+            <Badge variant={getBadgeVariant(getBillStatus(bill))}>
+              {getBillStatus(bill)}
+            </Badge>
+            <div></div>
           </div>
         </div>
       </CardContent>
@@ -227,9 +229,9 @@ const Billings = () => {
           <div>
             <CardTitle>Billing List</CardTitle>
             <CardDescription>Manage and view services billing information</CardDescription>
-          </div>
+          </div> 
           {isSmallScreen && (
-            <Button variant="outline" size="icon" onClick={() => navigate('/billings/create-service-bill')}>
+            <Button className="hidden" variant="outline" size="icon" onClick={() => navigate('/billings/create-service-bill')}>
               <Plus className="h-4 w-4" />
             </Button>
           )}
@@ -391,7 +393,7 @@ const Billings = () => {
             )}
           </div>
           {!isSmallScreen && (
-            <div className="flex items-center space-x-2">
+            <div className=" hidden">
               <Button variant="outline" onClick={() => navigate('/billings/create-service-bill')}>
                 <Plus className="mr-2 h-4 w-4" /> Create Bill
               </Button>
@@ -419,8 +421,9 @@ const Billings = () => {
                         <TableHead className="font-semibold">Date & Time</TableHead>
                       </>
                     )}
-                    <TableHead className="font-semibold">Total Amount</TableHead>
-                    <TableHead className="font-semibold">Due Amount</TableHead>
+                    <TableHead className="font-semibold">Total</TableHead>
+                    <TableHead className="font-semibold">Paid</TableHead>
+                    <TableHead className="font-semibold">Due</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
@@ -438,6 +441,7 @@ const Billings = () => {
                         </>
                       )}
                       <TableCell>₹{bill.totalAmount.toLocaleString('en-IN')}</TableCell>
+                      <TableCell>₹{bill.amountPaid.toLocaleString('en-IN')}</TableCell>
                       <TableCell>₹{(bill.totalAmount - bill.amountPaid).toLocaleString('en-IN')}</TableCell>
                       <TableCell>
                         <Badge variant={getBadgeVariant(getBillStatus(bill))}>

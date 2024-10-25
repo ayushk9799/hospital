@@ -54,9 +54,30 @@ export const updateTemplate = createLoadingAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  },
-  { useGlobalLoader: true }
+  }
 );
+
+// Async thunk for updating service bill collections
+export const updateServiceBillCollections = createAsyncThunk(
+  "templates/updateServiceBillCollections",
+  async (serviceBillCollections, { rejectWithValue }) => {  
+    try{
+      const response=await fetch(`${Backend_URL}/api/hospitals/template/service_collections`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        credentials:"include",
+        body:JSON.stringify(serviceBillCollections)
+      })
+      if(!response.ok){
+        throw new Error("Failed to update service bill collections")
+      }
+      const data=await response.json()
+      return data
+    }catch(error){
+      return rejectWithValue(error.message)
+    }
+  }
+);  
 
 const initialState = {
   labTestsTemplate: [],
@@ -64,6 +85,7 @@ const initialState = {
   diagnosisTemplate: [],
   status: "idle", 
   error: null,
+  serviceBillCollections:[]
 };
 
 const templatesSlice = createSlice({
@@ -80,33 +102,27 @@ const templatesSlice = createSlice({
         state.labTestsTemplate = action.payload.labTestsTemplate;
         state.headerTemplate = action.payload.headerTemplate;
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
+        state.serviceBillCollections=action.payload.service_collections;
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload.message || "Failed to fetch templates";
       })
       .addCase(updateTemplate.fulfilled, (state, action) => {
+        // Update both diagnosis and lab test templates based on the response
         if (action.payload.diagnosisTemplate) {
           state.diagnosisTemplate = action.payload.diagnosisTemplate;
         }
         if (action.payload.labTestsTemplate) {
-          // Check if the new template already exists
-          const existingTemplateIndex = state.labTestsTemplate.findIndex(
-            (template) => template.name === action.payload.labTestsTemplate.name
-          );
-
-          if (existingTemplateIndex !== -1) {
-            // Update existing template
-            state.labTestsTemplate[existingTemplateIndex] = action.payload.labTestsTemplate;
-          } else {
-            // Add new template
-            state.labTestsTemplate.push(action.payload.labTestsTemplate);
-          }
+          state.labTestsTemplate = action.payload.labTestsTemplate;
         }
-        if (action.payload.headerTemplate) {
-          state.headerTemplate = action.payload.headerTemplate;
+        if(action.payload.headerTemplate){
+          state.headerTemplate=action.payload.headerTemplate;
         }
-      });
+      })
+      .addCase(updateServiceBillCollections.fulfilled,(state,action)=>{
+        state.serviceBillCollections=action.payload;
+      })
   },
 });
 

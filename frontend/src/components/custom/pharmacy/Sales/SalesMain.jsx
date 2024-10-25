@@ -395,7 +395,7 @@ export default function SalesMain({
           </div>
         )}
 
-        <div className={`${isDesktop ? 'flex space-x-2' : 'space-y-4'} md:h-[calc(100vh-220px)]`}>
+        <div className={`${isDesktop ? 'flex space-x-2' : 'space-y-4'} md:h-[70vh]overflow-hidden`}>
           {/* Sales Order Details and Item List */}
           <div className={isDesktop ? "w-3/4" : "w-full"}>
             {/* Item List */}
@@ -689,20 +689,20 @@ export default function SalesMain({
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card >
                 <CardHeader className="pb-2">
                   <CardTitle className="font-semibold">Recent Bills</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <Table>
-                    <TableHeader>
-                      <TableRow>
+                    <TableHeader className="p-0 space-y-0">
+                      <TableRow >
                         <TableHead>Customer Name</TableHead>
                         <TableHead>Amount</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {salesBills.slice(0, 4).map((bill) => (
+                      {salesBills.slice(0, 3).map((bill) => (
                         <TableRow
                           key={bill._id}
                           className="cursor-pointer hover:bg-gray-100"
@@ -753,25 +753,51 @@ export default function SalesMain({
                   className="w-full"
                   placeholder="Enter buyer name"
                 />
-                <LabeledInput
-                  label="Additional Discount (%)"
-                  value={additionalDiscount}
-                  onChange={handleAdditionalDiscountChange}
-                  onFocus={(e) => {
-                    e.target.select();
-                  }}
-                  className="w-full"
-                  placeholder="0"
-                  suffix="%"
-                  min="0"
-                  max="100"
-                />
-                <LabeledInput
-                  label="Total"
-                  value={`₹${totals.totalAmount.toFixed(2)}`}
-                  readOnly
-                  className="w-full"
-                />
+                {isDesktop ? (
+                  <>
+                    <LabeledInput
+                      label="Additional Discount (%)"
+                      value={additionalDiscount}
+                      onChange={handleAdditionalDiscountChange}
+                      onFocus={(e) => {
+                        e.target.select();
+                      }}
+                      className="w-full"
+                      placeholder="0"
+                      suffix="%"
+                      min="0"
+                      max="100"
+                    />
+                    <LabeledInput
+                      label="Total"
+                      value={`₹${totals.totalAmount.toFixed(2)}`}
+                      readOnly
+                      className="w-full"
+                    />
+                  </>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4">
+                    <LabeledInput
+                      label="Additional Disc (%)"
+                      value={additionalDiscount}
+                      onChange={handleAdditionalDiscountChange}
+                      onFocus={(e) => {
+                        e.target.select();
+                      }}
+                      className="w-full"
+                      placeholder="0"
+                      suffix="%"
+                      min="0"
+                      max="100"
+                    />
+                    <LabeledInput
+                      label="Total"
+                      value={`₹${totals.totalAmount.toFixed(2)}`}
+                      readOnly
+                      className="w-full"
+                    />
+                  </div>
+                )}
               </div>
               <div className={`grid ${isDesktop ? 'grid-cols-2' : 'grid-cols-1'} gap-4 items-center`}>
                 <Button variant="outline" size="sm" className="hidden md:block" onClick={handleSaveDraft} disabled={true}>

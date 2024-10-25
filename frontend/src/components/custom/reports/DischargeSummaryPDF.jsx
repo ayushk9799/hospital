@@ -153,7 +153,7 @@ const hasValidData = (obj) => {
 
 const InvestigationDisplay = ({ investigation }) => {
   const { name, date, report } = investigation;
-
+ console.log(investigation)
   const formatLabel = (label) => {
     if (!label) return "";
     const regex = /^\([^)]+\)|^(?:\S+\s?){1,3}/;
@@ -161,7 +161,7 @@ const InvestigationDisplay = ({ investigation }) => {
     return match ? match[0].trim() : label;
   };
 
-  const reportEntries = Object.entries(report).filter(
+  const reportEntries = Object.entries(report)?.filter(
     ([_, testData]) => testData.value
   );
   const halfLength = Math.ceil(reportEntries.length / 2);

@@ -82,6 +82,21 @@ const allLabTests = labCategories.flatMap((category) =>
   category.types.map((type) => ({ name: type }))
 );
 
+// Add this near the top of the file, with other constant declarations
+const diagnosisList = [
+  "Pneumonia",
+  "Myocardial Infarction",
+  "Diabetes Mellitus",
+  "Hypertension",
+  "Chronic Obstructive Pulmonary Disease",
+  "Asthma",
+  "Gastroenteritis",
+  "Urinary Tract Infection",
+  "Appendicitis",
+  "Fracture",
+  // Add more common diagnoses as needed
+].map((name) => ({ name }));
+
 const LabReportTable = ({ report }) => {
   return (
     <Table>
@@ -132,7 +147,7 @@ useEffect(() => {
   const [formData, setFormData] = useState({
     admissionDate: "",
     dateDischarged: "",
-    diagnosis: "",
+    diagnosis: "", // Change this back to a string
     clinicalSummary: "",
     treatment: "",
     conditionOnAdmission: "",
@@ -183,7 +198,9 @@ useEffect(() => {
           ? new Date(patient.bookingDate).toISOString().split("T")[0]
           : "",
         dateDischarged: patient.dateDischarged || "",
-        diagnosis: patient.diagnosis || "",
+        diagnosis: Array.isArray(patient.diagnosis) 
+          ? patient.diagnosis.join(", ")
+          : patient.diagnosis || "",
         clinicalSummary: patient.clinicalSummary || "",
         treatment: patient.treatment || "",
         conditionOnAdmission: patient.conditionOnAdmission || "",
@@ -204,7 +221,9 @@ useEffect(() => {
             respiratoryRate: patient.vitals?.discharge?.respiratoryRate || "",
           },
         },
-        investigations: patient.labReports || [{ name: "", category: "" }],
+        investigations: patient.labReports?.length > 0 
+          ? patient.labReports 
+          : [{ name: "", category: "" }], // Default empty investigation
         medicineAdvice: patient.medicineAdvice || [
           { name: "", dosage: "0-0-0", duration: "" },
         ],
@@ -254,8 +273,7 @@ useEffect(() => {
     setFormData((prev) => ({ ...prev, investigations: updatedInvestigations }));
   };
 
-  const handleAddInvestigation = (e) => {
-    e.preventDefault(); // Prevent form submission
+  const handleAddInvestigation = () => {
     setFormData((prev) => ({
       ...prev,
       investigations: [...prev.investigations, { name: "", category: "" }],
@@ -289,7 +307,7 @@ useEffect(() => {
   
 
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent form submission on Enter key
+    e.preventDefault();
 
     const dischargeData = {
       patientId: patientId,
@@ -300,16 +318,20 @@ useEffect(() => {
       clinicalSummary: formData.clinicalSummary,
       diagnosis: formData.diagnosis,
       treatment: formData.treatment,
-      medicineAdvice: formData.medicineAdvice.map((m) => ({
-        name: m.name,
-        duration: m.duration,
-        frequency: m.dosage,
-      })),
-      labReports: formData.investigations.map((i) => ({
-        name: i.name,
-        report: i.report,
-        date: i.date,
-      })),
+      medicineAdvice: formData.medicineAdvice
+        .filter(m => m.name.trim() !== '')
+        .map((m) => ({
+          name: m.name,
+          duration: m.duration,
+          frequency: m.dosage,
+        })),
+      labReports: formData.investigations
+        .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
+        .map((i) => ({
+          name: i.name,
+          report: i.report,
+          date: i.date || new Date().toISOString()
+        })),
       vitals: formData.vitals,
       notes: formData.notes,
       status: "Discharged",
@@ -344,16 +366,20 @@ useEffect(() => {
       clinicalSummary: formData.clinicalSummary,
       diagnosis: formData.diagnosis,
       treatment: formData.treatment,
-      medicineAdvice: formData.medicineAdvice.map((m) => ({
-        name: m.name,
-        duration: m.duration,
-        frequency: m.dosage,
-      })),
-      labReports: formData.investigations.map((i) => ({
-        name: i.name,
-        report: i.report,
-        date: i.date,
-      })),
+      medicineAdvice: formData.medicineAdvice
+        .filter(m => m.name.trim() !== '')
+        .map((m) => ({
+          name: m.name,
+          duration: m.duration,
+          frequency: m.dosage,
+        })),
+      labReports: formData.investigations
+        .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
+        .map((i) => ({
+          name: i.name,
+          report: i.report,
+          date: i.date || new Date().toISOString()
+        })),
       vitals: formData.vitals,
       notes: formData.notes,
     };
@@ -548,26 +574,57 @@ useEffect(() => {
   // Add a new state for custom diagnosis input
   const [customDiagnosis, setCustomDiagnosis] = useState("");
 
-  // Add a function to handle adding diagnosis (both from template and custom)
+  // Add this state to track custom diagnoses
+  const [customDiagnosesList, setCustomDiagnosesList] = useState([]);
+
+  // Modify the handleAddDiagnosis function
   const handleAddDiagnosis = (diagnosis) => {
-    setFormData((prev) => ({
-      ...prev,
-      diagnosis: prev.diagnosis
-        ? `${prev.diagnosis}, ${diagnosis}`
-        : diagnosis,
-    }));
+    if (!diagnosis.trim()) return;
+    
+    const currentDiagnoses = formData.diagnosis ? formData.diagnosis.split(", ") : [];
+    
+    // Add to custom diagnoses list if it's not in the template
+    if (!diagnosisTemplate.includes(diagnosis) && !customDiagnosesList.includes(diagnosis)) {
+      setCustomDiagnosesList(prev => [...prev, diagnosis]);
+    }
+
+    if (currentDiagnoses.includes(diagnosis)) {
+      setFormData((prev) => ({
+        ...prev,
+        diagnosis: prev.diagnosis
+          .split(", ")
+          .filter(d => d !== diagnosis)
+          .join(", ")
+      }));
+    } else {
+      // Add the diagnosis if it's not selected
+      setFormData((prev) => ({
+        ...prev,
+        diagnosis: prev.diagnosis
+          ? `${prev.diagnosis}, ${diagnosis}`
+          : diagnosis,
+      }));
+    }
     setCustomDiagnosis("");
   };
 
-  // Add a function to handle removing diagnosis
-  const handleRemoveDiagnosis = (diagnosisToRemove) => {
-    setFormData((prev) => ({
-      ...prev,
-      diagnosis: prev.diagnosis
-        .split(", ")
-        .filter((d) => d !== diagnosisToRemove)
-        .join(", "),
-    }));
+  // Add this new function to check for matches
+  const getMatchingDiagnoses = (input) => {
+    if (!input) return [];
+    return diagnosisTemplate.filter(diagnosis => 
+      diagnosis.toLowerCase().startsWith(input.toLowerCase())
+    );
+  };
+
+  const handleDiagnosisChange = (newDiagnoses) => {
+    const diagnosisString = newDiagnoses.map(d => d.name).join(", ");
+    setFormData((prev) => ({ ...prev, diagnosis: diagnosisString }));
+  };
+
+  const handleRemoveDiagnosis = (name) => {
+    const currentDiagnoses = formData.diagnosis.split(", ");
+    const updatedDiagnoses = currentDiagnoses.filter(d => d !== name).join(", ");
+    setFormData((prev) => ({ ...prev, diagnosis: updatedDiagnoses }));
   };
 
   if (!patient)
@@ -708,54 +765,28 @@ useEffect(() => {
               <div>
                 <Label htmlFor="diagnosis">Diagnosis</Label>
                 <div className="mt-1 space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    {formData.diagnosis && formData.diagnosis.split(", ").filter(Boolean).map((diagnosis, index) => (
+                  <div className="flex flex-wrap gap-1">
+                    {formData.diagnosis.split(", ").map((diagnosis, index) => (
                       <Badge
                         key={index}
-                        variant="secondary"
-                        className="flex items-center px-3 py-1.5 text-sm font-medium bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                        variant="primary"
+                        className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
                       >
                         {diagnosis}
                         <X
-                          className="ml-2 h-4 w-4 cursor-pointer hover:text-blue-200"
+                          className="ml-1 h-3 w-3 cursor-pointer"
                           onClick={() => handleRemoveDiagnosis(diagnosis)}
                         />
                       </Badge>
                     ))}
                   </div>
                   <div className="flex gap-2">
-                    <Input
-                      id="diagnosis"
-                      name="diagnosis"
-                      value={customDiagnosis}
-                      onChange={handleInputChange}
-                      placeholder="Enter custom diagnosis"
-                      className="flex-grow"
+                    <MultiSelectInput
+                      suggestions={diagnosisList}
+                      selectedValues={formData.diagnosis.split(", ").map(d => ({ name: d }))}
+                      setSelectedValues={handleDiagnosisChange}
+                      placeholder="Select diagnosis"
                     />
-                    <Button
-                      type="button"
-                      onClick={() => handleAddDiagnosis(customDiagnosis)}
-                      disabled={!customDiagnosis}
-                      size="sm"
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {diagnosisTemplate.map((diagnosis, index) => (
-                      <Badge
-                        key={index}
-                        variant="outline"
-                        className={`cursor-pointer px-3 py-1.5 text-sm font-medium transition-colors ${
-                          formData.diagnosis.includes(diagnosis)
-                            ? 'bg-green-500 text-white hover:bg-green-600'
-                            : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                        }`}
-                        onClick={() => handleAddDiagnosis(diagnosis)}
-                      >
-                        {diagnosis}
-                      </Badge>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -821,8 +852,8 @@ useEffect(() => {
                 <Label htmlFor="investigations">Investigations</Label>
                 <div className="space-y-2 mt-2">
                   {formData.investigations.map((investigation, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                      <div className="w-full sm:w-1/2 flex items-center space-x-2">
+                    <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2">
+                      <div className="sm:col-span-3">
                         <SearchSuggestion
                           suggestions={allLabTests}
                           placeholder="Select investigation"
@@ -834,11 +865,6 @@ useEffect(() => {
                             handleInvestigationChange(index, suggestion)
                           }
                         />
-                        {investigation.date && (
-                          <span className="text-sm text-gray-500">
-                            {new Date(investigation.date).toLocaleDateString()}
-                          </span>
-                        )}
                       </div>
                       <div className="flex space-x-2">
                         <Button
@@ -847,6 +873,7 @@ useEffect(() => {
                           size="icon"
                           onClick={() => handleOpenLabReport(investigation)}
                           aria-label="Open Lab Report"
+                          disabled={!investigation.name}
                         >
                           <ChevronRight className="h-5 w-5" />
                         </Button>
@@ -866,7 +893,7 @@ useEffect(() => {
                     onClick={handleAddInvestigation}
                     variant="outline"
                     className="mt-2 font-semibold"
-                    type="button" // Change to type="button"
+                    type="button"
                   >
                     <PlusCircle className="h-4 w-4 mr-2" /> Add Investigation
                   </Button>
@@ -1029,7 +1056,20 @@ useEffect(() => {
               </Button>
             </div>
             <PDFViewer width="100%" height="90%">
-              <DischargeSummaryPDF formData={formData} patient={patientInfo} hospital={hospital}/>
+              <DischargeSummaryPDF 
+                formData={{
+                  ...formData,
+                  investigations: formData.investigations
+                    .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
+                    .map(inv => ({
+                      name: inv.name,
+                      report: inv.report,
+                      date: inv.date || new Date().toISOString()
+                    }))
+                }} 
+                patient={patientInfo} 
+                hospital={hospital}
+              />
             </PDFViewer>
           </div>
         </div>

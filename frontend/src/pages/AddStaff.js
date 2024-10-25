@@ -17,6 +17,7 @@ export default function AddStaff() {
   const navigate = useNavigate();
   const location = useLocation();
   const { staffId } = useParams();
+  console.log(staffId)
   const { status, error } = useSelector((state) => state.staff);
   const departments = useSelector((state) => state.departments.departments);
   const [formData, setFormData] = useState({ roles: [] });
@@ -33,7 +34,8 @@ export default function AddStaff() {
       setEditMode(true);
     }
   }, [location, staffId]);
-
+console.log(formData);
+console.log(location?.state?.staffData)
   const [errors, setErrors] = useState({});
   const [newQualification, setNewQualification] = useState("");
   const [newCertification, setNewCertification] = useState("");

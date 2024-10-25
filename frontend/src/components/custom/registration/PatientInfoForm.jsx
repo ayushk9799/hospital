@@ -94,7 +94,7 @@ export default function PatientInfoForm({
         <div className={isMobile ? 'w-1/2' : 'w-full'}>
           <MemoizedInput
             id="registrationNumber"
-            label="Registration Number"
+            label="Reg. No."
             value={formData.registrationNumber}
             onChange={handleInputChange}
             error={errors.registrationNumber}

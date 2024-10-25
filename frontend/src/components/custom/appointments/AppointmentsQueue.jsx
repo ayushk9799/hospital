@@ -9,7 +9,7 @@ import { Input } from "../../ui/input";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback } from "../../ui/avatar";
 
-const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, onSelect, vitals, diagnosis, treatment, medications, additionalInstructions, labTests, isSelected, comorbidities, conditionOnAdmission, conditionOnDischarge }) => {
+const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, registrationNumber, clinicalSummary, notes, onSelect, vitals, diagnosis, treatment, medications, additionalInstructions, labTests, isSelected, comorbidities, conditionOnAdmission, conditionOnDischarge }) => {
   const truncateName = (name, maxLength = 15) => {
     return name.length > maxLength ? name.substring(0, maxLength) + '...' : name;
   };
@@ -25,7 +25,7 @@ const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalS
       className={`flex items-center justify-between border-b p-4 cursor-pointer hover:bg-gray-100 ${
         isSelected ? 'border-2 border-green-400 bg-green-50' : ''
       }`}
-      onClick={() => onSelect({ ID, bookingNumber, patient, bookingDate, type, clinicalSummary, notes, vitals, diagnosis, treatment, medications, labTests, comorbidities, conditionOnAdmission, conditionOnDischarge })}
+      onClick={() => onSelect({ ID, bookingNumber, patient, registrationNumber, bookingDate, type, clinicalSummary, notes, vitals, diagnosis, treatment, medications, labTests, comorbidities, conditionOnAdmission, conditionOnDischarge })}
     >
       <div className="flex items-center space-x-4">
         <Avatar>
@@ -36,6 +36,7 @@ const PatientEntry = ({ ID, bookingNumber, patient, bookingDate, type, clinicalS
         <div>
           <h3 className="font-semibold capitalize">{truncateName(patient.name)}</h3>
           <p className="text-sm text-gray-500">{patient.contactNumber}</p>
+          <p className="text-xs text-gray-400">Reg: {registrationNumber}</p>
         </div>
       </div>
       <div className="text-right">
@@ -136,6 +137,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
                 conditionOnAdmission={booking.conditionOnAdmission}
                 conditionOnDischarge={booking.conditionOnDischarge}
                 isSelected={selectedPatientId === booking._id}
+                registrationNumber={booking.registrationNumber}
               />
             ))}
           </TabsContent>
@@ -158,6 +160,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
                 onSelect={handlePatientSelect}
                 comorbidities={booking.comorbidities}
                 isSelected={selectedPatientId === booking._id}
+                registrationNumber={booking.registrationNumber}
               />
             ))}
           </TabsContent>
@@ -181,6 +184,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
                 onSelect={handlePatientSelect}
                 comorbidities={booking.comorbidities}
                 isSelected={selectedPatientId === booking._id}
+                registrationNumber={booking.registrationNumber}
               />
             ))}
           </TabsContent>
