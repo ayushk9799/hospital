@@ -55,12 +55,35 @@ export const updateDiagnosisTemplate = createAsyncThunk(
   }
 );
 
+// Async thunk for updating service bill collections
+export const updateServiceBillCollections = createAsyncThunk(
+  "templates/updateServiceBillCollections",
+  async (serviceBillCollections, { rejectWithValue }) => {  
+    try{
+      const response=await fetch(`${Backend_URL}/api/hospitals/template/service_collections`,{
+        method:"POST",
+        headers:{"Content-Type":"application/json"},
+        credentials:"include",
+        body:JSON.stringify(serviceBillCollections)
+      })
+      if(!response.ok){
+        throw new Error("Failed to update service bill collections")
+      }
+      const data=await response.json()
+      return data
+    }catch(error){
+      return rejectWithValue(error.message)
+    }
+  }
+);  
+
 const initialState = {
   labTestsTemplate: [],
   headerTemplate: {},
   diagnosisTemplate: [],
   status: "idle", // 'idle' | 'loading' | 'succeeded' | 'failed'
   error: null,
+  serviceBillCollections:[]
 };
 
 const templatesSlice = createSlice({
@@ -77,6 +100,7 @@ const templatesSlice = createSlice({
         state.labTestsTemplate = action.payload.labTestsTemplate;
         state.headerTemplate = action.payload.headerTemplate;
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
+        state.serviceBillCollections=action.payload.service_collections;
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
         state.status = "failed";
@@ -84,7 +108,10 @@ const templatesSlice = createSlice({
       })
       .addCase(updateDiagnosisTemplate.fulfilled, (state, action) => {
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
-      });
+      })
+      .addCase(updateServiceBillCollections.fulfilled,(state,action)=>{
+        state.serviceBillCollections=action.payload;
+      })
   },
 });
 

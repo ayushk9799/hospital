@@ -94,7 +94,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent onOpenChange={setIsOpen} className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent onOpenChange={setIsOpen} className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-lg">
         <div 
           ref={componentRef}
           className={isPrinting ? 'print-content' : ''}
@@ -180,7 +180,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
             </div>
           </div>
         </div>
-        <DialogFooter>
+        <DialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:space-y-0 sm:space-x-2">
           <Button type="button" variant="secondary" onClick={() => setIsOpen(false)}>
             Close
           </Button>

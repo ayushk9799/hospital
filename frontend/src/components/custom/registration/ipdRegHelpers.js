@@ -9,6 +9,11 @@ export const initialFormData = {
   address: "",
   bloodType: "",
   patientType: "IPD",
+  paymentInfo : {
+    includeServices : true,
+    amountPaid : "",
+    paymentMethod : "", 
+  },
   admission: {
     department: "",
     assignedDoctor: "",

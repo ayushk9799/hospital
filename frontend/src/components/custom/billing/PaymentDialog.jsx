@@ -19,11 +19,13 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const isMobile = useMediaQuery('(max-width: 640px)');
+  const [amountError, setAmountError] = useState('');
 
   useEffect(() => {
     if (isOpen) {
       setPaymentAmount('');
       setPaymentMethod('');
+      setAmountError('');
     }
   }, [isOpen]);
 
@@ -76,6 +78,19 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
     setPaymentAmount(dueAmount.toFixed(2));
   };
 
+  const handlePaymentAmountChange = (e) => {
+    const amount = e.target.value;
+    setPaymentAmount(amount);
+    
+    if (parseFloat(amount) > dueAmount) {
+      setAmountError(`Amount cannot exceed the due amount of ₹${dueAmount.toFixed(2)}`);
+    } else {
+      setAmountError('');
+    }
+  };
+
+  const isPaymentValid = paymentAmount && paymentMethod && !amountError && parseFloat(paymentAmount) > 0;
+
   if (!billData) return null;
 
   // Add payment method options
@@ -83,7 +98,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="w-[90vw] max-w-[425px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[90vw] max-w-[425px] max-h-[90vh] overflow-y-auto rounded-lg">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Add Payment</DialogTitle>
           <DialogDescription>Manage payments for the bill.</DialogDescription>
@@ -106,9 +121,9 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
                 id="paymentAmount"
                 type="number"
                 value={paymentAmount}
-                onChange={(e) => setPaymentAmount(e.target.value)}
+                onChange={handlePaymentAmountChange}
                 placeholder="Enter amount"
-                className="pr-10"
+                className={`pr-10 ${amountError ? 'border-red-500' : ''}`}
                 disabled={isFullyPaid}
               />
               <Button
@@ -122,6 +137,9 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
                 <CreditCard className="h-4 w-4" />
               </Button>
             </div>
+            {amountError && (
+              <p className="text-xs text-red-500 mt-1">{amountError}</p>
+            )}
           </div>
           
           <div className="space-y-1">
@@ -178,7 +196,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
           )}
         </div>
         
-        <DialogFooter className="mt-6 flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2">
+        <DialogFooter className="mt-6 flex-col-reverse gap-2  sm:flex-row sm:space-y-0 sm:space-x-2">
           <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading} className="w-full sm:w-auto">
             Close
           </Button>
@@ -187,7 +205,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
               Fully Paid
             </Button>
           ) : (
-            <Button onClick={handleAddPayment} disabled={isLoading} className="w-full sm:w-auto">
+            <Button onClick={handleAddPayment} disabled={isLoading || !isPaymentValid} className="w-full sm:w-auto">
               {isLoading ? "Processing..." : "Add Payment"}
             </Button>
           )}

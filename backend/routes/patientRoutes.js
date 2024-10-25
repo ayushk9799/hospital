@@ -7,6 +7,7 @@ import { ServicesBill } from "../models/ServicesBill.js";
 import { getHospitalId } from "../utils/asyncLocalStorage.js";
 import { Service } from "../models/Services.js";
 import { Payment } from "../models/Payment.js";
+import { Template } from "../models/Template.js";
 import { checkPermission, verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 
@@ -18,7 +19,7 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
     session.startTransaction();
 
     try {
-      const { patientType, visit, admission, ...patientData } = req.body;
+      const { patientType, visit, admission, paymentInfo, ...patientData } = req.body;
       const user = req.user;
 
       if (!patientType || !["OPD", "IPD"].includes(patientType)) {
@@ -32,26 +33,14 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
       let admissionRecord, bill;
 
       if(visit?.consultationFee){
-        let consultationFee = await Service.findOne({
-          name: "Consultation Fee",
-        }).session(session);
-
-        if (!consultationFee) {
-          consultationFee = new Service({
-            name: "Consultation Fee",
-            rate: 500,
-            category: "General",
-          });
-          await consulatitonFee.save({ session });
-        }
         // Create a bill for the patient
         bill = new ServicesBill({
           services: [
             {
-              name: consultationFee.name,
+              name: 'Consultation Fee',
               quantity: 1,
-              rate: consultationFee.rate,
-              category: consultationFee.category,
+              rate: visit.consultationAmount,
+              category: 'Consultation',
             },
           ],
           patient: patient._id,
@@ -59,13 +48,13 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
             name: patient.name,
             phone: patient?.contactNumber,
           },
-          totalAmount: consultationFee.rate,
-          subtotal: consultationFee.rate,
+          totalAmount: visit.consultationAmount,
+          subtotal: visit.consultationAmount,
           createdBy: user._id,
         });
         if(visit.paymentMethod !== "" && visit.paymentMethod !== "Due"){
           const payment = new Payment({
-            amount: consultationFee.rate,
+            amount: visit.consultationAmount,
             paymentMethod: visit.paymentMethod,
             paymentType: { name: "Services", id: bill._id },
             type: "Income",
@@ -73,7 +62,7 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
           });
           await payment.save({ session });
           bill.payments.push(payment._id);
-          bill.amountPaid = consultationFee.rate;
+          bill.amountPaid = visit.consultationAmount;
         }
       }
 
@@ -106,6 +95,39 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
           patient: patient._id,
         });
         patient.admissionDetails.push(admissionRecord._id);
+        // billing for services
+        if(paymentInfo?.includeServices){
+          const template = await Template.findOne().select('service_collections').populate('service_collections').session(session);
+          const services = template.service_collections;
+          bill = new ServicesBill({
+            services: services.map((service) => ({
+              name: service.name,
+              quantity: 1,
+              rate: service.rate,
+            })),
+            patient: patient._id,
+            patientInfo: {
+              name: patient.name,
+              phone: patient?.contactNumber,
+            },
+            totalAmount: services.reduce((sum, service) => sum + service.rate, 0),
+            subtotal: services.reduce((sum, service) => sum + service.rate, 0),
+            createdBy: user._id,
+          });
+          if(paymentInfo?.paymentMethod !== "" && paymentInfo?.paymentMethod !== "Due"){
+            const payment = new Payment({
+              amount: Number(paymentInfo.amountPaid),
+              paymentMethod: paymentInfo.paymentMethod,
+              paymentType: { name: "Services", id: bill._id },
+              type: "Income",
+              createdBy: user._id,
+            });
+            await payment.save({ session });
+            bill.payments.push(payment._id);
+            bill.amountPaid = payment.amount;
+          }
+
+        }
         if (admission.assignedRoom) {
           const room = await Room.findById(admission.assignedRoom).session(session);
           if (!room) {
@@ -123,31 +145,22 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
           room.beds[bedIndex].currentPatient = patient._id;
           room.currentOccupancy += 1;
 
-          bill = new ServicesBill({
-            services: [
-              {
-                name: "Room Charge",
-                quantity: 1,
-                rate: room.ratePerDay,
-                category: "Room Rent",
-              },
-            ],
-            patient: patient._id,
-            patientInfo: {
-              name: patient.name,
-              phone: patient?.contactNumber,
-            },
-            totalAmount: room.ratePerDay,
-            subtotal: room.ratePerDay,
-            createdBy: user._id,
-          });
-          
+          if(bill){
+            bill.services.push({
+              name: "Room Charge",
+              quantity: 1,
+              rate: room.ratePerDay,
+              category: "Room Rent",
+            });
+            bill.totalAmount += room.ratePerDay;
+            bill.subtotal += room.ratePerDay;
+          }
           // This will trigger the pre-save hook
           await room.save({ session });
         }
       }
 
-      if(visit?.consultationFee || patientType === "IPD"){
+      if(visit?.consultationFee || (patientType === "IPD" && paymentInfo?.includeServices)){
         bill.patientType = patientType;
         admissionRecord.bills.services.push(bill._id);
         await bill.save({ session });

@@ -94,6 +94,7 @@ router.post('/:hospitalId', async (req, res) => {
         res.status(400).json({ message: 'Error updating hospital', error: error.message });
     }
 });
+
 router.post('/template/create',identifyHospital, async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -144,6 +145,33 @@ router.get('/template/read',identifyHospital, async (req, res) => {
         res.status(500).json({ message: 'Error fetching template', error: error.message });
     }
 });
+
+router.post('/template/service_collections', identifyHospital, async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+    try {
+        const template = await Template.findOne().session(session);
+        if (!template) {
+            return res.status(404).json({ message: "Template not found" });
+        }
+
+        // Ensure req.body.service_collections is an array of valid ObjectIds
+        if (!Array.isArray(req.body.service_collections) || !req.body.service_collections.every(mongoose.Types.ObjectId.isValid)) {
+            return res.status(400).json({ message: "Invalid service_collections data" });
+        }
+
+        template.service_collections = req.body.service_collections;
+        await template.save({ session });
+        await session.commitTransaction();
+        res.status(200).json(template.service_collections);
+    } catch (error) {
+        await session.abortTransaction();
+        res.status(400).json({ message: "Error updating service bill collections", error: error.message });
+    } finally {
+        session.endSession();
+    }
+});
+
 router.get('/getUploadUrl',identifyHospital,async(req,res)=>{
     try{
     const data=await presignedUrl()

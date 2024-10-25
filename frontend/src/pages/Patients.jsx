@@ -86,11 +86,11 @@ export default function Patients() {
     }
   },[status, dispatch])
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
-useEffect(()=>{
-  if(billsStatus==="idle"){
-    dispatch(fetchBills())
-  }
-},[billsStatus, dispatch])
+  useEffect(()=>{
+    if(billsStatus==="idle"){
+      dispatch(fetchBills())
+    }
+  },[billsStatus, dispatch])
 
   // Add this effect to refetch patients when the status changes
  
@@ -163,6 +163,20 @@ useEffect(()=>{
     const handleDischarge = (patient) => {
       navigate(`/patients/discharge/${patient._id}`, { state: { patient } });
     };
+
+    const getStatusBadgeVariant = (status) => {
+      switch (status.toLowerCase()) {
+        case 'admitted':
+          return 'default';
+        case 'discharged':
+          return 'secondary';
+        case 'critical':
+          return 'destructive';
+        default:
+          return 'outline';
+      }
+    };
+
     if (patients.length === 0) {
       return (
         <div className="flex flex-col items-center justify-center py-12">
@@ -227,7 +241,11 @@ useEffect(()=>{
                       ? format(new Date(patient.dateDischarged), "dd-MM-yyyy")
                       : "--"}
                   </TableCell>
-                  <TableCell>{patient.status}</TableCell>
+                  <TableCell>
+                    <Badge variant={getStatusBadgeVariant(patient.status)}>
+                      {patient.status}
+                    </Badge>
+                  </TableCell>
                 </>
               )}
               {type === "OPD" && (
@@ -298,76 +316,101 @@ useEffect(()=>{
     setDateFilter("All");
   };
 
-  const PatientCard = ({ patient }) => (
-    <Card className="mb-4 hover:shadow-md transition-shadow">
-      <CardContent className="p-4">
-        <div className="flex flex-col">
-          <div className="flex justify-between items-center mb-2">
-            <div className="flex items-center flex-grow">
-              <span className="text-sm font-semibold text-primary mr-2">
-                #{patient.bookingNumber}
-              </span>
-              <h3 className="text-lg font-semibold capitalize">
-                {patient.patient.name}
-                <span className="text-sm font-normal text-muted-foreground ml-2">
-                  ({patient.type})
+  const PatientCard = ({ patient }) => {
+    const getStatusBadgeVariant = (status) => {
+      switch (status.toLowerCase()) {
+        case 'admitted':
+          return 'default';
+        case 'discharged':
+          return 'secondary';
+        case 'critical':
+          return 'destructive';
+        default:
+          return 'outline';
+      }
+    };
+
+    return (
+      <Card className="mb-4 hover:shadow-md transition-shadow">
+        <CardContent className="p-4">
+          <div className="flex flex-col">
+            <div className="flex justify-between items-center mb-2">
+              <div className="flex items-center flex-grow">
+                <span className="text-sm font-semibold text-primary mr-2">
+                  #{patient.bookingNumber}
                 </span>
-              </h3>
-            </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => navigate(`/patients/${patient.patient._id}`)}>
-                  View Details
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleExistingBills(patient)}>
-                  Existing Bill
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => createServiceBill(patient)}>
-                  Create New Bill
-                </DropdownMenuItem>
-                {patient.type === "IPD" && (
-                  <DropdownMenuItem onClick={() => handleDischarge(patient)}>
-                    {patient.status === "Discharged" ? "View Discharge Summary" : "Discharge Patient"}
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
-            {patient.type === "IPD" && (
-              <div className="flex items-center col-span-2">
-                <User className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm">Reg. Number: {patient.registrationNumber || "--"}</span>
+                <h3 className="text-lg font-semibold capitalize">
+                  {patient.patient.name}
+                  <span className="text-sm font-normal text-muted-foreground ml-2">
+                    ({patient.type})
+                  </span>
+                </h3>
               </div>
-            )}
-            <div className="flex items-center">
-              <CalendarIcon className="h-4 w-4 text-muted-foreground mr-2" />
-              <span className="text-sm">{format(new Date(patient.bookingDate), "dd MMM yyyy")}</span>
-            </div>
-            <div className="flex items-center">
-              <Phone className="h-4 w-4 text-muted-foreground mr-2" />
-              <span className="text-sm">{patient.patient.contactNumber}</span>
-            </div>
-            <div className="flex items-center">
-              <User className="h-4 w-4 text-muted-foreground mr-2" />
-              <span className="text-sm capitalize">{patient.patient.gender}</span>
-            </div>
-            {patient.type === "IPD" && (
               <div className="flex items-center">
-                <BedDouble className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{patient.assignedRoom?.roomNumber || "Not assigned"}</span>
+                {patient.type === "IPD" && (
+                  <Badge 
+                    variant={getStatusBadgeVariant(patient.status)}
+                    className="mr-2"
+                  >
+                    {patient.status}
+                  </Badge>
+                )}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={() => navigate(`/patients/${patient.patient._id}`)}>
+                      View Details
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleExistingBills(patient)}>
+                      Existing Bill
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => createServiceBill(patient)}>
+                      Create New Bill
+                    </DropdownMenuItem>
+                    {patient.type === "IPD" && (
+                      <DropdownMenuItem onClick={() => handleDischarge(patient)}>
+                        {patient.status === "Discharged" ? "View Discharge Summary" : "Discharge Patient"}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
-            )}
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
+              {patient.type === "IPD" && (
+                <div className="flex items-center col-span-2">
+                  <User className="h-4 w-4 text-muted-foreground mr-2" />
+                  <span className="text-sm">Reg. Number: {patient.registrationNumber || "--"}</span>
+                </div>
+              )}
+              <div className="flex items-center">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground mr-2" />
+                <span className="text-sm">{format(new Date(patient.bookingDate), "dd MMM yyyy")}</span>
+              </div>
+              <div className="flex items-center">
+                <Phone className="h-4 w-4 text-muted-foreground mr-2" />
+                <span className="text-sm">{patient.patient.contactNumber}</span>
+              </div>
+              <div className="flex items-center">
+                <User className="h-4 w-4 text-muted-foreground mr-2" />
+                <span className="text-sm capitalize">{patient.patient.gender}</span>
+              </div>
+              {patient.type === "IPD" && (
+                <div className="flex items-center">
+                  <BedDouble className="h-4 w-4 text-muted-foreground mr-2" />
+                  <span className="text-sm">{patient.assignedRoom?.roomNumber || "Not assigned"}</span>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </CardContent>
-    </Card>
-  )
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="w-full border-none shadow-none">
@@ -445,25 +488,6 @@ useEffect(()=>{
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="outline" className="w-full">
-                                <Filter className="mr-2 h-4 w-4" />
-                                {filterStatus === "All" ? "Filter" : filterStatus}
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[200px]">
-                              <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuLabel>Status</DropdownMenuLabel>
-                              <DropdownMenuItem onSelect={() => setFilterStatus("All")}>All</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setFilterStatus("Active")}>Active</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setFilterStatus("Admitted")}>Admitted</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setFilterStatus("Discharged")}>Discharged</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setFilterStatus("Critical")}>Critical</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setFilterStatus("Pending")}>Pending</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" className="w-full">
                                 <CalendarIcon className="mr-2 h-4 w-4" />
                                 {dateFilter === "All" ? "All Time" : dateFilter}
                               </Button>
@@ -493,7 +517,7 @@ useEffect(()=>{
                   </AnimatePresence>
                 ) : (
                   <>
-                    <DropdownMenu>
+                    {/* <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline" className="ml-auto">
                           <Filter className="mr-2 h-4 w-4" />
@@ -511,7 +535,7 @@ useEffect(()=>{
                         <DropdownMenuItem onSelect={() => setFilterStatus("Critical")}>Critical</DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => setFilterStatus("Pending")}>Pending</DropdownMenuItem>
                       </DropdownMenuContent>
-                    </DropdownMenu>
+                    </DropdownMenu> */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline">

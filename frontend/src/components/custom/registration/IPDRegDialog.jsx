@@ -72,6 +72,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     setErrors({});
   }, [patientData]);
 
+
   useEffect(() => {
     if (!open) {
       dispatch(fetchRooms());
@@ -83,7 +84,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   }, [open, dispatch, resetFormData]);
 
   const handleInputChange = (e) => {
-    const { id, value } = e.target;
+    const { id, value, type, checked } = e.target;
     setFormData((prev) => {
       const keys = id.split(".");
       const newState = { ...prev };
@@ -92,7 +93,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         current[keys[i]] = { ...current[keys[i]] };
         current = current[keys[i]];
       }
-      current[keys[keys.length - 1]] = value;
+      current[keys[keys.length - 1]] = type === "checkbox" ? checked : value;
       return newState;
     });
   };
@@ -159,6 +160,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
               description: "The new patient has been added.",
               variant: "success",
             });
+            onOpenChange(false);
             dispatch(fetchPatients());
             dispatch(fetchRooms());
             dispatch(fetchBills());
@@ -173,8 +175,9 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             });
           })
           .finally(() => {
-            onOpenChange(false);
-          });
+      
+        });
+        console.log(submissionData);
       }
     }
   };
@@ -260,15 +263,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         onChange={handleInputChange}
                       />
                       <div className="flex items-end gap-4">
-                        <div className="flex-grow relative">
-                          <MemoizedInput
-                            id="dateOfBirth"
-                            label="Date of Birth"
-                            type="date"
-                            value={formData.dateOfBirth}
-                            onChange={handleDobChange}
-                          />
-                        </div>
+                       
                         <div className="w-30 relative">
                           <MemoizedInput
                             id="age"
@@ -277,6 +272,15 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             value={formData.age}
                             onChange={handleAgeChange}
                             error={errors.age}
+                          />
+                        </div>
+                        <div className="flex-grow relative">
+                          <MemoizedInput
+                            id="dateOfBirth"
+                            label="Date of Birth"
+                            type="date"
+                            value={formData.dateOfBirth}
+                            onChange={handleDobChange}
                           />
                         </div>
                       </div>
@@ -524,6 +528,47 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                     onChange={handleInputChange}
                   />
                 </div>
+                <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="paymentInfo.includeServices"
+                    checked={formData.paymentInfo.includeServices}
+                    onChange={handleInputChange}
+                  />
+                  <label htmlFor="paymentInfo.includeServices">Include Service Bill</label>
+                </div>
+
+                {/* Add payment fields here */}
+                  <div className="grid grid-cols-2 gap-2">
+                  <div>
+                  <MemoizedInput
+                    id="paymentInfo.amountPaid"
+                    label="Amount Paid"
+                    type="number"
+                    value={formData.paymentInfo.amountPaid}
+                    onChange={handleInputChange}
+                  />
+                  </div>
+                  <Select
+                    id="paymentInfo.paymentMethod"
+                    value={formData.paymentInfo.paymentMethod}
+                    onValueChange={(value) =>
+                      handleInputChange({ target: { id: "paymentInfo.paymentMethod", value } })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Payment Method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="UPI">UPI</SelectItem>
+                      <SelectItem value="Card">Card</SelectItem>
+                      <SelectItem value="Insurance">Insurance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  </div>
+                  </div>
               </div>
             </TabsContent>
 
@@ -631,6 +676,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
               </TabsContent>
           
           </Tabs>
+
+          
 
           <DialogFooter className={`mt-4 ${isMobile ? "mb-8" : ""}`}>
             <div className={`w-full flex ${isMobile ? "flex-col-reverse" : "flex-row"} justify-between sm:justify-end sm:space-x-2 space-y-2 sm:space-y-0`}>
