@@ -12,7 +12,8 @@ export const initialFormData = {
   paymentInfo : {
     includeServices : true,
     amountPaid : "",
-    paymentMethod : "", 
+    paymentMethod: "",
+    services: [],
   },
   admission: {
     department: "",

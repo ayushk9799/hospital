@@ -395,7 +395,7 @@ export default function SalesMain({
           </div>
         )}
 
-        <div className={`${isDesktop ? 'flex space-x-2' : 'space-y-4'} md:h-[70vh]overflow-hidden`}>
+        <div className={`${isDesktop ? 'flex space-x-2' : 'space-y-4'} md:h-[70vh] overflow-hidden`}>
           {/* Sales Order Details and Item List */}
           <div className={isDesktop ? "w-3/4" : "w-full"}>
             {/* Item List */}

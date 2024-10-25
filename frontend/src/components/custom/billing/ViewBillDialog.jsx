@@ -10,42 +10,13 @@ import { numberToWords } from "../../../assets/Data";
 import { stylesFont } from "../reports/LabReportPDF";
 import { useSelector } from "react-redux";
 import HospitalHeader from "../../../utils/print/HospitalHeader";
-// const HospitalHeader = () => {
-//   const {hospitalInfo} = useSelector((state) => state.hospital);
-//   return (
-//   <div className="hidden print:block mb-4">
-//     <div className="mb-2 border-b border-[#000000] pb-2">
-//       <div>
-//         <h1 className="text-4xl tracking-wide text-center text-[#1a5f7a] text-capitalize" style={stylesFont.fontFamilyName}>{hospitalInfo?.name}</h1>
-//       </div>
-//       <div style={{ display: "flex", flexDirection: "row" }}>
-//         <div style={{ marginLeft: 50 }}>
-//           <img
-//             src={require("../reports/Capture2.png")}
-//             alt="Clinic Logo"
-//             className="w-[100px] h-[100px]"
-//           />
-//         </div>
-//         <div className="ml-8">
-//           <p className="text-center text-[#333333]">
-//             {hospitalInfo?.address}
-//           </p>
-//           <h2 className="text-center text-[#1a5f7a] text-xl ">{hospitalInfo?.doctorName}</h2>
-//           <p className="text-center text-[#333333]">
-//             {hospitalInfo?.doctorInfo}
-//           </p>
-//           <p className="text-center text-[#333333]">{hospitalInfo?.contactNumber}</p>
-//         </div>
-//       </div>
-//     </div>
-//   </div>
-// );
-// }
-
+import { AlertCircle } from 'lucide-react';
+import { useMediaQuery } from '../../../hooks/useMediaQuery';
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
+  const isMobile = useMediaQuery('(max-width: 640px)');
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -176,6 +147,43 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                 {/* <div className="w-full text-left text-sm mt-1">
                   <span className="font-semibold">Invoice By: </span>{billData.physician || 'N/A'}
                 </div> */}
+              </div>
+              {/* Add this new section for the payment table */}
+              <div className="space-y-4 mt-6">
+                <h3 className="text-lg font-semibold mb-2">Payment History</h3>
+                {billData?.payments && billData?.payments?.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[80px]">Date</TableHead>
+                          {!isMobile && <TableHead className="w-[80px]">Time</TableHead>}
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Method</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {billData.payments.map((payment, index) => (
+                          <TableRow key={index}>
+                            <TableCell className="text-xs">{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
+                            {!isMobile && (
+                              <TableCell className="text-xs">
+                                {new Date(payment.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
+                              </TableCell>
+                            )}
+                            <TableCell className="text-xs font-medium">₹{payment.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
+                            <TableCell className="text-xs">{payment.paymentMethod}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center space-x-2 text-gray-500 py-4">
+                    <AlertCircle size={18} />
+                    <span>No payment history found</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>

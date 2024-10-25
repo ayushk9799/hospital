@@ -1,50 +1,58 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '../../ui/dialog';
 import { Button } from '../../ui/button';
 import { Checkbox } from '../../ui/checkbox';
 import { ScrollArea } from '../../ui/scroll-area';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../ui/table';
-import { useDispatch, useSelector } from 'react-redux';
-import { updateServiceBillCollections, fetchTemplates } from '../../../redux/slices/templatesSlice';
 import { Separator } from '../../ui/separator';
 import { Input } from '../../ui/input';
-import { Search } from 'lucide-react';
+import { Search, X } from 'lucide-react';
 
-const ManageServicesDialog = ({ isOpen, onClose, services }) => {
-  const [selectedServices, setSelectedServices] = useState([]); // Ensure this is always an array
-  const [total, setTotal] = useState(0); // New state for total
-  const [searchTerm, setSearchTerm] = useState(""); // New state for search
-  const dispatch = useDispatch();
-  const { serviceBillCollections, status } = useSelector((state) => state.templates);
+const SelectServicesDialog = ({ isOpen, onClose, services, selectedServices, onServicesChange }) => {
+  const [localSelectedServices, setLocalSelectedServices] = useState(selectedServices);
+  const [total, setTotal] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    setSelectedServices(serviceBillCollections || []); // Ensure serviceBillCollections is an array
-  }, [serviceBillCollections]);
+    setLocalSelectedServices(selectedServices );
+  }, [selectedServices]);
 
-  useEffect(()=>{
-    if(status==="idle"){
-      dispatch(fetchTemplates());
-    }
-  }, [dispatch, status]);
 
   useEffect(() => {
     const newTotal = services
-      .filter(service => selectedServices.includes(service._id))
+      .filter(service => localSelectedServices.includes(service._id))
       .reduce((sum, service) => sum + service.rate, 0);
     setTotal(newTotal);
-  }, [selectedServices, services]); // Update total when selectedServices or services change
+  }, [localSelectedServices, services]);
 
   const handleSearch = (event) => {
     setSearchTerm(event.target.value);
   };
 
-  const filteredServices = services.filter(service =>
-    service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    service.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const clearSearch = () => {
+    setSearchTerm("");
+  };
+
+  const sortedServices = useMemo(() => {
+    return [...services].sort((a, b) => {
+      const aSelected = localSelectedServices.includes(a._id);
+      const bSelected = localSelectedServices.includes(b._id);
+      if (aSelected === bSelected) {
+        return a.name.localeCompare(b.name);
+      }
+      return aSelected ? -1 : 1;
+    });
+  }, [services, localSelectedServices]);
+
+  const filteredServices = useMemo(() => {
+    return sortedServices.filter(service =>
+      service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      service.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [sortedServices, searchTerm]);
 
   const handleCheckboxChange = useCallback((serviceId) => {
-    setSelectedServices((prevSelected) =>
+    setLocalSelectedServices((prevSelected) =>
       prevSelected.includes(serviceId)
         ? prevSelected.filter((id) => id !== serviceId)
         : [...prevSelected, serviceId]
@@ -52,24 +60,32 @@ const ManageServicesDialog = ({ isOpen, onClose, services }) => {
   }, []);
 
   const handleApply = useCallback(() => {
-    dispatch(updateServiceBillCollections({ service_collections: selectedServices }));
+    onServicesChange(localSelectedServices);
     onClose();
-  }, [dispatch, selectedServices, onClose]);
+  }, [localSelectedServices, onServicesChange, onClose]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-[95vw] w-full sm:max-w-[200px] md:max-w-[250px] lg:max-w-[500px] xl:max-w-[600px] rounded-lg max-h-[90vh]">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl md:text-2xl">Manage Services</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl md:text-2xl">Select Services</DialogTitle>
         </DialogHeader>
-        <div className=" relative">
+        <div className="relative">
           <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search services..."
             value={searchTerm}
             onChange={handleSearch}
-            className="pl-8 w-full"
+            className="pl-8 pr-8 w-full"
           />
+          {searchTerm && (
+            <button
+              onClick={clearSearch}
+              className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
         <div className="relative">
           <Table>
@@ -77,25 +93,28 @@ const ManageServicesDialog = ({ isOpen, onClose, services }) => {
               <TableRow>
                 <TableHead className="w-[50px]">Select</TableHead>
                 <TableHead>Service Name</TableHead>
-                <TableHead className="hidden md:block">Category</TableHead> {/* New column for category */}
+                <TableHead className="hidden md:block">Category</TableHead>
                 <TableHead className="text-right pr-6">Rate</TableHead>
               </TableRow>
             </TableHeader>
           </Table>
-          <ScrollArea className="h-[50vh] pr-4 ">
+          <ScrollArea className="h-[50vh] pr-4">
             <Table>
               <TableBody>
                 {filteredServices.map((service) => (
-                  <TableRow key={service._id}>
+                  <TableRow 
+                    key={service._id}
+                    className={localSelectedServices.includes(service._id) ? "bg-muted" : ""}
+                  >
                     <TableCell className="text-center">
                       <Checkbox
-                        checked={selectedServices.includes(service._id)}
+                        checked={localSelectedServices.includes(service._id)}
                         onCheckedChange={() => handleCheckboxChange(service._id)}
                         className="h-5 w-5"
                       />
                     </TableCell>
                     <TableCell>{service.name}</TableCell>
-                    <TableCell className="hidden md:block">{service.category}</TableCell> {/* New cell for category */}
+                    <TableCell className="hidden md:block">{service.category}</TableCell>
                     <TableCell className="text-right font-semibold">₹{service.rate.toLocaleString('en-IN')}</TableCell>
                   </TableRow>
                 ))}
@@ -109,7 +128,7 @@ const ManageServicesDialog = ({ isOpen, onClose, services }) => {
         </div>
         <DialogFooter className="grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">
-            Close
+            Cancel
           </Button>
           <Button onClick={handleApply} className="w-full sm:w-auto">
             Apply
@@ -120,4 +139,4 @@ const ManageServicesDialog = ({ isOpen, onClose, services }) => {
   );
 };
 
-export default ManageServicesDialog;
+export default SelectServicesDialog;
