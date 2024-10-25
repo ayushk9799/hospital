@@ -105,13 +105,17 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
         patient.admissionDetails.push(admissionRecord._id);
         // billing for services
         if(paymentInfo?.includeServices){
-          const template = await Template.findOne().select('service_collections').populate('service_collections').session(session);
-          const services = template.service_collections;
+          
+          const services = await Service.find({
+            _id: { $in: paymentInfo.services },
+          }).session(session);
+
           bill = new ServicesBill({
             services: services.map((service) => ({
               name: service.name,
               quantity: 1,
               rate: service.rate,
+              category: service?.category || "Other",
             })),
             patient: patient._id,
             patientInfo: {

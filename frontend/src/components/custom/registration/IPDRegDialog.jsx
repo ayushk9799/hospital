@@ -30,11 +30,14 @@ import {
   formatSubmissionData,
 } from "./ipdRegHelpers";
 import { useToast } from "../../../hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, Info } from "lucide-react";
 import MemoizedInput from "./MemoizedInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { fetchBills } from "../../../redux/slices/BillingSlice";
 import { useMediaQuery } from "../../../hooks/use-media-query";
+import SelectServicesDialog from "./SelectServicesDialog";
+import { fetchServices } from "../../../redux/slices/serviceSlice";
+import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const dispatch = useDispatch();
@@ -49,21 +52,56 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const [isSelectServicesDialogOpen, setIsSelectServicesDialogOpen] =
+    useState(false);
+  const { services, servicesStatus } = useSelector((state) => state.services);
+  const { serviceBillCollections, status } = useSelector(
+    (state) => state.templates
+  );
+  const [totalAmount, setTotalAmount] = useState(0);
+
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchTemplates());
+    }
+    if (servicesStatus === "idle") {
+      dispatch(fetchServices());
+    }
+  }, [dispatch, status, servicesStatus]);
+
+  useEffect(() => {
+    const newTotal = services
+      .filter((service) => formData.paymentInfo.services.includes(service._id))
+      .reduce((sum, service) => sum + service.rate, 0);
+    setTotalAmount(newTotal);
+  }, [formData.paymentInfo.services, services]);
+
+  useEffect(() => {
+    if (open && serviceBillCollections) {
+      setFormData((prevData) => ({
+        ...prevData,
+        paymentInfo: {
+          ...prevData.paymentInfo,
+          services: serviceBillCollections,
+        },
+      }));
+    }
+  }, [open, serviceBillCollections]);
 
   // Function to reset form data
   const resetFormData = useCallback(() => {
     if (patientData) {
       setFormData({
         ...initialFormData,
-        name: patientData.name || '',
-        age: patientData.age || '',
-        gender: patientData.gender || '',
-        contactNumber: patientData.contactNumber || '',
-        email: patientData.email || '',
-        address: patientData.address || '',
-        registrationNumber: patientData.registrationNumber || '',
-        dateOfBirth: patientData.dateOfBirth || '',
-        bloodType: patientData.bloodType || '',
+        name: patientData.name || "",
+        age: patientData.age || "",
+        gender: patientData.gender || "",
+        contactNumber: patientData.contactNumber || "",
+        email: patientData.email || "",
+        address: patientData.address || "",
+        registrationNumber: patientData.registrationNumber || "",
+        dateOfBirth: patientData.dateOfBirth || "",
+        bloodType: patientData.bloodType || "",
         // Add any other fields you want to pre-fill
       });
     } else {
@@ -72,16 +110,15 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     setErrors({});
   }, [patientData]);
 
-
   useEffect(() => {
     if (!open) {
       dispatch(fetchRooms());
       resetFormData();
-      setTimeout(()=>{
-        document.body.style=""
-       },500)
+      setTimeout(() => {
+        document.body.style = "";
+      }, 500);
     }
-  }, [open, dispatch, resetFormData]);
+  }, [open, resetFormData]);
 
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -126,7 +163,12 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       console.log(submissionData);
       if (patientData) {
         // This is a readmission
-        dispatch(readmitPatient({ patientId: patientData._id, admission: submissionData }))
+        dispatch(
+          readmitPatient({
+            patientId: patientData._id,
+            admission: submissionData,
+          })
+        )
           .unwrap()
           .then(() => {
             toast({
@@ -175,7 +217,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             });
           })
           .finally(() => {
-      
+
         });
         console.log(submissionData);
       }
@@ -194,18 +236,36 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   useEffect(() => {
     if (!open) {
-      setTimeout(()=>{
-       document.body.style=""
-      },500)
+      setTimeout(() => {
+        document.body.style = "";
+      }, 500);
     }
   }, [open]);
 
+  const handleInfoClick = (e) => {
+    e.preventDefault();
+    setIsSelectServicesDialogOpen(true);
+  };
+
+  const handleServicesChange = (selectedServices) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      paymentInfo: {
+        ...prevData.paymentInfo,
+        services: selectedServices,
+      },
+    }));
+  };
 
   return (
     <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent className={` ${isMobile ? "w-[95vw] p-4 rounded-lg gap-0 " : "max-w-[1000px]"} h-[${isMobile ? "70vh" : "60vh"}] overflow-y-auto`}>
-        <DialogHeader className='mb-4 md:mb-0'>
-          <DialogTitle >
+      <DialogContent
+        className={` ${
+          isMobile ? "w-[95vw] p-4 rounded-lg gap-0 " : "max-w-[1000px]"
+        } h-[${isMobile ? "70vh" : "60vh"}] overflow-y-auto`}
+      >
+        <DialogHeader className="mb-4 md:mb-0">
+          <DialogTitle>
             {patientData ? "Admit IPD Patient" : "Register New IPD Patient"}
           </DialogTitle>
           <DialogDescription className={isMobile ? "hidden" : ""}>
@@ -219,7 +279,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
           className={`space-y-4 h-[calc(${isMobile ? "70vh" : "60vh"}-115px)]`}
         >
           <Tabs defaultValue="basic-info" className="w-full">
-            <TabsList className={`grid w-full ${isMobile ? "grid-cols-3" : "grid-cols-3"}`}>
+            <TabsList
+              className={`grid w-full ${
+                isMobile ? "grid-cols-3" : "grid-cols-3"
+              }`}
+            >
               <TabsTrigger value="basic-info">
                 {isMobile ? "Basic" : "Basic Information"}
               </TabsTrigger>
@@ -228,7 +292,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             </TabsList>
 
             <TabsContent value="basic-info">
-              <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-3"} mt-4 gap-4`}>
+              <div
+                className={`grid ${
+                  isMobile ? "grid-cols-1" : "grid-cols-3"
+                } mt-4 gap-4`}
+              >
                 <div className="space-y-4">
                   <MemoizedInput
                     id="name"
@@ -263,7 +331,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         onChange={handleInputChange}
                       />
                       <div className="flex items-end gap-4">
-                       
                         <div className="w-30 relative">
                           <MemoizedInput
                             id="age"
@@ -528,33 +595,56 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                     onChange={handleInputChange}
                   />
                 </div>
-                <div className="space-y-1">
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="paymentInfo.includeServices"
-                    checked={formData.paymentInfo.includeServices}
-                    onChange={handleInputChange}
-                  />
-                  <label htmlFor="paymentInfo.includeServices">Include Service Bill</label>
+                <div className="space-y-1 flex items-center gap-4">
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="paymentInfo.includeServices"
+                        checked={formData.paymentInfo.includeServices}
+                        onChange={handleInputChange}
+                      />
+                      <label htmlFor="paymentInfo.includeServices">
+                        Include Service Bill
+                      </label>
+                    </div>
+
+                    <div>
+                      <p>
+                        Total Bill:{" "}
+                        <span className="font-semibold">
+                          {totalAmount.toLocaleString("en-IN")}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="border-primary text-primary"
+                    onClick={handleInfoClick}
+                  >
+                    Modify Bill
+                  </Button>
                 </div>
 
                 {/* Add payment fields here */}
-                  <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2  items-center gap-2">
                   <div>
-                  <MemoizedInput
-                    id="paymentInfo.amountPaid"
-                    label="Amount Paid"
-                    type="number"
-                    value={formData.paymentInfo.amountPaid}
-                    onChange={handleInputChange}
-                  />
+                    <MemoizedInput
+                      id="paymentInfo.amountPaid"
+                      label="Amount Paid"
+                      type="number"
+                      value={formData.paymentInfo.amountPaid}
+                      onChange={handleInputChange}
+                    />
                   </div>
                   <Select
                     id="paymentInfo.paymentMethod"
                     value={formData.paymentInfo.paymentMethod}
                     onValueChange={(value) =>
-                      handleInputChange({ target: { id: "paymentInfo.paymentMethod", value } })
+                      handleInputChange({
+                        target: { id: "paymentInfo.paymentMethod", value },
+                      })
                     }
                   >
                     <SelectTrigger>
@@ -567,14 +657,17 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                       <SelectItem value="Insurance">Insurance</SelectItem>
                     </SelectContent>
                   </Select>
-                  </div>
-                  </div>
+                </div>
               </div>
             </TabsContent>
 
             <TabsContent value="vitals">
               <div className="space-y-4">
-                <div className={`grid ${isMobile ? "grid-cols-1" : "grid-cols-2"} gap-4`}>
+                <div
+                  className={`grid ${
+                    isMobile ? "grid-cols-1" : "grid-cols-2"
+                  } gap-4`}
+                >
                   <Textarea
                     id="admission.diagnosis"
                     placeholder="Diagnosis"
@@ -610,7 +703,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                 </div>
 
                 <h4 className="font-semibold text-sm mt-4">Admission Vitals</h4>
-                <div className={`grid ${isMobile ? "grid-cols-2" : "grid-cols-3"} gap-4`}>
+                <div
+                  className={`grid ${
+                    isMobile ? "grid-cols-2" : "grid-cols-3"
+                  } gap-4`}
+                >
                   <Input
                     id="admission.vitals.admission.weight"
                     placeholder="Weight"
@@ -657,33 +754,33 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
               </div>
             </TabsContent>
 
-            
-              <TabsContent value="insurance">
-                <div className="mt-4 grid grid-cols-2 gap-4">
-                  <MemoizedInput
-                    id="admission.insuranceDetails.provider"
-                    label="Insurance Provider"
-                    value={formData.admission.insuranceDetails.provider}
-                    onChange={handleInputChange}
-                  />
-                  <MemoizedInput
-                    id="admission.insuranceDetails.policyNumber"
-                    label="Policy Number"
-                    value={formData.admission.insuranceDetails.policyNumber}
-                    onChange={handleInputChange}
-                  />
-                </div>
-              </TabsContent>
-          
+            <TabsContent value="insurance">
+              <div className="mt-4 grid grid-cols-2 gap-4">
+                <MemoizedInput
+                  id="admission.insuranceDetails.provider"
+                  label="Insurance Provider"
+                  value={formData.admission.insuranceDetails.provider}
+                  onChange={handleInputChange}
+                />
+                <MemoizedInput
+                  id="admission.insuranceDetails.policyNumber"
+                  label="Policy Number"
+                  value={formData.admission.insuranceDetails.policyNumber}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </TabsContent>
           </Tabs>
 
-          
-
           <DialogFooter className={`mt-4 ${isMobile ? "mb-8" : ""}`}>
-            <div className={`w-full flex ${isMobile ? "flex-col-reverse" : "flex-row"} justify-between sm:justify-end sm:space-x-2 space-y-2 sm:space-y-0`}>
-              <Button 
-                type="button" 
-                variant="outline" 
+            <div
+              className={`w-full flex ${
+                isMobile ? "flex-col-reverse" : "flex-row"
+              } justify-between sm:justify-end sm:space-x-2 space-y-2 sm:space-y-0`}
+            >
+              <Button
+                type="button"
+                variant="outline"
                 onClick={handleReset}
                 className={`${isMobile ? "w-full mt-2" : ""}`}
               >
@@ -699,13 +796,22 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     {patientData ? "Readmitting..." : "Registering..."}
                   </>
+                ) : patientData ? (
+                  "Readmit Patient"
                 ) : (
-                  patientData ? "Readmit Patient" : "Register Patient"
+                  "Register Patient"
                 )}
               </Button>
             </div>
           </DialogFooter>
         </form>
+        <SelectServicesDialog
+          isOpen={isSelectServicesDialogOpen}
+          onClose={() => setIsSelectServicesDialogOpen(false)}
+          services={services}
+          selectedServices={formData.paymentInfo.services}
+          onServicesChange={handleServicesChange}
+        />
       </DialogContent>
     </Dialog>
   );
