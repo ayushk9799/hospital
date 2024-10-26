@@ -309,7 +309,7 @@ const CreateServiceBill = () => {
     createBillStatus === "loading" || updateBillStatus === "loading";
 
   return (
-    <div className="w-full mx-auto p-2 space-y-4">
+    <div className="w-full space-y-2">
       <div
         className="flex items-center cursor-pointer"
         onClick={() => navigate(-1)}
@@ -499,7 +499,7 @@ const CreateServiceBill = () => {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
+            <div className="flex md:hidden flex-col items-center justify-center h-[200px] text-gray-500">
               <AlertCircle className="w-12 h-12 mb-2" />
               <p>No services added yet. Please add a service above.</p>
             </div>

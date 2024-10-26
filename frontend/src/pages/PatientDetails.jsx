@@ -460,8 +460,8 @@ export default function PatientDetails() {
   };
 
   return (
-    <div className="container mx-auto p-2 space-y-4 bg-gray-50">
-      <div className="flex justify-between items-center mb-2">
+    <div className="container mx-auto px-2 space-y-2 bg-gray-50">
+      <div className="hidden justify-between items-center mb-2">
         <h1 className="text-xl font-bold text-gray-800">Patient Profile</h1>
         <div className="space-x-2 hidden">
           <Button variant="outline" size="sm" className="hover:bg-gray-100">
