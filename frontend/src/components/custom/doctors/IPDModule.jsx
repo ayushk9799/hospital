@@ -15,6 +15,7 @@ import { comorbidities } from "../../../assets/Data";
 import MultiSelectInput from "../MultiSelectInput";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 
 // Add this at the top of the file, outside the component
 const allLabTests = labCategories.flatMap((category) =>
@@ -24,7 +25,7 @@ const allLabTests = labCategories.flatMap((category) =>
 const comorbiditiesList = comorbidities.map((name) => ({ name }));
 
 export default function IPDModule({ patient }) {
-  console.log('patient', patient);
+  console.log("patient", patient);
   const [ipdAdmission, setIpdAdmission] = useState({
     bookingDate: patient.bookingDate,
     bookingNumber: patient.bookingNumber,
@@ -32,10 +33,12 @@ export default function IPDModule({ patient }) {
     contactNumber: patient.patient.contactNumber,
     registrationNumber: patient.patient._id,
     patient: patient.patient._id,
-    diagnosis: patient.diagnosis || "",
+    diagnosis: "",
     notes: patient.notes || "",
     clinicalSummary: patient.clinicalSummary,
-    comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [],
+    comorbidities:
+      patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) ||
+      [],
     comorbidityHandling: "separate",
     conditionOnAdmission: patient.conditionOnAdmission || "",
     conditionOnDischarge: patient.conditionOnDischarge || "",
@@ -81,69 +84,91 @@ export default function IPDModule({ patient }) {
 
   // Add this useEffect to update the state when the patient prop changes
   useEffect(() => {
-    setIpdAdmission({
-      bookingDate: patient.bookingDate,
-      bookingNumber: patient.bookingNumber,
-      patientName: patient.patient.name,
-      contactNumber: patient.patient.contactNumber,
-      registrationNumber: patient.patient._id,
-      comorbidities: patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) || [],
-      patient: patient.patient._id,
-      diagnosis: patient.diagnosis || "",
-      notes: patient.notes || "",
-      clinicalSummary: patient.clinicalSummary,
-      treatment: patient.treatment || "",
-      medications:
-        patient.medications.length > 0
-          ? patient.medications
-          : [{ name: "", frequency: "0-0-0", duration: "" }],
-      labTests:
-        patient.labTests.length > 0
-          ? patient.labTests.map((test) => ({ name: test }))
-          : [{ name: "" }],
-      vitals: {
-        admission: {
-          bloodPressure: patient.vitals.admission.bloodPressure || "",
-          heartRate: patient.vitals.admission.heartRate || "",
-          temperature: patient.vitals.admission.temperature || "",
-          oxygenSaturation: patient.vitals.admission.oxygenSaturation || "",
-          respiratoryRate: patient.vitals.admission.respiratoryRate || "",
-          weight: patient.vitals.admission.weight || "",
-          height: patient.vitals.admission.height || "",
+    if (patient) {
+      setIpdAdmission((prev) => ({
+        ...prev,
+        bookingDate: patient.bookingDate,
+        bookingNumber: patient.bookingNumber,
+        patientName: patient.patient.name,
+        contactNumber: patient.patient.contactNumber,
+        registrationNumber: patient.patient._id,
+        comorbidities:
+          patient.comorbidities?.map((comorbidity) => ({
+            name: comorbidity,
+          })) || [],
+        patient: patient.patient._id,
+        diagnosis: patient.diagnosis || "",
+        notes: patient.notes || "",
+        clinicalSummary: patient.clinicalSummary,
+        treatment: patient.treatment || "",
+        medications:
+          patient.medications.length > 0
+            ? patient.medications
+            : [{ name: "", frequency: "0-0-0", duration: "" }],
+        labTests:
+          patient.labTests.length > 0
+            ? patient.labTests.map((test) => ({ name: test }))
+            : [{ name: "" }],
+        vitals: {
+          admission: {
+            bloodPressure: patient.vitals.admission.bloodPressure || "",
+            heartRate: patient.vitals.admission.heartRate || "",
+            temperature: patient.vitals.admission.temperature || "",
+            oxygenSaturation: patient.vitals.admission.oxygenSaturation || "",
+            respiratoryRate: patient.vitals.admission.respiratoryRate || "",
+            weight: patient.vitals.admission.weight || "",
+            height: patient.vitals.admission.height || "",
+          },
+          discharge: {
+            bloodPressure: patient.vitals.discharge.bloodPressure || "",
+            heartRate: patient.vitals.discharge.heartRate || "",
+            temperature: patient.vitals.discharge.temperature || "",
+            oxygenSaturation: patient.vitals.discharge.oxygenSaturation || "",
+            respiratoryRate: patient.vitals.discharge.respiratoryRate || "",
+          },
+          weight: patient.vitals.weight || "",
+          height: patient.vitals.height || "",
         },
-        discharge: {
-          bloodPressure: patient.vitals.discharge.bloodPressure || "",
-          heartRate: patient.vitals.discharge.heartRate || "",
-          temperature: patient.vitals.discharge.temperature || "",
-          oxygenSaturation: patient.vitals.discharge.oxygenSaturation || "",
-          respiratoryRate: patient.vitals.discharge.respiratoryRate || "",
+        status: "Admitted",
+        assignedDoctor: "",
+        assignedRoom: "",
+        assignedBed: "",
+        insuranceDetails: {
+          provider: "",
+          policyNumber: "",
+          coverageType: "",
         },
-        weight: patient.vitals.weight || "",
-        height: patient.vitals.height || "",
-      },
-      status: "Admitted",
-      assignedDoctor: "",
-      assignedRoom: "",
-      assignedBed: "",
-      insuranceDetails: {
-        provider: "",
-        policyNumber: "",
-        coverageType: "",
-      },
-    });
+      }));
+
+      // Update selectedDiagnoses from patient data
+      const patientDiagnoses = patient.diagnosis
+        ? patient.diagnosis.split(",").map((d) => ({ name: d.trim() }))
+        : [];
+      setSelectedDiagnoses(patientDiagnoses);
+    }
   }, [patient]);
 
   const dispatch = useDispatch();
   const { toast } = useToast();
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
-  const prescriptionUpdateStatus = useSelector((state) => state.patients.prescriptionUpdateStatus);
+  const prescriptionUpdateStatus = useSelector(
+    (state) => state.patients.prescriptionUpdateStatus
+  );
+  const [selectedDiagnoses, setSelectedDiagnoses] = useState([]);
+  const { diagnosisTemplate, status } = useSelector((state) => state.templates);
 
   useEffect(() => {
     if (itemsStatus === "idle") {
       dispatch(fetchItems());
     }
   }, [dispatch, itemsStatus]);
+
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchTemplates());
+    }
+  }, [status, dispatch]);
 
   const commonMedications = useMemo(() => {
     return medicines.map((item) => ({ name: item.name }));
@@ -166,10 +191,16 @@ export default function IPDModule({ patient }) {
       };
 
       // Calculate BMI if height or weight changes
-      if (type === 'admission' && (name === 'height' || name === 'weight')) {
-        const height = name === 'height' ? parseFloat(value) : parseFloat(prev.vitals.admission.height);
-        const weight = name === 'weight' ? parseFloat(value) : parseFloat(prev.vitals.admission.weight);
-        
+      if (type === "admission" && (name === "height" || name === "weight")) {
+        const height =
+          name === "height"
+            ? parseFloat(value)
+            : parseFloat(prev.vitals.admission.height);
+        const weight =
+          name === "weight"
+            ? parseFloat(value)
+            : parseFloat(prev.vitals.admission.weight);
+
         if (height && weight) {
           const heightInMeters = height / 100;
           const bmi = (weight / (heightInMeters * heightInMeters)).toFixed(1);
@@ -275,17 +306,38 @@ export default function IPDModule({ patient }) {
     }));
   };
 
+  const handleDiagnosisChange = (newDiagnoses) => {
+    setSelectedDiagnoses(newDiagnoses);
+    setIpdAdmission((prev) => ({
+      ...prev,
+      diagnosis: newDiagnoses.map((d) => d.name).join(", "),
+    }));
+  };
+
+  const handleRemoveDiagnosis = (name) => {
+    const newDiagnoses = selectedDiagnoses.filter((d) => d.name !== name);
+    setSelectedDiagnoses(newDiagnoses);
+    setIpdAdmission((prev) => ({
+      ...prev,
+      diagnosis: newDiagnoses.map((d) => d.name).join(", "),
+    }));
+  };
+
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center border-b border-gray-300 pb-2">
         <div>
-          <h2 className="text-xl font-bold hidden lg:block">IPD Admission for: {ipdAdmission.patientName}</h2>
-          <h2 className="text-md font-bold lg:hidden">{ipdAdmission.patientName}</h2>
+          <h2 className="text-xl font-bold hidden lg:block">
+            IPD Admission for: {ipdAdmission.patientName}
+          </h2>
+          <h2 className="text-md font-bold lg:hidden">
+            {ipdAdmission.patientName}
+          </h2>
         </div>
         <div className="space-x-2">
-          <Button 
-            className="font-semibold" 
-            size="sm" 
+          <Button
+            className="font-semibold"
+            size="sm"
             onClick={handleSaveIPDAdmission}
             disabled={prescriptionUpdateStatus === "loading"}
           >
@@ -314,7 +366,12 @@ export default function IPDModule({ patient }) {
               <h3 className="text-lg font-semibold">Admission Vitals</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="admission-temperature" className="text-xs font-semibold">Temperature (°C)</Label>
+                  <Label
+                    htmlFor="admission-temperature"
+                    className="text-xs font-semibold"
+                  >
+                    Temperature (°C)
+                  </Label>
                   <Input
                     id="admission-temperature"
                     name="temperature"
@@ -324,7 +381,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="admission-heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
+                  <Label
+                    htmlFor="admission-heartRate"
+                    className="text-xs font-semibold"
+                  >
+                    Heart Rate (bpm)
+                  </Label>
                   <Input
                     id="admission-heartRate"
                     name="heartRate"
@@ -334,7 +396,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="admission-bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
+                  <Label
+                    htmlFor="admission-bloodPressure"
+                    className="text-xs font-semibold"
+                  >
+                    Blood Pressure (mmHg)
+                  </Label>
                   <Input
                     id="admission-bloodPressure"
                     name="bloodPressure"
@@ -344,7 +411,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="admission-respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
+                  <Label
+                    htmlFor="admission-respiratoryRate"
+                    className="text-xs font-semibold"
+                  >
+                    Respiratory Rate (bpm)
+                  </Label>
                   <Input
                     id="admission-respiratoryRate"
                     name="respiratoryRate"
@@ -354,7 +426,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="admission-height" className="text-xs font-semibold">Height (cm)</Label>
+                  <Label
+                    htmlFor="admission-height"
+                    className="text-xs font-semibold"
+                  >
+                    Height (cm)
+                  </Label>
                   <Input
                     id="admission-height"
                     name="height"
@@ -364,7 +441,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="admission-weight" className="text-xs font-semibold">Weight (kg)</Label>
+                  <Label
+                    htmlFor="admission-weight"
+                    className="text-xs font-semibold"
+                  >
+                    Weight (kg)
+                  </Label>
                   <Input
                     id="admission-weight"
                     name="weight"
@@ -374,17 +456,27 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="admission-bmi" className="text-xs font-semibold">BMI</Label>
+                  <Label
+                    htmlFor="admission-bmi"
+                    className="text-xs font-semibold"
+                  >
+                    BMI
+                  </Label>
                   <Input
                     id="admission-bmi"
                     name="bmi"
-                    value={ipdAdmission.vitals.admission.bmi || ''}
+                    value={ipdAdmission.vitals.admission.bmi || ""}
                     readOnly
                     className="h-8 text-sm font-medium bg-gray-100"
                   />
                 </div>
                 <div>
-                  <Label htmlFor="admission-oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
+                  <Label
+                    htmlFor="admission-oxygenSaturation"
+                    className="text-xs font-semibold"
+                  >
+                    O₂ Saturation (%)
+                  </Label>
                   <Input
                     id="admission-oxygenSaturation"
                     name="oxygenSaturation"
@@ -400,7 +492,12 @@ export default function IPDModule({ patient }) {
               <h3 className="text-lg font-semibold">Discharge Vitals</h3>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <Label htmlFor="discharge-temperature" className="text-xs font-semibold">Temperature (°C)</Label>
+                  <Label
+                    htmlFor="discharge-temperature"
+                    className="text-xs font-semibold"
+                  >
+                    Temperature (°C)
+                  </Label>
                   <Input
                     id="discharge-temperature"
                     name="temperature"
@@ -410,7 +507,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="discharge-heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
+                  <Label
+                    htmlFor="discharge-heartRate"
+                    className="text-xs font-semibold"
+                  >
+                    Heart Rate (bpm)
+                  </Label>
                   <Input
                     id="discharge-heartRate"
                     name="heartRate"
@@ -420,7 +522,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="discharge-bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
+                  <Label
+                    htmlFor="discharge-bloodPressure"
+                    className="text-xs font-semibold"
+                  >
+                    Blood Pressure (mmHg)
+                  </Label>
                   <Input
                     id="discharge-bloodPressure"
                     name="bloodPressure"
@@ -430,7 +537,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="discharge-respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
+                  <Label
+                    htmlFor="discharge-respiratoryRate"
+                    className="text-xs font-semibold"
+                  >
+                    Respiratory Rate (bpm)
+                  </Label>
                   <Input
                     id="discharge-respiratoryRate"
                     name="respiratoryRate"
@@ -440,7 +552,12 @@ export default function IPDModule({ patient }) {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="discharge-oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
+                  <Label
+                    htmlFor="discharge-oxygenSaturation"
+                    className="text-xs font-semibold"
+                  >
+                    O₂ Saturation (%)
+                  </Label>
                   <Input
                     id="discharge-oxygenSaturation"
                     name="oxygenSaturation"
@@ -453,30 +570,62 @@ export default function IPDModule({ patient }) {
             </div>
           </TabsContent>
           <TabsContent value="diagnosis">
-            {/* Diagnosis and Treatment */}
             <div className="pt-0 p-1 bg-gray-50">
               <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
               <div className="grid grid-cols-1 gap-2">
                 <div>
-                  <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
-                  <Textarea 
-                    id="diagnosis" 
-                    name="diagnosis" 
-                    value={ipdAdmission.diagnosis} 
-                    onChange={handleInputChange} 
-                    placeholder="Enter patient's diagnosis" 
-                    className="min-h-[80px] text-sm font-medium" 
-                  />
+                  <Label htmlFor="diagnosis" className="text-xs font-semibold">
+                    Diagnosis
+                  </Label>
+                  <div className="space-y-2">
+                    <div className="flex gap-2">
+                      <MultiSelectInput
+                        suggestions={diagnosisTemplate.map((item) => ({
+                          name: item,
+                        }))}
+                        selectedValues={selectedDiagnoses}
+                        setSelectedValues={handleDiagnosisChange}
+                        placeholder="Select diagnoses"
+                      />
+                    </div>
+                    <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                      {selectedDiagnoses.length > 0 ? (
+                        <div className="flex flex-wrap gap-1">
+                          {selectedDiagnoses.map((diagnosis, index) => (
+                            <Badge
+                              key={index}
+                              variant="primary"
+                              className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
+                            >
+                              {diagnosis.name}
+                              <X
+                                className="ml-1 h-3 w-3 cursor-pointer"
+                                onClick={() =>
+                                  handleRemoveDiagnosis(diagnosis.name)
+                                }
+                              />
+                            </Badge>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-gray-500 text-sm">
+                          No diagnoses selected
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
                 <div>
-                  <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
-                  <Textarea 
-                    id="treatment" 
-                    name="treatment" 
-                    value={ipdAdmission.treatment} 
-                    onChange={handleInputChange} 
-                    placeholder="Enter recommended treatment" 
-                    className="min-h-[80px] text-sm font-medium" 
+                  <Label htmlFor="treatment" className="text-xs font-semibold">
+                    Treatment
+                  </Label>
+                  <Textarea
+                    id="treatment"
+                    name="treatment"
+                    value={ipdAdmission.treatment}
+                    onChange={handleInputChange}
+                    placeholder="Enter recommended treatment"
+                    className="min-h-[100px] text-sm font-medium"
                   />
                 </div>
               </div>
@@ -514,7 +663,12 @@ export default function IPDModule({ patient }) {
                     <MultiSelectInput
                       suggestions={allLabTests}
                       selectedValues={ipdAdmission.labTests}
-                      setSelectedValues={(newLabTests) => setIpdAdmission(prev => ({ ...prev, labTests: newLabTests }))}
+                      setSelectedValues={(newLabTests) =>
+                        setIpdAdmission((prev) => ({
+                          ...prev,
+                          labTests: newLabTests,
+                        }))
+                      }
                       placeholder="Select lab tests"
                     />
                   </div>
@@ -536,7 +690,9 @@ export default function IPDModule({ patient }) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500 text-sm">No lab tests selected</p>
+                      <p className="text-gray-500 text-sm">
+                        No lab tests selected
+                      </p>
                     )}
                   </div>
                 </div>
@@ -572,7 +728,9 @@ export default function IPDModule({ patient }) {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500 text-sm">No comorbidities selected</p>
+                      <p className="text-gray-500 text-sm">
+                        No comorbidities selected
+                      </p>
                     )}
                   </div>
                 </div>
@@ -585,26 +743,45 @@ export default function IPDModule({ patient }) {
               <h3 className="text-lg font-semibold mb-2">Medications</h3>
               <div className="space-y-4">
                 {ipdAdmission.medications?.map((medication, index) => (
-                  <div key={index} className="bg-white p-3 rounded-md shadow-sm">
+                  <div
+                    key={index}
+                    className="bg-white p-3 rounded-md shadow-sm"
+                  >
                     <div className="grid grid-cols-1 gap-2 mb-2">
                       <SearchSuggestion
                         suggestions={commonMedications}
                         placeholder="Select medicine"
                         value={medication.name}
-                        setValue={(value) => handleMedicationChange(index, "name", value)}
-                        onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+                        setValue={(value) =>
+                          handleMedicationChange(index, "name", value)
+                        }
+                        onSuggestionSelect={(suggestion) =>
+                          handleMedicationSuggestionSelect(index, suggestion)
+                        }
                       />
                       <div className="grid grid-cols-2 gap-2">
                         <Input
                           placeholder="Frequency (e.g., 1-0-1)"
                           value={medication.frequency}
-                          onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                          onChange={(e) =>
+                            handleMedicationChange(
+                              index,
+                              "frequency",
+                              e.target.value
+                            )
+                          }
                           className="font-medium"
                         />
                         <Input
                           placeholder="Duration"
                           value={medication.duration}
-                          onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                          onChange={(e) =>
+                            handleMedicationChange(
+                              index,
+                              "duration",
+                              e.target.value
+                            )
+                          }
                           className="font-medium"
                         />
                       </div>
@@ -620,7 +797,11 @@ export default function IPDModule({ patient }) {
                     </Button>
                   </div>
                 ))}
-                <Button onClick={addMedication} variant="outline" className="w-full font-semibold">
+                <Button
+                  onClick={addMedication}
+                  variant="outline"
+                  className="w-full font-semibold"
+                >
                   <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
                 </Button>
               </div>
@@ -646,7 +827,12 @@ export default function IPDModule({ patient }) {
             <h3 className="text-lg font-semibold">Admission Vitals</h3>
             <div className="grid grid-cols-4 gap-3">
               <div>
-                <Label htmlFor="admission-temperature" className="text-xs font-semibold">Temperature (°C)</Label>
+                <Label
+                  htmlFor="admission-temperature"
+                  className="text-xs font-semibold"
+                >
+                  Temperature (°C)
+                </Label>
                 <Input
                   id="admission-temperature"
                   name="temperature"
@@ -656,7 +842,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="admission-heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
+                <Label
+                  htmlFor="admission-heartRate"
+                  className="text-xs font-semibold"
+                >
+                  Heart Rate (bpm)
+                </Label>
                 <Input
                   id="admission-heartRate"
                   name="heartRate"
@@ -666,7 +857,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="admission-bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
+                <Label
+                  htmlFor="admission-bloodPressure"
+                  className="text-xs font-semibold"
+                >
+                  Blood Pressure (mmHg)
+                </Label>
                 <Input
                   id="admission-bloodPressure"
                   name="bloodPressure"
@@ -676,7 +872,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="admission-respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
+                <Label
+                  htmlFor="admission-respiratoryRate"
+                  className="text-xs font-semibold"
+                >
+                  Respiratory Rate (bpm)
+                </Label>
                 <Input
                   id="admission-respiratoryRate"
                   name="respiratoryRate"
@@ -686,7 +887,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="admission-height" className="text-xs font-semibold">Height (cm)</Label>
+                <Label
+                  htmlFor="admission-height"
+                  className="text-xs font-semibold"
+                >
+                  Height (cm)
+                </Label>
                 <Input
                   id="admission-height"
                   name="height"
@@ -696,7 +902,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="admission-weight" className="text-xs font-semibold">Weight (kg)</Label>
+                <Label
+                  htmlFor="admission-weight"
+                  className="text-xs font-semibold"
+                >
+                  Weight (kg)
+                </Label>
                 <Input
                   id="admission-weight"
                   name="weight"
@@ -706,17 +917,27 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="admission-bmi" className="text-xs font-semibold">BMI</Label>
+                <Label
+                  htmlFor="admission-bmi"
+                  className="text-xs font-semibold"
+                >
+                  BMI
+                </Label>
                 <Input
                   id="admission-bmi"
                   name="bmi"
-                  value={ipdAdmission.vitals.admission.bmi || ''}
+                  value={ipdAdmission.vitals.admission.bmi || ""}
                   readOnly
                   className="h-8 text-sm font-medium bg-gray-100"
                 />
               </div>
               <div>
-                <Label htmlFor="admission-oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
+                <Label
+                  htmlFor="admission-oxygenSaturation"
+                  className="text-xs font-semibold"
+                >
+                  O₂ Saturation (%)
+                </Label>
                 <Input
                   id="admission-oxygenSaturation"
                   name="oxygenSaturation"
@@ -733,25 +954,58 @@ export default function IPDModule({ patient }) {
             <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="diagnosis" className="text-xs font-semibold">Diagnosis</Label>
-                <Textarea 
-                  id="diagnosis" 
-                  name="diagnosis" 
-                  value={ipdAdmission.diagnosis} 
-                  onChange={handleInputChange} 
-                  placeholder="Enter patient's diagnosis" 
-                  className="min-h-[100px] text-sm font-medium" 
-                />
+                <Label htmlFor="diagnosis" className="text-xs font-semibold">
+                  Diagnosis
+                </Label>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <MultiSelectInput
+                      suggestions={diagnosisTemplate.map((item) => ({
+                        name: item,
+                      }))}
+                      selectedValues={selectedDiagnoses}
+                      setSelectedValues={handleDiagnosisChange}
+                      placeholder="Select diagnoses"
+                    />
+                  </div>
+                  <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
+                    {selectedDiagnoses.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {selectedDiagnoses.map((diagnosis, index) => (
+                          <Badge
+                            key={index}
+                            variant="primary"
+                            className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
+                          >
+                            {diagnosis.name}
+                            <X
+                              className="ml-1 h-3 w-3 cursor-pointer"
+                              onClick={() =>
+                                handleRemoveDiagnosis(diagnosis.name)
+                              }
+                            />
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">
+                        No diagnoses selected
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
               <div>
-                <Label htmlFor="treatment" className="text-xs font-semibold">Treatment</Label>
-                <Textarea 
-                  id="treatment" 
-                  name="treatment" 
-                  value={ipdAdmission.treatment} 
-                  onChange={handleInputChange} 
-                  placeholder="Enter recommended treatment" 
-                  className="min-h-[100px] text-sm font-medium" 
+                <Label htmlFor="treatment" className="text-xs font-semibold">
+                  Treatment
+                </Label>
+                <Textarea
+                  id="treatment"
+                  name="treatment"
+                  value={ipdAdmission.treatment}
+                  onChange={handleInputChange}
+                  placeholder="Enter recommended treatment"
+                  className="min-h-[100px] text-sm font-medium"
                 />
               </div>
             </div>
@@ -779,7 +1033,12 @@ export default function IPDModule({ patient }) {
                   <MultiSelectInput
                     suggestions={allLabTests}
                     selectedValues={ipdAdmission.labTests}
-                    setSelectedValues={(newLabTests) => setIpdAdmission(prev => ({ ...prev, labTests: newLabTests }))}
+                    setSelectedValues={(newLabTests) =>
+                      setIpdAdmission((prev) => ({
+                        ...prev,
+                        labTests: newLabTests,
+                      }))
+                    }
                     placeholder="Select lab tests"
                   />
                 </div>
@@ -801,7 +1060,9 @@ export default function IPDModule({ patient }) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-sm">No lab tests selected</p>
+                    <p className="text-gray-500 text-sm">
+                      No lab tests selected
+                    </p>
                   )}
                 </div>
               </div>
@@ -837,7 +1098,9 @@ export default function IPDModule({ patient }) {
                       ))}
                     </div>
                   ) : (
-                    <p className="text-gray-500 text-sm">No comorbidities selected</p>
+                    <p className="text-gray-500 text-sm">
+                      No comorbidities selected
+                    </p>
                   )}
                 </div>
               </div>
@@ -854,19 +1117,27 @@ export default function IPDModule({ patient }) {
                     suggestions={commonMedications}
                     placeholder="Select medicine"
                     value={medication.name}
-                    setValue={(value) => handleMedicationChange(index, "name", value)}
-                    onSuggestionSelect={(suggestion) => handleMedicationSuggestionSelect(index, suggestion)}
+                    setValue={(value) =>
+                      handleMedicationChange(index, "name", value)
+                    }
+                    onSuggestionSelect={(suggestion) =>
+                      handleMedicationSuggestionSelect(index, suggestion)
+                    }
                   />
                   <Input
                     placeholder="Frequency"
                     value={medication.frequency}
-                    onChange={(e) => handleMedicationChange(index, "frequency", e.target.value)}
+                    onChange={(e) =>
+                      handleMedicationChange(index, "frequency", e.target.value)
+                    }
                     className="font-medium"
                   />
                   <Input
                     placeholder="Duration"
                     value={medication.duration}
-                    onChange={(e) => handleMedicationChange(index, "duration", e.target.value)}
+                    onChange={(e) =>
+                      handleMedicationChange(index, "duration", e.target.value)
+                    }
                     className="font-medium"
                   />
                   <Button
@@ -879,7 +1150,11 @@ export default function IPDModule({ patient }) {
                   </Button>
                 </div>
               ))}
-              <Button onClick={addMedication} variant="outline" className="mt-2 font-semibold">
+              <Button
+                onClick={addMedication}
+                variant="outline"
+                className="mt-2 font-semibold"
+              >
                 <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
               </Button>
             </div>
@@ -890,7 +1165,12 @@ export default function IPDModule({ patient }) {
             <h3 className="text-lg font-semibold">Discharge Vitals</h3>
             <div className="grid grid-cols-4 gap-3">
               <div>
-                <Label htmlFor="discharge-temperature" className="text-xs font-semibold">Temperature (°C)</Label>
+                <Label
+                  htmlFor="discharge-temperature"
+                  className="text-xs font-semibold"
+                >
+                  Temperature (°C)
+                </Label>
                 <Input
                   id="discharge-temperature"
                   name="temperature"
@@ -900,7 +1180,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="discharge-heartRate" className="text-xs font-semibold">Heart Rate (bpm)</Label>
+                <Label
+                  htmlFor="discharge-heartRate"
+                  className="text-xs font-semibold"
+                >
+                  Heart Rate (bpm)
+                </Label>
                 <Input
                   id="discharge-heartRate"
                   name="heartRate"
@@ -910,7 +1195,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="discharge-bloodPressure" className="text-xs font-semibold">Blood Pressure (mmHg)</Label>
+                <Label
+                  htmlFor="discharge-bloodPressure"
+                  className="text-xs font-semibold"
+                >
+                  Blood Pressure (mmHg)
+                </Label>
                 <Input
                   id="discharge-bloodPressure"
                   name="bloodPressure"
@@ -920,7 +1210,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="discharge-respiratoryRate" className="text-xs font-semibold">Respiratory Rate (bpm)</Label>
+                <Label
+                  htmlFor="discharge-respiratoryRate"
+                  className="text-xs font-semibold"
+                >
+                  Respiratory Rate (bpm)
+                </Label>
                 <Input
                   id="discharge-respiratoryRate"
                   name="respiratoryRate"
@@ -930,7 +1225,12 @@ export default function IPDModule({ patient }) {
                 />
               </div>
               <div>
-                <Label htmlFor="discharge-oxygenSaturation" className="text-xs font-semibold">O₂ Saturation (%)</Label>
+                <Label
+                  htmlFor="discharge-oxygenSaturation"
+                  className="text-xs font-semibold"
+                >
+                  O₂ Saturation (%)
+                </Label>
                 <Input
                   id="discharge-oxygenSaturation"
                   name="oxygenSaturation"

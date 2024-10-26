@@ -84,7 +84,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
     if (!searchQuery.trim()) return;
 
     try {
-      const response = await fetch(`${Backend_URL}/api/dashboard/search/${searchQuery}`, {
+      const response = await fetch(`${Backend_URL}/api/dashboard/search?q=${searchQuery}`, {
         method: 'GET',
         credentials: 'include',
       });
@@ -92,7 +92,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
       if (response.ok) {
         const data = await response.json();
         // Navigate to the PatientSearch page with the search results
-        navigate(`/search/${searchQuery}`, { state: { searchResults: data } });
+        navigate(`/search`, { state: { searchResults: data ,searchQuery:searchQuery} });
       } else {
         toast({
           title: "Search failed",

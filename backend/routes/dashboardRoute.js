@@ -270,10 +270,11 @@ router.get("/daily-stats", async (req, res) => {
 });
 
 
-router.get('/search/:searchQuery', async (req, res) => {
+router.get('/search', async (req, res) => {
   try {
-    const { searchQuery } = req.params;
-    const searchRegex = new RegExp(searchQuery, 'i');
+    const { q } = req.query;
+    console.log(q)
+    const searchRegex = new RegExp(q, 'i');
 
     const patients = await Patient.find({
       $or: [

@@ -103,24 +103,23 @@ router.post('/template/create',identifyHospital, async (req, res) => {
         let template = await Template.findOne().session(session);
         if (!template) {
             template = new Template({
-                labTestsTemplate: req.body.labTestsTemplate || [],
-                headerTemplate: req.body.headerTemplate || {},
-                diagnosisTemplate:req.body.diagnosisTemplate||[],
+                labTestsTemplate: [],
+                headerTemplate: {},
+                diagnosisTemplate: [],
             });
-            await template.save({ session });
-        } else {
-            if (req.body.labTestsTemplate) {
-                template.labTestsTemplate.push(req.body.labTestsTemplate);
-            }
-            if (req.body.headerTemplate) {
-                template.headerTemplate = req.body.headerTemplate; // Replace headerTemplate
-            }
-            if(req.body.diagnosisTemplate)
-            {
-                template.diagnosisTemplate=req.body.diagnosisTemplate
-            }
-            await template.save({ session });
         }
+
+        if (req.body.labTestsTemplate) {
+            template.labTestsTemplate.push(req.body.labTestsTemplate);
+        }
+        if (req.body.headerTemplate) {
+            template.headerTemplate = req.body.headerTemplate;
+        }
+        if (req.body.diagnosisTemplate) {
+            template.diagnosisTemplate = req.body.diagnosisTemplate;
+        }
+
+        await template.save({ session });
 
         await session.commitTransaction();
         session.endSession();

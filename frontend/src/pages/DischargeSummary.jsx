@@ -22,6 +22,7 @@ import {
   ChevronRight,
   PlusCircle,
   Trash2,
+  Plus,
 } from "lucide-react";
 import { Calendar } from "../components/ui/calendar";
 import {
@@ -38,6 +39,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import {fetchTemplates} from "../redux/slices/templatesSlice";
 import { labCategories, labReportFields } from "../assets/Data";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
 import CreateLabReport from "./CreateLabReport";
@@ -80,7 +82,21 @@ const allLabTests = labCategories.flatMap((category) =>
   category.types.map((type) => ({ name: type }))
 );
 
-// Add this new component to display the lab report data as a table
+// Add this near the top of the file, with other constant declarations
+const diagnosisList = [
+  "Pneumonia",
+  "Myocardial Infarction",
+  "Diabetes Mellitus",
+  "Hypertension",
+  "Chronic Obstructive Pulmonary Disease",
+  "Asthma",
+  "Gastroenteritis",
+  "Urinary Tract Infection",
+  "Appendicitis",
+  "Fracture",
+  // Add more common diagnoses as needed
+].map((name) => ({ name }));
+
 const LabReportTable = ({ report }) => {
   return (
     <Table>
@@ -117,16 +133,21 @@ export default function DischargeSummary() {
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
+  const templateStatus = useSelector((state) => state.templates.status);
   useEffect(() => {
     if (itemsStatus === "idle") {
       dispatch(fetchItems());
     }
   }, [dispatch, itemsStatus]);
-
+useEffect(() => {
+  if(templateStatus === "idle"){
+    dispatch(fetchTemplates());
+  }
+}, [dispatch,templateStatus]);
   const [formData, setFormData] = useState({
     admissionDate: "",
     dateDischarged: "",
-    diagnosis: "",
+    diagnosis: "", // Change this back to a string
     clinicalSummary: "",
     treatment: "",
     conditionOnAdmission: "",
@@ -159,6 +180,7 @@ export default function DischargeSummary() {
   const [isLabReportOpen, setIsLabReportOpen] = useState(false); // State to manage modal visibility
   const [selectedInvestigation, setSelectedInvestigation] = useState(null); // State to track selected investigation
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
+  const diagnosisTemplate = useSelector((state) => state.templates.diagnosisTemplate);
 
   const [patientInfo, setPatientInfo] = useState({
     name: "",
@@ -176,7 +198,9 @@ export default function DischargeSummary() {
           ? new Date(patient.bookingDate).toISOString().split("T")[0]
           : "",
         dateDischarged: patient.dateDischarged || "",
-        diagnosis: patient.diagnosis || "",
+        diagnosis: Array.isArray(patient.diagnosis) 
+          ? patient.diagnosis.join(", ")
+          : patient.diagnosis || "",
         clinicalSummary: patient.clinicalSummary || "",
         treatment: patient.treatment || "",
         conditionOnAdmission: patient.conditionOnAdmission || "",
@@ -197,7 +221,9 @@ export default function DischargeSummary() {
             respiratoryRate: patient.vitals?.discharge?.respiratoryRate || "",
           },
         },
-        investigations: patient.labReports || [{ name: "", category: "" }],
+        investigations: patient.labReports?.length > 0 
+          ? patient.labReports 
+          : [{ name: "", category: "" }], // Default empty investigation
         medicineAdvice: patient.medicineAdvice || [
           { name: "", dosage: "0-0-0", duration: "" },
         ],
@@ -227,7 +253,11 @@ export default function DischargeSummary() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "diagnosis") {
+      setCustomDiagnosis(value);
+    } else {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleDateChange = (field, date) => {
@@ -288,16 +318,20 @@ export default function DischargeSummary() {
       clinicalSummary: formData.clinicalSummary,
       diagnosis: formData.diagnosis,
       treatment: formData.treatment,
-      medicineAdvice: formData.medicineAdvice.map((m) => ({
-        name: m.name,
-        duration: m.duration,
-        frequency: m.dosage,
-      })),
-      labReports: formData.investigations.map((i) => ({
-        name: i.name,
-        report: i.report,
-        date: i.date,
-      })),
+      medicineAdvice: formData.medicineAdvice
+        .filter(m => m.name.trim() !== '')
+        .map((m) => ({
+          name: m.name,
+          duration: m.duration,
+          frequency: m.dosage,
+        })),
+      labReports: formData.investigations
+        .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
+        .map((i) => ({
+          name: i.name,
+          report: i.report,
+          date: i.date || new Date().toISOString()
+        })),
       vitals: formData.vitals,
       notes: formData.notes,
       status: "Discharged",
@@ -332,16 +366,20 @@ export default function DischargeSummary() {
       clinicalSummary: formData.clinicalSummary,
       diagnosis: formData.diagnosis,
       treatment: formData.treatment,
-      medicineAdvice: formData.medicineAdvice.map((m) => ({
-        name: m.name,
-        duration: m.duration,
-        frequency: m.dosage,
-      })),
-      labReports: formData.investigations.map((i) => ({
-        name: i.name,
-        report: i.report,
-        date: i.date,
-      })),
+      medicineAdvice: formData.medicineAdvice
+        .filter(m => m.name.trim() !== '')
+        .map((m) => ({
+          name: m.name,
+          duration: m.duration,
+          frequency: m.dosage,
+        })),
+      labReports: formData.investigations
+        .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
+        .map((i) => ({
+          name: i.name,
+          report: i.report,
+          date: i.date || new Date().toISOString()
+        })),
       vitals: formData.vitals,
       notes: formData.notes,
     };
@@ -532,6 +570,63 @@ export default function DischargeSummary() {
     </div>
   );
 
+  // Get the diagnosis template from the Redux store
+  // Add a new state for custom diagnosis input
+  const [customDiagnosis, setCustomDiagnosis] = useState("");
+
+  // Add this state to track custom diagnoses
+  const [customDiagnosesList, setCustomDiagnosesList] = useState([]);
+
+  // Modify the handleAddDiagnosis function
+  const handleAddDiagnosis = (diagnosis) => {
+    if (!diagnosis.trim()) return;
+    
+    const currentDiagnoses = formData.diagnosis ? formData.diagnosis.split(", ") : [];
+    
+    // Add to custom diagnoses list if it's not in the template
+    if (!diagnosisTemplate.includes(diagnosis) && !customDiagnosesList.includes(diagnosis)) {
+      setCustomDiagnosesList(prev => [...prev, diagnosis]);
+    }
+
+    if (currentDiagnoses.includes(diagnosis)) {
+      setFormData((prev) => ({
+        ...prev,
+        diagnosis: prev.diagnosis
+          .split(", ")
+          .filter(d => d !== diagnosis)
+          .join(", ")
+      }));
+    } else {
+      // Add the diagnosis if it's not selected
+      setFormData((prev) => ({
+        ...prev,
+        diagnosis: prev.diagnosis
+          ? `${prev.diagnosis}, ${diagnosis}`
+          : diagnosis,
+      }));
+    }
+    setCustomDiagnosis("");
+  };
+
+  // Add this new function to check for matches
+  const getMatchingDiagnoses = (input) => {
+    if (!input) return [];
+    return diagnosisTemplate.filter(diagnosis => 
+      diagnosis.toLowerCase().startsWith(input.toLowerCase())
+    );
+  };
+
+  const handleDiagnosisChange = (newDiagnoses) => {
+    const diagnosisString = newDiagnoses.map(d => d.name).join(", ");
+    setFormData((prev) => ({ ...prev, diagnosis: diagnosisString }));
+  };
+
+  const handleRemoveDiagnosis = (name) => {
+    const currentDiagnoses = formData.diagnosis.split(", ");
+    const updatedDiagnoses = currentDiagnoses.filter(d => d !== name).join(", ");
+    setFormData((prev) => ({ ...prev, diagnosis: updatedDiagnoses }));
+  };
+
   if (!patient)
     return (
       <div className="flex justify-center items-center h-screen">
@@ -667,7 +762,34 @@ export default function DischargeSummary() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 gap-4">
-              <div>{renderTextArea("diagnosis", "Diagnosis")}</div>
+              <div>
+                <Label htmlFor="diagnosis">Diagnosis</Label>
+                <div className="mt-1 space-y-2">
+                  <div className="flex flex-wrap gap-1">
+                    {formData.diagnosis.split(", ").map((diagnosis, index) => (
+                      <Badge
+                        key={index}
+                        variant="primary"
+                        className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
+                      >
+                        {diagnosis}
+                        <X
+                          className="ml-1 h-3 w-3 cursor-pointer"
+                          onClick={() => handleRemoveDiagnosis(diagnosis)}
+                        />
+                      </Badge>
+                    ))}
+                  </div>
+                  <div className="flex gap-2">
+                    <MultiSelectInput
+                      suggestions={diagnosisList}
+                      selectedValues={formData.diagnosis.split(", ").map(d => ({ name: d }))}
+                      setSelectedValues={handleDiagnosisChange}
+                      placeholder="Select diagnosis"
+                    />
+                  </div>
+                </div>
+              </div>
               <div>{renderTextArea("clinicalSummary", "Clinical Summary")}</div>
 
               <div>
@@ -730,8 +852,8 @@ export default function DischargeSummary() {
                 <Label htmlFor="investigations">Investigations</Label>
                 <div className="space-y-2 mt-2">
                   {formData.investigations.map((investigation, index) => (
-                    <div key={index} className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                      <div className="w-full sm:w-1/2 flex items-center space-x-2">
+                    <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2">
+                      <div className="sm:col-span-3">
                         <SearchSuggestion
                           suggestions={allLabTests}
                           placeholder="Select investigation"
@@ -743,11 +865,6 @@ export default function DischargeSummary() {
                             handleInvestigationChange(index, suggestion)
                           }
                         />
-                        {investigation.date && (
-                          <span className="text-sm text-gray-500">
-                            {new Date(investigation.date).toLocaleDateString()}
-                          </span>
-                        )}
                       </div>
                       <div className="flex space-x-2">
                         <Button
@@ -756,6 +873,7 @@ export default function DischargeSummary() {
                           size="icon"
                           onClick={() => handleOpenLabReport(investigation)}
                           aria-label="Open Lab Report"
+                          disabled={!investigation.name}
                         >
                           <ChevronRight className="h-5 w-5" />
                         </Button>
@@ -775,6 +893,7 @@ export default function DischargeSummary() {
                     onClick={handleAddInvestigation}
                     variant="outline"
                     className="mt-2 font-semibold"
+                    type="button"
                   >
                     <PlusCircle className="h-4 w-4 mr-2" /> Add Investigation
                   </Button>
@@ -937,7 +1056,20 @@ export default function DischargeSummary() {
               </Button>
             </div>
             <PDFViewer width="100%" height="90%">
-              <DischargeSummaryPDF formData={formData} patient={patientInfo} hospital={hospital}/>
+              <DischargeSummaryPDF 
+                formData={{
+                  ...formData,
+                  investigations: formData.investigations
+                    .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
+                    .map(inv => ({
+                      name: inv.name,
+                      report: inv.report,
+                      date: inv.date || new Date().toISOString()
+                    }))
+                }} 
+                patient={patientInfo} 
+                hospital={hospital}
+              />
             </PDFViewer>
           </div>
         </div>

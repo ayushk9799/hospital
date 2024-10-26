@@ -21,7 +21,7 @@ export const dischargePatient = createAsyncThunk(
       }
 
       const updatedPatient = await response.json();
-      return updatedPatient.admission; // Return the updated patient data
+      return updatedPatient.admission; 
     } catch (error) {
       return rejectWithValue(error.message);
     }

@@ -10,6 +10,7 @@ import { Payment } from "../models/Payment.js";
 import { Template } from "../models/Template.js";
 import { checkPermission, verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
+import { RegistrationNumber } from "../models/RegistrationNumber.js";
 
 const router = express.Router();
 
@@ -26,8 +27,15 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
         throw new Error("Invalid or missing patient type");
       }
 
-      // Create patient
-      const patient = new Patient({ ...patientData });
+      let registrationNumber = patientData.registrationNumber;
+
+      // Generate a new registration number only if it's not provided
+      if (!registrationNumber) {
+        registrationNumber = await RegistrationNumber.getNextRegistrationNumber(session);
+      }
+
+      // Create the patient with the registration number (either provided or newly generated)
+      const patient = new Patient({ ...patientData, registrationNumber });
       await patient.save({ session });
 
       let admissionRecord, bill;

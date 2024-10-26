@@ -286,6 +286,9 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   const handleDialogClose = useCallback(() => {
     setIsOldPatient(false);
     onOpenChange(false);
+    setTimeout(()=>{
+      document.body.style=""
+     },500)
     setFormData(prevData => ({
       ...initialFormData,
       visit: {
@@ -356,7 +359,9 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [patientData]);
 
   useEffect(() => {
+    console.log("open",open)
     if (!open) {
+      console.log("closing")
       setFormData(initialFormData);
       setErrors(initialErrors);
       setIsOldPatient(false);
@@ -386,6 +391,13 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       }));
     }
   }, [open, consultationService]);
+
+  // Add this new useEffect for cleanup
+  useEffect(() => {
+    return () => {
+      document.body.style = "";
+    };
+  }, []);
 
   return (
     <Dialog open={open} onOpenChange={(ev)=>{handleDialogClose(ev)}} >

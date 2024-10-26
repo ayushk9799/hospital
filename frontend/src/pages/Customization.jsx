@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { fetchTemplates, updateDiagnosisTemplate } from "../redux/slices/templatesSlice";
+import { fetchTemplates, updateTemplate } from "../redux/slices/templatesSlice";
 import { X, Plus } from "lucide-react";
 
 export default function Customization() {
@@ -33,7 +33,7 @@ export default function Customization() {
   };
 
   const handleSave = () => {
-    dispatch(updateDiagnosisTemplate(selectedDiagnoses));
+    dispatch(updateTemplate({ diagnosisTemplate: selectedDiagnoses }));
   };
 
   return (
@@ -61,13 +61,16 @@ export default function Customization() {
             {selectedDiagnoses.length === 0 ? (
               <p className="text-gray-500 text-center py-4">No diagnoses added yet.</p>
             ) : (
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
                 {selectedDiagnoses.map((diagnosis, index) => (
-                  <div key={index} className="flex items-center bg-gray-100 text-gray-800 px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm">
+                  <div
+                    key={index}
+                    className="flex items-center bg-gray-100 text-gray-800 px-2 py-1 sm:px-3 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-colors hover:bg-gray-200 whitespace-nowrap"
+                  >
                     <span className="mr-1 sm:mr-2">{diagnosis}</span>
                     <button
                       onClick={() => handleRemoveDiagnosis(diagnosis)}
-                      className="text-gray-500 hover:text-red-500 focus:outline-none"
+                      className="text-gray-500 hover:text-gray-700 focus:outline-none"
                     >
                       <X className="h-3 w-3 sm:h-4 sm:w-4" />
                     </button>
