@@ -15,12 +15,17 @@ import { RegistrationNumber } from "../models/RegistrationNumber.js";
 const router = express.Router();
 
 // Create a new patient (All authenticated staff)
-router.post("/", verifyToken, checkPermission("write:patients"), async (req, res) => {
+router.post(
+  "/",
+  verifyToken,
+  checkPermission("write:patients"),
+  async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
     try {
-      const { patientType, visit, admission, paymentInfo, ...patientData } = req.body;
+      const { patientType, visit, admission, paymentInfo, ...patientData } =
+        req.body;
       const user = req.user;
 
       if (!patientType || !["OPD", "IPD"].includes(patientType)) {
@@ -31,37 +36,39 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
 
       // Generate a new registration number only if it's not provided
       if (!registrationNumber) {
-        registrationNumber = await RegistrationNumber.getNextRegistrationNumber(session);
+        registrationNumber = await RegistrationNumber.getNextRegistrationNumber(
+          session
+        );
       }
 
-      // Create the patient with the registration number (either provided or newly generated)
       const patient = new Patient({ ...patientData, registrationNumber });
       await patient.save({ session });
 
-      let admissionRecord, bill;
+      let admissionRecord, bill, payment;
 
-      if(visit?.consultationFee){
+      if (visit?.consultationFee) {
         // Create a bill for the patient
         bill = new ServicesBill({
           services: [
             {
-              name: 'Consultation Fee',
+              name: "Consultation Fee",
               quantity: 1,
               rate: visit.consultationAmount,
-              category: 'Consultation',
+              category: "Consultation",
             },
           ],
           patient: patient._id,
           patientInfo: {
             name: patient.name,
             phone: patient?.contactNumber,
+            registrationNumber: patient.registrationNumber,
           },
           totalAmount: visit.consultationAmount,
           subtotal: visit.consultationAmount,
           createdBy: user._id,
         });
-        if(visit.paymentMethod !== "" && visit.paymentMethod !== "Due"){
-          const payment = new Payment({
+        if (visit.paymentMethod !== "" && visit.paymentMethod !== "Due") {
+          payment = new Payment({
             amount: visit.consultationAmount,
             paymentMethod: visit.paymentMethod,
             paymentType: { name: "Services", id: bill._id },
@@ -104,8 +111,7 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
         });
         patient.admissionDetails.push(admissionRecord._id);
         // billing for services
-        if(paymentInfo?.includeServices){
-          
+        if (paymentInfo?.includeServices) {
           const services = await Service.find({
             _id: { $in: paymentInfo.services },
           }).session(session);
@@ -121,13 +127,20 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
             patientInfo: {
               name: patient.name,
               phone: patient?.contactNumber,
+              registrationNumber: patient.registrationNumber,
             },
-            totalAmount: services.reduce((sum, service) => sum + service.rate, 0),
+            totalAmount: services.reduce(
+              (sum, service) => sum + service.rate,
+              0
+            ),
             subtotal: services.reduce((sum, service) => sum + service.rate, 0),
             createdBy: user._id,
           });
-          if(paymentInfo?.paymentMethod !== "" && paymentInfo?.paymentMethod !== "Due"){
-            const payment = new Payment({
+          if (
+            paymentInfo?.paymentMethod !== "" &&
+            paymentInfo?.paymentMethod !== "Due"
+          ) {
+             payment = new Payment({
               amount: Number(paymentInfo.amountPaid),
               paymentMethod: paymentInfo.paymentMethod,
               paymentType: { name: "Services", id: bill._id },
@@ -138,10 +151,11 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
             bill.payments.push(payment._id);
             bill.amountPaid = payment.amount;
           }
-
         }
         if (admission.assignedRoom) {
-          const room = await Room.findById(admission.assignedRoom).session(session);
+          const room = await Room.findById(admission.assignedRoom).session(
+            session
+          );
           if (!room) {
             throw new Error("Room not found");
           }
@@ -157,7 +171,7 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
           room.beds[bedIndex].currentPatient = patient._id;
           room.currentOccupancy += 1;
 
-          if(bill){
+          if (bill) {
             bill.services.push({
               name: "Room Charge",
               quantity: 1,
@@ -172,7 +186,10 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
         }
       }
 
-      if(visit?.consultationFee || (patientType === "IPD" && paymentInfo?.includeServices)){
+      if (
+        visit?.consultationFee ||
+        (patientType === "IPD" && paymentInfo?.includeServices)
+      ) {
         bill.patientType = patientType;
         admissionRecord.bills.services.push(bill._id);
         await bill.save({ session });
@@ -182,7 +199,7 @@ router.post("/", verifyToken, checkPermission("write:patients"), async (req, res
       await patient.save({ session });
 
       await session.commitTransaction();
-      res.status(201).json({ patient, admissionRecord });
+      res.status(201).json({ patient, admissionRecord, bill, payment });
     } catch (error) {
       await session.abortTransaction();
       res.status(400).json({ error: error.message });
@@ -268,8 +285,8 @@ router.get("/details", verifyToken, async (req, res) => {
       bookingDate: visit.bookingDate,
       doctor: visit.doctor,
       reasonForVisit: visit.reasonForVisit,
-      status:visit.status,
-      comorbidities:visit.comorbidities,
+      status: visit.status,
+      comorbidities: visit.comorbidities,
       vitals: visit.vitals,
       diagnosis: visit.diagnosis,
       treatment: visit.treatment,
@@ -333,26 +350,22 @@ router.get("/details", verifyToken, async (req, res) => {
   }
 });
 
-
 router.delete("/admissions", async (req, res) => {
-    try {
-      const result = await Visit.deleteMany();
+  try {
+    const result = await Visit.deleteMany();
 
-      if (result.deletedCount === 0) {
-        return res
-          .status(404)
-          .json({ message: "No matching admissions found" });
-      }
-
-      res.json({
-        message: `${result.deletedCount} admission(s) deleted successfully`,
-        deletedCount: result.deletedCount,
-      });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: "No matching admissions found" });
     }
+
+    res.json({
+      message: `${result.deletedCount} admission(s) deleted successfully`,
+      deletedCount: result.deletedCount,
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
-);
+});
 
 // Get a specific patient by ID (All authenticated staff)
 router.get("/:id", verifyToken, async (req, res) => {
@@ -369,7 +382,11 @@ router.get("/:id", verifyToken, async (req, res) => {
   }
 });
 
-router.put( "/:id", verifyToken, checkPermission("write:patients"), async (req, res) => {
+router.put(
+  "/:id",
+  verifyToken,
+  checkPermission("write:patients"),
+  async (req, res) => {
     try {
       // could be changed according to frontend
       const patient = await Patient.findByIdAndUpdate(req.params.id, req.body, {
@@ -388,7 +405,11 @@ router.put( "/:id", verifyToken, checkPermission("write:patients"), async (req, 
   }
 );
 
-router.delete( "/:id", verifyToken, checkPermission("write:patients"), async (req, res) => {
+router.delete(
+  "/:id",
+  verifyToken,
+  checkPermission("write:patients"),
+  async (req, res) => {
     try {
       const patient = await Patient.findByIdAndDelete(req.params.id);
       if (!patient) {
@@ -402,7 +423,11 @@ router.delete( "/:id", verifyToken, checkPermission("write:patients"), async (re
 );
 
 // Move patient from OPD to IPD
-router.post( "/:id/admit", verifyToken, checkPermission("write:patients"), async (req, res) => {
+router.post(
+  "/:id/admit",
+  verifyToken,
+  checkPermission("write:patients"),
+  async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -500,7 +525,11 @@ router.post( "/:id/admit", verifyToken, checkPermission("write:patients"), async
 // Add medical history to a patient (All authenticated staff)
 
 // Handle patient revisit
-router.post( "/:id/revisit", verifyToken, checkPermission("write:patients"), async (req, res) => {
+router.post(
+  "/:id/revisit",
+  verifyToken,
+  checkPermission("write:patients"),
+  async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
 
@@ -828,7 +857,7 @@ router.post(
       }
 
       // Update patient status
-     
+
       await session.commitTransaction();
       res.json({ message: "Patient discharged successfully", admission });
     } catch (error) {
@@ -880,12 +909,9 @@ router.post(
       admission.labReports = labReports;
       admission.vitals = vitals;
       admission.notes = notes;
-     
 
       await admission.save({ session });
 
-      
-     
       await session.commitTransaction();
       res.json({ message: "Patient discharged successfully", admission });
     } catch (error) {
@@ -908,8 +934,9 @@ router.post(
 
     try {
       const { id } = req.params;
-      const { admission, ...patientData } = req.body;
-  console.log(req.body)
+      const { admission, paymentInfo, ...patientData } = req.body;
+      const user = req.user;
+
       const patient = await Patient.findById(id).session(session);
       if (!patient) {
         throw new Error("Patient not found");
@@ -940,14 +967,51 @@ router.post(
         comorbidities: admission.comorbidities || [],
       });
 
-      await newAdmission.save({ session });
+      let bill, payment;
 
-      // Update patient's admissionDetails array
-      patient.admissionDetails.push(newAdmission._id);
-      patient.patientType = "IPD";
-      await patient.save({ session });
+      // Generate bill for services
+      if (paymentInfo?.includeServices) {
+        const services = await Service.find({
+          _id: { $in: paymentInfo.services },
+        }).session(session);
 
-      // If a room and bed are assigned, update their status
+        bill = new ServicesBill({
+          services: services.map((service) => ({
+            name: service.name,
+            quantity: 1,
+            rate: service.rate,
+            category: service?.category || "Other",
+          })),
+          patient: patient._id,
+          patientInfo: {
+            name: patient.name,
+            phone: patient?.contactNumber,
+            registrationNumber: patient.registrationNumber,
+          },
+          totalAmount: services.reduce((sum, service) => sum + service.rate, 0),
+          subtotal: services.reduce((sum, service) => sum + service.rate, 0),
+          createdBy: user._id,
+          patientType: "IPD", // Add this line
+        });
+
+        if (paymentInfo?.paymentMethod !== "" && paymentInfo?.paymentMethod !== "Due") {
+          payment = new Payment({
+            amount: Number(paymentInfo.amountPaid),
+            paymentMethod: paymentInfo.paymentMethod,
+            paymentType: { name: "Services", id: bill._id },
+            type: "Income",
+            createdBy: user._id,
+          });
+          await payment.save({ session });
+          bill.payments.push(payment._id);
+          bill.amountPaid = payment.amount;
+        }
+
+        await bill.save({ session });
+        newAdmission.bills.services.push(bill._id);
+      }
+
+      // If a room and bed are assigned, update their status and add room charge to bill
       if (admission.assignedRoom && admission.assignedBed) {
         const room = await Room.findById(admission.assignedRoom).session(session);
         if (room) {
@@ -959,9 +1023,28 @@ router.post(
             room.beds[bedIndex].currentPatient = patient._id;
             room.currentOccupancy += 1;
             await room.save({ session });
+
+            if (bill) {
+              bill.services.push({
+                name: "Room Charge",
+                quantity: 1,
+                rate: room.ratePerDay,
+                category: "Room Rent",
+              });
+              bill.totalAmount += room.ratePerDay;
+              bill.subtotal += room.ratePerDay;
+              await bill.save({ session });
+            }
           }
         }
       }
+
+      await newAdmission.save({ session });
+
+      // Update patient's admissionDetails array
+      patient.admissionDetails.push(newAdmission._id);
+      patient.patientType = "IPD";
+      await patient.save({ session });
 
       await session.commitTransaction();
       session.endSession();
@@ -970,6 +1053,8 @@ router.post(
         message: "Readmission recorded successfully",
         patient: patient,
         admission: newAdmission,
+        bill,
+        payment,
       });
     } catch (error) {
       await session.abortTransaction();

@@ -38,6 +38,8 @@ import { useMediaQuery } from "../../../hooks/use-media-query";
 import SelectServicesDialog from "./SelectServicesDialog";
 import { fetchServices } from "../../../redux/slices/serviceSlice";
 import { fetchTemplates } from "../../../redux/slices/templatesSlice";
+import BillModal from './BillModal'; // We'll create this component next
+import { fetchHospitalInfo } from "../../../redux/slices/HospitalSlice";
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const dispatch = useDispatch();
@@ -48,6 +50,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const departments = useSelector((state) => state.departments.departments);
   const rooms = useSelector((state) => state.rooms.rooms);
   const doctors = useSelector((state) => state.staff.doctors);
+  const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
+  const hospitalInfoStatus = useSelector((state) => state.hospital.hospitalInfoStatus);
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
@@ -59,7 +63,10 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     (state) => state.templates
   );
   const [totalAmount, setTotalAmount] = useState(0);
-
+  const [showBillModal, setShowBillModal] = useState(false);
+  const [billData, setBillData] = useState(null);
+  const [roomCharge, setRoomCharge] = useState(0);
+ console.log(billData)
   useEffect(() => {
     if (status === "idle") {
       dispatch(fetchTemplates());
@@ -70,11 +77,12 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   }, [dispatch, status, servicesStatus]);
 
   useEffect(() => {
-    const newTotal = services
+    const servicesTotal = services
       .filter((service) => formData.paymentInfo.services.includes(service._id))
       .reduce((sum, service) => sum + service.rate, 0);
+    const newTotal = servicesTotal + roomCharge;
     setTotalAmount(newTotal);
-  }, [formData.paymentInfo.services, services]);
+  }, [formData.paymentInfo.services, services, roomCharge]);
 
   useEffect(() => {
     if (open && serviceBillCollections) {
@@ -83,10 +91,17 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         paymentInfo: {
           ...prevData.paymentInfo,
           services: serviceBillCollections,
+          includeServices: true, // Set this to true by default
         },
       }));
     }
   }, [open, serviceBillCollections]);
+
+  useEffect(() => {
+    if (hospitalInfoStatus === 'idle') {
+      dispatch(fetchHospitalInfo());
+    }
+  }, [dispatch, hospitalInfoStatus]);
 
   // Function to reset form data
   const resetFormData = useCallback(() => {
@@ -108,6 +123,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       setFormData(initialFormData);
     }
     setErrors({});
+    setTotalAmount(0);
+    setRoomCharge(0);
   }, [patientData]);
 
   useEffect(() => {
@@ -118,7 +135,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         document.body.style = "";
       }, 500);
     }
-  }, [open, resetFormData]);
+  }, [open, resetFormData, dispatch]);
 
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -131,6 +148,17 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = type === "checkbox" ? checked : value;
+
+      // If the changed field is the assigned room, update the room charge
+      if (id === "admission.assignedRoom") {
+        const selectedRoom = rooms.find(room => room._id === value);
+        if (selectedRoom) {
+          setRoomCharge(selectedRoom.ratePerDay || 0);
+        } else {
+          setRoomCharge(0);
+        }
+      }
+
       return newState;
     });
   };
@@ -170,7 +198,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
           })
         )
           .unwrap()
-          .then(() => {
+          .then((result) => {
             toast({
               title: "Patient admitted successfully",
               description: "The patient has been admitted.",
@@ -179,6 +207,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             dispatch(fetchPatients());
             dispatch(fetchRooms());
             dispatch(fetchBills());
+            setBillData(result.bill);
+            setShowBillModal(true);
           })
           .catch((error) => {
             toast({
@@ -196,7 +226,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         // This is a new patient registration
         dispatch(registerPatient(submissionData))
           .unwrap()
-          .then(() => {
+          .then((result) => {
             toast({
               title: "Patient registered successfully",
               description: "The new patient has been added.",
@@ -206,6 +236,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             dispatch(fetchPatients());
             dispatch(fetchRooms());
             dispatch(fetchBills());
+            setBillData(result.bill);
+            setShowBillModal(true);
           })
           .catch((error) => {
             toast({
@@ -216,9 +248,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
               variant: "destructive",
             });
           })
-          .finally(() => {
-
-        });
+          .finally(() => {});
         console.log(submissionData);
       }
     }
@@ -258,177 +288,211 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleDialogClose}>
-      <DialogContent
-        className={` ${
-          isMobile ? "w-[95vw] p-4 rounded-lg gap-0 " : "max-w-[1000px]"
-        } h-[${isMobile ? "70vh" : "60vh"}] overflow-y-auto`}
-      >
-        <DialogHeader className="mb-4 md:mb-0">
-          <DialogTitle>
-            {patientData ? "Admit IPD Patient" : "Register New IPD Patient"}
-          </DialogTitle>
-          <DialogDescription className={isMobile ? "hidden" : ""}>
-            {patientData
-              ? "Fill details for patient Admission"
-              : "Fill basic details of patient for new IPD registration"}
-          </DialogDescription>
-        </DialogHeader>
-        <form
-          onSubmit={handleSubmit}
-          className={`space-y-4 h-[calc(${isMobile ? "70vh" : "60vh"}-115px)]`}
+    <>
+      <Dialog open={open} onOpenChange={handleDialogClose}>
+        <DialogContent
+          className={` ${
+            isMobile ? "w-[95vw] p-4 rounded-lg gap-0 " : "max-w-[1000px]"
+          } h-[${isMobile ? "70vh" : "60vh"}] overflow-y-auto`}
         >
-          <Tabs defaultValue="basic-info" className="w-full">
-            <TabsList
-              className={`grid w-full ${
-                isMobile ? "grid-cols-3" : "grid-cols-3"
-              }`}
-            >
-              <TabsTrigger value="basic-info">
-                {isMobile ? "Basic" : "Basic Information"}
-              </TabsTrigger>
-              <TabsTrigger value="vitals">Vitals</TabsTrigger>
-              <TabsTrigger value="insurance">Insurance</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="basic-info">
-              <div
-                className={`grid ${
-                  isMobile ? "grid-cols-1" : "grid-cols-3"
-                } mt-4 gap-4`}
+          <DialogHeader className="mb-4 md:mb-0">
+            <DialogTitle>
+              {patientData ? "Admit IPD Patient" : "Register New IPD Patient"}
+            </DialogTitle>
+            <DialogDescription className={isMobile ? "hidden" : ""}>
+              {patientData
+                ? "Fill details for patient Admission"
+                : "Fill basic details of patient for new IPD registration"}
+            </DialogDescription>
+          </DialogHeader>
+          <form
+            onSubmit={handleSubmit}
+            className={`space-y-4 h-[calc(${isMobile ? "70vh" : "60vh"}-115px)]`}
+          >
+            <Tabs defaultValue="basic-info" className="w-full">
+              <TabsList
+                className={`grid w-full ${
+                  isMobile ? "grid-cols-3" : "grid-cols-3"
+                }`}
               >
-                <div className="space-y-4">
-                  <MemoizedInput
-                    id="name"
-                    label="Full Name"
-                    value={formData.name}
-                    onChange={handleInputChange}
-                    error={errors.name}
-                  />
-                  {isMobile ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <MemoizedInput
-                        id="age"
-                        label="Age"
-                        type="number"
-                        value={formData.age}
-                        onChange={handleAgeChange}
-                        error={errors.age}
-                      />
-                      <MemoizedInput
-                        id="registrationNumber"
-                        label="Reg Number"
-                        value={formData.registrationNumber}
-                        onChange={handleInputChange}
-                      />
-                    </div>
-                  ) : (
-                    <>
-                      <MemoizedInput
-                        id="registrationNumber"
-                        label="Registration Number"
-                        value={formData.registrationNumber}
-                        onChange={handleInputChange}
-                      />
-                      <div className="flex items-end gap-4">
-                        <div className="w-30 relative">
-                          <MemoizedInput
-                            id="age"
-                            label="Age"
-                            type="number"
-                            value={formData.age}
-                            onChange={handleAgeChange}
-                            error={errors.age}
-                          />
-                        </div>
-                        <div className="flex-grow relative">
-                          <MemoizedInput
-                            id="dateOfBirth"
-                            label="Date of Birth"
-                            type="date"
-                            value={formData.dateOfBirth}
-                            onChange={handleDobChange}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
+                <TabsTrigger value="basic-info">
+                  {isMobile ? "Basic" : "Basic Information"}
+                </TabsTrigger>
+                <TabsTrigger value="vitals">Vitals</TabsTrigger>
+                <TabsTrigger value="insurance">Insurance</TabsTrigger>
+              </TabsList>
 
-                <div className="space-y-4">
-                  <div>
+              <TabsContent value="basic-info">
+                <div
+                  className={`grid ${
+                    isMobile ? "grid-cols-1" : "grid-cols-3"
+                  } mt-4 gap-4`}
+                >
+                  <div className="space-y-4">
                     <MemoizedInput
-                      id="contactNumber"
-                      label="Phone"
-                      type="tel"
-                      value={formData.contactNumber}
+                      id="name"
+                      label="Full Name"
+                      value={formData.name}
                       onChange={handleInputChange}
-                      error={errors.contactNumber}
+                      error={errors.name}
                     />
+                    {isMobile ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        <MemoizedInput
+                          id="age"
+                          label="Age"
+                          type="number"
+                          value={formData.age}
+                          onChange={handleAgeChange}
+                          error={errors.age}
+                        />
+                        <MemoizedInput
+                          id="registrationNumber"
+                          label="Reg Number"
+                          value={formData.registrationNumber}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <MemoizedInput
+                          id="registrationNumber"
+                          label="Registration Number"
+                          value={formData.registrationNumber}
+                          onChange={handleInputChange}
+                        />
+                        <div className="flex items-end gap-4">
+                          <div className="w-30 relative">
+                            <MemoizedInput
+                              id="age"
+                              label="Age"
+                              type="number"
+                              value={formData.age}
+                              onChange={handleAgeChange}
+                              error={errors.age}
+                            />
+                          </div>
+                          <div className="flex-grow relative">
+                            <MemoizedInput
+                              id="dateOfBirth"
+                              label="Date of Birth"
+                              type="date"
+                              value={formData.dateOfBirth}
+                              onChange={handleDobChange}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                  {!isMobile && (
+
+                  <div className="space-y-4">
                     <div>
                       <MemoizedInput
-                        id="email"
-                        label="Email"
-                        type="email"
-                        value={formData.email}
+                        id="contactNumber"
+                        label="Phone"
+                        type="tel"
+                        value={formData.contactNumber}
                         onChange={handleInputChange}
+                        error={errors.contactNumber}
                       />
                     </div>
-                  )}
-                  <div className={`grid grid-cols-2 gap-2`}>
-                    <Select
-                      id="gender"
-                      value={formData.gender}
-                      onValueChange={(value) =>
-                        handleInputChange({ target: { id: "gender", value } })
-                      }
-                    >
-                      <SelectTrigger
-                        className={errors.gender ? "border-red-500" : ""}
+                    {/* {!isMobile && (
+                      <div>
+                        <MemoizedInput
+                          id="email"
+                          label="Email"
+                          type="email"
+                          value={formData.email}
+                          onChange={handleInputChange}
+                        />
+                      </div>
+                    )} */}
+                    <div className={`space-y-4`}>
+                    <Textarea
+                      id="address"
+                      placeholder="Address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      className="min-h-[90px]"
+                    />
+                      {/* Blood group selection commented out
+                      <Select
+                        id="bloodType"
+                        onValueChange={(value) =>
+                          handleInputChange({
+                            target: { id: "bloodType", value },
+                          })
+                        }
                       >
-                        <SelectValue placeholder="Gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errors.gender && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.gender}
-                      </p>
-                    )}
-                    <Select
-                      id="bloodType"
-                      onValueChange={(value) =>
-                        handleInputChange({
-                          target: { id: "bloodType", value },
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Blood Group" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
-                          (type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          )
-                        )}
-                      </SelectContent>
-                    </Select>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Blood Group" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                            (type) => (
+                              <SelectItem key={type} value={type}>
+                                {type}
+                              </SelectItem>
+                            )
+                          )}
+                        </SelectContent>
+                      </Select>
+                      */}
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-4">
-                  {isMobile ? (
-                    <>
-                      <div className={`grid grid-cols-2 gap-2`}>
+                  <div className="space-y-4">
+                    {isMobile ? (
+                      <>
+                        <div className={`grid grid-cols-2 gap-2`}>
+                       
+                          <Select
+                            id="admission.department"
+                            onValueChange={(value) =>
+                              handleInputChange({
+                                target: { id: "admission.department", value },
+                              })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Department" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {departments.map((dept) => (
+                                <SelectItem key={dept._id} value={dept._id}>
+                                  {dept.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                        
+                          <Select
+                            id="admission.assignedDoctor"
+                            onValueChange={(value) =>
+                              handleInputChange({
+                                target: { id: "admission.assignedDoctor", value },
+                              })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Assigned Doctor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {doctors.map((doctor) => (
+                                <SelectItem key={doctor._id} value={doctor._id}>
+                                  {doctor.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                       
                         <Select
                           id="admission.department"
                           onValueChange={(value) =>
@@ -448,6 +512,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             ))}
                           </SelectContent>
                         </Select>
+                        
+                      
                         <Select
                           id="admission.assignedDoctor"
                           onValueChange={(value) =>
@@ -467,352 +533,325 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             ))}
                           </SelectContent>
                         </Select>
-                      </div>
-                    </>
-                  ) : (
-                    <>
+                        
+                      </>
+                    )}
+                    {errors["admission.assignedDoctor"] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors["admission.assignedDoctor"]}
+                      </p>
+                    )}
+
+                    <div className={`grid grid-cols-2 gap-2`}>
                       <Select
-                        id="admission.department"
-                        onValueChange={(value) =>
+                        id="admission.assignedRoom"
+                        onValueChange={(value) => {
                           handleInputChange({
-                            target: { id: "admission.department", value },
-                          })
-                        }
+                            target: { id: "admission.assignedRoom", value },
+                          });
+                          setFormData((prev) => ({
+                            ...prev,
+                            admission: {
+                              ...prev.admission,
+                              assignedBed: "",
+                            },
+                          }));
+                        }}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Department" />
+                        <SelectTrigger
+                          className={
+                            errors["admission.assignedRoom"]
+                              ? "border-red-500"
+                              : ""
+                          }
+                        >
+                          <SelectValue placeholder="Room" />
                         </SelectTrigger>
                         <SelectContent>
-                          {departments.map((dept) => (
-                            <SelectItem key={dept._id} value={dept._id}>
-                              {dept.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors["admission.department"] && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors["admission.department"]}
-                        </p>
-                      )}
-
-                      <Select
-                        id="admission.assignedDoctor"
-                        onValueChange={(value) =>
-                          handleInputChange({
-                            target: { id: "admission.assignedDoctor", value },
-                          })
-                        }
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Assigned Doctor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {doctors.map((doctor) => (
-                            <SelectItem key={doctor._id} value={doctor._id}>
-                              {doctor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </>
-                  )}
-                  {errors["admission.assignedDoctor"] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors["admission.assignedDoctor"]}
-                    </p>
-                  )}
-
-                  <div className={`grid grid-cols-2 gap-2`}>
-                    <Select
-                      id="admission.assignedRoom"
-                      onValueChange={(value) => {
-                        handleInputChange({
-                          target: { id: "admission.assignedRoom", value },
-                        });
-                        setFormData((prev) => ({
-                          ...prev,
-                          admission: {
-                            ...prev.admission,
-                            assignedBed: "",
-                          },
-                        }));
-                      }}
-                    >
-                      <SelectTrigger
-                        className={
-                          errors["admission.assignedRoom"]
-                            ? "border-red-500"
-                            : ""
-                        }
-                      >
-                        <SelectValue placeholder="Room" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {rooms
-                          .filter((room) => room.status !== "Occupied")
-                          .map((room) => (
-                            <SelectItem key={room._id} value={room._id}>
-                              {room.roomNumber} - {room.type}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      id="admission.assignedBed"
-                      onValueChange={(value) =>
-                        handleInputChange({
-                          target: { id: "admission.assignedBed", value },
-                        })
-                      }
-                      disabled={!formData.admission.assignedRoom}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Bed" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {formData.admission.assignedRoom &&
-                          rooms
-                            .find(
-                              (room) =>
-                                room._id === formData.admission.assignedRoom
-                            )
-                            ?.beds.filter((bed) => bed.status !== "Occupied")
-                            .map((bed) => (
-                              <SelectItem key={bed._id} value={bed._id}>
-                                {bed.bedNumber}
+                          {rooms
+                            .filter((room) => room.status !== "Occupied")
+                            .map((room) => (
+                              <SelectItem key={room._id} value={room._id}>
+                                {room.roomNumber} - {room.type}
                               </SelectItem>
                             ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        id="admission.assignedBed"
+                        onValueChange={(value) =>
+                          handleInputChange({
+                            target: { id: "admission.assignedBed", value },
+                          })
+                        }
+                        disabled={!formData.admission.assignedRoom}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Bed" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {formData.admission.assignedRoom &&
+                            rooms
+                              .find(
+                                (room) =>
+                                  room._id === formData.admission.assignedRoom
+                              )
+                              ?.beds.filter((bed) => bed.status !== "Occupied")
+                              .map((bed) => (
+                                <SelectItem key={bed._id} value={bed._id}>
+                                  {bed.bedNumber}
+                                </SelectItem>
+                              ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div>
+                  <Select
+                        id="gender"
+                        value={formData.gender}
+                        onValueChange={(value) =>
+                          handleInputChange({ target: { id: "gender", value } })
+                        }
+                      >
+                        <SelectTrigger
+                          className={errors.gender ? "border-red-500" : ""}
+                        >
+                          <SelectValue placeholder="Gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      {errors.gender && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.gender}
+                        </p>
+                      )}
+                    
+                  </div>
+                  <div className="space-y-1 flex items-center gap-4">
+                    <div>
+                      <div>
+                        <p>
+                          Total Bill:{" "}
+                          <span className="font-semibold">
+                            {totalAmount.toLocaleString("en-IN")}
+                          </span>
+                        </p>
+                        {roomCharge > 0 && (
+                          <p className="text-sm text-gray-500">
+                            (Includes room charge: {roomCharge.toLocaleString("en-IN")})
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <Button
+                      variant="outline"
+                      className="border-primary text-primary"
+                      onClick={handleInfoClick}
+                    >
+                      Modify Bill
+                    </Button>
+                  </div>
+
+                  {/* Add payment fields here */}
+                  <div className="grid grid-cols-2  items-center gap-2">
+                    <div>
+                      <MemoizedInput
+                        id="paymentInfo.amountPaid"
+                        label="Amount Paid"
+                        type="number"
+                        value={formData.paymentInfo.amountPaid}
+                        onChange={handleInputChange}
+                      />
+                    </div>
+                    <Select
+                      id="paymentInfo.paymentMethod"
+                      value={formData.paymentInfo.paymentMethod}
+                      onValueChange={(value) =>
+                        handleInputChange({
+                          target: { id: "paymentInfo.paymentMethod", value },
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Payment Method" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cash">Cash</SelectItem>
+                        <SelectItem value="UPI">UPI</SelectItem>
+                        <SelectItem value="Card">Card</SelectItem>
+                        <SelectItem value="Insurance">Insurance</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                 </div>
-                <div>
-                  <Textarea
-                    id="address"
-                    placeholder="Address"
-                    value={formData.address}
-                    onChange={handleInputChange}
-                  />
-                </div>
-                <div className="space-y-1 flex items-center gap-4">
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        id="paymentInfo.includeServices"
-                        checked={formData.paymentInfo.includeServices}
-                        onChange={handleInputChange}
-                      />
-                      <label htmlFor="paymentInfo.includeServices">
-                        Include Service Bill
-                      </label>
-                    </div>
+              </TabsContent>
 
-                    <div>
-                      <p>
-                        Total Bill:{" "}
-                        <span className="font-semibold">
-                          {totalAmount.toLocaleString("en-IN")}
-                        </span>
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    variant="outline"
-                    className="border-primary text-primary"
-                    onClick={handleInfoClick}
+              <TabsContent value="vitals">
+                <div className="space-y-4">
+                  <div
+                    className={`grid ${
+                      isMobile ? "grid-cols-1" : "grid-cols-2"
+                    } gap-4`}
                   >
-                    Modify Bill
-                  </Button>
-                </div>
+                    <Textarea
+                      id="admission.diagnosis"
+                      placeholder="Diagnosis"
+                      value={formData.admission.diagnosis}
+                      onChange={(e) =>
+                        handleInputChange({
+                          target: {
+                            id: "admission.diagnosis",
+                            value: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                    {errors["admission.diagnosis"] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors["admission.diagnosis"]}
+                      </p>
+                    )}
 
-                {/* Add payment fields here */}
-                <div className="grid grid-cols-2  items-center gap-2">
-                  <div>
-                    <MemoizedInput
-                      id="paymentInfo.amountPaid"
-                      label="Amount Paid"
-                      type="number"
-                      value={formData.paymentInfo.amountPaid}
+                    <Textarea
+                      id="admission.conditionOnAdmission"
+                      placeholder="Condition on Admission"
+                      value={formData.admission.conditionOnAdmission}
+                      onChange={(e) =>
+                        handleInputChange({
+                          target: {
+                            id: "admission.conditionOnAdmission",
+                            value: e.target.value,
+                          },
+                        })
+                      }
+                    />
+                  </div>
+
+                  <h4 className="font-semibold text-sm mt-4">Admission Vitals</h4>
+                  <div
+                    className={`grid ${
+                      isMobile ? "grid-cols-2" : "grid-cols-3"
+                    } gap-4`}
+                  >
+                    <Input
+                      id="admission.vitals.admission.weight"
+                      placeholder="Weight"
+                      value={formData.admission.vitals.admission.weight}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      id="admission.vitals.admission.height"
+                      placeholder="Height"
+                      value={formData.admission.vitals.admission.height}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      id="admission.vitals.admission.bloodPressure"
+                      placeholder="Blood Pressure"
+                      value={formData.admission.vitals.admission.bloodPressure}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      id="admission.vitals.admission.heartRate"
+                      placeholder="Heart Rate"
+                      value={formData.admission.vitals.admission.heartRate}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      id="admission.vitals.admission.temperature"
+                      placeholder="Temperature"
+                      value={formData.admission.vitals.admission.temperature}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      id="admission.vitals.admission.oxygenSaturation"
+                      placeholder="Oxygen Saturation"
+                      value={formData.admission.vitals.admission.oxygenSaturation}
+                      onChange={handleInputChange}
+                    />
+                    <Input
+                      id="admission.vitals.admission.respiratoryRate"
+                      placeholder="Respiratory Rate"
+                      value={formData.admission.vitals.admission.respiratoryRate}
                       onChange={handleInputChange}
                     />
                   </div>
-                  <Select
-                    id="paymentInfo.paymentMethod"
-                    value={formData.paymentInfo.paymentMethod}
-                    onValueChange={(value) =>
-                      handleInputChange({
-                        target: { id: "paymentInfo.paymentMethod", value },
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Payment Method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Cash">Cash</SelectItem>
-                      <SelectItem value="UPI">UPI</SelectItem>
-                      <SelectItem value="Card">Card</SelectItem>
-                      <SelectItem value="Insurance">Insurance</SelectItem>
-                    </SelectContent>
-                  </Select>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="vitals">
-              <div className="space-y-4">
-                <div
-                  className={`grid ${
-                    isMobile ? "grid-cols-1" : "grid-cols-2"
-                  } gap-4`}
-                >
-                  <Textarea
-                    id="admission.diagnosis"
-                    placeholder="Diagnosis"
-                    value={formData.admission.diagnosis}
-                    onChange={(e) =>
-                      handleInputChange({
-                        target: {
-                          id: "admission.diagnosis",
-                          value: e.target.value,
-                        },
-                      })
-                    }
+              <TabsContent value="insurance">
+                <div className="mt-4 grid grid-cols-2 gap-4">
+                  <MemoizedInput
+                    id="admission.insuranceDetails.provider"
+                    label="Insurance Provider"
+                    value={formData.admission.insuranceDetails.provider}
+                    onChange={handleInputChange}
                   />
-                  {errors["admission.diagnosis"] && (
-                    <p className="text-red-500 text-xs mt-1">
-                      {errors["admission.diagnosis"]}
-                    </p>
+                  <MemoizedInput
+                    id="admission.insuranceDetails.policyNumber"
+                    label="Policy Number"
+                    value={formData.admission.insuranceDetails.policyNumber}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </TabsContent>
+            </Tabs>
+
+            <DialogFooter className={`mt-4 ${isMobile ? "mb-8" : ""}`}>
+              <div
+                className={`w-full flex ${
+                  isMobile ? "flex-col-reverse" : "flex-row"
+                } justify-between sm:justify-end sm:space-x-2 space-y-2 sm:space-y-0`}
+              >
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleReset}
+                  className={`${isMobile ? "w-full mt-2" : ""}`}
+                >
+                  Reset
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={registerPatientStatus === "loading"}
+                  className={`${isMobile ? "w-full" : ""}`}
+                >
+                  {registerPatientStatus === "loading" ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {patientData ? "Readmitting..." : "Registering..."}
+                    </>
+                  ) : patientData ? (
+                    "Readmit Patient"
+                  ) : (
+                    "Register Patient"
                   )}
-
-                  <Textarea
-                    id="admission.conditionOnAdmission"
-                    placeholder="Condition on Admission"
-                    value={formData.admission.conditionOnAdmission}
-                    onChange={(e) =>
-                      handleInputChange({
-                        target: {
-                          id: "admission.conditionOnAdmission",
-                          value: e.target.value,
-                        },
-                      })
-                    }
-                  />
-                </div>
-
-                <h4 className="font-semibold text-sm mt-4">Admission Vitals</h4>
-                <div
-                  className={`grid ${
-                    isMobile ? "grid-cols-2" : "grid-cols-3"
-                  } gap-4`}
-                >
-                  <Input
-                    id="admission.vitals.admission.weight"
-                    placeholder="Weight"
-                    value={formData.admission.vitals.admission.weight}
-                    onChange={handleInputChange}
-                  />
-                  <Input
-                    id="admission.vitals.admission.height"
-                    placeholder="Height"
-                    value={formData.admission.vitals.admission.height}
-                    onChange={handleInputChange}
-                  />
-                  <Input
-                    id="admission.vitals.admission.bloodPressure"
-                    placeholder="Blood Pressure"
-                    value={formData.admission.vitals.admission.bloodPressure}
-                    onChange={handleInputChange}
-                  />
-                  <Input
-                    id="admission.vitals.admission.heartRate"
-                    placeholder="Heart Rate"
-                    value={formData.admission.vitals.admission.heartRate}
-                    onChange={handleInputChange}
-                  />
-                  <Input
-                    id="admission.vitals.admission.temperature"
-                    placeholder="Temperature"
-                    value={formData.admission.vitals.admission.temperature}
-                    onChange={handleInputChange}
-                  />
-                  <Input
-                    id="admission.vitals.admission.oxygenSaturation"
-                    placeholder="Oxygen Saturation"
-                    value={formData.admission.vitals.admission.oxygenSaturation}
-                    onChange={handleInputChange}
-                  />
-                  <Input
-                    id="admission.vitals.admission.respiratoryRate"
-                    placeholder="Respiratory Rate"
-                    value={formData.admission.vitals.admission.respiratoryRate}
-                    onChange={handleInputChange}
-                  />
-                </div>
+                </Button>
               </div>
-            </TabsContent>
-
-            <TabsContent value="insurance">
-              <div className="mt-4 grid grid-cols-2 gap-4">
-                <MemoizedInput
-                  id="admission.insuranceDetails.provider"
-                  label="Insurance Provider"
-                  value={formData.admission.insuranceDetails.provider}
-                  onChange={handleInputChange}
-                />
-                <MemoizedInput
-                  id="admission.insuranceDetails.policyNumber"
-                  label="Policy Number"
-                  value={formData.admission.insuranceDetails.policyNumber}
-                  onChange={handleInputChange}
-                />
-              </div>
-            </TabsContent>
-          </Tabs>
-
-          <DialogFooter className={`mt-4 ${isMobile ? "mb-8" : ""}`}>
-            <div
-              className={`w-full flex ${
-                isMobile ? "flex-col-reverse" : "flex-row"
-              } justify-between sm:justify-end sm:space-x-2 space-y-2 sm:space-y-0`}
-            >
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleReset}
-                className={`${isMobile ? "w-full mt-2" : ""}`}
-              >
-                Reset
-              </Button>
-              <Button
-                type="submit"
-                disabled={registerPatientStatus === "loading"}
-                className={`${isMobile ? "w-full" : ""}`}
-              >
-                {registerPatientStatus === "loading" ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {patientData ? "Readmitting..." : "Registering..."}
-                  </>
-                ) : patientData ? (
-                  "Readmit Patient"
-                ) : (
-                  "Register Patient"
-                )}
-              </Button>
-            </div>
-          </DialogFooter>
-        </form>
-        <SelectServicesDialog
-          isOpen={isSelectServicesDialogOpen}
-          onClose={() => setIsSelectServicesDialogOpen(false)}
-          services={services}
-          selectedServices={formData.paymentInfo.services}
-          onServicesChange={handleServicesChange}
+            </DialogFooter>
+          </form>
+          <SelectServicesDialog
+            isOpen={isSelectServicesDialogOpen}
+            onClose={() => setIsSelectServicesDialogOpen(false)}
+            services={services}
+            selectedServices={formData.paymentInfo.services}
+            onServicesChange={handleServicesChange}
+          />
+        </DialogContent>
+      </Dialog>
+      {showBillModal && hospitalInfo && (
+        <BillModal
+          isOpen={showBillModal}
+          onClose={() => setShowBillModal(false)}
+          billData={billData}
+          hospitalInfo={hospitalInfo}
         />
-      </DialogContent>
-    </Dialog>
+      )}
+    </>
   );
 }
