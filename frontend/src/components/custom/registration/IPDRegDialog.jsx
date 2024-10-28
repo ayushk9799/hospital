@@ -91,7 +91,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         paymentInfo: {
           ...prevData.paymentInfo,
           services: serviceBillCollections,
-          includeServices: true, // Set this to true by default
         },
       }));
     }
@@ -123,8 +122,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       setFormData(initialFormData);
     }
     setErrors({});
-    setTotalAmount(0);
-    setRoomCharge(0);
   }, [patientData]);
 
   useEffect(() => {
@@ -135,7 +132,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         document.body.style = "";
       }, 500);
     }
-  }, [open, resetFormData, dispatch]);
+  }, [open, resetFormData]);
 
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -634,6 +631,18 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                   </div>
                   <div className="space-y-1 flex items-center gap-4">
                     <div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id="paymentInfo.includeServices"
+                          checked={formData.paymentInfo.includeServices}
+                          onChange={handleInputChange}
+                        />
+                        <label htmlFor="paymentInfo.includeServices">
+                          Include Service Bill
+                        </label>
+                      </div>
+
                       <div>
                         <p>
                           Total Bill:{" "}
