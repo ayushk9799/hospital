@@ -22,8 +22,15 @@ import {
   ChevronDown,
   Search,
   X,
+  ClipboardList,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { CalendarDays, Phone, Mail, MapPin } from "lucide-react";
 import { format, parseISO } from "date-fns";
@@ -43,7 +50,7 @@ export default function PatientSearch() {
   const navigate = useNavigate();
   const patients = location.state?.searchResults || [];
   const searchQuery = location.state?.searchQuery || "";
-  console.log(patients)
+  console.log(patients);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isOPDRegDialogOpen, setIsOPDRegDialogOpen] = useState(false);
   const [selectedPatientForFollowUp, setSelectedPatientForFollowUp] =
@@ -52,7 +59,7 @@ export default function PatientSearch() {
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
-
+ console.log(selectedPatient);
   useEffect(() => {
     if (patients.length > 0) {
       setSelectedPatient(patients[0]);
@@ -81,12 +88,22 @@ export default function PatientSearch() {
       },
     },
     { name: "IPD", icon: Bed, action: () => setIsIPDRegDialogOpen(true) },
-    { 
-      name: "OPD Procedure", 
-      icon: FileText, 
-      action: () => navigate(`/opd-procedure/${selectedPatient._id}`, { state: { patient: selectedPatient } })
+    {
+      name: "OPD Procedure",
+      icon: FileText,
+      action: () =>
+        navigate(`/opd-procedure/${selectedPatient._id}`, {
+          state: { patient: selectedPatient },
+        }),
     },
-   
+    {
+      name: "Discharge Summary",
+      icon: ClipboardList,
+      action: () => 
+        navigate(`/patients/discharge/${selectedPatient._id}`, {
+          state: { patient: selectedPatient },
+        }),
+    },
   ];
 
   const getLatestDate = (patient) => {
@@ -107,8 +124,9 @@ export default function PatientSearch() {
         <div className="flex flex-col space-y-2">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <h3 className="text-lg font-semibold capitalize mr-2">{patient.name}</h3>
-              
+              <h3 className="text-lg font-semibold capitalize mr-2">
+                {patient.name}
+              </h3>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -118,28 +136,33 @@ export default function PatientSearch() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {actions.map((action) => (
-                  <DropdownMenuItem key={action.name} onSelect={() => action.action(patient)}>
+                  <DropdownMenuItem
+                    key={action.name}
+                    onSelect={() => action.action(patient)}
+                  >
                     {action.name}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-          <p className="text-sm text-muted-foreground">Reg: {patient.registrationNumber}</p>
+          <p className="text-sm text-muted-foreground">
+            Reg: {patient.registrationNumber}
+          </p>
           <div className="grid grid-cols-2 gap-2">
-            <div className='flex gap-2 items-center'>
+            <div className="flex gap-2 items-center">
               <p className="text-sm text-muted-foreground">Last Visit:</p>
               <p className="text-sm font-medium">{getLatestDate(patient)}</p>
             </div>
-            <div className='flex gap-2 items-center'>
+            <div className="flex gap-2 items-center">
               <p className="text-sm text-muted-foreground">Age:</p>
               <p className="text-sm font-medium">{patient.age}</p>
             </div>
-            <div className='flex gap-2 items-center'>
+            <div className="flex gap-2 items-center">
               <p className="text-sm text-muted-foreground">Mobile:</p>
               <p className="text-sm font-medium">{patient.contactNumber}</p>
             </div>
-            <div className='flex gap-2 items-center'>
+            <div className="flex gap-2 items-center">
               <p className="text-sm text-muted-foreground">Gender:</p>
               <p className="text-sm font-medium">{patient.gender}</p>
             </div>
@@ -153,14 +176,17 @@ export default function PatientSearch() {
     <Card className="w-full">
       <CardHeader>
         <CardTitle>Search Results for: {searchQuery}</CardTitle>
-        <CardDescription>{patients.length} Registered patients found</CardDescription>
+        <CardDescription>
+          {patients.length} Registered patients found
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {patients.length === 0 ? (
           <div className="text-center py-8">
             <h3 className="text-xl font-semibold mb-2">No patients found</h3>
-            <p className="text-muted-foreground mb-4">Try searching with a different query</p>
-          
+            <p className="text-muted-foreground mb-4">
+              Try searching with a different query
+            </p>
           </div>
         ) : (
           <>
@@ -192,12 +218,16 @@ export default function PatientSearch() {
                       <TableRow
                         key={patient._id}
                         className={`cursor-pointer ${
-                          selectedPatient?._id === patient._id ? "bg-blue-100" : ""
+                          selectedPatient?._id === patient._id
+                            ? "bg-blue-100"
+                            : ""
                         }`}
                         onClick={() => setSelectedPatient(patient)}
                       >
                         <TableCell>{index + 1}</TableCell>
-                        <TableCell className="font-medium">{patient.name}</TableCell>
+                        <TableCell className="font-medium">
+                          {patient.name}
+                        </TableCell>
                         <TableCell>{patient.registrationNumber}</TableCell>
                         <TableCell>{getLatestDate(patient)}</TableCell>
                         <TableCell>{patient.address?.city || "-"}</TableCell>
@@ -214,7 +244,10 @@ export default function PatientSearch() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               {actions.map((action) => (
-                                <DropdownMenuItem key={action.name} onSelect={() => action.action(patient)}>
+                                <DropdownMenuItem
+                                  key={action.name}
+                                  onSelect={() => action.action(patient)}
+                                >
                                   {action.name}
                                 </DropdownMenuItem>
                               ))}
@@ -243,10 +276,16 @@ export default function PatientSearch() {
                         </AvatarFallback>
                       </Avatar>
                       <div>
-                        <h2 className="font-semibold">{selectedPatient.name}</h2>
+                        <h2 className="font-semibold">
+                          {selectedPatient.name}
+                        </h2>
                         <div className="flex gap-2 mt-1">
-                          <Badge variant="outline">{selectedPatient.gender}</Badge>
-                          <Badge variant="outline">{selectedPatient.age} years</Badge>
+                          <Badge variant="outline">
+                            {selectedPatient.gender}
+                          </Badge>
+                          <Badge variant="outline">
+                            {selectedPatient.age} years
+                          </Badge>
                           {selectedPatient.bloodGroup && (
                             <Badge variant="outline">
                               {selectedPatient.bloodGroup}

@@ -48,15 +48,12 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo }) => {
         <div className="flex justify-between items-center mb-4">
           <DialogHeader className="flex flex-row items-center space-x-4">
             <DialogTitle>Bill Details</DialogTitle>
-            <Button 
-              onClick={togglePDFView} 
-              className="py-1 h-8 text-sm"
-            >
+            <Button onClick={togglePDFView} className="py-1 h-8 text-sm">
               {showPDF ? "Hide PDF View" : "Show PDF View"}
             </Button>
           </DialogHeader>
         </div>
-        
+
         {showPDF ? (
           <div className="mt-4">
             <PDFViewer width="100%" height={500}>
@@ -68,13 +65,16 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo }) => {
             {/* Compact Patient Details Section */}
             <div className="bg-gray-100 p-3 rounded-md flex justify-between items-center">
               <div>
-                <span className="font-semibold">Name:</span> {billData.patientInfo.name || 'N/A'}
+                <span className="font-semibold">Name:</span>{" "}
+                {billData.patientInfo.name || "N/A"}
               </div>
               <div>
-                <span className="font-semibold">Phone Number:</span> {billData.patientInfo.phone || 'N/A'}
+                <span className="font-semibold">Phone Number:</span>{" "}
+                {billData.patientInfo.phone || "N/A"}
               </div>
               <div>
-                <span className="font-semibold">Reg. Number:</span> {billData.patientInfo.registrationNumber || 'N/A'}
+                <span className="font-semibold">Reg. Number:</span>{" "}
+                {billData.patientInfo.registrationNumber || "N/A"}
               </div>
             </div>
 
@@ -99,7 +99,9 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo }) => {
                       {(service.rate || 0).toFixed(2)}
                     </TableCell>
                     <TableCell className="text-right">
-                      {((service.quantity || 0) * (service.rate || 0)).toFixed(2)}
+                      {((service.quantity || 0) * (service.rate || 0)).toFixed(
+                        2
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -112,9 +114,11 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo }) => {
                 <Table>
                   <TableBody>
                     <TableRow>
-                      <TableCell className="font-semibold">Total Amount:</TableCell>
+                      <TableCell className="font-semibold">
+                        Sub Total:
+                      </TableCell>
                       <TableCell className="text-right">
-                        ₹{(billData.totalAmount || 0).toFixed(2)}
+                        ₹{(billData.subtotal || 0).toFixed(2)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
@@ -124,21 +128,35 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo }) => {
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className="font-semibold">Net Amount:</TableCell>
+                      <TableCell className="font-semibold">
+                        Net Amount:
+                      </TableCell>
                       <TableCell className="text-right">
-                        ₹{((billData.totalAmount || 0) - (billData.additionalDiscount || 0)).toFixed(2)}
+                        ₹
+                        {(
+                          (billData.subtotal || 0) -
+                          (billData.additionalDiscount || 0)
+                        ).toFixed(2)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className="font-semibold">Amount Paid:</TableCell>
+                      <TableCell className="font-semibold">
+                        Amount Paid:
+                      </TableCell>
                       <TableCell className="text-right text-green-500">
                         ₹{(billData.amountPaid || 0).toFixed(2)}
                       </TableCell>
                     </TableRow>
                     <TableRow>
-                      <TableCell className="font-semibold">Balance Due:</TableCell>
+                      <TableCell className="font-semibold">
+                        Balance Due:
+                      </TableCell>
                       <TableCell className="text-right">
-                        ₹{((billData.totalAmount || 0) - (billData.additionalDiscount || 0) - (billData.amountPaid || 0)).toFixed(2)}
+                        ₹
+                        {(
+                          (billData.totalAmount || 0) -
+                          (billData.amountPaid || 0)
+                        ).toFixed(2)}
                       </TableCell>
                     </TableRow>
                   </TableBody>

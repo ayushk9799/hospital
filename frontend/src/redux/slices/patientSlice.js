@@ -6,11 +6,16 @@ import { dischargePatient } from "./dischargeSlice"; // Import the dischargePati
 // Replace the existing fetchPatients thunk with this:
 export const fetchPatients = createLoadingAsyncThunk(
   "patients/fetchPatients",
-  async (_, { rejectWithValue }) => {
+  async (dateRange, { rejectWithValue }) => {
     try {
       const response = await fetch(`${Backend_URL}/api/patients/details`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({
+          startDate: dateRange?.startDate || null,
+          endDate: dateRange?.endDate || null,
+        }),
       });
 
       if (!response.ok) {
@@ -186,16 +191,19 @@ export const addLabReport = createLoadingAsyncThunk(
 // Add this new thunk for patient readmission
 export const readmitPatient = createLoadingAsyncThunk(
   "patients/readmitPatient",
-  async ({ patientId, admission}, { rejectWithValue }) => {
+  async ({ patientId, admission }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/patients/${patientId}/readmission`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(admission),
-        credentials: "include",
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/patients/${patientId}/readmission`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(admission),
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -204,6 +212,32 @@ export const readmitPatient = createLoadingAsyncThunk(
 
       const result = await response.json();
       return result;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+// Add this new thunk for fetching visit details
+export const fetchVisitDetails = createLoadingAsyncThunk(
+  "patients/fetchVisitDetails",
+  async ({ id, type }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/visit-details`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ id, type })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -222,6 +256,8 @@ const initialState = {
   patientDetailsStatus: "idle",
   addLabReportStatus: "idle",
   error: null,
+  visitDetails: null,
+  visitDetailsStatus: 'idle',
 };
 
 const patientSlice = createSlice({
@@ -298,16 +334,25 @@ const patientSlice = createSlice({
         state.addLabReportStatus = "succeeded";
         // Update the patient in the patientlist with the new lab report
         const updatedPatient = action.payload.visit;
-        const {labReports} = updatedPatient;
+        const { labReports } = updatedPatient;
         const index = state.patientlist.findIndex(
           (patient) => patient._id === updatedPatient._id
         );
         if (index !== -1) {
-          state.patientlist[index] = { ...state.patientlist[index], labReports };
+          state.patientlist[index] = {
+            ...state.patientlist[index],
+            labReports,
+          };
         }
         // If the updated patient is the currently selected patient, update it as well
-        if (state.selectedPatient && state.selectedPatient._id === updatedPatient._id) {
-          state.selectedPatient = { ...state.selectedPatient, ...updatedPatient };
+        if (
+          state.selectedPatient &&
+          state.selectedPatient._id === updatedPatient._id
+        ) {
+          state.selectedPatient = {
+            ...state.selectedPatient,
+            ...updatedPatient,
+          };
         }
       })
       .addCase(addLabReport.rejected, (state, action) => {
@@ -316,7 +361,8 @@ const patientSlice = createSlice({
       })
       .addCase(dischargePatient.fulfilled, (state, action) => {
         const updatedPatient = action.payload;
-        const {assignedRoom, assignedBed, department,patient,...rest} = updatedPatient;
+        const { assignedRoom, assignedBed, department, patient, ...rest } =
+          updatedPatient;
         const index = state.patientlist.findIndex(
           (patient) => patient._id === updatedPatient._id
         );
@@ -325,8 +371,14 @@ const patientSlice = createSlice({
           state.patientlist[index] = { ...state.patientlist[index], ...rest };
         }
         // If the discharged patient is the currently selected patient, update it as well
-        if (state.selectedPatient && state.selectedPatient._id === updatedPatient._id) {
-          state.selectedPatient = { ...state.selectedPatient, ...updatedPatient };
+        if (
+          state.selectedPatient &&
+          state.selectedPatient._id === updatedPatient._id
+        ) {
+          state.selectedPatient = {
+            ...state.selectedPatient,
+            ...updatedPatient,
+          };
         }
       })
       .addCase(readmitPatient.pending, (state) => {
@@ -343,12 +395,28 @@ const patientSlice = createSlice({
           state.patientlist[index] = updatedPatient;
         }
         // If the readmitted patient is the currently selected patient, update it as well
-        if (state.selectedPatient && state.selectedPatient._id === updatedPatient._id) {
+        if (
+          state.selectedPatient &&
+          state.selectedPatient._id === updatedPatient._id
+        ) {
           state.selectedPatient = updatedPatient;
         }
       })
       .addCase(readmitPatient.rejected, (state, action) => {
         state.status = "failed";
+        state.error = action.payload;
+      })
+      .addCase(fetchVisitDetails.pending, (state) => {
+        state.visitDetailsStatus = 'loading';
+        state.visitDetails = null;
+      })
+      .addCase(fetchVisitDetails.fulfilled, (state, action) => {
+        state.visitDetailsStatus = 'succeeded';
+        state.visitDetails = action.payload;
+      })
+      .addCase(fetchVisitDetails.rejected, (state, action) => {
+        state.visitDetailsStatus = 'failed';
+        state.visitDetails = null;
         state.error = action.payload;
       });
   },
@@ -364,4 +432,11 @@ export const selectPatientDetails = createSelector(
   ],
   (selectedPatient, status) => ({ patientData: selectedPatient, status })
 );
+
+// Add a selector for visit details
+export const selectVisitDetails = createSelector(
+  [(state) => state.patients.visitDetails, (state) => state.patients.visitDetailsStatus],
+  (visitDetails, status) => ({ visitDetails, status })
+);
+
 export default patientSlice.reducer;

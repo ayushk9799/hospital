@@ -31,6 +31,8 @@ import {
   PopoverTrigger,
 } from "../components/ui/popover";
 import { format } from "date-fns";
+import { fetchVisitDetails } from "../redux/slices/patientSlice.js";
+import {useLocation} from "react-router-dom";
 import MultiSelectInput from "../components/custom/MultiSelectInput";
 import {
   Select,
@@ -39,13 +41,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
-import {fetchTemplates} from "../redux/slices/templatesSlice";
+import { fetchTemplates } from "../redux/slices/templatesSlice";
 import { labCategories, labReportFields } from "../assets/Data";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
 import CreateLabReport from "./CreateLabReport";
 import { PDFViewer } from "@react-pdf/renderer";
 import DischargeSummaryPDF from "../components/custom/reports/DischargeSummaryPDF";
-import { dischargePatient, saveDischargeData } from "../redux/slices/dischargeSlice";
+import {
+  dischargePatient,
+  saveDischargeData,
+} from "../redux/slices/dischargeSlice";
 import { useToast } from "../hooks/use-toast";
 import {
   Table,
@@ -126,9 +131,34 @@ export default function DischargeSummary() {
   const { patientId } = useParams();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const patient = useSelector((state) =>
+  const location = useLocation();
+  const [patient, setPatient] = useState(null);
+  
+  // Get initial patient from Redux store
+  const patientFromStore = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
   );
+console.log(patient);
+  // Fetch patient details if not in store
+  useEffect(() => {
+    const fetchPatient = async () => {
+      if (!patientFromStore && location.state?.patient) {
+        try {
+          console.log(location.state.patient);
+          const result = await dispatch(
+            fetchVisitDetails({id:location.state.patient.admissionDetails.at(-1)._id,type:"IPD"})
+          ).unwrap();
+          setPatient(result);
+        } catch (error) {
+          console.error("Error fetching patient details:", error);
+        }
+      } else {
+        setPatient(patientFromStore);
+      }
+    };
+
+    fetchPatient();
+  }, [dispatch, patientFromStore, location.state?.patient]);
 
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
@@ -139,11 +169,11 @@ export default function DischargeSummary() {
       dispatch(fetchItems());
     }
   }, [dispatch, itemsStatus]);
-useEffect(() => {
-  if(templateStatus === "idle"){
-    dispatch(fetchTemplates());
-  }
-}, [dispatch,templateStatus]);
+  useEffect(() => {
+    if (templateStatus === "idle") {
+      dispatch(fetchTemplates());
+    }
+  }, [dispatch, templateStatus]);
   const [formData, setFormData] = useState({
     admissionDate: "",
     dateDischarged: "",
@@ -180,7 +210,9 @@ useEffect(() => {
   const [isLabReportOpen, setIsLabReportOpen] = useState(false); // State to manage modal visibility
   const [selectedInvestigation, setSelectedInvestigation] = useState(null); // State to track selected investigation
   const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
-  const diagnosisTemplate = useSelector((state) => state.templates.diagnosisTemplate);
+  const diagnosisTemplate = useSelector(
+    (state) => state.templates.diagnosisTemplate
+  );
 
   const [patientInfo, setPatientInfo] = useState({
     name: "",
@@ -198,7 +230,7 @@ useEffect(() => {
           ? new Date(patient.bookingDate).toISOString().split("T")[0]
           : "",
         dateDischarged: patient.dateDischarged || "",
-        diagnosis: Array.isArray(patient.diagnosis) 
+        diagnosis: Array.isArray(patient.diagnosis)
           ? patient.diagnosis.join(", ")
           : patient.diagnosis || "",
         clinicalSummary: patient.clinicalSummary || "",
@@ -221,9 +253,10 @@ useEffect(() => {
             respiratoryRate: patient.vitals?.discharge?.respiratoryRate || "",
           },
         },
-        investigations: patient.labReports?.length > 0 
-          ? patient.labReports 
-          : [{ name: "", category: "" }], // Default empty investigation
+        investigations:
+          patient.labReports?.length > 0
+            ? patient.labReports
+            : [{ name: "", category: "" }], // Default empty investigation
         medicineAdvice: patient.medicineAdvice || [
           { name: "", dosage: "0-0-0", duration: "" },
         ],
@@ -303,8 +336,9 @@ useEffect(() => {
   };
 
   const { toast } = useToast();
-  const {status:dischargeStatus,savingStatus} = useSelector((state) => state.discharge);
-  
+  const { status: dischargeStatus, savingStatus } = useSelector(
+    (state) => state.discharge
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -319,18 +353,18 @@ useEffect(() => {
       diagnosis: formData.diagnosis,
       treatment: formData.treatment,
       medicineAdvice: formData.medicineAdvice
-        .filter(m => m.name.trim() !== '')
+        .filter((m) => m.name.trim() !== "")
         .map((m) => ({
           name: m.name,
           duration: m.duration,
           frequency: m.dosage,
         })),
       labReports: formData.investigations
-        .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
+        .filter((inv) => inv.name.trim() !== "" && inv.report) // Only include if has name and report
         .map((i) => ({
           name: i.name,
           report: i.report,
-          date: i.date || new Date().toISOString()
+          date: i.date || new Date().toISOString(),
         })),
       vitals: formData.vitals,
       notes: formData.notes,
@@ -342,7 +376,7 @@ useEffect(() => {
       toast({
         title: "Success",
         description: "Patient discharged successfully",
-        variant:"success"
+        variant: "success",
       });
       navigate("/patients");
     } catch (error) {
@@ -367,18 +401,18 @@ useEffect(() => {
       diagnosis: formData.diagnosis,
       treatment: formData.treatment,
       medicineAdvice: formData.medicineAdvice
-        .filter(m => m.name.trim() !== '')
+        .filter((m) => m.name.trim() !== "")
         .map((m) => ({
           name: m.name,
           duration: m.duration,
           frequency: m.dosage,
         })),
       labReports: formData.investigations
-        .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
+        .filter((inv) => inv.name.trim() !== "" && inv.report) // Only include if has name and report
         .map((i) => ({
           name: i.name,
           report: i.report,
-          date: i.date || new Date().toISOString()
+          date: i.date || new Date().toISOString(),
         })),
       vitals: formData.vitals,
       notes: formData.notes,
@@ -389,7 +423,7 @@ useEffect(() => {
       toast({
         title: "Success",
         description: "Discharge data saved successfully",
-        variant:"success"
+        variant: "success",
       });
     } catch (error) {
       toast({
@@ -580,12 +614,17 @@ useEffect(() => {
   // Modify the handleAddDiagnosis function
   const handleAddDiagnosis = (diagnosis) => {
     if (!diagnosis.trim()) return;
-    
-    const currentDiagnoses = formData.diagnosis ? formData.diagnosis.split(", ") : [];
-    
+
+    const currentDiagnoses = formData.diagnosis
+      ? formData.diagnosis.split(", ")
+      : [];
+
     // Add to custom diagnoses list if it's not in the template
-    if (!diagnosisTemplate.includes(diagnosis) && !customDiagnosesList.includes(diagnosis)) {
-      setCustomDiagnosesList(prev => [...prev, diagnosis]);
+    if (
+      !diagnosisTemplate.includes(diagnosis) &&
+      !customDiagnosesList.includes(diagnosis)
+    ) {
+      setCustomDiagnosesList((prev) => [...prev, diagnosis]);
     }
 
     if (currentDiagnoses.includes(diagnosis)) {
@@ -593,8 +632,8 @@ useEffect(() => {
         ...prev,
         diagnosis: prev.diagnosis
           .split(", ")
-          .filter(d => d !== diagnosis)
-          .join(", ")
+          .filter((d) => d !== diagnosis)
+          .join(", "),
       }));
     } else {
       // Add the diagnosis if it's not selected
@@ -611,19 +650,21 @@ useEffect(() => {
   // Add this new function to check for matches
   const getMatchingDiagnoses = (input) => {
     if (!input) return [];
-    return diagnosisTemplate.filter(diagnosis => 
+    return diagnosisTemplate.filter((diagnosis) =>
       diagnosis.toLowerCase().startsWith(input.toLowerCase())
     );
   };
 
   const handleDiagnosisChange = (newDiagnoses) => {
-    const diagnosisString = newDiagnoses.map(d => d.name).join(", ");
+    const diagnosisString = newDiagnoses.map((d) => d.name).join(", ");
     setFormData((prev) => ({ ...prev, diagnosis: diagnosisString }));
   };
 
   const handleRemoveDiagnosis = (name) => {
     const currentDiagnoses = formData.diagnosis.split(", ");
-    const updatedDiagnoses = currentDiagnoses.filter(d => d !== name).join(", ");
+    const updatedDiagnoses = currentDiagnoses
+      .filter((d) => d !== name)
+      .join(", ");
     setFormData((prev) => ({ ...prev, diagnosis: updatedDiagnoses }));
   };
 
@@ -783,7 +824,9 @@ useEffect(() => {
                   <div className="flex gap-2">
                     <MultiSelectInput
                       suggestions={diagnosisList}
-                      selectedValues={formData.diagnosis.split(", ").map(d => ({ name: d }))}
+                      selectedValues={formData.diagnosis
+                        .split(", ")
+                        .map((d) => ({ name: d }))}
                       setSelectedValues={handleDiagnosisChange}
                       placeholder="Select diagnosis"
                     />
@@ -852,7 +895,10 @@ useEffect(() => {
                 <Label htmlFor="investigations">Investigations</Label>
                 <div className="space-y-2 mt-2">
                   {formData.investigations.map((investigation, index) => (
-                    <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2">
+                    <div
+                      key={index}
+                      className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                    >
                       <div className="sm:col-span-3">
                         <SearchSuggestion
                           suggestions={allLabTests}
@@ -918,7 +964,10 @@ useEffect(() => {
                 <Label htmlFor="medicineAdvice">Medicine/Advice</Label>
                 <div className="space-y-2 mt-2">
                   {formData.medicineAdvice.map((item, index) => (
-                    <div key={index} className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2">
+                    <div
+                      key={index}
+                      className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                    >
                       <SearchSuggestion
                         suggestions={medicines.map((item) => ({
                           name: item.name,
@@ -980,13 +1029,28 @@ useEffect(() => {
               </div>
 
               <div className="flex flex-col sm:flex-row justify-end mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
-                <Button type="button" variant="outline" onClick={handlePreviewPDF} className="w-full sm:w-auto">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handlePreviewPDF}
+                  className="w-full sm:w-auto"
+                >
                   Preview
                 </Button>
-                <Button type="button" onClick={handleSave} variant="outline" disabled={savingStatus==="loading"} className="w-full sm:w-auto">
-                  {savingStatus==="loading"?"Saving...":"Save"}
+                <Button
+                  type="button"
+                  onClick={handleSave}
+                  variant="outline"
+                  disabled={savingStatus === "loading"}
+                  className="w-full sm:w-auto"
+                >
+                  {savingStatus === "loading" ? "Saving..." : "Save"}
                 </Button>
-                <Button type="submit" disabled={dischargeStatus === "loading"} className="w-full sm:w-auto">
+                <Button
+                  type="submit"
+                  disabled={dischargeStatus === "loading"}
+                  className="w-full sm:w-auto"
+                >
                   {dischargeStatus === "loading"
                     ? "Discharging..."
                     : "Discharge"}
@@ -1056,18 +1120,18 @@ useEffect(() => {
               </Button>
             </div>
             <PDFViewer width="100%" height="90%">
-              <DischargeSummaryPDF 
+              <DischargeSummaryPDF
                 formData={{
                   ...formData,
                   investigations: formData.investigations
-                    .filter(inv => inv.name.trim() !== '' && inv.report) // Only include if has name and report
-                    .map(inv => ({
+                    .filter((inv) => inv.name.trim() !== "" && inv.report) // Only include if has name and report
+                    .map((inv) => ({
                       name: inv.name,
                       report: inv.report,
-                      date: inv.date || new Date().toISOString()
-                    }))
-                }} 
-                patient={patientInfo} 
+                      date: inv.date || new Date().toISOString(),
+                    })),
+                }}
+                patient={patientInfo}
                 hospital={hospital}
               />
             </PDFViewer>

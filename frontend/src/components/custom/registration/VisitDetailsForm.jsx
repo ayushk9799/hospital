@@ -2,6 +2,8 @@ import React, { useState, useCallback, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
+import { Textarea } from "../../ui/textarea";
+import MemoizedInput from "./MemoizedInput";
 import {
   Select,
   SelectContent,
@@ -50,72 +52,55 @@ export default function VisitDetailsForm({
     setEndTime(formatTime(formData.visit.timeSlot.end));
   }, [formData.visit.timeSlot.start, formData.visit.timeSlot.end]);
 
-  const handleTimeChange = useCallback((field, type, value) => {
-    const updateTime = (prevTime) => {
-      const newTime = { ...prevTime, [type]: value };
-      let timeString;
-      if (type === "hour")
-        timeString = `${value}:${newTime.minute} ${newTime.amPm}`;
-      else if (type === "minute")
-        timeString = `${newTime.hour}:${value} ${newTime.amPm}`;
-      else if (type === "amPm")
-        timeString = `${newTime.hour}:${newTime.minute} ${value}`;
+  const handleTimeChange = useCallback(
+    (field, type, value) => {
+      const updateTime = (prevTime) => {
+        const newTime = { ...prevTime, [type]: value };
+        let timeString;
+        if (type === "hour")
+          timeString = `${value}:${newTime.minute} ${newTime.amPm}`;
+        else if (type === "minute")
+          timeString = `${newTime.hour}:${value} ${newTime.amPm}`;
+        else if (type === "amPm")
+          timeString = `${newTime.hour}:${newTime.minute} ${value}`;
 
-      handleInputChange({
-        target: { id: `visit.timeSlot.${field}`, value: timeString },
-      });
-      return newTime;
-    };
+        handleInputChange({
+          target: { id: `visit.timeSlot.${field}`, value: timeString },
+        });
+        return newTime;
+      };
 
-    if (field === "start") {
-      setStartTime(updateTime);
-    } else {
-      setEndTime(updateTime);
-    }
-  }, [handleInputChange]);
+      if (field === "start") {
+        setStartTime(updateTime);
+      } else {
+        setEndTime(updateTime);
+      }
+    },
+    [handleInputChange]
+  );
 
   return (
-    <>
-      <div className="relative hidden sm:block">
-        <Select
-          id="visit.department"
-          onValueChange={(value) =>
-            handleSelectChange("visit.department", value)
-          }
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Department" />
-          </SelectTrigger>
-          <SelectContent>
-            {departments.map((department) => (
-              <SelectItem key={department._id} value={department._id}>
-                {department.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="space-y-4">
+      
+      <MemoizedInput
+        id="contactNumber"
+        label="Contact Number"
+        type="tel"
+        value={formData.contactNumber}
+        onChange={handleInputChange}
+        error={errors.contactNumber}
+      />
 
-      <div className="relative hidden sm:block">
-        <Select
-          id="visit.doctor"
-          onValueChange={(value) => handleSelectChange("visit.doctor", value)}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Assigned Doctor" />
-          </SelectTrigger>
-          <SelectContent>
-            {doctors.map((doctor) => (
-              <SelectItem key={doctor._id} value={doctor._id}>
-                Dr. {doctor.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <Textarea
+        id="address"
+        placeholder="Address: 123 Main St, Anytown USA"
+        value={formData.address}
+        onChange={handleInputChange}
+        className="h-[90px]"
+      />
 
       {!isMobile && (
-        <div className="relative col-span-1">
+        <div className="relative ">
           <Input
             type="date"
             id="visit.bookingDate"
@@ -131,7 +116,7 @@ export default function VisitDetailsForm({
               errors["visit.bookingDate"] ? "text-red-500" : "text-gray-500"
             }`}
           >
-            Booking Date{" "}
+            Booking Date
             {errors["visit.bookingDate"] && (
               <span className="text-red-500 ml-1">*Required</span>
             )}
@@ -139,103 +124,7 @@ export default function VisitDetailsForm({
         </div>
       )}
 
-      <div className="grid-cols-1 sm:grid-cols-4 items-center mb-2 gap-2 hidden sm:grid">
-        <Label className="sm:col-span-1">Start Time:</Label>
-        <div className="flex space-x-2 sm:col-span-3">
-          <Select
-            value={startTime.hour}
-            onValueChange={(value) => handleTimeChange("start", "hour", value)}
-          >
-            <SelectTrigger className="w-[70px]">
-              <SelectValue placeholder="HH" />
-            </SelectTrigger>
-            <SelectContent>
-              {hours.map((hour) => (
-                <SelectItem key={hour} value={hour}>
-                  {hour}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={startTime.minute}
-            onValueChange={(value) =>
-              handleTimeChange("start", "minute", value)
-            }
-          >
-            <SelectTrigger className="w-[70px]">
-              <SelectValue placeholder="MM" />
-            </SelectTrigger>
-            <SelectContent>
-              {minutes.map((minute) => (
-                <SelectItem key={minute} value={minute}>
-                  {minute}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={startTime.amPm}
-            onValueChange={(value) => handleTimeChange("start", "amPm", value)}
-          >
-            <SelectTrigger className="w-[60px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="AM">AM</SelectItem>
-              <SelectItem value="PM">PM</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <div className="grid-cols-1 sm:grid-cols-4 items-center gap-2 mb-2 hidden sm:grid">
-        <Label className="sm:col-span-1">End Time:</Label>
-        <div className="flex space-x-2 sm:col-span-3">
-          <Select
-            value={endTime.hour}
-            onValueChange={(value) => handleTimeChange("end", "hour", value)}
-          >
-            <SelectTrigger className="w-[70px]">
-              <SelectValue placeholder="HH" />
-            </SelectTrigger>
-            <SelectContent>
-              {hours.map((hour) => (
-                <SelectItem key={hour} value={hour}>
-                  {hour}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={endTime.minute}
-            onValueChange={(value) => handleTimeChange("end", "minute", value)}
-          >
-            <SelectTrigger className="w-[70px]">
-              <SelectValue placeholder="MM" />
-            </SelectTrigger>
-            <SelectContent>
-              {minutes.map((minute) => (
-                <SelectItem key={minute} value={minute}>
-                  {minute}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={endTime.amPm}
-            onValueChange={(value) => handleTimeChange("end", "amPm", value)}
-          >
-            <SelectTrigger className="w-[60px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="AM">AM</SelectItem>
-              <SelectItem value="PM">PM</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </>
+     
+    </div>
   );
 }

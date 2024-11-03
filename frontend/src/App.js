@@ -8,10 +8,9 @@ import { fetchPatients } from './redux/slices/patientSlice';
 import { fetchStaffMembers } from './redux/slices/staffSlice';
 import  CreateRoom  from './pages/CreateRoom';
 import Home from './pages/Home';
-
 import VerticalNav, { navItems } from './components/custom/Navigations/VerticalNav';
 import HorizontalNav from './components/custom/Navigations/HorizontalNav';
-import Dashboard from './pages/Dashboard';
+import Statistics from './pages/Statistics';
 import Billings from './pages/Billings';
 import Doctors from './pages/Doctors';
 import Patients from './pages/Patients';
@@ -43,6 +42,7 @@ import Expenses from './pages/Expenses';
 import Customization from './pages/Customization';
 import PatientSearch from './pages/PatientSearch';
 import OPDProcedure from './pages/OPDProcedure';
+import QuickMenu from './pages/QuickMenu';
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -53,11 +53,15 @@ const AppContent = () => {
 
   useEffect(() => {
     dispatch(setLoading(true));
+    
+    // Get today's date in YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
+    
     dispatch(fetchUserData())
       .then(() => {
         if (isAuthenticated) {
           return Promise.all([
-            dispatch(fetchPatients()),
+            dispatch(fetchPatients({ startDate: today })), // Pass today's date as parameter
             dispatch(fetchStaffMembers()),
             dispatch(fetchDepartments()),
             dispatch(fetchRooms()),
@@ -69,7 +73,7 @@ const AppContent = () => {
         dispatch(setLoading(false));
         setIsInitializing(false);
       });
-  }, [dispatch,isAuthenticated]);
+  }, [dispatch, isAuthenticated]);
 
   if (isInitializing) {
     return (
@@ -101,7 +105,7 @@ const AppContent = () => {
           } px-0 sm:px-4 w-full h-full bg-gray-50 transition-all duration-300`}
         >
           <Routes>
-            <Route path="/" element={isAuthenticated ? <Dashboard /> : <Home />} />
+            <Route path="/" element={isAuthenticated ? <QuickMenu /> : <Home />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/contact" element={<ContactPage />} />
 
@@ -129,6 +133,7 @@ const AppContent = () => {
                 <Route path="/patients/discharge/:patientId" element={<DischargeSummary />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/billings/create-service-bill" element={<CreateServiceBill />} />
+                <Route path="/statistics" element={<Statistics />} />
                 <Route path="/billings/edit/:billId" element={<CreateServiceBill />} />
                 <Route path="/settings/hospital-info" element={<HospitalInfo />} />
                 <Route path="/expenses" element={<Expenses />} />

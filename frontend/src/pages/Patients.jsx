@@ -1,4 +1,4 @@
-import React, { useState ,useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -43,6 +43,7 @@ import {
   BedDouble,
   User,
   MoreVertical,
+  MapPin,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
@@ -51,14 +52,18 @@ import { useSelector, useDispatch } from "react-redux";
 import { DateRangePicker } from "../assets/Data";
 import { fetchBills } from "../redux/slices/BillingSlice";
 import { setSelectedPatient } from "../redux/slices/patientSlice";
-import { startOfDay, endOfDay, subDays, isWithinInterval } from "date-fns";
+import {
+  startOfDay,
+  endOfDay,
+  subDays,
+  isWithinInterval,
+  addDays,
+} from "date-fns";
 import { format } from "date-fns";
 import { fetchPatients } from "../redux/slices/patientSlice";
-import { useMediaQuery } from "../hooks/useMediaQuery"
-import { motion, AnimatePresence } from "framer-motion"
+import { useMediaQuery } from "../hooks/useMediaQuery";
+import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "../components/ui/badge";
-
-// Add this selector function at the top of your file, outside of the component
 
 export default function Patients() {
   const dispatch = useDispatch();
@@ -72,28 +77,67 @@ export default function Patients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
 
-  const isSmallScreen = useMediaQuery("(max-width: 640px)")
-  const isMediumScreen = useMediaQuery("(max-width: 1024px)")
-  const [isFilterExpanded, setIsFilterExpanded] = useState(false)
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
+  const isMediumScreen = useMediaQuery("(max-width: 1024px)");
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   // Use the useSelector hook to get the patients from the Redux store
-  const {patientlist:patients,status} = useSelector((state) => state.patients);
-  const { bills ,billsStatus} = useSelector((state) => state.bills);
-  
-  useEffect(()=>{
-    if(status==="idle"){
-      dispatch(fetchPatients())
+  const { patientlist: patients, status } = useSelector(
+    (state) => state.patients
+  );
+  const { bills, billsStatus } = useSelector((state) => state.bills);
+
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchPatients());
     }
-  },[status, dispatch])
+  }, [status, dispatch]);
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
-  useEffect(()=>{
-    if(billsStatus==="idle"){
-      dispatch(fetchBills())
+  useEffect(() => {
+    if (billsStatus === "idle") {
+      dispatch(fetchBills());
     }
-  },[billsStatus, dispatch])
+  }, [billsStatus, dispatch]);
 
   // Add this effect to refetch patients when the status changes
- 
+  useEffect(() => {
+    // Get date range based on filter
+    const getDateRange = () => {
+      const today = new Date();
+      switch (dateFilter) {
+        case "Today":
+          return {
+            startDate: format(today, "yyyy-MM-dd"),
+            endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+          };
+        case "Yesterday":
+          return {
+            startDate: format(subDays(today, 1), "yyyy-MM-dd"),
+            endDate: format(today, "yyyy-MM-dd"),
+          };
+        case "This Week":
+          return {
+            startDate: format(subDays(today, 7), "yyyy-MM-dd"),
+            endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+          };
+        case "Custom":
+          if (dateRange.from && dateRange.to) {
+            return {
+              startDate: format(dateRange.from, "yyyy-MM-dd"),
+              endDate: format(addDays(dateRange.to, 1), "yyyy-MM-dd"),
+            };
+          }
+          return null;
+        case "All":
+        default:
+          return null;
+      }
+    };
+
+    const dateRangeParams = getDateRange();
+    dispatch(fetchPatients(dateRangeParams));
+  }, [dateFilter, dateRange, dispatch]);
+
   const filteredPatients = patients.filter((patient) => {
     const nameMatch = patient.patient?.name
       .toLowerCase()
@@ -141,7 +185,7 @@ export default function Patients() {
   });
 
   const handleExistingBills = (patient) => {
-    const billID = patient.bills.services[0];
+    const billID = patient.bills.services.at(-1);
     dispatch(setSelectedPatient(patient));
     const bill = bills.find((bill) => bill._id === billID);
     navigate(`/billings/edit/${billID}`, { state: { billData: bill } });
@@ -166,14 +210,14 @@ export default function Patients() {
 
     const getStatusBadgeVariant = (status) => {
       switch (status.toLowerCase()) {
-        case 'admitted':
-          return 'default';
-        case 'discharged':
-          return 'secondary';
-        case 'critical':
-          return 'destructive';
+        case "admitted":
+          return "default";
+        case "discharged":
+          return "secondary";
+        case "critical":
+          return "destructive";
         default:
-          return 'outline';
+          return "outline";
       }
     };
 
@@ -207,6 +251,7 @@ export default function Patients() {
             {type === "OPD" && <TableHead>Date</TableHead>}
             {type === "OPD" && <TableHead>Time Slot</TableHead>}
             <TableHead>Mobile</TableHead>
+            <TableHead>Address</TableHead>
             <TableHead>Gender</TableHead>
             <TableHead>Doctor</TableHead>
             <TableHead>Actions</TableHead>
@@ -259,6 +304,7 @@ export default function Patients() {
                 </TableCell>
               )}
               <TableCell>{patient.patient.contactNumber}</TableCell>
+              <TableCell>{patient.patient.address || "--"}</TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
               <TableCell>{patient.doctor?.name || "--"}</TableCell>
 
@@ -280,13 +326,9 @@ export default function Patients() {
                     <DropdownMenuItem
                       onClick={() => handleExistingBills(patient)}
                     >
-                      Existing Bill
+                      Bills
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => createServiceBill(patient)}
-                    >
-                      Create New Bill
-                    </DropdownMenuItem>
+                    
                     {type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
@@ -319,14 +361,14 @@ export default function Patients() {
   const PatientCard = ({ patient }) => {
     const getStatusBadgeVariant = (status) => {
       switch (status.toLowerCase()) {
-        case 'admitted':
-          return 'default';
-        case 'discharged':
-          return 'secondary';
-        case 'critical':
-          return 'destructive';
+        case "admitted":
+          return "default";
+        case "discharged":
+          return "secondary";
+        case "critical":
+          return "destructive";
         default:
-          return 'outline';
+          return "outline";
       }
     };
 
@@ -348,7 +390,7 @@ export default function Patients() {
               </div>
               <div className="flex items-center">
                 {patient.type === "IPD" && (
-                  <Badge 
+                  <Badge
                     variant={getStatusBadgeVariant(patient.status)}
                     className="mr-2"
                   >
@@ -362,18 +404,30 @@ export default function Patients() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => navigate(`/patients/${patient.patient._id}`)}>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        navigate(`/patients/${patient.patient._id}`)
+                      }
+                    >
                       View Details
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleExistingBills(patient)}>
+                    <DropdownMenuItem
+                      onClick={() => handleExistingBills(patient)}
+                    >
                       Existing Bill
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => createServiceBill(patient)}>
+                    <DropdownMenuItem
+                      onClick={() => createServiceBill(patient)}
+                    >
                       Create New Bill
                     </DropdownMenuItem>
                     {patient.type === "IPD" && (
-                      <DropdownMenuItem onClick={() => handleDischarge(patient)}>
-                        {patient.status === "Discharged" ? "View Discharge Summary" : "Discharge Patient"}
+                      <DropdownMenuItem
+                        onClick={() => handleDischarge(patient)}
+                      >
+                        {patient.status === "Discharged"
+                          ? "View Discharge Summary"
+                          : "Discharge Patient"}
                       </DropdownMenuItem>
                     )}
                   </DropdownMenuContent>
@@ -384,33 +438,45 @@ export default function Patients() {
               {patient.type === "IPD" && (
                 <div className="flex items-center col-span-2">
                   <User className="h-4 w-4 text-muted-foreground mr-2" />
-                  <span className="text-sm">Reg. Number: {patient.registrationNumber || "--"}</span>
+                  <span className="text-sm">
+                    Reg. Number: {patient.registrationNumber || "--"}
+                  </span>
                 </div>
               )}
               <div className="flex items-center">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{format(new Date(patient.bookingDate), "dd MMM yyyy")}</span>
+                <span className="text-sm">
+                  {format(new Date(patient.bookingDate), "dd MMM yyyy")}
+                </span>
               </div>
               <div className="flex items-center">
                 <Phone className="h-4 w-4 text-muted-foreground mr-2" />
                 <span className="text-sm">{patient.patient.contactNumber}</span>
               </div>
+              <div className="flex items-center col-span-2">
+                <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
+                <span className="text-sm">{patient.patient.address || "--"}</span>
+              </div>
               <div className="flex items-center">
                 <User className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm capitalize">{patient.patient.gender}</span>
+                <span className="text-sm capitalize">
+                  {patient.patient.gender}
+                </span>
               </div>
               {patient.type === "IPD" && (
                 <div className="flex items-center">
                   <BedDouble className="h-4 w-4 text-muted-foreground mr-2" />
-                  <span className="text-sm">{patient.assignedRoom?.roomNumber || "Not assigned"}</span>
+                  <span className="text-sm">
+                    {patient.assignedRoom?.roomNumber || "Not assigned"}
+                  </span>
                 </div>
               )}
             </div>
           </div>
         </CardContent>
       </Card>
-    )
-  }
+    );
+  };
 
   return (
     <Card className="w-full border-none shadow-none">
@@ -418,7 +484,9 @@ export default function Patients() {
         <div className="flex justify-between items-center">
           <div>
             <CardTitle>Patient List</CardTitle>
-            <CardDescription>Manage and view patient information</CardDescription>
+            <CardDescription>
+              Manage and view patient information
+            </CardDescription>
           </div>
           {isSmallScreen && (
             <DropdownMenu>
@@ -428,17 +496,28 @@ export default function Patients() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>OPD</DropdownMenuItem>
-                <DropdownMenuItem onSelect={() => setIsIPDDialogOpen(true)}>IPD</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>
+                  OPD
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setIsIPDDialogOpen(true)}>
+                  IPD
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           )}
         </div>
       </CardHeader>
-      <CardContent className='px-4'>
+      <CardContent className="px-4">
         <OPDRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-        <IPDRegDialog open={isIPDDialogOpen} onOpenChange={setIsIPDDialogOpen} />
-        <Tabs defaultValue="OPD" className="w-full" onValueChange={setActiveTab}>
+        <IPDRegDialog
+          open={isIPDDialogOpen}
+          onOpenChange={setIsIPDDialogOpen}
+        />
+        <Tabs
+          defaultValue="OPD"
+          className="w-full"
+          onValueChange={setActiveTab}
+        >
           <TabsList>
             <TabsTrigger value="OPD">OPD</TabsTrigger>
             <TabsTrigger value="IPD">IPD</TabsTrigger>
@@ -492,14 +571,39 @@ export default function Patients() {
                                 {dateFilter === "All" ? "All Time" : dateFilter}
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="start" className="w-[200px]">
-                              <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                            <DropdownMenuContent
+                              align="start"
+                              className="w-[200px]"
+                            >
+                              <DropdownMenuLabel>
+                                Time Filter Options
+                              </DropdownMenuLabel>
                               <DropdownMenuSeparator />
-                              <DropdownMenuItem onSelect={() => setDateFilter("Today")}>Today</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>Yesterday</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>This Week</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setDateFilter("All")}>All Time</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>Custom Range</DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => setDateFilter("Today")}
+                              >
+                                Today
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => setDateFilter("Yesterday")}
+                              >
+                                Yesterday
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => setDateFilter("This Week")}
+                              >
+                                This Week
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => setDateFilter("All")}
+                              >
+                                All Time
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onSelect={() => setDateFilter("Custom")}
+                              >
+                                Custom Range
+                              </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                           {dateFilter === "Custom" && (
@@ -544,19 +648,39 @@ export default function Patients() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="start" className="w-[200px]">
-                        <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                        <DropdownMenuLabel>
+                          Time Filter Options
+                        </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onSelect={() => setDateFilter("Today")}>Today</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>Yesterday</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>This Week</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setDateFilter("All")}>All Time</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>Custom Range</DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => setDateFilter("Today")}
+                        >
+                          Today
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => setDateFilter("Yesterday")}
+                        >
+                          Yesterday
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => setDateFilter("This Week")}
+                        >
+                          This Week
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setDateFilter("All")}>
+                          All Time
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onSelect={() => setDateFilter("Custom")}
+                        >
+                          Custom Range
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                     {dateFilter === "Custom" && (
                       <DateRangePicker
-                        from={tempDateRange.from}
-                        to={tempDateRange.to}
+                        from={tempDateRange?.from}
+                        to={tempDateRange?.to}
                         onSelect={(range) => setTempDateRange(range)}
                         onSearch={handleDateRangeSearch}
                         onCancel={handleDateRangeCancel}
@@ -574,8 +698,14 @@ export default function Patients() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>OPD</DropdownMenuItem>
-                      <DropdownMenuItem onSelect={() => setIsIPDDialogOpen(true)}>IPD</DropdownMenuItem>
+                      <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>
+                        OPD
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => setIsIPDDialogOpen(true)}
+                      >
+                        IPD
+                      </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
@@ -586,9 +716,11 @@ export default function Patients() {
             {isSmallScreen ? (
               filteredPatients.filter((p) => p.type === "OPD").length > 0 ? (
                 <div>
-                  {filteredPatients.filter((p) => p.type === "OPD").map((patient) => (
-                    <PatientCard key={patient._id} patient={patient} />
-                  ))}
+                  {filteredPatients
+                    .filter((p) => p.type === "OPD")
+                    .map((patient) => (
+                      <PatientCard key={patient._id} patient={patient} />
+                    ))}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12">
@@ -596,20 +728,27 @@ export default function Patients() {
                   <p className="text-xl font-semibold text-gray-600">
                     No OPD patients found
                   </p>
-                  <p className="text-gray-500">Try adjusting your search or filters</p>
+                  <p className="text-gray-500">
+                    Try adjusting your search or filters
+                  </p>
                 </div>
               )
             ) : (
-              <PatientTable patients={filteredPatients.filter((p) => p.type === "OPD")} type="OPD" />
+              <PatientTable
+                patients={filteredPatients.filter((p) => p.type === "OPD")}
+                type="OPD"
+              />
             )}
           </TabsContent>
           <TabsContent value="IPD">
             {isSmallScreen ? (
               filteredPatients.filter((p) => p.type === "IPD").length > 0 ? (
                 <div>
-                  {filteredPatients.filter((p) => p.type === "IPD").map((patient) => (
-                    <PatientCard key={patient._id} patient={patient} />
-                  ))}
+                  {filteredPatients
+                    .filter((p) => p.type === "IPD")
+                    .map((patient) => (
+                      <PatientCard key={patient._id} patient={patient} />
+                    ))}
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center py-12">
@@ -617,11 +756,16 @@ export default function Patients() {
                   <p className="text-xl font-semibold text-gray-600">
                     No IPD patients found
                   </p>
-                  <p className="text-gray-500">Try adjusting your search or filters</p>
+                  <p className="text-gray-500">
+                    Try adjusting your search or filters
+                  </p>
                 </div>
               )
             ) : (
-              <PatientTable patients={filteredPatients.filter((p) => p.type === "IPD")} type="IPD" />
+              <PatientTable
+                patients={filteredPatients.filter((p) => p.type === "IPD")}
+                type="IPD"
+              />
             )}
           </TabsContent>
         </Tabs>

@@ -10,6 +10,7 @@ import {
   Plus,
   AlertCircle,
   Loader2,
+  PrinterIcon,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -43,6 +44,8 @@ import { CalendarDays, Phone, Mail, MapPin } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { format } from "date-fns";
 import { ScrollArea } from "../components/ui/scroll-area";
+import OPDBillTokenModal from "../components/custom/registration/OPDBillTokenModal";
+import ViewBillDialog from "../components/custom/billing/ViewBillDialog";
 
 const CreateServiceBill = () => {
   const dispatch = useDispatch();
@@ -71,6 +74,9 @@ const CreateServiceBill = () => {
   const [additionalDiscountType, setAdditionalDiscountType] =
     useState("amount");
   const [isEditing, setIsEditing] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [billData, setBillData] = useState(null);
+  const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
 
   const calculateTotals = useMemo(() => {
     const subtotal = addedServices.reduce(
@@ -128,6 +134,31 @@ const CreateServiceBill = () => {
         title: "Bill created successfully",
         description: "The bill has been successfully created.",
       });
+      
+      // If patient type is OPD, show print modal
+      if (selectedPatient?.type === "OPD") {
+        setBillData({
+          patient: patientDetails,
+          bill: {
+            _id: Date.now().toString(), // Temporary ID until you get the actual bill ID
+            services: addedServices.map(service => ({
+              name: service.service,
+              quantity: service.quantity,
+              rate: service.rate
+            })),
+            createdAt: new Date(),
+            subtotal: calculateTotals.subtotal,
+            additionalDiscount: calculateTotals.additionalDiscount,
+            totalAmount: calculateTotals.totalAmount,
+            amountPaid: calculateTotals.totalAmount // Assuming full payment
+          },
+          payment: {
+            paymentMethod: "Cash" // You might want to add payment method selection
+          }
+        });
+        setIsPrintModalOpen(true);
+      }
+
       dispatch(setCreateBillStatusIdle());
       navigate("/billings");
     } else if (createBillStatus === "failed") {
@@ -286,10 +317,6 @@ const CreateServiceBill = () => {
     setAdditionalDiscountType("amount");
   };
 
-  if (!selectedPatient) {
-    return <div>No patient selected</div>;
-  }
-
   const handleEditService = (id) => {
     const serviceToEdit = addedServices.find((service) => service.id === id);
     if (serviceToEdit) {
@@ -302,6 +329,59 @@ const CreateServiceBill = () => {
       });
       setServiceName(serviceToEdit.service);
       setAddedServices((prev) => prev.filter((service) => service.id !== id));
+    }
+  };
+
+  const handlePrintBill = () => {
+    // Common bill data
+    const commonBillData = {
+      _id: Date.now().toString(),
+      services: addedServices.map(service => ({
+        name: service.service,
+        quantity: service.quantity,
+        rate: Number(service.rate)
+      })),
+      createdAt: new Date(),
+      totalAmount: Number(calculateTotals.totalAmount),
+      additionalDiscount: Number(calculateTotals.additionalDiscount || 0),
+      amountPaid: Number(calculateTotals.totalAmount),
+      payments: [{
+        amount: Number(calculateTotals.totalAmount),
+        paymentMethod: "Cash",
+        createdAt: new Date()
+      }]
+    };
+
+    if (selectedPatient?.type === "OPD") {
+      // Format for OPDBillTokenModal
+      const opdBillData = {
+        patient: {
+          name: patientDetails?.name,
+          age: patientDetails?.age,
+          gender: patientDetails?.gender,
+          contactNumber: patientDetails?.contactNumber
+        },
+        bill: {
+          ...commonBillData,
+          subtotal: calculateTotals.subtotal
+        },
+        payment: {
+          paymentMethod: "Cash"
+        }
+      };
+      setBillData(opdBillData);
+      setIsPrintModalOpen(true);
+    } else {
+      // Format for ViewBillDialog
+      const viewBillData = {
+        ...commonBillData,
+        patientInfo: {
+          name: patientDetails?.name
+        },
+        subtotal: calculateTotals.subtotal
+      };
+      setBillData(viewBillData);
+      setIsViewBillDialogOpen(true);
     }
   };
 
@@ -491,7 +571,7 @@ const CreateServiceBill = () => {
                     <div className="grid grid-cols-2 gap-2 text-sm">
                       <div>Category: {service.category}</div>
                       <div>Quantity: {service.quantity}</div>
-                      <div>Rate: ₹{service.rate.toLocaleString("en-IN")}</div>
+                      <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
                       <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
                     </div>
                   </CardContent>
@@ -617,10 +697,20 @@ const CreateServiceBill = () => {
             variant="outline" 
             onClick={handleReset} 
             disabled={isLoading} 
-            className="w-1/2 sm:w-auto mr-2 sm:mr-0"
+            className="w-1/2 sm:w-auto"
           >
             Reset
           </Button>
+          {addedServices.length > 0 && (
+            <Button
+              variant="outline"
+              onClick={handlePrintBill}
+              className="w-1/2 sm:w-auto"
+            >
+              <PrinterIcon className="mr-2 h-4 w-4" />
+              Print Bill
+            </Button>
+          )}
           <Button 
             onClick={handleCreate} 
             disabled={isLoading} 
@@ -639,6 +729,18 @@ const CreateServiceBill = () => {
           </Button>
         </div>
       </div>
+
+      <OPDBillTokenModal 
+        isOpen={isPrintModalOpen}
+        setIsOpen={setIsPrintModalOpen}
+        patientData={billData}
+      />
+
+      <ViewBillDialog
+        isOpen={isViewBillDialogOpen}
+        setIsOpen={setIsViewBillDialogOpen}
+        billData={billData}
+      />
     </div>
   );
 };

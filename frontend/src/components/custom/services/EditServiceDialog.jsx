@@ -9,7 +9,14 @@ import { updateService } from "../../../redux/slices/serviceSlice";
 import { useToast } from "../../../hooks/use-toast";
 import { cn } from "../../../lib/utils";
 
-const categoryOptions = ['Lab', 'General', 'Consultation', 'Other'];
+const categoryOptions =  [
+  "Consultation",
+  "Lab",
+  "General",
+  "OPD Procedure",
+  "Surgery",
+  "Other"
+];
 
 export default function EditServiceDialog({ isOpen, onClose, service }) {
   const dispatch = useDispatch();

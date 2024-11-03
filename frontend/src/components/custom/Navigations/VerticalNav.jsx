@@ -17,7 +17,7 @@ import {
   TestTube,
   ChevronRight,
   UsersIcon,
-  IndianRupee
+  IndianRupee,
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
@@ -38,18 +38,17 @@ const labReportTypes = [
 ];
 
 export const navItems = [
-  { name: "Dashboard", icon: Home, path: "/" },
-  { name: "Patients", icon: Users, path: "/patients" },
+  { name: "Quick Menu", icon: Home, path: "/" },
+  { name: "Patients List", icon: Users, path: "/patients" },
   { name: "Billings", icon: ReceiptText, path: "/billings" },
   { name: "Expenses", icon: IndianRupee, path: "/expenses" },
   { name: "Doctors", icon: Stethoscope, path: "/doctors" },
   { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy" },
   { name: "Lab", icon: TestTube, path: "/lab" },
   { name: "Rooms", icon: Bed, path: "/rooms" },
-  // { name: "Appointments", icon: Calendar, path: "/appointments" },
   { name: "Services", icon: ClipboardList, path: "/services" },
+  { name: "Statistics", icon: BarChart, path: "/statistics" },
   { name: "Staffs", icon: UsersIcon, path: "/staff" },
-  // { name: "Analytics", icon: BarChart, path: "/analytics" },
   { name: "Settings", icon: Settings, path: "/settings" },
 ];
 
@@ -60,7 +59,7 @@ export const ColorfulLogo = ({ className }) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <circle cx="50" cy="50" r="45" fill="#4299E1" /> {/* Blue background */}
+    <circle cx="50" cy="50" r="45" fill="#4299E1" /> 
     <path
       d="M30 50H70"
       stroke="white"

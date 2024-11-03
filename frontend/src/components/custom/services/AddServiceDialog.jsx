@@ -8,7 +8,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { createService } from "../../../redux/slices/serviceSlice";
 import { useToast } from "../../../hooks/use-toast";
 
-const categoryOptions = ['Lab', 'General', 'Consultation', 'Other'];
+const categories = [
+  "Consultation",
+  "Lab",
+  "General",
+  "OPD Procedure",
+  "Surgery",
+  "Other"
+];
 
 export default function AddServiceDialog({ isOpen, onClose }) {
   const dispatch = useDispatch();
@@ -75,12 +82,12 @@ export default function AddServiceDialog({ isOpen, onClose }) {
             </div>
             <div className="space-y-2">
               <Label htmlFor="category" className="text-sm font-medium">Category</Label>
-              <Select onValueChange={(value) => setCategory(value)} required>
+              <Select onValueChange={(value) => setCategory(value)} value={category}>
                 <SelectTrigger id="category" className="w-full">
                   <SelectValue placeholder="Select Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categoryOptions.map((cat) => (
+                  {categories.map((cat) => (
                     <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                   ))}
                 </SelectContent>

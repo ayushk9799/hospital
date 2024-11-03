@@ -38,7 +38,7 @@ import { useMediaQuery } from "../../../hooks/use-media-query";
 import SelectServicesDialog from "./SelectServicesDialog";
 import { fetchServices } from "../../../redux/slices/serviceSlice";
 import { fetchTemplates } from "../../../redux/slices/templatesSlice";
-import BillModal from './BillModal'; // We'll create this component next
+import BillModal from './BillModal'; 
 import { fetchHospitalInfo } from "../../../redux/slices/HospitalSlice";
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
@@ -81,8 +81,19 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       .filter((service) => formData.paymentInfo.services.includes(service._id))
       .reduce((sum, service) => sum + service.rate, 0);
     const newTotal = servicesTotal + roomCharge;
-    setTotalAmount(newTotal);
-  }, [formData.paymentInfo.services, services, roomCharge]);
+    
+    // Apply additional discount if any
+    const finalTotal = Math.max(0, newTotal - (formData.paymentInfo.additionalDiscount || 0));
+    
+    setFormData(prev => ({
+      ...prev,
+      paymentInfo: {
+        ...prev.paymentInfo,
+        totalAmount: finalTotal
+      }
+    }));
+    setTotalAmount(finalTotal);
+  }, [formData.paymentInfo.services, services, roomCharge, formData.paymentInfo.additionalDiscount]);
 
   useEffect(() => {
     if (open && serviceBillCollections) {
@@ -116,23 +127,26 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         registrationNumber: patientData.registrationNumber || "",
         dateOfBirth: patientData.dateOfBirth || "",
         bloodType: patientData.bloodType || "",
-        // Add any other fields you want to pre-fill
       });
     } else {
       setFormData(initialFormData);
     }
     setErrors({});
+    setTotalAmount(0); // Reset total amount
+    setRoomCharge(0); // Reset room charge
   }, [patientData]);
 
   useEffect(() => {
     if (!open) {
       dispatch(fetchRooms());
       resetFormData();
+      setTotalAmount(0); // Reset total amount
+      setRoomCharge(0); // Reset room charge
       setTimeout(() => {
         document.body.style = "";
       }, 500);
     }
-  }, [open, resetFormData]);
+  }, [open, resetFormData, dispatch]);
 
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
@@ -259,6 +273,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const handleReset = () => {
     setFormData(initialFormData);
     setErrors({});
+    setTotalAmount(0); // Reset total amount
+    setRoomCharge(0); // Reset room charge
   };
 
   useEffect(() => {
@@ -631,28 +647,48 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                   </div>
                   <div className="space-y-1 flex items-center gap-4">
                     <div>
-                      <div className="flex items-center space-x-2">
-                        <input
-                          type="checkbox"
-                          id="paymentInfo.includeServices"
-                          checked={formData.paymentInfo.includeServices}
-                          onChange={handleInputChange}
-                        />
-                        <label htmlFor="paymentInfo.includeServices">
-                          Include Service Bill
-                        </label>
-                      </div>
-
                       <div>
-                        <p>
-                          Total Bill:{" "}
-                          <span className="font-semibold">
-                            {totalAmount.toLocaleString("en-IN")}
-                          </span>
-                        </p>
+                        <div className="flex items-center gap-2">
+                          <span>Total Bill:</span>
+                          <Input 
+                            value={formData.paymentInfo.totalAmount.toLocaleString("en-IN")}
+                            className="font-semibold w-20 inline-block"
+                            onChange={(e) => {
+                              const value = Number(e.target.value.replace(/,/g, ''));
+                              if (!isNaN(value)) {
+                                const originalTotal = services
+                                  .filter((service) => formData.paymentInfo.services.includes(service._id))
+                                  .reduce((sum, service) => sum + service.rate, 0) + roomCharge;
+                                
+                                const newDiscount = Math.max(0, originalTotal - value);
+                                
+                                setFormData(prev => ({
+                                  ...prev,
+                                  paymentInfo: {
+                                    ...prev.paymentInfo,
+                                    totalAmount: value,
+                                    additionalDiscount: newDiscount
+                                  }
+                                }));
+                                setTotalAmount(value);
+                              }
+                            }}
+                            onBlur={(e) => {
+                              const value = Number(e.target.value.replace(/,/g, ''));
+                              if (!isNaN(value)) {
+                                setTotalAmount(value);
+                              }
+                            }}
+                          />
+                        </div>
                         {roomCharge > 0 && (
                           <p className="text-sm text-gray-500">
                             (Includes room charge: {roomCharge.toLocaleString("en-IN")})
+                          </p>
+                        )}
+                        {formData.paymentInfo.additionalDiscount > 0 && (
+                          <p className="text-sm text-green-600">
+                            (Discount: {formData.paymentInfo.additionalDiscount.toLocaleString("en-IN")})
                           </p>
                         )}
                       </div>

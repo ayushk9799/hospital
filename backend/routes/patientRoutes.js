@@ -34,26 +34,48 @@ router.post(
 
       let registrationNumber = patientData.registrationNumber;
 
-      // Generate a new registration number only if it's not provided
-      if (!registrationNumber) {
+      // Generate registration number only for IPD patients if not provided
+      if (!registrationNumber && patientType === "IPD") {
         registrationNumber = await RegistrationNumber.getNextRegistrationNumber(
           session
         );
       }
 
-      const patient = new Patient({ ...patientData, registrationNumber });
+      const patient = new Patient({
+        ...patientData,
+        registrationNumber,
+        patientType,
+      });
       await patient.save({ session });
 
       let admissionRecord, bill, payment;
 
-      if (visit?.consultationFee) {
-        // Create a bill for the patient
+      if (patientType === "OPD") {
+        if (!visit) {
+          throw new Error("Visit details are required for OPD patients");
+        }
+
+        // Create visit record
+        admissionRecord = new Visit({
+          ...visit,
+          patient: patient._id,
+          patientName: patient.name,
+          contactNumber: patient.contactNumber,
+          registrationNumber: patient.registrationNumber,
+          doctor: visit.doctor || null,
+        });
+
+        // Create bill
+        const totalFee = Number(visit.totalFee) || 0;
+        const discount = Number(visit.discount) || 0;
+        const amountPaid = Number(visit.amountPaid) || 0;
+
         bill = new ServicesBill({
           services: [
             {
               name: "Consultation Fee",
               quantity: 1,
-              rate: visit.consultationAmount,
+              rate: totalFee,
               category: "Consultation",
             },
           ],
@@ -63,13 +85,21 @@ router.post(
             phone: patient?.contactNumber,
             registrationNumber: patient.registrationNumber,
           },
-          totalAmount: visit.consultationAmount,
-          subtotal: visit.consultationAmount,
+          totalAmount: totalFee-discount,
+          subtotal: totalFee,
+          additionalDiscount: discount,
+          amountPaid: amountPaid,
+          patientType: "OPD",
           createdBy: user._id,
         });
-        if (visit.paymentMethod !== "" && visit.paymentMethod !== "Due") {
+
+        if (
+          visit.paymentMethod &&
+          visit.paymentMethod !== "Due" &&
+          amountPaid > 0
+        ) {
           payment = new Payment({
-            amount: visit.consultationAmount,
+            amount: amountPaid,
             paymentMethod: visit.paymentMethod,
             paymentType: { name: "Services", id: bill._id },
             type: "Income",
@@ -77,81 +107,33 @@ router.post(
           });
           await payment.save({ session });
           bill.payments.push(payment._id);
-          bill.amountPaid = visit.consultationAmount;
         }
-      }
 
-      if (patientType === "OPD") {
-        if (!visit) {
-          throw new Error("Visit details are required for OPD patients");
-        }
-        // Create visit and link it to the patient
-        admissionRecord = new Visit({
-          ...visit,
-          doctor: visit.doctor || null,
-          registrationNumber: patient.registrationNumber || null,
-          patientName: patient.name,
-          contactNumber: patient.contactNumber,
-          patient: patient._id,
-        });
+        await bill.save({ session });
+        
+        // Link bill to visit and patient
+        admissionRecord.bills.services.push(bill._id);
         patient.visits.push(admissionRecord._id);
-        // bill.patientType = "OPD";
-        // admissionRecord.bills.services.push(bill._id);
+        
+        await admissionRecord.save({ session });
+        await patient.save({ session });
       } else if (patientType === "IPD") {
         if (!admission) {
           throw new Error("Admission details are required for IPD patients");
         }
-        // Create IPD admission and link it to the patient
+
+        // Create IPD admission
         admissionRecord = new IPDAdmission({
           ...admission,
-          registrationNumber: patient.registrationNumber || null,
+          patient: patient._id,
           patientName: patient.name,
           contactNumber: patient.contactNumber,
-          patient: patient._id,
+          registrationNumber: patient.registrationNumber,
+          doctor: admission.doctor || null,
+          department: admission.department || null,
         });
-        patient.admissionDetails.push(admissionRecord._id);
-        // billing for services
-        if (paymentInfo?.includeServices) {
-          const services = await Service.find({
-            _id: { $in: paymentInfo.services },
-          }).session(session);
 
-          bill = new ServicesBill({
-            services: services.map((service) => ({
-              name: service.name,
-              quantity: 1,
-              rate: service.rate,
-              category: service?.category || "Other",
-            })),
-            patient: patient._id,
-            patientInfo: {
-              name: patient.name,
-              phone: patient?.contactNumber,
-              registrationNumber: patient.registrationNumber,
-            },
-            totalAmount: services.reduce(
-              (sum, service) => sum + service.rate,
-              0
-            ),
-            subtotal: services.reduce((sum, service) => sum + service.rate, 0),
-            createdBy: user._id,
-          });
-          if (
-            paymentInfo?.paymentMethod !== "" &&
-            paymentInfo?.paymentMethod !== "Due"
-          ) {
-             payment = new Payment({
-              amount: Number(paymentInfo.amountPaid),
-              paymentMethod: paymentInfo.paymentMethod,
-              paymentType: { name: "Services", id: bill._id },
-              type: "Income",
-              createdBy: user._id,
-            });
-            await payment.save({ session });
-            bill.payments.push(payment._id);
-            bill.amountPaid = payment.amount;
-          }
-        }
+        // Handle room assignment if provided
         if (admission.assignedRoom) {
           const room = await Room.findById(admission.assignedRoom).session(
             session
@@ -170,36 +152,71 @@ router.post(
           room.beds[bedIndex].status = "Occupied";
           room.beds[bedIndex].currentPatient = patient._id;
           room.currentOccupancy += 1;
-
-          if (bill) {
-            bill.services.push({
-              name: "Room Charge",
-              quantity: 1,
-              rate: room.ratePerDay,
-              category: "Room Rent",
-            });
-            bill.totalAmount += room.ratePerDay;
-            bill.subtotal += room.ratePerDay;
-          }
-          // This will trigger the pre-save hook
           await room.save({ session });
         }
-      }
 
-      if (
-        visit?.consultationFee ||
-        (patientType === "IPD" && paymentInfo?.includeServices)
-      ) {
-        bill.patientType = patientType;
-        admissionRecord.bills.services.push(bill._id);
-        await bill.save({ session });
+        // Handle initial services bill if any
+        if (paymentInfo?.includeServices) {
+          const services = await Service.find({
+            _id: { $in: paymentInfo.services },
+          }).session(session);
+
+          bill = new ServicesBill({
+            services: services.map((service) => ({
+              name: service.name,
+              quantity: 1,
+              rate: service.rate,
+              category: service?.category || "Other",
+            })),
+            patient: patient._id,
+            patientInfo: {
+              name: patient.name,
+              phone: patient?.contactNumber,
+              registrationNumber: patient.registrationNumber,
+            },
+            totalAmount: Number(paymentInfo.totalAmount),
+            subtotal: services.reduce((sum, service) => sum + service.rate, 0),
+            additionalDiscount: paymentInfo.additionalDiscount || 0,
+            amountPaid: Number(paymentInfo.amountPaid) || 0,
+            patientType: "IPD",
+            createdBy: user._id,
+          });
+
+          if (
+            paymentInfo?.paymentMethod &&
+            paymentInfo?.paymentMethod !== "Due" &&
+            paymentInfo.amountPaid > 0
+          ) {
+            payment = new Payment({
+              amount: Number(paymentInfo.amountPaid),
+              paymentMethod: paymentInfo.paymentMethod,
+              paymentType: { name: "Services", id: bill._id },
+              type: "Income",
+              createdBy: user._id,
+            });
+            await payment.save({ session });
+            bill.payments.push(payment._id);
+          }
+
+          await bill.save({ session });
+          admissionRecord.bills.services.push(bill._id);
+        }
+
+        // Link admission to patient
+        patient.admissionDetails.push(admissionRecord._id);
+        await admissionRecord.save({ session });
+        await patient.save({ session });
       }
-      await admissionRecord.save({ session });
-      // Add admission reference to patient
-      await patient.save({ session });
 
       await session.commitTransaction();
-      res.status(201).json({ patient, admissionRecord, bill, payment });
+      res.status(201).json({
+        patient,
+        admissionRecord,
+        bill,
+        payment,
+        message: `Patient registered successfully as ${patientType}`
+      });
+
     } catch (error) {
       await session.abortTransaction();
       res.status(400).json({ error: error.message });
@@ -259,17 +276,31 @@ router.post("/search", async (req, res) => {
 });
 
 // all patients details for patient
-router.get("/details", verifyToken, async (req, res) => {
-  //
+router.post("/details", verifyToken, async (req, res) => {
   try {
-    const visits = await Visit.find()
+    const { startDate, endDate } = req.body;
+
+    // Build date filter
+    let dateFilter = {};
+    if (startDate || endDate) {
+      dateFilter.bookingDate = {};
+      if (startDate) {
+        dateFilter.bookingDate.$gte = new Date(startDate);
+      }
+      if (endDate) {
+        dateFilter.bookingDate.$lt = new Date(endDate);
+      }
+    }
+
+    // Apply date filter to both queries
+    const visits = await Visit.find(dateFilter)
       .populate(
         "patient",
         "name dateOfBirth gender contactNumber email address bloodType age"
       )
       .populate("doctor", "name");
 
-    const ipdAdmissions = await IPDAdmission.find()
+    const ipdAdmissions = await IPDAdmission.find(dateFilter)
       .populate(
         "patient",
         "name dateOfBirth gender contactNumber email address bloodType age"
@@ -332,15 +363,11 @@ router.get("/details", verifyToken, async (req, res) => {
 
     // Sort the combined data
     const sortedData = combinedData.sort((a, b) => {
-      // Convert date strings to Date objects for comparison
       const dateA = a.bookingDate;
       const dateB = b.bookingDate;
 
-      // Compare dates first (descending order)
       if (dateB > dateA) return 1;
       if (dateB < dateA) return -1;
-
-      // If dates are equal, compare booking numbers (ascending order)
       return a.bookingNumber - b.bookingNumber;
     });
 
@@ -994,7 +1021,10 @@ router.post(
           patientType: "IPD", // Add this line
         });
 
-        if (paymentInfo?.paymentMethod !== "" && paymentInfo?.paymentMethod !== "Due") {
+        if (
+          paymentInfo?.paymentMethod !== "" &&
+          paymentInfo?.paymentMethod !== "Due"
+        ) {
           payment = new Payment({
             amount: Number(paymentInfo.amountPaid),
             paymentMethod: paymentInfo.paymentMethod,
@@ -1013,7 +1043,9 @@ router.post(
 
       // If a room and bed are assigned, update their status and add room charge to bill
       if (admission.assignedRoom && admission.assignedBed) {
-        const room = await Room.findById(admission.assignedRoom).session(session);
+        const room = await Room.findById(admission.assignedRoom).session(
+          session
+        );
         if (room) {
           const bedIndex = room.beds.findIndex(
             (bed) => bed._id.toString() === admission.assignedBed.toString()
@@ -1063,6 +1095,98 @@ router.post(
     }
   }
 );
+
+// ... remaining code ...
+
+// Get specific visit/admission details
+router.post("/visit-details", verifyToken, async (req, res) => {
+  try {
+    const { id, type } = req.body;
+
+    let result;
+    if (type === "OPD") {
+      result = await Visit.findById(id)
+        .populate(
+          "patient",
+          "name dateOfBirth gender contactNumber email address bloodType age"
+        )
+        .populate("doctor", "name");
+
+      if (!result) {
+        return res.status(404).json({ error: "Visit not found" });
+      }
+
+      result = {
+        _id: result._id,
+        bookingNumber: result.bookingNumber,
+        patient: result.patient,
+        registrationNumber: result.registrationNumber,
+        bookingDate: result.bookingDate,
+        doctor: result.doctor,
+        reasonForVisit: result.reasonForVisit,
+        status: result.status,
+        comorbidities: result.comorbidities,
+        vitals: result.vitals,
+        diagnosis: result.diagnosis,
+        treatment: result.treatment,
+        medications: result.medications,
+        labTests: result.labTests,
+        timeSlot: result.timeSlot,
+        additionalInstructions: result.additionalInstructions,
+        type: "OPD",
+        createdAt: result.createdAt,
+        bills: result.bills,
+      };
+    } else if (type === "IPD") {
+      result = await IPDAdmission.findById(id)
+        .populate(
+          "patient",
+          "name dateOfBirth gender contactNumber email address bloodType age"
+        )
+        .populate("assignedDoctor", "name")
+        .populate("assignedRoom", "roomNumber type");
+
+      if (!result) {
+        return res.status(404).json({ error: "Admission not found" });
+      }
+
+      result = {
+        _id: result._id,
+        bookingNumber: result.bookingNumber,
+        patient: result.patient,
+        registrationNumber: result.registrationNumber,
+        bookingDate: result.bookingDate,
+        doctor: result.assignedDoctor,
+        assignedRoom: result.assignedRoom,
+        assignedBed: result.assignedBed,
+        dateDischarged: result.dateDischarged,
+        clinicalSummary: result.clinicalSummary,
+        comorbidities: result.comorbidities,
+        diagnosis: result.diagnosis,
+        status: result.status,
+        labReports: result.labReports,
+        treatment: result.treatment,
+        conditionOnAdmission: result.conditionOnAdmission,
+        conditionOnDischarge: result.conditionOnDischarge,
+        medications: result.medications,
+        additionalInstructions: result.additionalInstructions,
+        labTests: result.labTests,
+        notes: result.notes,
+        timeSlot: result.timeSlot,
+        vitals: result.vitals,
+        type: "IPD",
+        createdAt: result.createdAt,
+        bills: result.bills,
+      };
+    } else {
+      return res.status(400).json({ error: "Invalid type specified" });
+    }
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ... remaining code ...
 

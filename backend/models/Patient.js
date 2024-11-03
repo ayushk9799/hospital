@@ -24,17 +24,16 @@ const patientSchema = new mongoose.Schema(
     email: String,
     address: String,
     bloodType: String,
-    opdProcedureBills : [{ type: mongoose.Schema.Types.ObjectId, ref: "ServicesBill" }],
+    opdProcedureBills: [
+      { type: mongoose.Schema.Types.ObjectId, ref: "ServicesBill" },
+    ],
     admissionDetails: [
       { type: mongoose.Schema.Types.ObjectId, ref: "ipdAdmission" },
     ],
     visits: [{ type: mongoose.Schema.Types.ObjectId, ref: "visit" }],
-   
   },
   { timestamps: true }
 );
-
-
 
 patientSchema.plugin(hospitalPlugin);
 export const Patient = mongoose.model("Patient", patientSchema);

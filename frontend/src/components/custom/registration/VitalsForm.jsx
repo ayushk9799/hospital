@@ -20,14 +20,15 @@ export default function VitalsForm({ formData, handleSelectChange }) {
   return (
     <>
       {vitalFields.map((field) => (
-        <MemoizedInput
-          key={field.id}
-          id={field.id}
-          label={field.label}
-          type={field.type || "text"}
-          value={formData.visit.vitals[field.id]}
-          onChange={handleVitalChange}
-        />
+        <div key={field.id} className="w-full">
+          <MemoizedInput
+            id={field.id}
+            label={field.label}
+            type={field.type || "text"}
+            value={formData.visit.vitals[field.id]}
+            onChange={handleVitalChange}
+          />
+        </div>
       ))}
     </>
   );

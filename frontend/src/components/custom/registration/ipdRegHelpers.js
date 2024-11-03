@@ -14,6 +14,8 @@ export const initialFormData = {
     amountPaid : "",
     paymentMethod: "",
     services: [],
+    totalAmount: 0,
+    additionalDiscount: 0,
   },
   admission: {
     department: "",
