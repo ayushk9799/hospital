@@ -6,11 +6,13 @@ import IPDModule from "../components/custom/doctors/IPDModule";
 import { Button } from "../components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
 import { Menu, ScrollText } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
 export default function Doctors() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientType, setSelectedPatientType] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const location = useLocation();
 
   const handlePatientSelect = ({
     ID,
@@ -51,7 +53,19 @@ export default function Doctors() {
     setIsDrawerOpen(false);
   };
 
-  useEffect(() => {}, [selectedPatient, selectedPatientType]);
+  useEffect(() => {
+    if (location.state?.editPatient) {
+      const editData = location.state.editPatient;
+      setSelectedPatient(editData);
+      setSelectedPatientType(editData.type);
+    }
+  }, [location.state]);
+
+  useEffect(() => {
+    if (location.state?.editPatient) {
+      window.history.replaceState({}, document.title);
+    }
+  }, []);
 
   return (
     <div className="h-full w-full flex flex-col">

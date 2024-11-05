@@ -66,7 +66,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const [showBillModal, setShowBillModal] = useState(false);
   const [billData, setBillData] = useState(null);
   const [roomCharge, setRoomCharge] = useState(0);
- console.log(billData)
+
   useEffect(() => {
     if (status === "idle") {
       dispatch(fetchTemplates());
@@ -77,35 +77,34 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   }, [dispatch, status, servicesStatus]);
 
   useEffect(() => {
+    // Only calculate room charge when room is selected
+    if (formData.admission.assignedRoom) {
+      const selectedRoom = rooms.find(room => room._id === formData.admission.assignedRoom);
+      if (selectedRoom) {
+        setRoomCharge(selectedRoom.ratePerDay || 0);
+      } else {
+        setRoomCharge(0);
+      }
+    }
+  }, [formData.admission.assignedRoom, rooms]);
+
+  useEffect(() => {
+    // Calculate total using services plus room charge
     const servicesTotal = services
       .filter((service) => formData.paymentInfo.services.includes(service._id))
-      .reduce((sum, service) => sum + service.rate, 0);
-    const newTotal = servicesTotal + roomCharge;
-    
-    // Apply additional discount if any
-    const finalTotal = Math.max(0, newTotal - (formData.paymentInfo.additionalDiscount || 0));
-    
+      .reduce((sum, service) => sum + (service.rate || 0), 0);
+
+    const totalWithRoom = servicesTotal + roomCharge;
+
     setFormData(prev => ({
       ...prev,
       paymentInfo: {
         ...prev.paymentInfo,
-        totalAmount: finalTotal
+        totalAmount: totalWithRoom
       }
     }));
-    setTotalAmount(finalTotal);
-  }, [formData.paymentInfo.services, services, roomCharge, formData.paymentInfo.additionalDiscount]);
-
-  useEffect(() => {
-    if (open && serviceBillCollections) {
-      setFormData((prevData) => ({
-        ...prevData,
-        paymentInfo: {
-          ...prevData.paymentInfo,
-          services: serviceBillCollections,
-        },
-      }));
-    }
-  }, [open, serviceBillCollections]);
+    setTotalAmount(totalWithRoom);
+  }, [formData.paymentInfo.services, services, roomCharge]);
 
   useEffect(() => {
     if (hospitalInfoStatus === 'idle') {
@@ -284,21 +283,45 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       }, 500);
     }
   }, [open]);
-
+console.log(formData.paymentInfo.totalAmount)
   const handleInfoClick = (e) => {
     e.preventDefault();
     setIsSelectServicesDialogOpen(true);
   };
 
   const handleServicesChange = (selectedServices) => {
+    const actualServices = selectedServices.filter(id => id !== 'room-charge');
     setFormData((prevData) => ({
       ...prevData,
       paymentInfo: {
         ...prevData.paymentInfo,
-        services: selectedServices,
+        services: actualServices,
       },
     }));
   };
+
+  // Add this function to get all services including room for display
+  const getDisplayServices = useCallback(() => {
+    // Get the selected room service if any
+    const selectedRoom = rooms.find(room => room._id === formData.admission.assignedRoom);
+    const roomService = selectedRoom ? {
+      _id: 'room-charge',
+      name: `Room: ${selectedRoom.roomNumber} - ${selectedRoom.type}`,
+      rate: selectedRoom.ratePerDay || 0,
+      isRoom: true
+    } : null;
+
+    // Get all available services from the services array
+    const availableServices = services.map(service => ({
+      ...service,
+      isRoom: false
+    }));
+
+    // Combine room service (if exists) with available services
+    return roomService 
+      ? [roomService, ...availableServices]
+      : availableServices;
+  }, [formData.admission.assignedRoom, rooms, services]);
 
   return (
     <>
@@ -620,90 +643,90 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                     </div>
                   </div>
                   <div>
-                  <Select
-                        id="gender"
-                        value={formData.gender}
-                        onValueChange={(value) =>
-                          handleInputChange({ target: { id: "gender", value } })
-                        }
-                      >
-                        <SelectTrigger
-                          className={errors.gender ? "border-red-500" : ""}
-                        >
-                          <SelectValue placeholder="Gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
-                          <SelectItem value="Other">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      {errors.gender && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.gender}
-                        </p>
-                      )}
-                    
-                  </div>
-                  <div className="space-y-1 flex items-center gap-4">
-                    <div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span>Total Bill:</span>
-                          <Input 
-                            value={formData.paymentInfo.totalAmount.toLocaleString("en-IN")}
-                            className="font-semibold w-20 inline-block"
-                            onChange={(e) => {
-                              const value = Number(e.target.value.replace(/,/g, ''));
-                              if (!isNaN(value)) {
-                                const originalTotal = services
-                                  .filter((service) => formData.paymentInfo.services.includes(service._id))
-                                  .reduce((sum, service) => sum + service.rate, 0) + roomCharge;
-                                
-                                const newDiscount = Math.max(0, originalTotal - value);
-                                
-                                setFormData(prev => ({
-                                  ...prev,
-                                  paymentInfo: {
-                                    ...prev.paymentInfo,
-                                    totalAmount: value,
-                                    additionalDiscount: newDiscount
-                                  }
-                                }));
-                                setTotalAmount(value);
-                              }
-                            }}
-                            onBlur={(e) => {
-                              const value = Number(e.target.value.replace(/,/g, ''));
-                              if (!isNaN(value)) {
-                                setTotalAmount(value);
-                              }
-                            }}
-                          />
-                        </div>
-                        {roomCharge > 0 && (
-                          <p className="text-sm text-gray-500">
-                            (Includes room charge: {roomCharge.toLocaleString("en-IN")})
-                          </p>
-                        )}
-                        {formData.paymentInfo.additionalDiscount > 0 && (
-                          <p className="text-sm text-green-600">
-                            (Discount: {formData.paymentInfo.additionalDiscount.toLocaleString("en-IN")})
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      className="border-primary text-primary"
-                      onClick={handleInfoClick}
+                    <Select
+                      id="gender"
+                      value={formData.gender}
+                      onValueChange={(value) =>
+                        handleInputChange({ target: { id: "gender", value } })
+                      }
                     >
-                      Modify Bill
-                    </Button>
+                      <SelectTrigger
+                        className={errors.gender ? "border-red-500" : ""}
+                      >
+                        <SelectValue placeholder="Gender" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Male">Male</SelectItem>
+                        <SelectItem value="Female">Female</SelectItem>
+                        <SelectItem value="Other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.gender && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors.gender}
+                      </p>
+                    )}
                   </div>
 
-                  {/* Add payment fields here */}
-                  <div className="grid grid-cols-2  items-center gap-2">
+                  {/* Bill Details Section */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span>Final Bill:</span>
+                        <Input 
+                          value={formData.paymentInfo.totalAmount.toLocaleString("en-IN")}
+                          className="font-semibold w-28 inline-block"
+                          onChange={(e) => {
+                            const value = Number(e.target.value.replace(/,/g, ''));
+                            if (!isNaN(value)) {
+                              const servicesTotal = services
+                                .filter((service) => formData.paymentInfo.services.includes(service._id))
+                                .reduce((sum, service) => sum + (service.rate || 0), 0);
+                              
+                              const totalWithRoom = servicesTotal + roomCharge;
+                              
+                              setFormData(prev => ({
+                                ...prev,
+                                paymentInfo: {
+                                  ...prev.paymentInfo,
+                                  totalAmount: value,
+                                  additionalDiscount: Math.max(0, totalWithRoom - value)
+                                }
+                              }));
+                            }
+                          }}
+                        />
+                      </div>
+                      <Button
+                        variant="outline"
+                        className="border-primary text-primary"
+                        onClick={handleInfoClick}
+                      >
+                        Modify Bill
+                      </Button>
+                    </div>
+                    {formData.paymentInfo.additionalDiscount > 0 && (
+                      <>
+                        <p className="text-sm text-gray-500">
+                          Services Total: ₹{(services
+                            .filter((service) => formData.paymentInfo.services.includes(service._id))
+                            .reduce((sum, service) => sum + (service.rate || 0), 0)+roomCharge)
+                            .toLocaleString("en-IN")}
+                        </p>
+                        {roomCharge > 0 && (
+                          <p className="text-sm text-gray-500">
+                            Room Charge: ₹{roomCharge.toLocaleString("en-IN")}
+                          </p>
+                        )}
+                        <p className="text-sm text-gray-500">
+                          Discount Applied: ₹{formData.paymentInfo.additionalDiscount.toLocaleString("en-IN")}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Payment Fields */}
+                  <div className="grid grid-cols-2  gap-2">
                     <div>
                       <MemoizedInput
                         id="paymentInfo.amountPaid"
@@ -883,8 +906,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
           <SelectServicesDialog
             isOpen={isSelectServicesDialogOpen}
             onClose={() => setIsSelectServicesDialogOpen(false)}
-            services={services}
-            selectedServices={formData.paymentInfo.services}
+            services={getDisplayServices()}
+            selectedServices={[
+              ...formData.paymentInfo.services,
+              formData.admission.assignedRoom ? 'room-charge' : ''
+            ].filter(Boolean)} // Filter out empty strings
             onServicesChange={handleServicesChange}
           />
         </DialogContent>

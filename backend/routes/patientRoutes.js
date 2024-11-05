@@ -161,13 +161,31 @@ router.post(
             _id: { $in: paymentInfo.services },
           }).session(session);
 
+          // Get room rate if room is assigned
+          let roomCharge = 0;
+          if (admission.assignedRoom) {
+            const room = await Room.findById(admission.assignedRoom).session(session);
+            if (room) {
+              roomCharge = room.ratePerDay || 0;
+            }
+          }
+
           bill = new ServicesBill({
-            services: services.map((service) => ({
-              name: service.name,
-              quantity: 1,
-              rate: service.rate,
-              category: service?.category || "Other",
-            })),
+            services: [
+              ...services.map((service) => ({
+                name: service.name,
+                quantity: 1,
+                rate: service.rate,
+                category: service?.category || "Other",
+              })),
+              // Add room charge if room is assigned
+              ...(roomCharge > 0 ? [{
+                name: "Room Charge",
+                quantity: 1,
+                rate: roomCharge,
+                category: "Room Rent",
+              }] : []),
+            ],
             patient: patient._id,
             patientInfo: {
               name: patient.name,
@@ -175,7 +193,7 @@ router.post(
               registrationNumber: patient.registrationNumber,
             },
             totalAmount: Number(paymentInfo.totalAmount),
-            subtotal: services.reduce((sum, service) => sum + service.rate, 0),
+            subtotal: services.reduce((sum, service) => sum + service.rate, 0)?services.reduce((sum, service) => sum + service.rate, 0)+roomCharge:Number(paymentInfo.totalAmount),
             additionalDiscount: paymentInfo.additionalDiscount || 0,
             amountPaid: Number(paymentInfo.amountPaid) || 0,
             patientType: "IPD",

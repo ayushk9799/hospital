@@ -46,6 +46,7 @@ import { format } from "date-fns";
 import { ScrollArea } from "../components/ui/scroll-area";
 import OPDBillTokenModal from "../components/custom/registration/OPDBillTokenModal";
 import ViewBillDialog from "../components/custom/billing/ViewBillDialog";
+import { ConsoleLogEntry } from "selenium-webdriver/bidi/logEntries";
 
 const CreateServiceBill = () => {
   const dispatch = useDispatch();
@@ -79,10 +80,18 @@ const CreateServiceBill = () => {
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
 
   const calculateTotals = useMemo(() => {
-    const subtotal = addedServices.reduce(
+    // Calculate subtotal from current added services
+    const currentServicesSubtotal = addedServices.reduce(
       (sum, service) => sum + service.total,
       0
     );
+
+    // Get existing bill subtotal if editing
+    const existingBillSubtotal = location.state?.billData?.subtotal || 0;
+console.log(existingBillSubtotal)
+    // Combine subtotals
+    const subtotal = currentServicesSubtotal + existingBillSubtotal;
+
     let discountValue = 0;
 
     if (additionalDiscount !== "") {
@@ -100,8 +109,10 @@ const CreateServiceBill = () => {
       subtotal,
       additionalDiscount: discountValue.toFixed(2),
       totalAmount: totalAmount,
+      existingBillSubtotal,
+      currentServicesSubtotal
     };
-  }, [addedServices, additionalDiscount, additionalDiscountType]);
+  }, [addedServices, additionalDiscount, additionalDiscountType, location.state?.billData]);
 
   useEffect(() => {
     if (servicesStatus === "idle") dispatch(fetchServices());
@@ -111,6 +122,7 @@ const CreateServiceBill = () => {
     if (billId && location.state?.billData) {
       setIsEditing(true);
       const billData = location.state.billData;
+      
       // Populate form with bill data
       setAddedServices(
         billData.services.map((service, index) => ({
@@ -120,6 +132,7 @@ const CreateServiceBill = () => {
           quantity: service.quantity,
           rate: service.rate,
           total: service.rate * service.quantity,
+          isExisting: true // Flag to identify existing services
         }))
       );
       setAdditionalDiscount(billData.additionalDiscount || "");
@@ -277,6 +290,7 @@ const CreateServiceBill = () => {
         rate: service.rate,
         discount: service.discAmt,
         category: service.category,
+        isExisting: service.isExisting || false
       })),
       patient: selectedPatient.patient._id,
       patientType: selectedPatient.type,
@@ -288,6 +302,8 @@ const CreateServiceBill = () => {
         totalAmount: calculateTotals.totalAmount,
         subtotal: calculateTotals.subtotal,
         additionalDiscount: additionalDiscountAmount,
+        existingBillSubtotal: calculateTotals.existingBillSubtotal,
+        currentServicesSubtotal: calculateTotals.currentServicesSubtotal
       },
       visitID: selectedPatient?._id,
     };

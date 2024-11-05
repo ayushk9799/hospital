@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPatientDetails } from "../redux/slices/patientSlice";
 import {
@@ -68,6 +68,7 @@ export default function PatientDetails() {
   );
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [activeTab, setActiveTab] = useState("");
+  const navigate = useNavigate();
 
   useEffect(() => {
     dispatch(fetchPatientDetails(patientId))
@@ -459,15 +460,62 @@ export default function PatientDetails() {
     );
   };
 
+  const handleEditClick = () => {
+    if (!selectedVisit || !patientDetails) return;
+
+    const visitData = selectedVisit.type === "visit" 
+      ? patientDetails.visits?.find(v => v.bookingDate === selectedVisit.date)
+      : patientDetails.admissionDetails?.find(a => a.bookingDate === selectedVisit.date);
+
+    if (!visitData) return;
+
+    const patientDataForEdit = {
+      ID: visitData._id,
+      bookingNumber: visitData.bookingNumber,
+      patient: {
+        name: patientDetails.name,
+        registrationNumber: patientDetails.registrationNumber,
+        age: patientDetails.age,
+        gender: patientDetails.gender,
+        contactNumber: patientDetails.contactNumber,
+      },
+      bookingDate: visitData.bookingDate,
+      clinicalSummary: visitData.clinicalSummary,
+      notes: visitData.notes,
+      type: selectedVisit.type === "visit" ? "OPD" : "IPD",
+      vitals: visitData.vitals,
+      diagnosis: visitData.diagnosis,
+      treatment: visitData.treatment,
+      medications: visitData.medications,
+      additionalInstructions: visitData.additionalInstructions,
+      labTests: visitData.labTests,
+      comorbidities: visitData.comorbidities,
+      conditionOnAdmission: visitData.conditionOnAdmission,
+      conditionOnDischarge: visitData.conditionOnDischarge,
+    };
+
+    navigate('/doctors', { state: { editPatient: patientDataForEdit } });
+  };
+
   return (
     <div className="container mx-auto px-2 space-y-2 bg-gray-50">
-      <div className="hidden justify-between items-center mb-2">
+      <div className="flex justify-between items-center mb-2 p-4">
         <h1 className="text-xl font-bold text-gray-800">Patient Profile</h1>
-        <div className="space-x-2 hidden">
-          <Button variant="outline" size="sm" className="hover:bg-gray-100">
+        <div className="space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hover:bg-gray-100"
+            onClick={handleEditClick}
+            disabled={!selectedVisit}
+          >
             <Edit className="mr-2 h-4 w-4" /> Edit
           </Button>
-          <Button variant="outline" size="sm" className="hover:bg-gray-100">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="hover:bg-gray-100"
+          >
             <Printer className="mr-2 h-4 w-4" /> Print
           </Button>
         </div>

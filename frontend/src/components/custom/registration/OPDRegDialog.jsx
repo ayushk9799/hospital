@@ -125,19 +125,36 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
         const amountPaid = Number(id === 'visit.amountPaid' ? value : newState.visit.amountPaid) || 0;
         const discount = Number(id === 'visit.discount' ? value : newState.visit.discount) || 0;
 
-        // If amount paid is being changed and it exceeds (totalFee - discount),
-        // set it to (totalFee - discount)
-        if (id === 'visit.amountPaid') {
-          const maxAllowed = totalFee - discount;
-          if (Number(value) > maxAllowed) {
+        // Real-time error updates for payment validation
+        const newErrors = { ...errors };
+        
+        if (discount > totalFee) {
+          newErrors.discount = "Discount cannot exceed total fee";
+        } else {
+          delete newErrors.discount;
+        }
+
+        const maxAllowed = totalFee - discount;
+        
+        // Reset amount paid if discount makes it invalid
+        if (id === 'visit.discount' && amountPaid > maxAllowed) {
+          newState.visit.amountPaid = maxAllowed.toString();
+          delete newErrors.amountPaid;
+        } else if (amountPaid > maxAllowed) {
+          newErrors.amountPaid = `Cannot exceed ₹${maxAllowed} (Total - Discount)`;
+          if (id === 'visit.amountPaid') {
             current[keys[keys.length - 1]] = maxAllowed.toString();
           }
+        } else {
+          delete newErrors.amountPaid;
         }
+
+        setErrors(newErrors);
       }
 
       return newState;
     });
-  }, []);
+  }, [errors]);
 
   const handleSelectChange = useCallback(
     (id, value) => handleInputChange({ target: { id, value } }),
@@ -165,7 +182,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     if (amountPaid > (totalFee - discount)) 
       newErrors.amountPaid = "Amount paid cannot exceed total fee minus discount";
     if (amountPaid > 0 && !formData.visit.paymentMethod)
-      newErrors.paymentMethod = "Payment method is required when amount is paid";
+      newErrors.paymentMethod = "required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -397,50 +414,75 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                     </div>
                     <div className="flex flex-col gap-6 pt-2 md:pt-1">
                       <div className="flex flex-col gap-2">
-                        <div className="grid grid-cols-2 gap-4">
-                          <MemoizedInput
-                            label="Total Fee (₹)"
-                            id="visit.totalFee"
-                            value={formData.visit.totalFee}
-                            onChange={handleInputChange}
-                            error={errors.totalFee}
-                          />
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
+                          <div className="relative">
+                            <MemoizedInput
+                              label="Total Fee (₹)"
+                              id="visit.totalFee"
+                              value={formData.visit.totalFee}
+                              onChange={handleInputChange}
+                              error={errors.totalFee}
+                            />
+                            {errors.totalFee && (
+                              <span className="absolute -bottom-5 left-0 text-xs text-red-500">
+                                {errors.totalFee}
+                              </span>
+                            )}
+                          </div>
                           
-                          <MemoizedInput
-                            label="Discount (₹)"
-                            id="visit.discount"
-                            value={formData.visit.discount}
-                            onChange={handleInputChange}
-                            error={errors.discount}
-                          />
+                          <div className="relative">
+                            <MemoizedInput
+                              label="Discount (₹)"
+                              id="visit.discount"
+                              value={formData.visit.discount}
+                              onChange={handleInputChange}
+                              error={errors.discount}
+                            />
+                            {errors.discount && (
+                              <span className="absolute -bottom-5 left-0 text-xs text-red-500">
+                                {errors.discount}
+                              </span>
+                            )}
+                          </div>
 
-                          <MemoizedInput
-                            label="Amount Paid (₹)"
-                            id="visit.amountPaid"
-                            value={formData.visit.amountPaid}
-                            onChange={handleInputChange}
-                            error={errors.amountPaid}
-                          />
+                          <div className="relative">
+                            <MemoizedInput
+                              label="Amount Paid (₹)"
+                              id="visit.amountPaid"
+                              value={formData.visit.amountPaid}
+                              onChange={handleInputChange}
+                              error={errors.amountPaid}
+                            />
+                            {errors.amountPaid && (
+                              <span className="absolute -bottom-5 left-0 text-xs text-red-500 whitespace-nowrap">
+                                {errors.amountPaid}
+                              </span>
+                            )}
+                          </div>
 
-                          <Select
-                            id="visit.paymentMethod"
-                            value={formData.visit.paymentMethod}
-                            onValueChange={(value) =>
-                              handleSelectChange("visit.paymentMethod", value)
-                            }
-                          >
-                            <SelectTrigger className={`w-full ${errors.paymentMethod ? 'border-red-500' : ''}`}>
-                              <SelectValue placeholder="Payment Method" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Cash">Cash</SelectItem>
-                              <SelectItem value="UPI">UPI</SelectItem>
-                              <SelectItem value="Card">Card</SelectItem>
-                              <SelectItem value="Due">Due</SelectItem>
-                              <SelectItem value="Other">Other</SelectItem>
-                            </SelectContent>
-                          </Select>
-                          
+                          <div className="relative">
+                            <Select
+                              id="visit.paymentMethod"
+                              value={formData.visit.paymentMethod}
+                              onValueChange={(value) =>
+                                handleSelectChange("visit.paymentMethod", value)
+                              }
+                            >
+                              <SelectTrigger 
+                                className={`w-full ${errors.paymentMethod ? 'border-red-500' : ''}`}
+                              >
+                                <SelectValue placeholder="Payment Method" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Cash">Cash</SelectItem>
+                                <SelectItem value="UPI">UPI</SelectItem>
+                                <SelectItem value="Card">Card</SelectItem>
+                                <SelectItem value="Due">Due</SelectItem>
+                                <SelectItem value="Other">Other</SelectItem>
+                              </SelectContent>
+                            </Select>
+                           
+                          </div>
                         </div>
                       </div>
                     </div>
