@@ -8,6 +8,9 @@ import {
   SelectContent,
 } from "../../ui/select";
 import { useMediaQuery } from "../../../hooks/use-media-query";
+import { Search } from "lucide-react";
+import { useDispatch } from "react-redux";
+import { searchPatients } from "../../../redux/slices/patientSlice";
 
 // Updated FloatingLabelSelect component
 export const FloatingLabelSelect = ({
@@ -63,8 +66,10 @@ export default function PatientInfoForm({
   handleInputChange,
   handleSelectChange,
   errors,
+  setSearchedPatient
 }) {
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const dispatch = useDispatch();
 
   const handleDobChange = useCallback(
     (e) => {
@@ -86,6 +91,23 @@ export default function PatientInfoForm({
     },
     [handleInputChange]
   );
+
+  const handleSearch = async () => {
+    if (!formData.registrationNumber) return;
+    
+    try {
+      const result = await dispatch(searchPatients(formData.registrationNumber)).unwrap();
+      if (result.results && result.results.length > 0) {
+        const patient = result.results[0];
+        setSearchedPatient({
+          ...patient,
+          isFromSearch: true
+        });
+      }
+    } catch (error) {
+      console.error("Search failed:", error);
+    }
+  };
 
   return (
     <>
@@ -144,14 +166,22 @@ export default function PatientInfoForm({
         </div>
       )}
 
-      <div className={`${isMobile ? "w-full" : "w-full"}`}>
+      <div className="relative">
         <MemoizedInput
           id="registrationNumber"
           label="Reg. No."
           value={formData.registrationNumber}
           onChange={handleInputChange}
           error={errors.registrationNumber}
+          className="pr-10"
         />
+        <button
+          type="button"
+          onClick={handleSearch}
+          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+        >
+          <Search className="h-5 w-5" />
+        </button>
       </div>
 
       <FloatingLabelSelect

@@ -85,7 +85,7 @@ router.post(
             phone: patient?.contactNumber,
             registrationNumber: patient.registrationNumber,
           },
-          totalAmount: totalFee-discount,
+          totalAmount: totalFee - discount,
           subtotal: totalFee,
           additionalDiscount: discount,
           amountPaid: amountPaid,
@@ -110,11 +110,11 @@ router.post(
         }
 
         await bill.save({ session });
-        
+
         // Link bill to visit and patient
         admissionRecord.bills.services.push(bill._id);
         patient.visits.push(admissionRecord._id);
-        
+
         await admissionRecord.save({ session });
         await patient.save({ session });
       } else if (patientType === "IPD") {
@@ -164,7 +164,9 @@ router.post(
           // Get room rate if room is assigned
           let roomCharge = 0;
           if (admission.assignedRoom) {
-            const room = await Room.findById(admission.assignedRoom).session(session);
+            const room = await Room.findById(admission.assignedRoom).session(
+              session
+            );
             if (room) {
               roomCharge = room.ratePerDay || 0;
             }
@@ -179,12 +181,16 @@ router.post(
                 category: service?.category || "Other",
               })),
               // Add room charge if room is assigned
-              ...(roomCharge > 0 ? [{
-                name: "Room Charge",
-                quantity: 1,
-                rate: roomCharge,
-                category: "Room Rent",
-              }] : []),
+              ...(roomCharge > 0
+                ? [
+                    {
+                      name: "Room Charge",
+                      quantity: 1,
+                      rate: roomCharge,
+                      category: "Room Rent",
+                    },
+                  ]
+                : []),
             ],
             patient: patient._id,
             patientInfo: {
@@ -193,7 +199,10 @@ router.post(
               registrationNumber: patient.registrationNumber,
             },
             totalAmount: Number(paymentInfo.totalAmount),
-            subtotal: services.reduce((sum, service) => sum + service.rate, 0)?services.reduce((sum, service) => sum + service.rate, 0)+roomCharge:Number(paymentInfo.totalAmount),
+            subtotal: services.reduce((sum, service) => sum + service.rate, 0)
+              ? services.reduce((sum, service) => sum + service.rate, 0) +
+                roomCharge
+              : Number(paymentInfo.totalAmount),
             additionalDiscount: paymentInfo.additionalDiscount || 0,
             amountPaid: Number(paymentInfo.amountPaid) || 0,
             patientType: "IPD",
@@ -232,9 +241,8 @@ router.post(
         admissionRecord,
         bill,
         payment,
-        message: `Patient registered successfully as ${patientType}`
+        message: `Patient registered successfully as ${patientType}`,
       });
-
     } catch (error) {
       await session.abortTransaction();
       res.status(400).json({ error: error.message });
@@ -581,6 +589,7 @@ router.post(
     try {
       const { id } = req.params;
       const { visit, ...patientData } = req.body;
+      const user = req.user;
 
       const patient = await Patient.findById(id).session(session);
       if (!patient) {
@@ -595,47 +604,78 @@ router.post(
 
       // Create new visit
       const newVisit = new Visit({
+        ...visit,
         patient: patient._id,
-        registrationNumber: patient.registrationNumber || null,
         patientName: patient.name,
         contactNumber: patient.contactNumber,
-        reasonForVisit: visit.reasonForVisit || null,
+        registrationNumber: patient.registrationNumber,
         doctor: visit.doctor || null,
-        department: visit.department || null,
-        diagnosis: visit.diagnosis || null,
-        treatment: visit.treatment || null,
-        vitals: visit.vitals || null,
-        bookingDate:
-          visit.bookingDate ||
-          new Date()
-            .toLocaleDateString("en-In", {
-              year: "numeric",
-              month: "2-digit",
-              day: "2-digit",
-            })
-            .split("/")
-            .reverse()
-            .join("-"),
       });
 
-      await newVisit.save({ session });
+      // Create bill
+      const totalFee = Number(visit.totalFee) || 0;
+      const discount = Number(visit.discount) || 0;
+      const amountPaid = Number(visit.amountPaid) || 0;
 
-      // Update patient's visits array
+      const bill = new ServicesBill({
+        services: [
+          {
+            name: "Consultation Fee",
+            quantity: 1,
+            rate: totalFee,
+            category: "Consultation",
+          },
+        ],
+        patient: patient._id,
+        patientInfo: {
+          name: patient.name,
+          phone: patient?.contactNumber,
+          registrationNumber: patient.registrationNumber,
+        },
+        totalAmount: totalFee - discount,
+        subtotal: totalFee,
+        additionalDiscount: discount,
+        amountPaid: amountPaid,
+        patientType: "OPD",
+        createdBy: user._id,
+      });
+
+      let payment;
+      if (visit.paymentMethod && visit.paymentMethod !== "Due" && amountPaid > 0) {
+        payment = new Payment({
+          amount: amountPaid,
+          paymentMethod: visit.paymentMethod,
+          paymentType: { name: "Services", id: bill._id },
+          type: "Income",
+          createdBy: user._id,
+        });
+        await payment.save({ session });
+        bill.payments.push(payment._id);
+      }
+
+      await bill.save({ session });
+
+      // Link bill to visit and patient
+      newVisit.bills.services.push(bill._id);
       patient.visits.push(newVisit._id);
+
+      await newVisit.save({ session });
       await patient.save({ session });
 
       await session.commitTransaction();
-      session.endSession();
 
       res.status(201).json({
         message: "Revisit recorded successfully",
-        patient: patient,
+        patient,
         visit: newVisit,
+        bill,
+        payment,
       });
     } catch (error) {
       await session.abortTransaction();
-      session.endSession();
       res.status(400).json({ error: error.message });
+    } finally {
+      session.endSession();
     }
   }
 );
@@ -1014,34 +1054,61 @@ router.post(
 
       let bill, payment;
 
-      // Generate bill for services
+      // Handle initial services bill if any
       if (paymentInfo?.includeServices) {
         const services = await Service.find({
           _id: { $in: paymentInfo.services },
         }).session(session);
 
+        // Get room rate if room is assigned
+        let roomCharge = 0;
+        if (admission.assignedRoom) {
+          const room = await Room.findById(admission.assignedRoom).session(session);
+          if (room) {
+            roomCharge = room.ratePerDay || 0;
+          }
+        }
+
         bill = new ServicesBill({
-          services: services.map((service) => ({
-            name: service.name,
-            quantity: 1,
-            rate: service.rate,
-            category: service?.category || "Other",
-          })),
+          services: [
+            ...services.map((service) => ({
+              name: service.name,
+              quantity: 1,
+              rate: service.rate,
+              category: service?.category || "Other",
+            })),
+            // Add room charge if room is assigned
+            ...(roomCharge > 0
+              ? [
+                  {
+                    name: "Room Charge",
+                    quantity: 1,
+                    rate: roomCharge,
+                    category: "Room Rent",
+                  },
+                ]
+              : []),
+          ],
           patient: patient._id,
           patientInfo: {
             name: patient.name,
             phone: patient?.contactNumber,
             registrationNumber: patient.registrationNumber,
           },
-          totalAmount: services.reduce((sum, service) => sum + service.rate, 0),
-          subtotal: services.reduce((sum, service) => sum + service.rate, 0),
+          totalAmount: Number(paymentInfo.totalAmount),
+          subtotal: services.reduce((sum, service) => sum + service.rate, 0)
+            ? services.reduce((sum, service) => sum + service.rate, 0) + roomCharge
+            : Number(paymentInfo.totalAmount),
+          additionalDiscount: paymentInfo.additionalDiscount || 0,
+          amountPaid: Number(paymentInfo.amountPaid) || 0,
+          patientType: "IPD",
           createdBy: user._id,
-          patientType: "IPD", // Add this line
         });
 
         if (
-          paymentInfo?.paymentMethod !== "" &&
-          paymentInfo?.paymentMethod !== "Due"
+          paymentInfo?.paymentMethod &&
+          paymentInfo?.paymentMethod !== "Due" &&
+          paymentInfo.amountPaid > 0
         ) {
           payment = new Payment({
             amount: Number(paymentInfo.amountPaid),
@@ -1052,41 +1119,45 @@ router.post(
           });
           await payment.save({ session });
           bill.payments.push(payment._id);
-          bill.amountPaid = payment.amount;
         }
 
         await bill.save({ session });
         newAdmission.bills.services.push(bill._id);
       }
 
-      // If a room and bed are assigned, update their status and add room charge to bill
-      if (admission.assignedRoom && admission.assignedBed) {
-        const room = await Room.findById(admission.assignedRoom).session(
-          session
+      // Handle room assignment if provided
+      if (admission.assignedRoom) {
+        const room = await Room.findOneAndUpdate(
+          {
+            _id: admission.assignedRoom,
+            beds: {
+              $elemMatch: {
+                _id: admission.assignedBed,
+                status: "Available",
+              },
+            },
+          },
+          {
+            $inc: { currentOccupancy: 1 },
+            $set: {
+              "beds.$.status": "Occupied",
+              "beds.$.currentPatient": patient._id,
+            },
+          },
+          { new: true, session, runValidators: true }
         );
-        if (room) {
-          const bedIndex = room.beds.findIndex(
-            (bed) => bed._id.toString() === admission.assignedBed.toString()
-          );
-          if (bedIndex !== -1) {
-            room.beds[bedIndex].status = "Occupied";
-            room.beds[bedIndex].currentPatient = patient._id;
-            room.currentOccupancy += 1;
-            await room.save({ session });
 
-            if (bill) {
-              bill.services.push({
-                name: "Room Charge",
-                quantity: 1,
-                rate: room.ratePerDay,
-                category: "Room Rent",
-              });
-              bill.totalAmount += room.ratePerDay;
-              bill.subtotal += room.ratePerDay;
-              await bill.save({ session });
-            }
-          }
+        if (!room) {
+          throw new Error("Room or bed not available");
         }
+
+        // Update room status if necessary
+        if (room.currentOccupancy === room.capacity) {
+          room.status = "Occupied";
+        } else if (room.currentOccupancy > 0) {
+          room.status = "Partially Available";
+        }
+        await room.save({ session });
       }
 
       await newAdmission.save({ session });
@@ -1097,19 +1168,18 @@ router.post(
       await patient.save({ session });
 
       await session.commitTransaction();
-      session.endSession();
-
       res.status(201).json({
         message: "Readmission recorded successfully",
-        patient: patient,
+        patient,
         admission: newAdmission,
         bill,
         payment,
       });
     } catch (error) {
       await session.abortTransaction();
-      session.endSession();
       res.status(400).json({ error: error.message });
+    } finally {
+      session.endSession();
     }
   }
 );

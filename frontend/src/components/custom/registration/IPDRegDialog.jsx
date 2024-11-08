@@ -22,6 +22,7 @@ import {
   fetchPatients,
   registerPatient,
   readmitPatient,
+  searchPatients,
 } from "../../../redux/slices/patientSlice";
 import { fetchRooms } from "../../../redux/slices/roomSlice";
 import {
@@ -30,7 +31,7 @@ import {
   formatSubmissionData,
 } from "./ipdRegHelpers";
 import { useToast } from "../../../hooks/use-toast";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, Search } from "lucide-react";
 import MemoizedInput from "./MemoizedInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { fetchBills } from "../../../redux/slices/BillingSlice";
@@ -47,6 +48,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const registerPatientStatus = useSelector(
     (state) => state.patients.registerPatientStatus
   );
+  console.log(patientData)
   const departments = useSelector((state) => state.departments.departments);
   const rooms = useSelector((state) => state.rooms.rooms);
   const doctors = useSelector((state) => state.staff.doctors);
@@ -66,6 +68,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const [showBillModal, setShowBillModal] = useState(false);
   const [billData, setBillData] = useState(null);
   const [roomCharge, setRoomCharge] = useState(0);
+  const [searchedPatient, setSearchedPatient] = useState(null);
 
   useEffect(() => {
     if (status === "idle") {
@@ -114,26 +117,40 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   // Function to reset form data
   const resetFormData = useCallback(() => {
-    if (patientData) {
-      setFormData({
-        ...initialFormData,
-        name: patientData.name || "",
-        age: patientData.age || "",
-        gender: patientData.gender || "",
-        contactNumber: patientData.contactNumber || "",
-        email: patientData.email || "",
-        address: patientData.address || "",
-        registrationNumber: patientData.registrationNumber || "",
-        dateOfBirth: patientData.dateOfBirth || "",
-        bloodType: patientData.bloodType || "",
-      });
-    } else {
+    if (!open) {
       setFormData(initialFormData);
+      setErrors({});
+      setTotalAmount(0);
+      setRoomCharge(0);
+      setSearchedPatient(null);
     }
-    setErrors({});
-    setTotalAmount(0); // Reset total amount
-    setRoomCharge(0); // Reset room charge
-  }, [patientData]);
+  }, [open]);
+
+  useEffect(() => {
+    if (patientData || searchedPatient) {
+      const sourceData = searchedPatient || patientData;
+      setFormData(prev => ({
+        ...prev,
+        _id: sourceData._id,
+        name: sourceData.name || "",
+        age: sourceData.age || "",
+        gender: sourceData.gender || "",
+        contactNumber: sourceData.contactNumber || "",
+        email: sourceData.email || "",
+        address: sourceData.address || "",
+        registrationNumber: sourceData.registrationNumber || "",
+        dateOfBirth: sourceData.dateOfBirth || "",
+        bloodType: sourceData.bloodType || "",
+        // Keep existing admission and payment info
+        admission: {
+          ...prev.admission,
+        },
+        paymentInfo: {
+          ...prev.paymentInfo,
+        }
+      }));
+    }
+  }, [patientData, searchedPatient,open]);
 
   useEffect(() => {
     if (!open) {
@@ -144,6 +161,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       setTimeout(() => {
         document.body.style = "";
       }, 500);
+      setSearchedPatient(null);
     }
   }, [open, resetFormData, dispatch]);
 
@@ -199,7 +217,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
       console.log(submissionData);
-      if (patientData) {
+      if (patientData||searchedPatient) {
         // This is a readmission
         dispatch(
           readmitPatient({
@@ -323,6 +341,23 @@ console.log(formData.paymentInfo.totalAmount)
       : availableServices;
   }, [formData.admission.assignedRoom, rooms, services]);
 
+  const handleSearch = async () => {
+    if (!formData.registrationNumber) return;
+    
+    try {
+      const result = await dispatch(searchPatients(formData.registrationNumber)).unwrap();
+      if (result.results && result.results.length > 0) {
+        const patient = result.results[0];
+        setSearchedPatient({
+          ...patient,
+          isFromSearch: true
+        });
+      }
+    } catch (error) {
+      console.error("Search failed:", error);
+    }
+  };
+
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogClose}>
@@ -382,21 +417,41 @@ console.log(formData.paymentInfo.totalAmount)
                           onChange={handleAgeChange}
                           error={errors.age}
                         />
-                        <MemoizedInput
-                          id="registrationNumber"
-                          label="Reg Number"
-                          value={formData.registrationNumber}
-                          onChange={handleInputChange}
-                        />
+                        <div className="relative">
+                          <MemoizedInput
+                            id="registrationNumber"
+                            label="Reg Number"
+                            value={formData.registrationNumber}
+                            onChange={handleInputChange}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSearch}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                          >
+                            <Search className="h-5 w-5" />
+                          </button>
+                        </div>
                       </div>
                     ) : (
                       <>
-                        <MemoizedInput
-                          id="registrationNumber"
-                          label="Registration Number"
-                          value={formData.registrationNumber}
-                          onChange={handleInputChange}
-                        />
+                        <div className="relative">
+                          <MemoizedInput
+                            id="registrationNumber"
+                            label="Registration Number"
+                            value={formData.registrationNumber}
+                            onChange={handleInputChange}
+                            className="pr-10"
+                          />
+                          <button
+                            type="button"
+                            onClick={handleSearch}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                          >
+                            <Search className="h-5 w-5" />
+                          </button>
+                        </div>
                         <div className="flex items-end gap-4">
                           <div className="w-30 relative">
                             <MemoizedInput

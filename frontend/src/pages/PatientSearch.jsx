@@ -117,7 +117,7 @@ export default function PatientSearch() {
       ? format(new Date(Math.max(...dates)), "dd-MM-yyyy")
       : "-";
   };
-
+console.log(selectedPatient)
   const PatientCard = ({ patient }) => (
     <Card className="mb-4 hover:shadow-md transition-shadow">
       <CardContent className="p-4">

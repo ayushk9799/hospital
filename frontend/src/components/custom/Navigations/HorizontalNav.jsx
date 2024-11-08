@@ -28,6 +28,7 @@ import {
   SheetContent,
   SheetTrigger,
 } from "../../ui/sheet";
+import { searchPatients } from "../../../redux/slices/patientSlice";
 
 const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const user = useSelector((state) => state.user.userData);
@@ -84,15 +85,15 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
     if (!searchQuery.trim()) return;
 
     try {
-      const response = await fetch(`${Backend_URL}/api/dashboard/search?q=${searchQuery}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        // Navigate to the PatientSearch page with the search results
-        navigate(`/search`, { state: { searchResults: data ,searchQuery:searchQuery} });
+      const resultAction = await dispatch(searchPatients(searchQuery));
+      console.log(resultAction)
+      if (searchPatients.fulfilled.match(resultAction)) {
+        navigate('/search', { 
+          state: { 
+            searchResults: resultAction.payload.results,
+            searchQuery: searchQuery 
+          } 
+        });
       } else {
         toast({
           title: "Search failed",

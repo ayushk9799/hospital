@@ -14,6 +14,7 @@ import { fetchBills } from "../../../redux/slices/BillingSlice";
 import {
   fetchPatients,
   registerPatient,
+  opdRevisit,
 } from "../../../redux/slices/patientSlice";
 import PatientInfoForm from "./PatientInfoForm";
 import VisitDetailsForm from "./VisitDetailsForm";
@@ -106,6 +107,8 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   const [showBillModal, setShowBillModal] = useState(false);
   const [registeredPatient, setRegisteredPatient] = useState(null);
   const [billData, setBillData] = useState(null);
+
+  const [searchedPatient, setSearchedPatient] = useState(null);
 
   const handleInputChange = useCallback((e) => {
     const { id, value } = e.target;
@@ -211,12 +214,25 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           },
         };
 
-        dispatch(registerPatient(submissionData))
+        // Choose the appropriate action based on whether this is a revisit
+        const sourceData = searchedPatient || patientData;
+        const action = sourceData
+          ? opdRevisit({ 
+              patientId: sourceData._id, 
+              visit: submissionData 
+            })
+          : registerPatient(submissionData);
+
+        dispatch(action)
           .unwrap()
           .then((response) => {
             toast({
-              title: "Patient registered successfully",
-              description: "The new patient has been added.",
+              title: patientData 
+                ? "Patient revisit recorded successfully"
+                : "Patient registered successfully",
+              description: patientData
+                ? "The patient visit has been recorded."
+                : "The new patient has been added.",
               variant: "success",
             });
             
@@ -229,14 +245,16 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           })
           .catch((error) => {
             toast({
-              title: "Failed to register patient",
-              description: error.message || "There was an error registering the patient. Please try again.",
+              title: patientData 
+                ? "Failed to record revisit"
+                : "Failed to register patient",
+              description: error.message || "There was an error. Please try again.",
               variant: "destructive",
             });
           });
       }
     },
-    [formData, validateForm, dispatch, toast, onOpenChange]
+    [formData, validateForm, dispatch, toast, onOpenChange, patientData]
   );
 
   const handleReset = useCallback(() => {
@@ -261,18 +279,20 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [onOpenChange, consultationService]);
 
   useEffect(() => {
-    if (patientData) {
-      setFormData({
-        ...initialFormData,
-        _id: patientData._id,
-        name: patientData.name,
-        age: patientData.age,
-        gender: patientData.gender,
-        contactNumber: patientData.contactNumber,
-        registrationNumber: patientData.registrationNumber,
-      });
+    if (patientData || searchedPatient) {
+      const sourceData = searchedPatient || patientData;
+      setFormData((prev) => ({
+        ...prev,
+        _id: sourceData._id,
+        name: sourceData.name,
+        age: sourceData.age,
+        gender: sourceData.gender,
+        contactNumber: sourceData.contactNumber,
+        registrationNumber: sourceData.registrationNumber,
+        // Add any other fields you want to prefill
+      }));
     }
-  }, [patientData]);
+  }, [patientData, searchedPatient]);
 
   useEffect(() => {
     console.log("open", open);
@@ -323,6 +343,12 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     }
   }, [departments, doctors, handleSelectChange]);
 
+  useEffect(() => {
+    if (!open) {
+      setSearchedPatient(null);
+    }
+  }, [open]);
+
   return (
     <>
       <Dialog
@@ -361,6 +387,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                       handleInputChange={handleInputChange}
                       handleSelectChange={handleSelectChange}
                       errors={errors}
+                      setSearchedPatient={setSearchedPatient}
                     />
                   </div>
 

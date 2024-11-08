@@ -78,6 +78,7 @@ const CreateServiceBill = () => {
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [billData, setBillData] = useState(null);
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
+  const [selectedServices, setSelectedServices] = useState([]);
 
   const calculateTotals = useMemo(() => {
     // Calculate subtotal from current added services
@@ -403,6 +404,24 @@ console.log(existingBillSubtotal)
 
   const isLoading =
     createBillStatus === "loading" || updateBillStatus === "loading";
+
+  const handleSelectAll = (e) => {
+    if (e.target.checked) {
+      setSelectedServices(addedServices.map(service => service.id));
+    } else {
+      setSelectedServices([]);
+    }
+  };
+
+  const handleSelectService = (id) => {
+    setSelectedServices(prev => {
+      if (prev.includes(id)) {
+        return prev.filter(serviceId => serviceId !== id);
+      } else {
+        return [...prev, id];
+      }
+    });
+  };
 
   return (
     <div className="w-full space-y-2">

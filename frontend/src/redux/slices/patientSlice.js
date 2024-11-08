@@ -245,6 +245,61 @@ export const fetchVisitDetails = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new thunk after the other thunks
+export const searchPatients = createLoadingAsyncThunk(
+  "patients/searchPatients",
+  async (searchQuery, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/dashboard/search?q=${searchQuery}`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return { results: data, searchQuery };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+// Add this new thunk for OPD revisit
+export const opdRevisit = createLoadingAsyncThunk(
+  "patients/opdRevisit",
+  async ({ patientId, visit }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/patients/${patientId}/revisit`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(visit),
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -258,6 +313,9 @@ const initialState = {
   error: null,
   visitDetails: null,
   visitDetailsStatus: 'idle',
+  searchResults: [],
+  searchQuery: '',
+  searchStatus: 'idle',
 };
 
 const patientSlice = createSlice({
@@ -417,6 +475,43 @@ const patientSlice = createSlice({
       .addCase(fetchVisitDetails.rejected, (state, action) => {
         state.visitDetailsStatus = 'failed';
         state.visitDetails = null;
+        state.error = action.payload;
+      })
+      .addCase(searchPatients.pending, (state) => {
+        state.searchStatus = 'loading';
+      })
+      .addCase(searchPatients.fulfilled, (state, action) => {
+        state.searchStatus = 'succeeded';
+        state.searchResults = action.payload.results;
+        state.searchQuery = action.payload.searchQuery;
+      })
+      .addCase(searchPatients.rejected, (state, action) => {
+        state.searchStatus = 'failed';
+        state.error = action.payload;
+      })
+      .addCase(opdRevisit.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(opdRevisit.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Update the patient in the patientlist
+        const updatedPatient = action.payload.patient;
+        const index = state.patientlist.findIndex(
+          (patient) => patient._id === updatedPatient._id
+        );
+        if (index !== -1) {
+          state.patientlist[index] = updatedPatient;
+        }
+        // If the updated patient is the currently selected patient, update it as well
+        if (
+          state.selectedPatient &&
+          state.selectedPatient._id === updatedPatient._id
+        ) {
+          state.selectedPatient = updatedPatient;
+        }
+      })
+      .addCase(opdRevisit.rejected, (state, action) => {
+        state.status = "failed";
         state.error = action.payload;
       });
   },
