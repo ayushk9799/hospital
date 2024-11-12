@@ -185,11 +185,11 @@ export default function Patients() {
   });
 
   const handleExistingBills = (patient) => {
+    console.log(patient);
     const billID = patient.bills.services.at(-1);
-    dispatch(setSelectedPatient(patient));
     const bill = bills.find((bill) => bill._id === billID);
+    console.log(bill);
     navigate(`/billings/edit/${billID}`, { state: { billData: bill } });
-    // ;
   };
 
   const createServiceBill = (patient) => {
@@ -321,14 +321,14 @@ export default function Patients() {
                         navigate(`/patients/${patient.patient._id}`)
                       }
                     >
-                      View Details
+                      View/Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleExistingBills(patient)}
                     >
                       Bills
                     </DropdownMenuItem>
-                    
+
                     {type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
@@ -409,18 +409,14 @@ export default function Patients() {
                         navigate(`/patients/${patient.patient._id}`)
                       }
                     >
-                      View Details
+                      View/Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleExistingBills(patient)}
                     >
-                      Existing Bill
+                      Bills
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => createServiceBill(patient)}
-                    >
-                      Create New Bill
-                    </DropdownMenuItem>
+                   
                     {patient.type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
@@ -455,7 +451,9 @@ export default function Patients() {
               </div>
               <div className="flex items-center col-span-2">
                 <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm">{patient.patient.address || "--"}</span>
+                <span className="text-sm">
+                  {patient.patient.address || "--"}
+                </span>
               </div>
               <div className="flex items-center">
                 <User className="h-4 w-4 text-muted-foreground mr-2" />

@@ -261,9 +261,9 @@ export default function OPDProcedure() {
               />
             </div>
             <div className="col-span-full sm:col-span-1 flex items-center justify-center mt-2 sm:mt-0">
-              <Button type="submit" variant="outline" size="sm" className="h-8 w-full sm:w-8 sm:p-0 mr-2">
-                <Plus className="h-4 w-4 sm:inline" />
-                <span className="sm:hidden">Add</span>
+              <Button type="submit" variant="outline" size="sm" className="h-8 w-full sm:w-auto sm:px-3 mr-2">
+                <Plus className="h-4 w-4 mr-2" />
+                <span>Add</span>
               </Button>
               <Button
                 type="button"

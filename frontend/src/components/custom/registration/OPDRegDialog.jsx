@@ -297,7 +297,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   useEffect(() => {
     console.log("open", open);
     if (!open) {
-      console.log("closing");
+      
       setFormData(initialFormData);
       setErrors(initialErrors);
       setTimeout(() => {

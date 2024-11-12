@@ -1235,7 +1235,7 @@ router.post("/visit-details", verifyToken, async (req, res) => {
         .populate("assignedRoom", "roomNumber type");
 
       if (!result) {
-        return res.status(404).json({ error: "Admission not found" });
+        return res.status(404).json({ error: "Admission not found" })
       }
 
       result = {
@@ -1277,5 +1277,102 @@ router.post("/visit-details", verifyToken, async (req, res) => {
 });
 
 // ... remaining code ...
+
+// Get details by registration number
+router.post("/registration-details", verifyToken, async (req, res) => {
+  try {
+    const { registrationNumber, type } = req.body;
+
+    if (!registrationNumber || !type) {
+      return res.status(400).json({ 
+        error: "Both registration number and type (OPD/IPD) are required" 
+      });
+    }
+    const regexPattern = new RegExp(registrationNumber, 'i');
+
+    let result;
+    if (type === "OPD") {
+      result = await Visit.findOne({ registrationNumber:regexPattern })
+        .populate(
+          "patient",
+          "name dateOfBirth gender contactNumber email address bloodType age"
+        )
+        .populate("doctor", "name");
+
+      if (!result) {
+        return res.status(404).json({ error: "Visit not found" });
+      }
+
+      result = {
+        _id: result._id,
+        bookingNumber: result.bookingNumber,
+        patient: result.patient,
+        registrationNumber: result.registrationNumber,
+        bookingDate: result.bookingDate,
+        doctor: result.doctor,
+        reasonForVisit: result.reasonForVisit,
+        status: result.status,
+        comorbidities: result.comorbidities,
+        vitals: result.vitals,
+        diagnosis: result.diagnosis,
+        treatment: result.treatment,
+        medications: result.medications,
+        labTests: result.labTests,
+        timeSlot: result.timeSlot,
+        additionalInstructions: result.additionalInstructions,
+        type: "OPD",
+        createdAt: result.createdAt,
+        bills: result.bills,
+      };
+    } else if (type === "IPD") {
+      result = await IPDAdmission.findOne({ registrationNumber:regexPattern })
+        .populate(
+          "patient",
+          "name dateOfBirth gender contactNumber email address bloodType age"
+        )
+        .populate("assignedDoctor", "name")
+        .populate("assignedRoom", "roomNumber type");
+
+      if (!result) {
+        return res.status(404).json({ error: "Admission not found" });
+      }
+
+      result = {
+        _id: result._id,
+        bookingNumber: result.bookingNumber,
+        patient: result.patient,
+        registrationNumber: result.registrationNumber,
+        bookingDate: result.bookingDate,
+        doctor: result.assignedDoctor,
+        assignedRoom: result.assignedRoom,
+        assignedBed: result.assignedBed,
+        dateDischarged: result.dateDischarged,
+        clinicalSummary: result.clinicalSummary,
+        comorbidities: result.comorbidities,
+        diagnosis: result.diagnosis,
+        status: result.status,
+        labReports: result.labReports,
+        treatment: result.treatment,
+        conditionOnAdmission: result.conditionOnAdmission,
+        conditionOnDischarge: result.conditionOnDischarge,
+        medications: result.medications,
+        additionalInstructions: result.additionalInstructions,
+        labTests: result.labTests,
+        notes: result.notes,
+        timeSlot: result.timeSlot,
+        vitals: result.vitals,
+        type: "IPD",
+        createdAt: result.createdAt,
+        bills: result.bills,
+      };
+    } else {
+      return res.status(400).json({ error: "Invalid type specified" });
+    }
+
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;

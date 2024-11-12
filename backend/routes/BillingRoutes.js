@@ -109,31 +109,32 @@ router.post("/update-bill/:id", async (req, res) => {
 // Get all service bills
 router.get("/get-bills", async (req, res) => {
   try {
-    const bills = await ServicesBill.find()
-      .sort({ createdAt: -1 })
-      .populate("payments")
-      .lean();
-    res.status(200).json(bills);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error });
-  }
-}); 
+    const { startDate, endDate } = req.query;
+    let query = {};
 
-// Get a specific service bill by ID
-router.get("/get-bill/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const bill = await ServicesBill.findById(id).populate("payments").lean();
-
-    if (!bill) {
-      return res.status(404).json({ message: "Bill not found" });
+    // Add date range filter if provided
+    if (startDate && endDate) {
+      query.createdAt = {
+        $gte: new Date(startDate),
+        $lte: new Date(endDate)
+      };
     }
 
-    res.status(200).json(bill);
+    const bills = await ServicesBill.find(query)
+      .sort({ createdAt: -1 })
+      .populate("patient", "name phone")
+      .populate("createdBy", "name")
+      .populate("payments");
+
+    res.json(bills);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error fetching bills:", error);
+    res.status(500).json({ message: "Error fetching bills", error: error.message });
   }
 });
+
+// Get a specific service bill by ID
+
 
 // Create or update a service
 router.post("/service", async (req, res) => {
@@ -332,6 +333,24 @@ router.post("/create-opd-procedure-bill", verifyToken, async (req, res) => {
     res.status(400).json({ message: error.message });
   } finally {
     session.endSession();
+  }
+});
+
+// Add this route handler with your other routes
+router.get('/get-bill/:id', verifyToken, async (req, res) => {
+  try {
+    const bill = await ServicesBill.findById(req.params.id)
+      .populate('patient')
+      .populate('payments')
+      .populate('createdBy');
+      
+    if (!bill) {
+      return res.status(404).json({ message: 'Bill not found' });
+    }
+
+    res.json(bill);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 });
 

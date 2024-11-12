@@ -23,6 +23,7 @@ import {
   PlusCircle,
   Trash2,
   Plus,
+  Search,
 } from "lucide-react";
 import { Calendar } from "../components/ui/calendar";
 import {
@@ -31,8 +32,11 @@ import {
   PopoverTrigger,
 } from "../components/ui/popover";
 import { format } from "date-fns";
-import { fetchVisitDetails } from "../redux/slices/patientSlice.js";
-import {useLocation} from "react-router-dom";
+import {
+  fetchVisitDetails,
+  fetchRegistrationDetails,
+} from "../redux/slices/patientSlice.js";
+import { useLocation } from "react-router-dom";
 import MultiSelectInput from "../components/custom/MultiSelectInput";
 import {
   Select,
@@ -133,22 +137,44 @@ export default function DischargeSummary() {
   const navigate = useNavigate();
   const location = useLocation();
   const [patient, setPatient] = useState(null);
-  
+  console.log(location.state?.patient);
   // Get initial patient from Redux store
   const patientFromStore = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
   );
-console.log(patient);
-  // Fetch patient details if not in store
+
+  console.log(patient);
   useEffect(() => {
     const fetchPatient = async () => {
-      if (!patientFromStore && location.state?.patient) {
+      if (!patientFromStore) {
+        console.log(patientFromStore);
         try {
-          console.log(location.state.patient);
-          const result = await dispatch(
-            fetchVisitDetails({id:location.state.patient.admissionDetails.at(-1)._id,type:"IPD"})
-          ).unwrap();
-          setPatient(result);
+          if (patientId) {
+            const result = await dispatch(
+              fetchVisitDetails({ id: patientId, type: "IPD" })
+            ).unwrap();
+            console.log(result);
+            setPatient(result);
+          } else if (location.state?.patient) {
+            const result = await dispatch(
+              fetchVisitDetails({
+                id: location.state?.patient?.admissionDetails.at(-1)._id,
+                type: "IPD",
+              })
+            ).unwrap();
+            console.log(result);
+            setPatient(result);
+          } else {
+            setPatientInfo({
+              name: "",
+              age: "",
+              gender: "",
+              contactNumber: "",
+              address: "",
+              roomNumber: "",
+              registrationNumber: "",
+            });
+          }
         } catch (error) {
           console.error("Error fetching patient details:", error);
         }
@@ -177,7 +203,7 @@ console.log(patient);
   const [formData, setFormData] = useState({
     admissionDate: "",
     dateDischarged: "",
-    diagnosis: "", // Change this back to a string
+    diagnosis: "",
     clinicalSummary: "",
     treatment: "",
     conditionOnAdmission: "",
@@ -221,6 +247,7 @@ console.log(patient);
     contactNumber: "",
     address: "",
     roomNumber: "",
+    registrationNumber: "",
   });
   useEffect(() => {
     if (patient) {
@@ -273,6 +300,7 @@ console.log(patient);
         contactNumber: patient.patient.contactNumber || "",
         address: patient.patient.address || "",
         roomNumber: patient.assignedRoom?.roomNumber || "",
+        registrationNumber: patient.registrationNumber || "",
       });
     }
   }, [patient]);
@@ -392,7 +420,7 @@ console.log(patient);
     e.preventDefault();
 
     const dischargeData = {
-      patientId: patientId,
+      patientId: patientId || patient._id,
       dateDischarged: formData.dateDischarged,
       conditionOnAdmission: formData.conditionOnAdmission,
       conditionOnDischarge: formData.conditionOnDischarge,
@@ -668,12 +696,12 @@ console.log(patient);
     setFormData((prev) => ({ ...prev, diagnosis: updatedDiagnoses }));
   };
 
-  if (!patient)
-    return (
-      <div className="flex justify-center items-center h-screen">
-        Loading...
-      </div>
-    );
+  // if (!patient)
+  //   return (
+  //     <div className="flex justify-center items-center h-screen">
+  //       Loading...
+  //     </div>
+  //   );
 
   const renderTextArea = (name, label) => (
     <div>
@@ -687,6 +715,37 @@ console.log(patient);
       />
     </div>
   );
+
+  // Add this function to handle registration search
+  const handleRegistrationSearch = async () => {
+    if (!patientInfo.registrationNumber) {
+      toast({
+        title: "Error",
+        description: "Please enter a registration number",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const result = await dispatch(
+        fetchRegistrationDetails({
+          registrationNumber: patientInfo.registrationNumber,
+          type: "IPD",
+        })
+      ).unwrap();
+
+      if (result) {
+        setPatient(result);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch patient details",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <div className="container mx-auto py-4 px-2 sm:px-4 max-w-5xl">
@@ -712,29 +771,56 @@ console.log(patient);
                   className="h-8"
                 />
               </div>
-              <div className="flex items-center">
-                <Label htmlFor="age" className="w-24 font-bold">
-                  Age:
-                </Label>
-                <Input
-                  id="age"
-                  name="age"
-                  value={patientInfo.age}
-                  onChange={handlePatientInfoChange}
-                  className="h-8"
-                />
+              <div className="flex items-center gap-2">
+                <div className="flex items-center flex-1">
+                  <Label htmlFor="age" className="w-12 font-bold">
+                    Age:
+                  </Label>
+                  <Input
+                    id="age"
+                    name="age"
+                    value={patientInfo.age}
+                    onChange={handlePatientInfoChange}
+                    className="h-8"
+                  />
+                </div>
+                <div className="flex items-center flex-1">
+                  <Label htmlFor="gender" className="w-16 font-bold">
+                    Gender:
+                  </Label>
+                  <Input
+                    id="gender"
+                    name="gender"
+                    value={patientInfo.gender}
+                    onChange={handlePatientInfoChange}
+                    className="h-8"
+                  />
+                </div>
               </div>
               <div className="flex items-center">
-                <Label htmlFor="gender" className="w-24 font-bold">
-                  Gender:
+                <Label htmlFor="registrationNumber" className="w-24 font-bold">
+                  Registration Number:
                 </Label>
-                <Input
-                  id="gender"
-                  name="gender"
-                  value={patientInfo.gender}
-                  onChange={handlePatientInfoChange}
-                  className="h-8"
-                />
+                <div className="relative flex-1">
+                  <Input
+                    id="registrationNumber"
+                    name="registrationNumber"
+                    value={patientInfo.registrationNumber}
+                    onChange={handlePatientInfoChange}
+                    className="h-8 pr-8"
+                  />
+                  {(!patient || !patientInfo.name) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleRegistrationSearch}
+                      className="h-8 w-8 absolute right-0 top-0"
+                    >
+                      <Search className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
               <div className="flex items-center">
                 <Label htmlFor="contactNumber" className="w-24 font-bold">

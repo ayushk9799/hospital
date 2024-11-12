@@ -13,12 +13,39 @@ import HospitalHeader from "../../../utils/print/HospitalHeader";
 import { AlertCircle } from 'lucide-react';
 import { useMediaQuery } from '../../../hooks/useMediaQuery';
 import { ScrollArea } from "../../ui/scroll-area";
+import { Checkbox } from "../../ui/checkbox";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery('(max-width: 640px)');
+  const [selectedServices, setSelectedServices] = useState([]);
  console.log(billData)
+
+  React.useEffect(() => {
+    if (billData?.services) {
+      setSelectedServices(billData.services.map((_, index) => index));
+    }
+  }, [billData]);
+
+  const toggleAllServices = (checked) => {
+    if (checked) {
+      setSelectedServices(services.map((_, index) => index));
+    } else {
+      setSelectedServices([]);
+    }
+  };
+
+  const toggleService = (index, checked) => {
+    setSelectedServices(prev => {
+      if (checked) {
+        return [...prev, index];
+      } else {
+        return prev.filter(i => i !== index);
+      }
+    });
+  };
+
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
@@ -63,6 +90,15 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
     return bill.amountPaid === bill.totalAmount ? "Paid" : "Due";
   }
 
+  const calculateSelectedTotals = () => {
+    return services.reduce((acc, service, index) => {
+      if (selectedServices.includes(index)) {
+        acc.subTotal += (service.quantity || 0) * (service.rate || 0);
+      }
+      return acc;
+    }, { subTotal: 0 });
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent onOpenChange={setIsOpen} className="max-w-3xl max-h-[90vh] overflow-visible rounded-lg">
@@ -104,7 +140,13 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                   <Table className="border-2 border-gray-200">
                     <TableHeader>
                       <TableRow className="border-b border-gray-200 bg-gray-200">
-                        <TableHead className="border-r border-gray-300 w-16">S.No</TableHead>
+                        <TableHead className="border-r border-gray-300 w-16 no-print">
+                          <Checkbox 
+                            checked={selectedServices.length === services.length}
+                            onCheckedChange={toggleAllServices}
+                          />
+                        </TableHead>
+                        <TableHead className="border-r border-gray-300 w-16 hidden print:table-cell">No.</TableHead>
                         <TableHead className="border-r border-gray-300 w-1/2">Service Name</TableHead>
                         <TableHead className="border-r border-gray-300 w-24">Quantity</TableHead>
                         <TableHead className="border-r border-gray-300 w-24">Price (INR)</TableHead>
@@ -113,8 +155,21 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                     </TableHeader>
                     <TableBody>
                       {services.map((service, index) => (
-                        <TableRow key={index} className="border-b border-gray-200">
-                          <TableCell className="border-r border-gray-200">{index + 1}</TableCell>
+                        <TableRow 
+                          key={index} 
+                          className={`border-b border-gray-200 ${
+                            !selectedServices.includes(index) && isPrinting ? 'hidden' : ''
+                          }`}
+                        >
+                          <TableCell className="border-r border-gray-200 no-print">
+                            <Checkbox 
+                              checked={selectedServices.includes(index)}
+                              onCheckedChange={(checked) => toggleService(index, checked)}
+                            />
+                          </TableCell>
+                          <TableCell className="border-r border-gray-200 hidden print:table-cell">
+                            {selectedServices.includes(index) ? selectedServices.indexOf(index) + 1 : ''}
+                          </TableCell>
                           <TableCell className="border-r border-gray-200">{service.name || 'N/A'}</TableCell>
                           <TableCell className="border-r border-gray-200">{service.quantity || 0}</TableCell>
                           <TableCell className="border-r border-gray-200">{(service.rate || 0).toFixed(2)}</TableCell>
@@ -127,7 +182,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                 <div className="flex flex-col items-end space-y-0.5 mt-1 ">
                   <div className="flex justify-end w-48 items-center text-sm">
                     <span className="text-gray-600 mr-3">Sub Total:</span>
-                    <span>₹{((billData.totalAmount || 0) + (billData.additionalDiscount || 0)).toFixed(2)}</span>
+                    <span>₹{calculateSelectedTotals().subTotal.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-end w-48 items-center text-sm">
                     <span className="text-gray-600 mr-3">Discount:</span>
@@ -135,7 +190,9 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                   </div>
                   <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
                     <span className="font-medium mr-3">Net Total:</span>
-                    <span className="font-medium">₹{(billData.totalAmount || 0).toFixed(2)}</span>
+                    <span className="font-medium">
+                      ₹{(calculateSelectedTotals().subTotal - (billData.additionalDiscount || 0)).toFixed(2)}
+                    </span>
                   </div>
                   <div className="flex justify-end w-48 items-center text-sm">
                     <span className="text-gray-600 mr-3">Paid:</span>

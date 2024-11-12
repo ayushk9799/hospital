@@ -9,6 +9,7 @@ import {
   startOfDay,
   endOfDay,
   startOfWeek,
+  addDays,
 } from "date-fns";
 import {
   Table,
@@ -72,7 +73,7 @@ const Billings = () => {
   const { bills, billsStatus } = useSelector((state) => state.bills);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
-  const [dateFilter, setDateFilter] = useState("All");
+  const [dateFilter, setDateFilter] = useState("Today");
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [selectedBill, setSelectedBill] = useState(null);
@@ -90,15 +91,22 @@ const Billings = () => {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
   useEffect(() => {
-    if (billsStatus === "idle") dispatch(fetchBills());
+    if (billsStatus === "idle") {
+      const today = new Date();
+      const dateRangeParams = {
+        startDate: format(today, "yyyy-MM-dd"),
+        endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+      };
+      dispatch(fetchBills({ dateRange: dateRangeParams }));
+    }
   }, [dispatch, billsStatus]);
 
   useEffect(() => {
     if (location.state?.searchPatientId) {
-      setSearchTerm(location.state.patientName || '');
-      
-      const patientBills = bills.filter(bill => 
-        bill.patientInfo._id === location.state.searchPatientId
+      setSearchTerm(location.state.patientName || "");
+
+      const patientBills = bills.filter(
+        (bill) => bill.patientInfo._id === location.state.searchPatientId
       );
 
       if (patientBills.length > 0) {
@@ -106,6 +114,45 @@ const Billings = () => {
       }
     }
   }, [location.state, bills]);
+
+  useEffect(() => {
+    const getDateRange = () => {
+      const today = new Date();
+      switch (dateFilter) {
+        case "Today":
+          return {
+            startDate: format(today, "yyyy-MM-dd"),
+            endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+          };
+        case "Yesterday":
+          return {
+            startDate: format(subDays(today, 1), "yyyy-MM-dd"),
+            endDate: format(today, "yyyy-MM-dd"),
+          };
+        case "This Week":
+          return {
+            startDate: format(subDays(today, 7), "yyyy-MM-dd"),
+            endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+          };
+        case "Custom":
+          if (dateRange.from && dateRange.to) {
+            return {
+              startDate: format(dateRange.from, "yyyy-MM-dd"),
+              endDate: format(addDays(dateRange.to, 1), "yyyy-MM-dd"),
+            };
+          }
+          return null;
+        case "All":
+        default:
+          return null;
+      }
+    };
+
+    if (dateFilter !== "Custom" || (dateFilter === "Custom" && dateRange.from && dateRange.to)) {
+      const dateRangeParams = getDateRange();
+      dispatch(fetchBills({ dateRange: dateRangeParams }));
+    }
+  }, [dateFilter, dateRange, dispatch]);
 
   const getBillStatus = (bill) => {
     if (bill.amountPaid === bill.totalAmount) return "Paid";
@@ -184,13 +231,22 @@ const Billings = () => {
   };
 
   const handleDateRangeSearch = () => {
-    setDateRange(tempDateRange);
-    setDateFilter("Custom");
+    if (tempDateRange.from && tempDateRange.to) {
+      setDateRange(tempDateRange);
+      setDateFilter("Custom");
+    }
   };
 
   const handleDateRangeCancel = () => {
     setTempDateRange({ from: null, to: null });
-    setDateFilter("All");
+    setDateRange({ from: null, to: null });
+    setDateFilter("Today");
+    const today = new Date();
+    const dateRangeParams = {
+      startDate: format(today, "yyyy-MM-dd"),
+      endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+    };
+    dispatch(fetchBills({ dateRange: dateRangeParams }));
   };
 
   const handleViewBill = (bill) => {
@@ -243,7 +299,15 @@ const Billings = () => {
   };
 
   const BillCard = ({ bill }) => (
-    <Card className="mb-4 hover:shadow-md transition-shadow">
+    <Card 
+      className="mb-4 hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
+      onClick={(e) => {
+        // Prevent opening modal if clicking on dropdown menu
+        if (!e.target.closest('.dropdown-trigger')) {
+          handleViewBill(bill);
+        }
+      }}
+    >
       <CardContent className="p-4">
         <div className="flex justify-between items-stretch">
           <div className="flex-grow">
@@ -282,13 +346,17 @@ const Billings = () => {
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-8 w-8 p-0 dropdown-trigger"
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => handleViewBill(bill)}>
-                    View Details
+                    Print Bill
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => handleEditBill(bill)}>
                     Edit Bill
@@ -442,7 +510,7 @@ const Billings = () => {
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="w-full">
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {dateFilter === "All" ? "All Time" : dateFilter}
+                            {dateFilter === "Today" ? "Today" : dateFilter}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
@@ -551,7 +619,7 @@ const Billings = () => {
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateFilter === "All" ? "All Time" : dateFilter}
+                      {dateFilter === "Today" ? "Today" : dateFilter}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="start" className="w-[200px]">
@@ -560,14 +628,10 @@ const Billings = () => {
                     <DropdownMenuItem onSelect={() => setDateFilter("Today")}>
                       Today
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setDateFilter("Yesterday")}
-                    >
+                    <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>
                       Yesterday
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onSelect={() => setDateFilter("This Week")}
-                    >
+                    <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>
                       This Week
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setDateFilter("All")}>
@@ -637,7 +701,16 @@ const Billings = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredBills.map((bill) => (
-                    <TableRow key={bill._id}>
+                    <TableRow 
+                      key={bill._id}
+                      className="cursor-pointer hover:bg-blue-50 transition-colors duration-200"
+                      onClick={(e) => {
+                        // Prevent opening modal if clicking on dropdown menu
+                        if (!e.target.closest('.dropdown-trigger')) {
+                          handleViewBill(bill);
+                        }
+                      }}
+                    >
                       <TableCell>B{bill._id.slice(-6)}</TableCell>
                       <TableCell>{bill.patientInfo.name}</TableCell>
                       <TableCell>{bill.patientInfo.phone}</TableCell>
@@ -674,7 +747,7 @@ const Billings = () => {
                           }
                         >
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
+                            <Button variant="ghost" className="h-8 w-8 p-0 dropdown-trigger">
                               <ChevronDown className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -682,7 +755,7 @@ const Billings = () => {
                             <DropdownMenuItem
                               onClick={() => handleViewBill(bill)}
                             >
-                              View Details
+                              Print Bill
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleEditBill(bill)}

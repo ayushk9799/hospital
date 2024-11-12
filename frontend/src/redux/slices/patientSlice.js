@@ -237,6 +237,7 @@ export const fetchVisitDetails = createLoadingAsyncThunk(
       }
 
       const data = await response.json();
+      console.log(data)
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -300,6 +301,32 @@ export const opdRevisit = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new thunk for fetching registration details
+export const fetchRegistrationDetails = createLoadingAsyncThunk(
+  "patients/fetchRegistrationDetails",
+  async ({ registrationNumber, type }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/registration-details`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ registrationNumber, type })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -316,6 +343,8 @@ const initialState = {
   searchResults: [],
   searchQuery: '',
   searchStatus: 'idle',
+  registrationDetails: null,
+  registrationDetailsStatus: 'idle',
 };
 
 const patientSlice = createSlice({
@@ -513,6 +542,19 @@ const patientSlice = createSlice({
       .addCase(opdRevisit.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
+      })
+      .addCase(fetchRegistrationDetails.pending, (state) => {
+        state.registrationDetailsStatus = 'loading';
+        state.registrationDetails = null;
+      })
+      .addCase(fetchRegistrationDetails.fulfilled, (state, action) => {
+        state.registrationDetailsStatus = 'succeeded';
+        state.registrationDetails = action.payload;
+      })
+      .addCase(fetchRegistrationDetails.rejected, (state, action) => {
+        state.registrationDetailsStatus = 'failed';
+        state.registrationDetails = null;
+        state.error = action.payload;
       });
   },
 });
@@ -532,6 +574,11 @@ export const selectPatientDetails = createSelector(
 export const selectVisitDetails = createSelector(
   [(state) => state.patients.visitDetails, (state) => state.patients.visitDetailsStatus],
   (visitDetails, status) => ({ visitDetails, status })
+);
+
+export const selectRegistrationDetails = createSelector(
+  [(state) => state.patients.registrationDetails, (state) => state.patients.registrationDetailsStatus],
+  (registrationDetails, status) => ({ registrationDetails, status })
 );
 
 export default patientSlice.reducer;

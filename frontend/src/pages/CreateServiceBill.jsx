@@ -37,6 +37,7 @@ import {
   createBill,
   setCreateBillStatusIdle,
   updateBill,
+  fetchBillById,
 } from "../redux/slices/BillingSlice";
 import { useToast } from "../hooks/use-toast";
 import { setSelectedPatientForBill } from "../redux/slices/patientSlice";
@@ -46,7 +47,14 @@ import { format } from "date-fns";
 import { ScrollArea } from "../components/ui/scroll-area";
 import OPDBillTokenModal from "../components/custom/registration/OPDBillTokenModal";
 import ViewBillDialog from "../components/custom/billing/ViewBillDialog";
-import { ConsoleLogEntry } from "selenium-webdriver/bidi/logEntries";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
 
 const CreateServiceBill = () => {
   const dispatch = useDispatch();
@@ -55,10 +63,9 @@ const CreateServiceBill = () => {
   const location = useLocation();
   const { toast } = useToast();
 
-  const selectedPatient = useSelector(
-    (state) => state.patients.selectedPatient
-  );
-  const patientDetails = selectedPatient?.patient;
+  const [billPatientDetails, setBillPatientDetails] = useState(null);
+
+  const patientDetails = billPatientDetails;
   const { services, servicesStatus } = useSelector((state) => state.services);
   const createBillStatus = useSelector((state) => state.bills.createBillStatus);
   const updateBillStatus = useSelector((state) => state.bills.updateBillStatus);
@@ -81,17 +88,11 @@ const CreateServiceBill = () => {
   const [selectedServices, setSelectedServices] = useState([]);
 
   const calculateTotals = useMemo(() => {
-    // Calculate subtotal from current added services
-    const currentServicesSubtotal = addedServices.reduce(
+    // Calculate total from all services (both existing and newly added)
+    const subtotal = addedServices.reduce(
       (sum, service) => sum + service.total,
       0
     );
-
-    // Get existing bill subtotal if editing
-    const existingBillSubtotal = location.state?.billData?.subtotal || 0;
-console.log(existingBillSubtotal)
-    // Combine subtotals
-    const subtotal = currentServicesSubtotal + existingBillSubtotal;
 
     let discountValue = 0;
 
@@ -103,43 +104,83 @@ console.log(existingBillSubtotal)
       }
     }
 
-    const discountedSubtotal = Math.max(subtotal - discountValue, 0);
-    const totalAmount = discountedSubtotal;
+    // Ensure discount doesn't exceed subtotal
+    discountValue = Math.min(discountValue, subtotal);
+
+    const totalAmount = subtotal - discountValue;
 
     return {
       subtotal,
       additionalDiscount: discountValue.toFixed(2),
-      totalAmount: totalAmount,
-      existingBillSubtotal,
-      currentServicesSubtotal
+      totalAmount,
+      currentServicesSubtotal: subtotal, // This is now the same as subtotal since we're not separating them
     };
-  }, [addedServices, additionalDiscount, additionalDiscountType, location.state?.billData]);
+  }, [addedServices, additionalDiscount, additionalDiscountType]);
 
   useEffect(() => {
     if (servicesStatus === "idle") dispatch(fetchServices());
   }, [dispatch, servicesStatus]);
 
   useEffect(() => {
-    if (billId && location.state?.billData) {
+    if (billId) {
+      dispatch(fetchBillById(billId))
+        .unwrap()
+        .then((billData) => {
+          setIsEditing(true);
+          
+          const services = billData.services.map((service, index) => ({
+            id: index + 1,
+            service: service.name,
+            category: service.category,
+            quantity: service.quantity,
+            rate: service.rate,
+            total: service.rate * service.quantity,
+            isExisting: true,
+          }));
+
+          setAddedServices(services);
+          setSelectedServices(services.map((service) => service.id));
+          setAdditionalDiscount(billData.additionalDiscount || "");
+          
+          setBillPatientDetails({
+            _id: billData.patient._id,
+            name: billData.patientInfo.name,
+            contactNumber: billData.patientInfo.phone,
+            registrationNumber: billData.patient.registrationNumber,
+            age: billData.patient.age,
+            gender: billData.patient.gender,
+            address: billData.patient.address,
+            bloodGroup: billData.patient.bloodGroup,
+            type: billData.patientType
+          });
+        })
+        .catch((error) => {
+          toast({
+            title: "Error fetching bill",
+            description: "Could not load the bill details. Please try again.",
+            variant: "destructive",
+          });
+          navigate("/billings");
+        });
+    } else if (location.state?.billData) {
+      let billData = location.state.billData;
       setIsEditing(true);
-      const billData = location.state.billData;
       
-      // Populate form with bill data
-      setAddedServices(
-        billData.services.map((service, index) => ({
-          id: index + 1,
-          service: service.name,
-          category: service.category,
-          quantity: service.quantity,
-          rate: service.rate,
-          total: service.rate * service.quantity,
-          isExisting: true // Flag to identify existing services
-        }))
-      );
+      const services = billData.services.map((service, index) => ({
+        id: index + 1,
+        service: service.name,
+        category: service.category,
+        quantity: service.quantity,
+        rate: service.rate,
+        total: service.rate * service.quantity,
+        isExisting: true,
+      }));
+
+      setAddedServices(services);
+      setSelectedServices(services.map((service) => service.id));
       setAdditionalDiscount(billData.additionalDiscount || "");
-      dispatch(setSelectedPatientForBill(billData.patient));
     }
-  }, [billId, location.state]);
+  }, [billId, dispatch, location.state, navigate, toast]);
 
   useEffect(() => {
     if (createBillStatus === "succeeded") {
@@ -148,27 +189,27 @@ console.log(existingBillSubtotal)
         title: "Bill created successfully",
         description: "The bill has been successfully created.",
       });
-      
+
       // If patient type is OPD, show print modal
-      if (selectedPatient?.type === "OPD") {
+      if (patientDetails?.type === "OPD") {
         setBillData({
           patient: patientDetails,
           bill: {
-            _id: Date.now().toString(), // Temporary ID until you get the actual bill ID
-            services: addedServices.map(service => ({
+            _id: Date.now().toString(),
+            services: addedServices.map((service) => ({
               name: service.service,
               quantity: service.quantity,
-              rate: service.rate
+              rate: service.rate,
             })),
             createdAt: new Date(),
             subtotal: calculateTotals.subtotal,
             additionalDiscount: calculateTotals.additionalDiscount,
             totalAmount: calculateTotals.totalAmount,
-            amountPaid: calculateTotals.totalAmount // Assuming full payment
+            amountPaid: calculateTotals.totalAmount,
           },
           payment: {
-            paymentMethod: "Cash" // You might want to add payment method selection
-          }
+            paymentMethod: "Cash",
+          },
         });
         setIsPrintModalOpen(true);
       }
@@ -183,7 +224,7 @@ console.log(existingBillSubtotal)
       });
       dispatch(setCreateBillStatusIdle());
     }
-  }, [createBillStatus, dispatch, toast, navigate]);
+  }, [createBillStatus, dispatch, toast, navigate, patientDetails, addedServices, calculateTotals]);
 
   useEffect(() => {
     if (updateBillStatus === "succeeded") {
@@ -193,7 +234,7 @@ console.log(existingBillSubtotal)
         description: "The bill has been successfully updated.",
       });
       dispatch(setCreateBillStatusIdle());
-      navigate("/billings");
+      handlePrintBill();
     } else if (updateBillStatus === "failed") {
       toast({
         title: "Error updating bill",
@@ -202,7 +243,7 @@ console.log(existingBillSubtotal)
       });
       dispatch(setCreateBillStatusIdle());
     }
-  }, [updateBillStatus, dispatch, toast, navigate]);
+  }, [updateBillStatus, dispatch, toast]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -239,6 +280,8 @@ console.log(existingBillSubtotal)
     };
 
     setAddedServices((prev) => [...prev, newServiceWithoutDiscount]);
+    setSelectedServices((prev) => [...prev, newServiceWithoutDiscount.id]);
+
     setNewService({
       serviceName: "",
       quantity: "",
@@ -251,6 +294,7 @@ console.log(existingBillSubtotal)
 
   const handleRemoveService = (id) => {
     setAddedServices((prev) => prev.filter((service) => service.id !== id));
+    setSelectedServices((prev) => prev.filter((serviceId) => serviceId !== id));
   };
 
   const handleServiceSuggestionSelect = (suggestion) => {
@@ -269,8 +313,7 @@ console.log(existingBillSubtotal)
     if (addedServices.length === 0) {
       toast({
         title: "No services added",
-        description:
-          "Please add at least one service before creating the bill.",
+        description: "Please add at least one service before creating the bill.",
         variant: "destructive",
       });
       return;
@@ -278,7 +321,6 @@ console.log(existingBillSubtotal)
 
     let additionalDiscountAmount = parseFloat(additionalDiscount) || 0;
 
-    // Convert percentage to amount if necessary
     if (additionalDiscountType === "percentage") {
       additionalDiscountAmount =
         (additionalDiscountAmount / 100) * calculateTotals.subtotal;
@@ -291,22 +333,20 @@ console.log(existingBillSubtotal)
         rate: service.rate,
         discount: service.discAmt,
         category: service.category,
-        isExisting: service.isExisting || false
+        isExisting: service.isExisting || false,
       })),
-      patient: selectedPatient.patient._id,
-      patientType: selectedPatient.type,
+      patient: patientDetails._id,
+      patientType: patientDetails.type,
       patientInfo: {
-        name: selectedPatient.patient.name,
-        phone: selectedPatient.patient.contactNumber,
+        name: patientDetails.name,
+        phone: patientDetails.contactNumber,
       },
       totals: {
         totalAmount: calculateTotals.totalAmount,
         subtotal: calculateTotals.subtotal,
         additionalDiscount: additionalDiscountAmount,
-        existingBillSubtotal: calculateTotals.existingBillSubtotal,
-        currentServicesSubtotal: calculateTotals.currentServicesSubtotal
+        currentServicesSubtotal: calculateTotals.currentServicesSubtotal,
       },
-      visitID: selectedPatient?._id,
     };
 
     if (isEditing) {
@@ -332,6 +372,7 @@ console.log(existingBillSubtotal)
     setServiceName("");
     setAdditionalDiscount("");
     setAdditionalDiscountType("amount");
+    setSelectedServices([]);
   };
 
   const handleEditService = (id) => {
@@ -350,41 +391,54 @@ console.log(existingBillSubtotal)
   };
 
   const handlePrintBill = () => {
-    // Common bill data
+    // Filter services based on selection
+    const selectedServicesList = addedServices.filter((service) =>
+      selectedServices.includes(service.id)
+    );
+
+    // Calculate totals for selected services only
+    const selectedServicesTotal = selectedServicesList.reduce(
+      (sum, service) => sum + service.total,
+      0
+    );
+
+    // Common bill data with filtered services
     const commonBillData = {
       _id: Date.now().toString(),
-      services: addedServices.map(service => ({
+      services: selectedServicesList.map((service) => ({
         name: service.service,
         quantity: service.quantity,
-        rate: Number(service.rate)
+        rate: Number(service.rate),
       })),
       createdAt: new Date(),
-      totalAmount: Number(calculateTotals.totalAmount),
+      totalAmount: Number(selectedServicesTotal),
       additionalDiscount: Number(calculateTotals.additionalDiscount || 0),
-      amountPaid: Number(calculateTotals.totalAmount),
-      payments: [{
-        amount: Number(calculateTotals.totalAmount),
-        paymentMethod: "Cash",
-        createdAt: new Date()
-      }]
+      amountPaid: Number(selectedServicesTotal),
+      payments: [
+        {
+          amount: Number(selectedServicesTotal),
+          paymentMethod: "Cash",
+          createdAt: new Date(),
+        },
+      ],
     };
 
-    if (selectedPatient?.type === "OPD") {
+    if (patientDetails?.type === "OPD") {
       // Format for OPDBillTokenModal
       const opdBillData = {
         patient: {
           name: patientDetails?.name,
           age: patientDetails?.age,
           gender: patientDetails?.gender,
-          contactNumber: patientDetails?.contactNumber
+          contactNumber: patientDetails?.contactNumber,
         },
         bill: {
           ...commonBillData,
-          subtotal: calculateTotals.subtotal
+          subtotal: selectedServicesTotal,
         },
         payment: {
-          paymentMethod: "Cash"
-        }
+          paymentMethod: "Cash",
+        },
       };
       setBillData(opdBillData);
       setIsPrintModalOpen(true);
@@ -393,9 +447,9 @@ console.log(existingBillSubtotal)
       const viewBillData = {
         ...commonBillData,
         patientInfo: {
-          name: patientDetails?.name
+          name: patientDetails?.name,
         },
-        subtotal: calculateTotals.subtotal
+        subtotal: selectedServicesTotal,
       };
       setBillData(viewBillData);
       setIsViewBillDialogOpen(true);
@@ -407,16 +461,16 @@ console.log(existingBillSubtotal)
 
   const handleSelectAll = (e) => {
     if (e.target.checked) {
-      setSelectedServices(addedServices.map(service => service.id));
+      setSelectedServices(addedServices.map((service) => service.id));
     } else {
       setSelectedServices([]);
     }
   };
 
   const handleSelectService = (id) => {
-    setSelectedServices(prev => {
+    setSelectedServices((prev) => {
       if (prev.includes(id)) {
-        return prev.filter(serviceId => serviceId !== id);
+        return prev.filter((serviceId) => serviceId !== id);
       } else {
         return [...prev, id];
       }
@@ -424,9 +478,9 @@ console.log(existingBillSubtotal)
   };
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-2 max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
       <div
-        className="flex items-center cursor-pointer"
+        className="flex items-center cursor-pointer mb-2"
         onClick={() => navigate(-1)}
       >
         <ArrowLeft className="mr-2" />
@@ -436,33 +490,38 @@ console.log(existingBillSubtotal)
       </div>
 
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-2">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center mb-4 md:mb-0">
-              <Avatar className="h-12 w-12 mr-4">
+            <div className="flex items-center mb-2 md:mb-0">
+              <Avatar className="h-10 w-10 mr-3">
                 <AvatarImage
                   src={`https://api.dicebear.com/6.x/initials/svg?seed=${patientDetails?.name}`}
                   alt={patientDetails?.name}
                 />
-                <AvatarFallback>{patientDetails?.name?.charAt(0)}</AvatarFallback>
+                <AvatarFallback>
+                  {patientDetails?.name?.charAt(0)}
+                </AvatarFallback>
               </Avatar>
               <div>
                 <h2 className="font-semibold">{patientDetails?.name}</h2>
-                <div className="flex flex-wrap gap-2 mt-1">
+                <div className="flex flex-wrap gap-1 mt-0.5">
                   <Badge variant="outline">{patientDetails?.gender}</Badge>
                   <Badge variant="outline">{patientDetails?.age} yrs</Badge>
                   {patientDetails?.bloodGroup && (
                     <Badge variant="outline">{patientDetails.bloodGroup}</Badge>
                   )}
+                  {patientDetails?.registrationNumber && (
+                    <Badge variant="outline">Reg: {patientDetails.registrationNumber}</Badge>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
               <div className="flex items-center gap-2">
                 <CalendarDays className="w-4 h-4 text-gray-400" />
                 <span>
-                  {selectedPatient?.bookingDate
-                    ? format(selectedPatient?.bookingDate, "MMM dd, hh:mm a")
+                  {patientDetails?.bookingDate
+                    ? format(patientDetails?.bookingDate, "MMM dd, hh:mm a")
                     : "N/A"}
                 </span>
               </div>
@@ -470,12 +529,7 @@ console.log(existingBillSubtotal)
                 <Phone className="w-4 h-4 text-gray-400" />
                 <span>{patientDetails?.contactNumber}</span>
               </div>
-              {selectedPatient?.registrationNumber && (
-                <div className="flex items-center gap-2">
-                  <Mail className="w-4 h-4 text-gray-400" />
-                  <span>Reg:{selectedPatient?.registrationNumber}</span>
-                </div>
-              )}
+             
               {patientDetails?.address && (
                 <div className="flex items-center gap-2">
                   <MapPin className="w-4 h-4 text-gray-400" />
@@ -488,10 +542,10 @@ console.log(existingBillSubtotal)
       </Card>
 
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-3">
           <form
             onSubmit={handleAddService}
-            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 items-end mb-4"
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 items-end mb-2"
           >
             <div className="col-span-full sm:col-span-1 md:col-span-2">
               <Label htmlFor="serviceName">Service Name</Label>
@@ -506,7 +560,9 @@ console.log(existingBillSubtotal)
             <div className="col-span-full sm:col-span-1 md:col-span-3 lg:col-span-3">
               <div className="grid grid-cols-3 gap-2">
                 <div className="col-span-1">
-                  <Label htmlFor="quantity" className="hidden sm:block">Quantity *</Label>
+                  <Label htmlFor="quantity" className="hidden sm:block">
+                    Quantity *
+                  </Label>
                   <Input
                     type="number"
                     id="quantity"
@@ -519,7 +575,9 @@ console.log(existingBillSubtotal)
                   />
                 </div>
                 <div className="col-span-1">
-                  <Label htmlFor="rate" className="hidden sm:block">Rate</Label>
+                  <Label htmlFor="rate" className="hidden sm:block">
+                    Rate
+                  </Label>
                   <Input
                     type="number"
                     id="rate"
@@ -531,7 +589,9 @@ console.log(existingBillSubtotal)
                   />
                 </div>
                 <div className="col-span-1">
-                  <Label htmlFor="total" className="hidden sm:block">Total *</Label>
+                  <Label htmlFor="total" className="hidden sm:block">
+                    Total *
+                  </Label>
                   <Input
                     type="number"
                     id="total"
@@ -550,10 +610,10 @@ console.log(existingBillSubtotal)
                 type="submit"
                 variant="outline"
                 size="sm"
-                className="h-8 w-full sm:w-8 sm:p-0 mr-2"
+                className="h-8 w-full sm:w-auto sm:px-3 mr-2 flex items-center justify-center"
               >
-                <Plus className="h-4 w-4 sm:inline" />
-                <span className="sm:hidden">Add</span>
+                <Plus className="h-4 w-4 mr-2" />
+                <span>Add</span>
               </Button>
               <Button
                 type="button"
@@ -576,55 +636,57 @@ console.log(existingBillSubtotal)
             </div>
           </form>
           <Separator className="my-2" />
-          <h3 className="font-semibold text-lg mb-2">Added Services</h3>
-          {addedServices.length > 0 ? (
-            <div className="sm:hidden">
-              {addedServices.map((service, index) => (
-                <Card key={service.id} className="mb-2">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold">{service.service}</span>
-                      <div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 mr-2"
-                          onClick={() => handleEditService(service.id)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleRemoveService(service.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+          <h3 className="font-semibold text-lg mb-1">Added Services</h3>
+          <div className="sm:hidden space-y-1">
+            {addedServices.map((service) => (
+              <Card key={service.id} className="mb-1">
+                <CardContent className="p-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">{service.service}</span>
+                    <div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 mr-2"
+                        onClick={() => handleEditService(service.id)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleRemoveService(service.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>Category: {service.category}</div>
-                      <div>Quantity: {service.quantity}</div>
-                      <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
-                      <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : (
-            <div className="flex md:hidden flex-col items-center justify-center h-[200px] text-gray-500">
-              <AlertCircle className="w-12 h-12 mb-2" />
-              <p>No services added yet. Please add a service above.</p>
-            </div>
-          )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>Category: {service.category}</div>
+                    <div>Quantity: {service.quantity}</div>
+                    <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
+                    <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
           <div className="hidden sm:block">
-            <ScrollArea className="h-[300px] w-full">
+            <ScrollArea className="h-[250px] w-full">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50px]">#</TableHead>
+                    <TableHead className="w-[50px]">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        checked={
+                          selectedServices.length === addedServices.length
+                        }
+                        onChange={handleSelectAll}
+                      />
+                    </TableHead>
                     <TableHead>Service</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead>Quantity</TableHead>
@@ -634,9 +696,16 @@ console.log(existingBillSubtotal)
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {addedServices.map((service, index) => (
+                  {addedServices.map((service) => (
                     <TableRow key={service.id}>
-                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4"
+                          checked={selectedServices.includes(service.id)}
+                          onChange={() => handleSelectService(service.id)}
+                        />
+                      </TableCell>
                       <TableCell>{service.service}</TableCell>
                       <TableCell>{service.category}</TableCell>
                       <TableCell>{service.quantity}</TableCell>
@@ -676,9 +745,9 @@ console.log(existingBillSubtotal)
       </Card>
 
       <Card>
-        <CardContent className="p-4">
+        <CardContent className="p-3">
           <div className="flex md:flex-row justify-between items-start md:items-center">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-4 md:mb-0">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 mb-2 md:mb-0">
               <Label htmlFor="additionalDiscountType">
                 Additional Discount:
               </Label>
@@ -699,26 +768,24 @@ console.log(existingBillSubtotal)
                 <Input
                   id="additionalDiscount"
                   type="text"
-                  placeholder={additionalDiscountType === "amount" ? "0.00" : "0%"}
+                  placeholder={
+                    additionalDiscountType === "amount" ? "0.00" : "0%"
+                  }
                   value={additionalDiscount}
                   onChange={(e) => setAdditionalDiscount(e.target.value)}
                   className="w-24"
                 />
               </div>
             </div>
-            <div className="flex flex-col items-start md:items-end">
+            <div className="flex flex-col items-start md:items-end space-y-1">
               <div className="flex items-center space-x-2">
                 <Label>Subtotal:</Label>
-                <span>
-                  ₹
-                  {calculateTotals.subtotal.toLocaleString("en-IN")}
-                </span>
+                <span>₹{calculateTotals.subtotal.toLocaleString("en-IN")}</span>
               </div>
               <div className="flex items-center space-x-2">
                 <Label>Total:</Label>
                 <span className="text-xl font-bold">
-                  ₹
-                  {calculateTotals.totalAmount.toLocaleString("en-IN")}
+                  ₹{calculateTotals.totalAmount.toLocaleString("en-IN")}
                 </span>
               </div>
             </div>
@@ -726,17 +793,17 @@ console.log(existingBillSubtotal)
         </CardContent>
       </Card>
 
-      <div className="flex flex-col sm:flex-row justify-end space-y-2 sm:space-y-0 sm:space-x-4 mt-4">
-        <div className="flex w-full sm:w-auto gap-4">
-          <Button 
-            variant="outline" 
-            onClick={handleReset} 
-            disabled={isLoading} 
+      <div className="flex flex-col sm:flex-row justify-end space-y-1 sm:space-y-0 sm:space-x-4 mt-2">
+        <div className="flex w-full sm:w-auto gap-2">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            disabled={isLoading}
             className="w-1/2 sm:w-auto"
           >
             Reset
           </Button>
-          {addedServices.length > 0 && (
+          {addedServices.length > 0 && selectedServices.length > 0 && (
             <Button
               variant="outline"
               onClick={handlePrintBill}
@@ -746,9 +813,9 @@ console.log(existingBillSubtotal)
               Print Bill
             </Button>
           )}
-          <Button 
-            onClick={handleCreate} 
-            disabled={isLoading} 
+          <Button
+            onClick={handleCreate}
+            disabled={isLoading}
             className="w-1/2 sm:w-auto"
           >
             {isLoading ? (
@@ -765,16 +832,32 @@ console.log(existingBillSubtotal)
         </div>
       </div>
 
-      <OPDBillTokenModal 
+      <OPDBillTokenModal
         isOpen={isPrintModalOpen}
         setIsOpen={setIsPrintModalOpen}
         patientData={billData}
+        services={addedServices}
+        selectedServices={selectedServices}
+        onSelectService={handleSelectService}
+        onSelectAll={handleSelectAll}
+        onClose={() => {
+          setIsPrintModalOpen(false);
+          navigate("/billings");
+        }}
       />
 
       <ViewBillDialog
         isOpen={isViewBillDialogOpen}
         setIsOpen={setIsViewBillDialogOpen}
         billData={billData}
+        services={addedServices}
+        selectedServices={selectedServices}
+        onSelectService={handleSelectService}
+        onSelectAll={handleSelectAll}
+        onClose={() => {
+          setIsViewBillDialogOpen(false);
+          navigate("/billings");
+        }}
       />
     </div>
   );

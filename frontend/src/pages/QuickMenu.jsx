@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardContent } from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { UserPlus, FileText, Bed, Stethoscope, Plus } from "lucide-react";
+import { UserPlus, FileText, Bed, Stethoscope, Plus, ClipboardList } from "lucide-react";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
 import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
 import { useNavigate } from 'react-router-dom';
@@ -26,8 +26,13 @@ const QuickMenu = () => {
       action: () => setIsIPDDialogOpen(true),
       color: "bg-green-100 text-green-700 hover:bg-green-200"
     },
-   
-    
+    {
+      title: "Discharge Summary",
+      description: "Add discharge data or data",
+      icon: ClipboardList,
+      action: () => navigate('/patients/discharge'),
+      color: "bg-purple-100 text-purple-700 hover:bg-purple-200"
+    },
   ];
 
   return (

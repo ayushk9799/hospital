@@ -130,7 +130,7 @@ const AppContent = () => {
                 <Route path="/lab/create/:category/:type" element={<CreateLabReport />} />
                 <Route path="/lab/blood-work/create" element={<CreateBloodWork />} />
                 <Route path="/create-room" element={<CreateRoom />} />
-                <Route path="/patients/discharge/:patientId" element={<DischargeSummary />} />
+                <Route path="/patients/discharge/:patientId?" element={<DischargeSummary />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/billings/create-service-bill" element={<CreateServiceBill />} />
                 <Route path="/statistics" element={<Statistics />} />

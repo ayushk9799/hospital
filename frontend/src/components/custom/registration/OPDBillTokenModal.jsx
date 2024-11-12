@@ -8,7 +8,16 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from ".
 import { PrinterIcon } from "lucide-react";
 import SimplePrintHeader from "../../../utils/print/SimplePrintHeader";
 
-const OPDBillTokenModal = ({ isOpen, setIsOpen, patientData }) => {
+const OPDBillTokenModal = ({ 
+  isOpen, 
+  setIsOpen, 
+  patientData,
+  services,
+  selectedServices,
+  onSelectService,
+  onSelectAll,
+  onClose
+}) => {
   const componentRef = useRef();
  
   useEffect(() => {

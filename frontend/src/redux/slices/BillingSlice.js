@@ -33,15 +33,30 @@ export const createBill = createLoadingAsyncThunk(
 // Async thunk to fetch all bills
 export const fetchBills = createLoadingAsyncThunk(
   'billing/fetchBills',
-  async (_, { rejectWithValue }) => {
+  async (filters = {}, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/billing/get-bills`, {
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      
+      // Add date range filters if present
+      if (filters.dateRange?.startDate) {
+        queryParams.append('startDate', filters.dateRange.startDate);
+      }
+      if (filters.dateRange?.endDate) {
+        queryParams.append('endDate', filters.dateRange.endDate);
+      }
+
+      const url = `${Backend_URL}/api/billing/get-bills${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+      
+      const response = await fetch(url, {
         credentials: 'include'
       });
+      
       if (!response.ok) {
         const errorData = await response.json();
         return rejectWithValue(errorData);
       }
+      
       const data = await response.json();
       return data;
     } catch (error) {
@@ -159,6 +174,29 @@ export const createOPDProcedureBill = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new async thunk after the other thunks
+export const fetchBillById = createLoadingAsyncThunk(
+  'billing/fetchBillById',
+  async (billId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/billing/get-bill/${billId}`, {
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const billingSlice = createSlice({
   name: 'bills',
   initialState: {
@@ -168,6 +206,8 @@ const billingSlice = createSlice({
     updateBillStatus: "idle",
     error: null,
     createOPDProcedureBillStatus: "idle",
+    currentBill: null,
+    currentBillStatus: "idle",
   },
   reducers: {
     setCreateBillStatusIdle: (state) => {
@@ -241,6 +281,18 @@ const billingSlice = createSlice({
       })
       .addCase(createOPDProcedureBill.rejected, (state, action) => {
         state.createOPDProcedureBillStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(fetchBillById.pending, (state) => {
+        state.currentBillStatus = "loading";
+        state.error = null;
+      })
+      .addCase(fetchBillById.fulfilled, (state, action) => {
+        state.currentBillStatus = "succeeded";
+        state.currentBill = action.payload;
+      })
+      .addCase(fetchBillById.rejected, (state, action) => {
+        state.currentBillStatus = "failed";
         state.error = action.payload;
       });
   },

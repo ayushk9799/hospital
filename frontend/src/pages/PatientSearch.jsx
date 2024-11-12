@@ -100,7 +100,7 @@ export default function PatientSearch() {
       name: "Discharge Summary",
       icon: ClipboardList,
       action: () => 
-        navigate(`/patients/discharge/${selectedPatient._id}`, {
+        navigate(`/patients/discharge/${selectedPatient?.admissionDetails.at(-1)._id}`, {
           state: { patient: selectedPatient },
         }),
     },
