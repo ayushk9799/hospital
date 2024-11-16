@@ -39,7 +39,7 @@ import { useMediaQuery } from "../../../hooks/use-media-query";
 import SelectServicesDialog from "./SelectServicesDialog";
 import { fetchServices } from "../../../redux/slices/serviceSlice";
 import { fetchTemplates } from "../../../redux/slices/templatesSlice";
-import BillModal from './BillModal'; 
+import BillModal from "./BillModal";
 import { fetchHospitalInfo } from "../../../redux/slices/HospitalSlice";
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
@@ -48,12 +48,14 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const registerPatientStatus = useSelector(
     (state) => state.patients.registerPatientStatus
   );
-  console.log(patientData)
+  console.log(patientData);
   const departments = useSelector((state) => state.departments.departments);
   const rooms = useSelector((state) => state.rooms.rooms);
   const doctors = useSelector((state) => state.staff.doctors);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
-  const hospitalInfoStatus = useSelector((state) => state.hospital.hospitalInfoStatus);
+  const hospitalInfoStatus = useSelector(
+    (state) => state.hospital.hospitalInfoStatus
+  );
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
@@ -82,7 +84,9 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   useEffect(() => {
     // Only calculate room charge when room is selected
     if (formData.admission.assignedRoom) {
-      const selectedRoom = rooms.find(room => room._id === formData.admission.assignedRoom);
+      const selectedRoom = rooms.find(
+        (room) => room._id === formData.admission.assignedRoom
+      );
       if (selectedRoom) {
         setRoomCharge(selectedRoom.ratePerDay || 0);
       } else {
@@ -99,18 +103,18 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
     const totalWithRoom = servicesTotal + roomCharge;
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       paymentInfo: {
         ...prev.paymentInfo,
-        totalAmount: totalWithRoom
-      }
+        totalAmount: totalWithRoom,
+      },
     }));
     setTotalAmount(totalWithRoom);
   }, [formData.paymentInfo.services, services, roomCharge]);
 
   useEffect(() => {
-    if (hospitalInfoStatus === 'idle') {
+    if (hospitalInfoStatus === "idle") {
       dispatch(fetchHospitalInfo());
     }
   }, [dispatch, hospitalInfoStatus]);
@@ -129,7 +133,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   useEffect(() => {
     if (patientData || searchedPatient) {
       const sourceData = searchedPatient || patientData;
-      setFormData(prev => ({
+      setFormData((prev) => ({
         ...prev,
         _id: sourceData._id,
         name: sourceData.name || "",
@@ -147,10 +151,10 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         },
         paymentInfo: {
           ...prev.paymentInfo,
-        }
+        },
       }));
     }
-  }, [patientData, searchedPatient,open]);
+  }, [patientData, searchedPatient, open]);
 
   useEffect(() => {
     if (!open) {
@@ -179,7 +183,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
       // If the changed field is the assigned room, update the room charge
       if (id === "admission.assignedRoom") {
-        const selectedRoom = rooms.find(room => room._id === value);
+        const selectedRoom = rooms.find((room) => room._id === value);
         if (selectedRoom) {
           setRoomCharge(selectedRoom.ratePerDay || 0);
         } else {
@@ -216,8 +220,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     e.preventDefault();
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
-      console.log(submissionData);
-      if (patientData||searchedPatient) {
+      if (patientData || searchedPatient) {
         // This is a readmission
         dispatch(
           readmitPatient({
@@ -277,7 +280,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             });
           })
           .finally(() => {});
-        console.log(submissionData);
       }
     }
   };
@@ -301,14 +303,16 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       }, 500);
     }
   }, [open]);
-console.log(formData.paymentInfo.totalAmount)
+  console.log(formData.paymentInfo.totalAmount);
   const handleInfoClick = (e) => {
     e.preventDefault();
     setIsSelectServicesDialogOpen(true);
   };
 
   const handleServicesChange = (selectedServices) => {
-    const actualServices = selectedServices.filter(id => id !== 'room-charge');
+    const actualServices = selectedServices.filter(
+      (id) => id !== "room-charge"
+    );
     setFormData((prevData) => ({
       ...prevData,
       paymentInfo: {
@@ -321,36 +325,42 @@ console.log(formData.paymentInfo.totalAmount)
   // Add this function to get all services including room for display
   const getDisplayServices = useCallback(() => {
     // Get the selected room service if any
-    const selectedRoom = rooms.find(room => room._id === formData.admission.assignedRoom);
-    const roomService = selectedRoom ? {
-      _id: 'room-charge',
-      name: `Room: ${selectedRoom.roomNumber} - ${selectedRoom.type}`,
-      rate: selectedRoom.ratePerDay || 0,
-      isRoom: true
-    } : null;
+    const selectedRoom = rooms.find(
+      (room) => room._id === formData.admission.assignedRoom
+    );
+    const roomService = selectedRoom
+      ? {
+          _id: "room-charge",
+          name: `Room: ${selectedRoom.roomNumber} - ${selectedRoom.type}`,
+          rate: selectedRoom.ratePerDay || 0,
+          isRoom: true,
+        }
+      : null;
 
     // Get all available services from the services array
-    const availableServices = services.map(service => ({
+    const availableServices = services.map((service) => ({
       ...service,
-      isRoom: false
+      isRoom: false,
     }));
 
     // Combine room service (if exists) with available services
-    return roomService 
+    return roomService
       ? [roomService, ...availableServices]
       : availableServices;
   }, [formData.admission.assignedRoom, rooms, services]);
 
   const handleSearch = async () => {
     if (!formData.registrationNumber) return;
-    
+
     try {
-      const result = await dispatch(searchPatients(formData.registrationNumber)).unwrap();
+      const result = await dispatch(
+        searchPatients(formData.registrationNumber)
+      ).unwrap();
       if (result.results && result.results.length > 0) {
         const patient = result.results[0];
         setSearchedPatient({
           ...patient,
-          isFromSearch: true
+          isFromSearch: true,
         });
       }
     } catch (error) {
@@ -378,7 +388,9 @@ console.log(formData.paymentInfo.totalAmount)
           </DialogHeader>
           <form
             onSubmit={handleSubmit}
-            className={`space-y-4 h-[calc(${isMobile ? "70vh" : "60vh"}-115px)]`}
+            className={`space-y-4 h-[calc(${
+              isMobile ? "70vh" : "60vh"
+            }-115px)]`}
           >
             <Tabs defaultValue="basic-info" className="w-full">
               <TabsList
@@ -500,13 +512,13 @@ console.log(formData.paymentInfo.totalAmount)
                       </div>
                     )} */}
                     <div className={`space-y-4`}>
-                    <Textarea
-                      id="address"
-                      placeholder="Address"
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      className="min-h-[90px]"
-                    />
+                      <Textarea
+                        id="address"
+                        placeholder="Address"
+                        value={formData.address}
+                        onChange={handleInputChange}
+                        className="min-h-[90px]"
+                      />
                       {/* Blood group selection commented out
                       <Select
                         id="bloodType"
@@ -537,7 +549,6 @@ console.log(formData.paymentInfo.totalAmount)
                     {isMobile ? (
                       <>
                         <div className={`grid grid-cols-2 gap-2`}>
-                       
                           <Select
                             id="admission.department"
                             onValueChange={(value) =>
@@ -557,13 +568,15 @@ console.log(formData.paymentInfo.totalAmount)
                               ))}
                             </SelectContent>
                           </Select>
-                          
-                        
+
                           <Select
                             id="admission.assignedDoctor"
                             onValueChange={(value) =>
                               handleInputChange({
-                                target: { id: "admission.assignedDoctor", value },
+                                target: {
+                                  id: "admission.assignedDoctor",
+                                  value,
+                                },
                               })
                             }
                           >
@@ -578,12 +591,10 @@ console.log(formData.paymentInfo.totalAmount)
                               ))}
                             </SelectContent>
                           </Select>
-                          
                         </div>
                       </>
                     ) : (
                       <>
-                       
                         <Select
                           id="admission.department"
                           onValueChange={(value) =>
@@ -603,8 +614,7 @@ console.log(formData.paymentInfo.totalAmount)
                             ))}
                           </SelectContent>
                         </Select>
-                        
-                      
+
                         <Select
                           id="admission.assignedDoctor"
                           onValueChange={(value) =>
@@ -624,7 +634,6 @@ console.log(formData.paymentInfo.totalAmount)
                             ))}
                           </SelectContent>
                         </Select>
-                        
                       </>
                     )}
                     {errors["admission.assignedDoctor"] && (
@@ -728,25 +737,39 @@ console.log(formData.paymentInfo.totalAmount)
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <span>Final Bill:</span>
-                        <Input 
-                          value={formData.paymentInfo.totalAmount.toLocaleString("en-IN")}
+                        <Input
+                          value={formData.paymentInfo.totalAmount.toLocaleString(
+                            "en-IN"
+                          )}
                           className="font-semibold w-28 inline-block"
                           onChange={(e) => {
-                            const value = Number(e.target.value.replace(/,/g, ''));
+                            const value = Number(
+                              e.target.value.replace(/,/g, "")
+                            );
                             if (!isNaN(value)) {
                               const servicesTotal = services
-                                .filter((service) => formData.paymentInfo.services.includes(service._id))
-                                .reduce((sum, service) => sum + (service.rate || 0), 0);
-                              
+                                .filter((service) =>
+                                  formData.paymentInfo.services.includes(
+                                    service._id
+                                  )
+                                )
+                                .reduce(
+                                  (sum, service) => sum + (service.rate || 0),
+                                  0
+                                );
+
                               const totalWithRoom = servicesTotal + roomCharge;
-                              
-                              setFormData(prev => ({
+
+                              setFormData((prev) => ({
                                 ...prev,
                                 paymentInfo: {
                                   ...prev.paymentInfo,
                                   totalAmount: value,
-                                  additionalDiscount: Math.max(0, totalWithRoom - value)
-                                }
+                                  additionalDiscount: Math.max(
+                                    0,
+                                    totalWithRoom - value
+                                  ),
+                                },
                               }));
                             }
                           }}
@@ -763,10 +786,19 @@ console.log(formData.paymentInfo.totalAmount)
                     {formData.paymentInfo.additionalDiscount > 0 && (
                       <>
                         <p className="text-sm text-gray-500">
-                          Services Total: ₹{(services
-                            .filter((service) => formData.paymentInfo.services.includes(service._id))
-                            .reduce((sum, service) => sum + (service.rate || 0), 0)+roomCharge)
-                            .toLocaleString("en-IN")}
+                          Services Total: ₹
+                          {(
+                            services
+                              .filter((service) =>
+                                formData.paymentInfo.services.includes(
+                                  service._id
+                                )
+                              )
+                              .reduce(
+                                (sum, service) => sum + (service.rate || 0),
+                                0
+                              ) + roomCharge
+                          ).toLocaleString("en-IN")}
                         </p>
                         {roomCharge > 0 && (
                           <p className="text-sm text-gray-500">
@@ -774,7 +806,10 @@ console.log(formData.paymentInfo.totalAmount)
                           </p>
                         )}
                         <p className="text-sm text-gray-500">
-                          Discount Applied: ₹{formData.paymentInfo.additionalDiscount.toLocaleString("en-IN")}
+                          Discount Applied: ₹
+                          {formData.paymentInfo.additionalDiscount.toLocaleString(
+                            "en-IN"
+                          )}
                         </p>
                       </>
                     )}
@@ -855,7 +890,9 @@ console.log(formData.paymentInfo.totalAmount)
                     />
                   </div>
 
-                  <h4 className="font-semibold text-sm mt-4">Admission Vitals</h4>
+                  <h4 className="font-semibold text-sm mt-4">
+                    Admission Vitals
+                  </h4>
                   <div
                     className={`grid ${
                       isMobile ? "grid-cols-2" : "grid-cols-3"
@@ -894,13 +931,17 @@ console.log(formData.paymentInfo.totalAmount)
                     <Input
                       id="admission.vitals.admission.oxygenSaturation"
                       placeholder="Oxygen Saturation"
-                      value={formData.admission.vitals.admission.oxygenSaturation}
+                      value={
+                        formData.admission.vitals.admission.oxygenSaturation
+                      }
                       onChange={handleInputChange}
                     />
                     <Input
                       id="admission.vitals.admission.respiratoryRate"
                       placeholder="Respiratory Rate"
-                      value={formData.admission.vitals.admission.respiratoryRate}
+                      value={
+                        formData.admission.vitals.admission.respiratoryRate
+                      }
                       onChange={handleInputChange}
                     />
                   </div>
@@ -964,7 +1005,7 @@ console.log(formData.paymentInfo.totalAmount)
             services={getDisplayServices()}
             selectedServices={[
               ...formData.paymentInfo.services,
-              formData.admission.assignedRoom ? 'room-charge' : ''
+              formData.admission.assignedRoom ? "room-charge" : "",
             ].filter(Boolean)} // Filter out empty strings
             onServicesChange={handleServicesChange}
           />

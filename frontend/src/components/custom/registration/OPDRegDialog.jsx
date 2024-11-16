@@ -110,54 +110,66 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
 
   const [searchedPatient, setSearchedPatient] = useState(null);
 
-  const handleInputChange = useCallback((e) => {
-    const { id, value } = e.target;
-    setFormData((prev) => {
-      const keys = id.split(".");
-      let newState = { ...prev };
-      let current = newState;
-      for (let i = 0; i < keys.length - 1; i++) {
-        current[keys[i]] = { ...current[keys[i]] };
-        current = current[keys[i]];
-      }
-      current[keys[keys.length - 1]] = value;
-
-      // Real-time validation for payment fields
-      if (['visit.totalFee', 'visit.amountPaid', 'visit.discount'].includes(id)) {
-        const totalFee = Number(id === 'visit.totalFee' ? value : newState.visit.totalFee) || 0;
-        const amountPaid = Number(id === 'visit.amountPaid' ? value : newState.visit.amountPaid) || 0;
-        const discount = Number(id === 'visit.discount' ? value : newState.visit.discount) || 0;
-
-        // Real-time error updates for payment validation
-        const newErrors = { ...errors };
-        
-        if (discount > totalFee) {
-          newErrors.discount = "Discount cannot exceed total fee";
-        } else {
-          delete newErrors.discount;
+  const handleInputChange = useCallback(
+    (e) => {
+      const { id, value } = e.target;
+      setFormData((prev) => {
+        const keys = id.split(".");
+        let newState = { ...prev };
+        let current = newState;
+        for (let i = 0; i < keys.length - 1; i++) {
+          current[keys[i]] = { ...current[keys[i]] };
+          current = current[keys[i]];
         }
+        current[keys[keys.length - 1]] = value;
 
-        const maxAllowed = totalFee - discount;
-        
-        // Reset amount paid if discount makes it invalid
-        if (id === 'visit.discount' && amountPaid > maxAllowed) {
-          newState.visit.amountPaid = maxAllowed.toString();
-          delete newErrors.amountPaid;
-        } else if (amountPaid > maxAllowed) {
-          newErrors.amountPaid = `Cannot exceed ₹${maxAllowed} (Total - Discount)`;
-          if (id === 'visit.amountPaid') {
-            current[keys[keys.length - 1]] = maxAllowed.toString();
+        // Real-time validation for payment fields
+        if (
+          ["visit.totalFee", "visit.amountPaid", "visit.discount"].includes(id)
+        ) {
+          const totalFee =
+            Number(id === "visit.totalFee" ? value : newState.visit.totalFee) ||
+            0;
+          const amountPaid =
+            Number(
+              id === "visit.amountPaid" ? value : newState.visit.amountPaid
+            ) || 0;
+          const discount =
+            Number(id === "visit.discount" ? value : newState.visit.discount) ||
+            0;
+
+          // Real-time error updates for payment validation
+          const newErrors = { ...errors };
+
+          if (discount > totalFee) {
+            newErrors.discount = "Discount cannot exceed total fee";
+          } else {
+            delete newErrors.discount;
           }
-        } else {
-          delete newErrors.amountPaid;
+
+          const maxAllowed = totalFee - discount;
+
+          // Reset amount paid if discount makes it invalid
+          if (id === "visit.discount" && amountPaid > maxAllowed) {
+            newState.visit.amountPaid = maxAllowed.toString();
+            delete newErrors.amountPaid;
+          } else if (amountPaid > maxAllowed) {
+            newErrors.amountPaid = `Cannot exceed ₹${maxAllowed} (Total - Discount)`;
+            if (id === "visit.amountPaid") {
+              current[keys[keys.length - 1]] = maxAllowed.toString();
+            }
+          } else {
+            delete newErrors.amountPaid;
+          }
+
+          setErrors(newErrors);
         }
 
-        setErrors(newErrors);
-      }
-
-      return newState;
-    });
-  }, [errors]);
+        return newState;
+      });
+    },
+    [errors]
+  );
 
   const handleSelectChange = useCallback(
     (id, value) => handleInputChange({ target: { id, value } }),
@@ -172,7 +184,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.contactNumber)
       newErrors.contactNumber = "Contact number is required";
-    
+
     // Payment validation
     const totalFee = Number(formData.visit.totalFee) || 0;
     const amountPaid = Number(formData.visit.amountPaid) || 0;
@@ -181,9 +193,11 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     if (totalFee < 0) newErrors.totalFee = "Total fee cannot be negative";
     if (amountPaid < 0) newErrors.amountPaid = "Amount paid cannot be negative";
     if (discount < 0) newErrors.discount = "Discount cannot be negative";
-    if (discount > totalFee) newErrors.discount = "Discount cannot exceed total fee";
-    if (amountPaid > (totalFee - discount)) 
-      newErrors.amountPaid = "Amount paid cannot exceed total fee minus discount";
+    if (discount > totalFee)
+      newErrors.discount = "Discount cannot exceed total fee";
+    if (amountPaid > totalFee - discount)
+      newErrors.amountPaid =
+        "Amount paid cannot exceed total fee minus discount";
     if (amountPaid > 0 && !formData.visit.paymentMethod)
       newErrors.paymentMethod = "required";
 
@@ -217,9 +231,9 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
         // Choose the appropriate action based on whether this is a revisit
         const sourceData = searchedPatient || patientData;
         const action = sourceData
-          ? opdRevisit({ 
-              patientId: sourceData._id, 
-              visit: submissionData 
+          ? opdRevisit({
+              patientId: sourceData._id,
+              visit: submissionData,
             })
           : registerPatient(submissionData);
 
@@ -227,7 +241,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           .unwrap()
           .then((response) => {
             toast({
-              title: patientData 
+              title: patientData
                 ? "Patient revisit recorded successfully"
                 : "Patient registered successfully",
               description: patientData
@@ -235,20 +249,21 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                 : "The new patient has been added.",
               variant: "success",
             });
-            
+
             setRegisteredPatient(response);
             setShowBillModal(true);
-            
-            dispatch(fetchPatients());
+
+            dispatch(fetchPatients({startDate: new Date().toLocaleDateString("en-IN").split("/").reverse().join("-")}));
             dispatch(fetchBills());
             onOpenChange(false);
           })
           .catch((error) => {
             toast({
-              title: patientData 
+              title: patientData
                 ? "Failed to record revisit"
                 : "Failed to register patient",
-              description: error.message || "There was an error. Please try again.",
+              description:
+                error.message || "There was an error. Please try again.",
               variant: "destructive",
             });
           });
@@ -295,9 +310,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [patientData, searchedPatient]);
 
   useEffect(() => {
-    console.log("open", open);
     if (!open) {
-      
       setFormData(initialFormData);
       setErrors(initialErrors);
       setTimeout(() => {
@@ -407,14 +420,25 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                       <Select
                         id="visit.department"
                         value={formData.visit.department}
-                        onValueChange={(value) => handleSelectChange("visit.department", value)}
+                        onValueChange={(value) =>
+                          handleSelectChange("visit.department", value)
+                        }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={departments.length === 1 ? departments[0].name : "Department"} />
+                          <SelectValue
+                            placeholder={
+                              departments.length === 1
+                                ? departments[0].name
+                                : "Department"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {departments.map((department) => (
-                            <SelectItem key={department._id} value={department._id}>
+                            <SelectItem
+                              key={department._id}
+                              value={department._id}
+                            >
                               {department.name}
                             </SelectItem>
                           ))}
@@ -425,10 +449,18 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                       <Select
                         id="visit.doctor"
                         value={formData.visit.doctor}
-                        onValueChange={(value) => handleSelectChange("visit.doctor", value)}
+                        onValueChange={(value) =>
+                          handleSelectChange("visit.doctor", value)
+                        }
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder={doctors.length === 1 ? `Dr. ${doctors[0].name}` : "Assigned Doctor"} />
+                          <SelectValue
+                            placeholder={
+                              doctors.length === 1
+                                ? `Dr. ${doctors[0].name}`
+                                : "Assigned Doctor"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {doctors.map((doctor) => (
@@ -456,7 +488,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                               </span>
                             )}
                           </div>
-                          
+
                           <div className="relative">
                             <MemoizedInput
                               label="Discount (₹)"
@@ -495,8 +527,10 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                                 handleSelectChange("visit.paymentMethod", value)
                               }
                             >
-                              <SelectTrigger 
-                                className={`w-full ${errors.paymentMethod ? 'border-red-500' : ''}`}
+                              <SelectTrigger
+                                className={`w-full ${
+                                  errors.paymentMethod ? "border-red-500" : ""
+                                }`}
                               >
                                 <SelectValue placeholder="Payment Method" />
                               </SelectTrigger>
@@ -508,7 +542,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                                 <SelectItem value="Other">Other</SelectItem>
                               </SelectContent>
                             </Select>
-                           
                           </div>
                         </div>
                       </div>

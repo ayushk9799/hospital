@@ -20,20 +20,39 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
   const [isLoading, setIsLoading] = useState(false);
   const isMobile = useMediaQuery('(max-width: 640px)');
   const [amountError, setAmountError] = useState('');
+  console.log(billData)
+  useEffect(() => {
+    console.log("PaymentDialog rendered with billData:", billData);
+  }, [billData]);
 
   useEffect(() => {
     if (isOpen) {
+      console.log("PaymentDialog opened with data:", billData);
       setPaymentAmount('');
       setPaymentMethod('');
       setAmountError('');
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (billData) {
+      console.log("Bill Data Structure:", {
+        hasId: Boolean(billData._id),
+        totalAmount: billData.totalAmount,
+        amountPaid: billData.amountPaid,
+        payments: billData.payments,
+        services: billData.services,
+      });
+    }
+  }, [billData]);
+
   // Calculate total amount and due amount
   const totalAmount = billData?.totalAmount || 0;
   const paidAmount = billData?.amountPaid || 0;
   const dueAmount = totalAmount - paidAmount;
   const isFullyPaid = dueAmount <= 0;
+
+  console.log("Calculated amounts:", { totalAmount, paidAmount, dueAmount });
 
   const handleAddPayment = () => {
     if (!paymentAmount || !paymentMethod) {
@@ -51,7 +70,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
       amount: parseFloat(paymentAmount),
       paymentMethod,
     };
-
+    console.log(billData)
     dispatch(addPayment({ billId: billData._id, payment }))
       .unwrap()
       .then(() => {

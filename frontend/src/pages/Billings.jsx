@@ -302,8 +302,8 @@ const Billings = () => {
     <Card 
       className="mb-4 hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
       onClick={(e) => {
-        // Prevent opening modal if clicking on dropdown menu
-        if (!e.target.closest('.dropdown-trigger')) {
+        // Only open view modal if not clicking dropdown or its children
+        if (!e.target.closest('[data-prevent-view]')) {
           handleViewBill(bill);
         }
       }}
@@ -349,12 +349,13 @@ const Billings = () => {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    className="h-8 w-8 p-0 dropdown-trigger"
+                    className="h-8 w-8 p-0"
+                    data-prevent-view
                   >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" data-prevent-view>
                   <DropdownMenuItem onClick={() => handleViewBill(bill)}>
                     Print Bill
                   </DropdownMenuItem>
@@ -705,8 +706,8 @@ const Billings = () => {
                       key={bill._id}
                       className="cursor-pointer hover:bg-blue-50 transition-colors duration-200"
                       onClick={(e) => {
-                        // Prevent opening modal if clicking on dropdown menu
-                        if (!e.target.closest('.dropdown-trigger')) {
+                        // Only open view modal if not clicking dropdown or its children
+                        if (!e.target.closest('[data-prevent-view]')) {
                           handleViewBill(bill);
                         }
                       }}
@@ -747,11 +748,15 @@ const Billings = () => {
                           }
                         >
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0 dropdown-trigger">
+                            <Button 
+                              variant="ghost" 
+                              className="h-8 w-8 p-0"
+                              data-prevent-view
+                            >
                               <ChevronDown className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" data-prevent-view>
                             <DropdownMenuItem
                               onClick={() => handleViewBill(bill)}
                             >

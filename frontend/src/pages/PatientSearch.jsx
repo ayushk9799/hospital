@@ -50,7 +50,6 @@ export default function PatientSearch() {
   const navigate = useNavigate();
   const patients = location.state?.searchResults || [];
   const searchQuery = location.state?.searchQuery || "";
-  console.log(patients);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isOPDRegDialogOpen, setIsOPDRegDialogOpen] = useState(false);
   const [selectedPatientForFollowUp, setSelectedPatientForFollowUp] =
@@ -59,7 +58,6 @@ export default function PatientSearch() {
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
- console.log(selectedPatient);
   useEffect(() => {
     if (patients.length > 0) {
       setSelectedPatient(patients[0]);
@@ -99,10 +97,13 @@ export default function PatientSearch() {
     {
       name: "Discharge Summary",
       icon: ClipboardList,
-      action: () => 
-        navigate(`/patients/discharge/${selectedPatient?.admissionDetails.at(-1)._id}`, {
-          state: { patient: selectedPatient },
-        }),
+      action: () =>
+        navigate(
+          `/patients/discharge/${selectedPatient?.admissionDetails.at(-1)._id}`,
+          {
+            state: { patient: selectedPatient },
+          }
+        ),
     },
   ];
 
@@ -117,7 +118,7 @@ export default function PatientSearch() {
       ? format(new Date(Math.max(...dates)), "dd-MM-yyyy")
       : "-";
   };
-console.log(selectedPatient)
+  console.log(selectedPatient);
   const PatientCard = ({ patient }) => (
     <Card className="mb-4 hover:shadow-md transition-shadow">
       <CardContent className="p-4">

@@ -5,7 +5,7 @@ export const hospitalPlugin = (schema) => {
   // Add the hospital field to the schema if it doesn't exist
   if (!schema.path("hospital")) {
     schema.add({
-      hospital: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital" },
+      hospital: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital" ,index:true},
     });
   }
 

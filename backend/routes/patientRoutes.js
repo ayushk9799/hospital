@@ -310,11 +310,15 @@ router.post("/details", verifyToken, async (req, res) => {
     let dateFilter = {};
     if (startDate || endDate) {
       dateFilter.bookingDate = {};
-      if (startDate) {
-        dateFilter.bookingDate.$gte = new Date(startDate);
-      }
-      if (endDate) {
-        dateFilter.bookingDate.$lt = new Date(endDate);
+      if (startDate && !endDate) {
+        // If only startDate is provided, make it equal to that date
+        dateFilter.bookingDate = new Date(startDate);
+      } else if (startDate && endDate) {
+        // If both dates are provided, use gte and lt
+        dateFilter.bookingDate = {
+          $gte: new Date(startDate),
+          $lt: new Date(endDate)
+        };
       }
     }
 
@@ -326,7 +330,7 @@ router.post("/details", verifyToken, async (req, res) => {
       )
       .populate("doctor", "name");
 
-    const ipdAdmissions = await IPDAdmission.find(dateFilter)
+    const ipdAdmissions = await IPDAdmission.find({$or:[dateFilter,{status:"Admitted"}]})
       .populate(
         "patient",
         "name dateOfBirth gender contactNumber email address bloodType age"
@@ -424,8 +428,27 @@ router.delete("/admissions", async (req, res) => {
 router.get("/:id", verifyToken, async (req, res) => {
   try {
     const patient = await Patient.findById(req.params.id)
-      .populate("visits")
-      .populate("admissionDetails");
+      .populate({
+        path: "visits",
+        populate: {
+          path: "bills.services bills.pharmacy",
+          populate: {
+            path: "payments",
+            model: "Payment"
+          }
+        }
+      })
+      .populate({
+        path: "admissionDetails",
+        populate: {
+          path: "bills.services bills.pharmacy",
+          populate: {
+            path: "payments",
+            model: "Payment"
+          }
+        }
+      });
+
     if (!patient) {
       return res.status(404).json({ error: "Patient not found" });
     }

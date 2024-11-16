@@ -80,7 +80,37 @@ export default function Patients() {
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-
+  const getDateRange = () => {
+    const today = new Date();
+    switch (dateFilter) {
+      case "Today":
+        return {
+          startDate: format(today, "yyyy-MM-dd"),
+          endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+        };
+      case "Yesterday":
+        return {
+          startDate: format(subDays(today, 1), "yyyy-MM-dd"),
+          endDate: format(today, "yyyy-MM-dd"),
+        };
+      case "This Week":
+        return {
+          startDate: format(subDays(today, 7), "yyyy-MM-dd"),
+          endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+        };
+      case "Custom":
+        if (dateRange.from && dateRange.to) {
+          return {
+            startDate: format(dateRange.from, "yyyy-MM-dd"),
+            endDate: format(addDays(dateRange.to, 1), "yyyy-MM-dd"),
+          };
+        }
+        return null;
+      case "All":
+      default:
+        return null;
+    }
+  };
   // Use the useSelector hook to get the patients from the Redux store
   const { patientlist: patients, status } = useSelector(
     (state) => state.patients
@@ -89,7 +119,8 @@ export default function Patients() {
 
   useEffect(() => {
     if (status === "idle") {
-      dispatch(fetchPatients());
+      let date = getDateRange();
+      dispatch(fetchPatients(date));
     }
   }, [status, dispatch]);
   // Use useEffect to log the patients when the component mounts or when patientsFromRedux chang
@@ -102,37 +133,6 @@ export default function Patients() {
   // Add this effect to refetch patients when the status changes
   useEffect(() => {
     // Get date range based on filter
-    const getDateRange = () => {
-      const today = new Date();
-      switch (dateFilter) {
-        case "Today":
-          return {
-            startDate: format(today, "yyyy-MM-dd"),
-            endDate: format(addDays(today, 1), "yyyy-MM-dd"),
-          };
-        case "Yesterday":
-          return {
-            startDate: format(subDays(today, 1), "yyyy-MM-dd"),
-            endDate: format(today, "yyyy-MM-dd"),
-          };
-        case "This Week":
-          return {
-            startDate: format(subDays(today, 7), "yyyy-MM-dd"),
-            endDate: format(addDays(today, 1), "yyyy-MM-dd"),
-          };
-        case "Custom":
-          if (dateRange.from && dateRange.to) {
-            return {
-              startDate: format(dateRange.from, "yyyy-MM-dd"),
-              endDate: format(addDays(dateRange.to, 1), "yyyy-MM-dd"),
-            };
-          }
-          return null;
-        case "All":
-        default:
-          return null;
-      }
-    };
 
     const dateRangeParams = getDateRange();
     dispatch(fetchPatients(dateRangeParams));
@@ -143,52 +143,12 @@ export default function Patients() {
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
 
-    let dateMatch = true;
-    // Parse the date string in the format "DD-MM-YYYY"
-    const visitDate = patient.bookingDate;
-
-    const today = new Date();
-
-    switch (dateFilter) {
-      case "Today":
-        dateMatch = isWithinInterval(visitDate, {
-          start: startOfDay(today),
-          end: endOfDay(today),
-        });
-        break;
-      case "Yesterday":
-        dateMatch = isWithinInterval(visitDate, {
-          start: startOfDay(subDays(today, 1)),
-          end: endOfDay(subDays(today, 1)),
-        });
-        break;
-      case "This Week":
-        dateMatch = isWithinInterval(visitDate, {
-          start: startOfDay(subDays(today, 7)),
-          end: endOfDay(today),
-        });
-        break;
-      case "Custom":
-        if (dateRange.from && dateRange.to) {
-          dateMatch = isWithinInterval(visitDate, {
-            start: startOfDay(dateRange.from),
-            end: endOfDay(dateRange.to),
-          });
-        }
-        break;
-      case "All":
-      default:
-        dateMatch = true;
-    }
-
-    return nameMatch && dateMatch;
+    return nameMatch;
   });
 
   const handleExistingBills = (patient) => {
-    console.log(patient);
     const billID = patient.bills.services.at(-1);
     const bill = bills.find((bill) => bill._id === billID);
-    console.log(bill);
     navigate(`/billings/edit/${billID}`, { state: { billData: bill } });
   };
 
@@ -265,7 +225,11 @@ export default function Patients() {
                 <Button
                   variant="link"
                   className="p-0 h-auto font-normal text-black capitalize"
-                  onClick={() => navigate(`/patients/${patient.patient._id}`)}
+                  onClick={() =>
+                    navigate(`/patient-overview/${patient.patient._id}`, {
+                      state: { ID: patient._id },
+                    })
+                  }
                 >
                   {patient.patient.name}
                 </Button>
@@ -359,6 +323,7 @@ export default function Patients() {
   };
 
   const PatientCard = ({ patient }) => {
+    console.log(patient);
     const getStatusBadgeVariant = (status) => {
       switch (status.toLowerCase()) {
         case "admitted":
@@ -381,11 +346,15 @@ export default function Patients() {
                 <span className="text-sm font-semibold text-primary mr-2">
                   #{patient.bookingNumber}
                 </span>
-                <h3 className="text-lg font-semibold capitalize">
+                <h3
+                  className="text-lg font-semibold capitalize cursor-pointer hover:text-primary"
+                  onClick={() =>
+                    navigate(`/patient-overview/${patient.patient._id}`, {
+                      state: { ID: patient._id },
+                    })
+                  }
+                >
                   {patient.patient.name}
-                  <span className="text-sm font-normal text-muted-foreground ml-2">
-                    ({patient.type})
-                  </span>
                 </h3>
               </div>
               <div className="flex items-center">
@@ -416,7 +385,7 @@ export default function Patients() {
                     >
                       Bills
                     </DropdownMenuItem>
-                   
+
                     {patient.type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}

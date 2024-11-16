@@ -137,23 +137,19 @@ export default function DischargeSummary() {
   const navigate = useNavigate();
   const location = useLocation();
   const [patient, setPatient] = useState(null);
-  console.log(location.state?.patient);
   // Get initial patient from Redux store
   const patientFromStore = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
   );
 
-  console.log(patient);
   useEffect(() => {
     const fetchPatient = async () => {
       if (!patientFromStore) {
-        console.log(patientFromStore);
         try {
           if (patientId) {
             const result = await dispatch(
               fetchVisitDetails({ id: patientId, type: "IPD" })
             ).unwrap();
-            console.log(result);
             setPatient(result);
           } else if (location.state?.patient) {
             const result = await dispatch(
@@ -162,7 +158,6 @@ export default function DischargeSummary() {
                 type: "IPD",
               })
             ).unwrap();
-            console.log(result);
             setPatient(result);
           } else {
             setPatientInfo({

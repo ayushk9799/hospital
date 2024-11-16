@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchPatientDetails } from "../redux/slices/patientSlice";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "../hooks/use-toast";
 import {
   User,
   Phone,
@@ -42,7 +41,6 @@ import {
   TabsList,
   TabsTrigger,
 } from "../components/ui/tabs";
-import { useToast } from "../hooks/use-toast";
 import { cn } from "../lib/utils";
 
 // Move VitalItem component definition here
@@ -59,112 +57,66 @@ const VitalItem = ({ icon, label, value, unit }) => (
   </div>
 );
 
-export default function PatientDetails() {
-  const { patientId } = useParams();
-  const dispatch = useDispatch();
+export default function PatientDetails({ patientData }) {
   const { toast } = useToast();
-  const { patientDetails, patientDetailsStatus } = useSelector(
-    (state) => state.patients
-  );
   const [selectedVisit, setSelectedVisit] = useState(null);
   const [activeTab, setActiveTab] = useState("");
+  const [allDates, setAllDates] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
-    dispatch(fetchPatientDetails(patientId))
-      .unwrap()
-      .then(() => {
-        // ;
-      })
-      .catch((error) => {
-        // console.error("Error fetching patient details:", error);
-        toast({
-          title: "Error",
-          description: "Error fetching patient details",
-          variant: "destructive",
-        });
-      });
-  }, [dispatch, patientId]);
-
-  useEffect(() => {
-    if (patientDetails) {
-      const allDates = [
-        ...(patientDetails.visits || []).map((visit) => ({
+    if (patientData) {
+      const dates = [
+        ...(patientData.visits || []).map((visit) => ({
           date: visit.bookingDate,
           type: "visit",
           data: visit,
         })),
-        ...(patientDetails.admissionDetails || []).map((admission) => ({
+        ...(patientData.admissionDetails || []).map((admission) => ({
           date: admission.bookingDate,
           type: "admission",
           data: admission,
         })),
       ].sort((a, b) => new Date(b.date) - new Date(a.date));
-      if (allDates.length > 0) {
-        setSelectedVisit(allDates[0]);
+
+      setAllDates(dates);
+
+      if (dates.length > 0) {
+        setSelectedVisit(dates[0]);
         setActiveTab(
-          allDates[0].data.reasonForVisit
+          dates[0].data.reasonForVisit
             ? "reason"
-            : allDates[0].data.diagnosis
+            : dates[0].data.diagnosis
             ? "diagnosis"
             : "reason"
         );
       }
     }
-  }, [patientDetails]);
+  }, [patientData]);
 
-  if (patientDetailsStatus === "loading") return null;
-  if (patientDetailsStatus === "failed")
-    return (
-      <div className="flex flex-col items-center justify-center h-screen">
-        <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
-        <div className="text-xl font-semibold text-gray-800">
-          Error loading patient details
-        </div>
-        <div className="text-gray-600 mt-2">
-          Please try again later or contact support.
-        </div>
-      </div>
-    );
-  if (!patientDetails) return null;
-
-  const allDates = [
-    ...(patientDetails.visits || []).map((visit) => ({
-      date: visit.bookingDate,
-      type: "visit",
-      data: visit,
-    })),
-    ...(patientDetails.admissionDetails || []).map((admission) => ({
-      date: admission.bookingDate,
-      type: "admission",
-      data: admission,
-    })),
-  ].sort((a, b) => new Date(b.date) - new Date(a.date));
-
-  const selectedItem = selectedVisit
-    ? allDates.find((item) => item.date === selectedVisit.date && item.type === selectedVisit.type)
-    : null;
-    console.log(selectedItem);
+  if (!patientData) return null;
 
   const renderVisitDetails = () => {
-    if (!selectedVisit || !patientDetails) return null;
+    if (!selectedVisit || !patientData) return null;
 
     const visitData =
-      patientDetails.visits?.find((v) => v.bookingDate === selectedVisit?.date) ||
-      patientDetails.admissionDetails?.find(
+      patientData.visits?.find((v) => v.bookingDate === selectedVisit?.date) ||
+      patientData.admissionDetails?.find(
         (a) => a.bookingDate === selectedVisit?.date
       );
 
     if (!visitData) return null;
 
-    const isIPD = selectedItem?.type === "admission" ? true : false;
+    const isIPD = selectedVisit?.type === "admission" ? true : false;
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="overflow-x-auto scrollbar-hide">
-          <TabsList className={cn(
-            "inline-flex h-9 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground mb-4",
-            "w-max min-w-full"
-          )}>
+          <TabsList
+            className={cn(
+              "inline-flex h-9 items-center justify-start rounded-lg bg-muted p-1 text-muted-foreground mb-4",
+              "w-max min-w-full"
+            )}
+          >
             <TabsTrigger value="reason" className="px-3">
               Reason
             </TabsTrigger>
@@ -461,11 +413,14 @@ export default function PatientDetails() {
   };
 
   const handleEditClick = () => {
-    if (!selectedVisit || !patientDetails) return;
+    if (!selectedVisit || !patientData) return;
 
-    const visitData = selectedVisit.type === "visit" 
-      ? patientDetails.visits?.find(v => v.bookingDate === selectedVisit.date)
-      : patientDetails.admissionDetails?.find(a => a.bookingDate === selectedVisit.date);
+    const visitData =
+      selectedVisit.type === "visit"
+        ? patientData.visits?.find((v) => v.bookingDate === selectedVisit.date)
+        : patientData.admissionDetails?.find(
+            (a) => a.bookingDate === selectedVisit.date
+          );
 
     if (!visitData) return;
 
@@ -473,11 +428,11 @@ export default function PatientDetails() {
       ID: visitData._id,
       bookingNumber: visitData.bookingNumber,
       patient: {
-        name: patientDetails.name,
-        registrationNumber: patientDetails.registrationNumber,
-        age: patientDetails.age,
-        gender: patientDetails.gender,
-        contactNumber: patientDetails.contactNumber,
+        name: patientData.name,
+        registrationNumber: patientData.registrationNumber,
+        age: patientData.age,
+        gender: patientData.gender,
+        contactNumber: patientData.contactNumber,
       },
       bookingDate: visitData.bookingDate,
       clinicalSummary: visitData.clinicalSummary,
@@ -494,48 +449,28 @@ export default function PatientDetails() {
       conditionOnDischarge: visitData.conditionOnDischarge,
     };
 
-    navigate('/doctors', { state: { editPatient: patientDataForEdit } });
+    navigate("/doctors", { state: { editPatient: patientDataForEdit } });
   };
 
   return (
     <div className="container mx-auto px-2 space-y-2 bg-gray-50">
-      <div className="flex justify-between items-center mb-2 p-4">
-        <h1 className="text-xl font-bold text-gray-800">Patient Profile</h1>
-        <div className="space-x-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="hover:bg-gray-100"
-            onClick={handleEditClick}
-            disabled={!selectedVisit}
-          >
-            <Edit className="mr-2 h-4 w-4" /> Edit
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="hover:bg-gray-100"
-          >
-            <Printer className="mr-2 h-4 w-4" /> Print
-          </Button>
-        </div>
-      </div>
-
       <Card className="shadow-md">
         <CardContent className="grid md:grid-cols-3 gap-4 p-3">
           <div className="flex items-center space-x-3">
             <Avatar className="h-14 w-14 ring-2 ring-primary ring-offset-2">
-              <AvatarFallback >{patientDetails.name.charAt(0).toUpperCase()}</AvatarFallback>
+              <AvatarFallback>
+                {patientData.name.charAt(0).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div>
               <h2 className="text-lg font-semibold text-gray-800">
-                {patientDetails.name}
+                {patientData.name}
               </h2>
               <p className="text-xs text-gray-500">
-                ID: {patientDetails.registrationNumber}
+                ID: {patientData.registrationNumber}
               </p>
               <Badge variant="outline" className="mt-1 text-xs">
-                {patientDetails.bloodType}
+                {patientData.bloodType}
               </Badge>
             </div>
           </div>
@@ -543,39 +478,58 @@ export default function PatientDetails() {
             <InfoItem
               icon={<User className="h-4 w-4" />}
               label="Age & Gender"
-              value={`${patientDetails.age} yrs, ${patientDetails.gender}`}
+              value={`${patientData.age} yrs, ${patientData.gender}`}
             />
             <InfoItem
               icon={<Phone className="h-4 w-4" />}
               label="Contact"
-              value={patientDetails.contactNumber}
+              value={patientData.contactNumber}
             />
           </div>
           <div className="text-sm">
             <InfoItem
               icon={<MapPin className="h-4 w-4" />}
               label="Address"
-              value={patientDetails.address}
+              value={patientData.address}
             />
             <InfoItem
               icon={<Mail className="h-4 w-4" />}
               label="Email"
-              value={patientDetails.email}
+              value={patientData.email}
             />
           </div>
         </CardContent>
       </Card>
 
       <div className="bg-white p-4 rounded-lg shadow-md">
-        <h3 className="text-lg font-semibold mb-3">Visit History</h3>
+        <div className="flex justify-between items-center mb-3">
+          <h3 className="text-lg font-semibold">Visit History</h3>
+          <Button
+            variant="outline"
+            size="sm"
+            className="hover:bg-gray-100"
+            onClick={handleEditClick}
+            disabled={!selectedVisit}
+          >
+            <Edit className="mr-2 h-4 w-4" /> Doctor's Section
+          </Button>
+        </div>
         <div className="flex flex-wrap gap-2 mb-4">
           {allDates.map((item) => (
             <Button
-              key={item}
-              variant={selectedVisit?.date === item.date && item.type === selectedVisit?.type ? "default" : "outline"}
+              key={`${item.date}-${item.type}`}
+              variant={
+                selectedVisit?.date === item.date &&
+                item.type === selectedVisit?.type
+                  ? "default"
+                  : "outline"
+              }
               size="sm"
               className={`${
-                selectedVisit?.date === item.date && item.type === selectedVisit?.type ? "ring-2 ring-primary" : ""
+                selectedVisit?.date === item.date &&
+                item.type === selectedVisit?.type
+                  ? "ring-2 ring-primary"
+                  : ""
               }`}
               onClick={() => setSelectedVisit(item)}
             >

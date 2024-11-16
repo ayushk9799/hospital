@@ -2,22 +2,31 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import { Select, SelectTrigger, SelectValue, SelectItem, SelectContent,} from "../components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { Checkbox } from "../components/ui/checkbox";
 import { Plus, X } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useDispatch, useSelector } from 'react-redux';
-import { createStaffMember, updateStaffMember } from '../redux/slices/staffSlice';
-import { useNavigate, useLocation, useParams } from 'react-router-dom';
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createStaffMember,
+  updateStaffMember,
+} from "../redux/slices/staffSlice";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 export default function AddStaff() {
   const { toast } = useToast();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { staffId } = useParams();
-  console.log(staffId)
+  console.log(staffId);
   const { status, error } = useSelector((state) => state.staff);
   const departments = useSelector((state) => state.departments.departments);
   const [formData, setFormData] = useState({ roles: [] });
@@ -34,51 +43,48 @@ export default function AddStaff() {
       setEditMode(true);
     }
   }, [location, staffId]);
-console.log(formData);
-console.log(location?.state?.staffData)
+  console.log(location?.state?.staffData);
   const [errors, setErrors] = useState({});
   const [newQualification, setNewQualification] = useState("");
   const [newCertification, setNewCertification] = useState("");
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    const keys=id.split('.')
-    if (keys.length===2) {
-      const [parent, child] = id.split('.');
-      setFormData(prev => ({
+    const keys = id.split(".");
+    if (keys.length === 2) {
+      const [parent, child] = id.split(".");
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       }));
-    }
-    else if (keys.length===3)
-      {
-        setFormData(prev => ({
-          ...prev,
-          [keys[0]]: {
-            ...prev[keys[0]],
-            [keys[1]]: {
-              ...prev[keys[0]][keys[1]],
-              [keys[2]]: value
-            }
-          }
-        }));
-      } else {
+    } else if (keys.length === 3) {
+      setFormData((prev) => ({
+        ...prev,
+        [keys[0]]: {
+          ...prev[keys[0]],
+          [keys[1]]: {
+            ...prev[keys[0]][keys[1]],
+            [keys[2]]: value,
+          },
+        },
+      }));
+    } else {
       setFormData({ ...formData, [id]: value });
     }
   };
 
   const handleSelectChange = (id, value) => {
-    if (id.includes('.')) {
-      const [parent, child] = id.split('.');
-      setFormData(prev => ({
+    if (id.includes(".")) {
+      const [parent, child] = id.split(".");
+      setFormData((prev) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: value
-        }
+          [child]: value,
+        },
       }));
     } else {
       setFormData({ ...formData, [id]: value });
@@ -86,7 +92,6 @@ console.log(location?.state?.staffData)
   };
 
   const handleCheckboxChange = (id, checked) => {
-
     const currentRoles = formData.roles || [];
     const updatedRoles = checked
       ? [...currentRoles, id]
@@ -103,56 +108,68 @@ console.log(location?.state?.staffData)
   const handleDepartmentChange = (department, checked) => {
     // Ensure formData.department is always an array
     const currentDepartments = formData.department || [];
-  
+
     // Update the department list based on the checked state
     const updatedDepartments = checked
       ? [...currentDepartments, department] // Add the department if checked
       : currentDepartments?.filter((dep) => dep !== department); // Remove if unchecked
-  
+
     // Update the formData with the new department list
     setFormData({ ...formData, department: updatedDepartments });
   };
-  
 
   const addQualification = () => {
     if (newQualification.trim()) {
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        qualifications: [...(prevData.qualifications || []), newQualification.trim()]
+        qualifications: [
+          ...(prevData.qualifications || []),
+          newQualification.trim(),
+        ],
       }));
       setNewQualification("");
     }
   };
 
   const removeQualification = (index) => {
-    const updatedQualifications = formData.qualifications.filter((_, i) => i !== index);
+    const updatedQualifications = formData.qualifications.filter(
+      (_, i) => i !== index
+    );
     setFormData({ ...formData, qualifications: updatedQualifications });
   };
 
   const addCertification = () => {
     if (newCertification.trim()) {
-      setFormData(prevData => ({
+      setFormData((prevData) => ({
         ...prevData,
-        certifications: [...(prevData.certifications || []), newCertification.trim()]
+        certifications: [
+          ...(prevData.certifications || []),
+          newCertification.trim(),
+        ],
       }));
       setNewCertification("");
     }
   };
 
   const removeCertification = (index) => {
-    const updatedCertifications = formData.certifications.filter((_, i) => i !== index);
+    const updatedCertifications = formData.certifications.filter(
+      (_, i) => i !== index
+    );
     setFormData({ ...formData, certifications: updatedCertifications });
   };
 
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Name is required";
-    if (formData.roles?.includes('admin')) {
-      if (!formData.username) newErrors.username = "Username is required for admin";
-      if (!formData.password) newErrors.password = "Password is required for admin";
+    if (formData.roles?.includes("admin")) {
+      if (!formData.username)
+        newErrors.username = "Username is required for admin";
+      if (!formData.password)
+        newErrors.password = "Password is required for admin";
     }
     // Check if roles exist and have a length greater than 0
-    if (!formData.roles || formData.roles.length === 0) newErrors.roles = "At least one role is required";
+    if (!formData.roles || formData.roles.length === 0)
+      newErrors.roles = "At least one role is required";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -162,7 +179,9 @@ console.log(location?.state?.staffData)
     if (validateForm()) {
       try {
         if (editMode) {
-          await dispatch(updateStaffMember({ id: formData._id, data: formData })).unwrap();
+          await dispatch(
+            updateStaffMember({ id: formData._id, data: formData })
+          ).unwrap();
           toast({
             variant: "success",
             title: "Staff Updated",
@@ -176,11 +195,15 @@ console.log(location?.state?.staffData)
             description: "Staff member has been added successfully.",
           });
         }
-        navigate('/reports');
+        navigate("/reports");
       } catch (error) {
         toast({
           title: "Error",
-          description: error || `Failed to ${editMode ? 'update' : 'add'} staff member. Please try again.`,
+          description:
+            error ||
+            `Failed to ${
+              editMode ? "update" : "add"
+            } staff member. Please try again.`,
           variant: "destructive",
         });
       }
@@ -193,8 +216,12 @@ console.log(location?.state?.staffData)
   };
   return (
     <div className="max-w-[1200px] mx-auto p-4">
-      <h2 className="text-xl font-bold mb-0">{editMode ? 'Edit' : 'Add New'} Staff Member</h2>
-      <p className="text-gray-600 mb-4">Fill in the details of the {editMode ? 'existing' : 'new'} staff member</p>
+      <h2 className="text-xl font-bold mb-0">
+        {editMode ? "Edit" : "Add New"} Staff Member
+      </h2>
+      <p className="text-gray-600 mb-4">
+        Fill in the details of the {editMode ? "existing" : "new"} staff member
+      </p>
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 md:col-span-2 lg:col-span-3 gap-4">
@@ -234,7 +261,9 @@ console.log(location?.state?.staffData)
                   onChange={handleInputChange}
                 />
                 {errors.password && (
-                  <span className="text-red-500 text-sm">{errors.password}</span>
+                  <span className="text-red-500 text-sm">
+                    {errors.password}
+                  </span>
                 )}
               </div>
             )}
@@ -315,7 +344,9 @@ console.log(location?.state?.staffData)
             <div>
               <Label htmlFor="shift.type">Shift Type</Label>
               <Select
-                onValueChange={(value) => handleSelectChange("shift.type", value)}
+                onValueChange={(value) =>
+                  handleSelectChange("shift.type", value)
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select shift type" />
@@ -393,12 +424,21 @@ console.log(location?.state?.staffData)
             <div>
               <Label>Roles</Label>
               <div className="grid grid-cols-2 gap-2">
-                {["pharmacist", "admin","nurse", "receptionist", "doctor","technician"].map((role) => (
+                {[
+                  "pharmacist",
+                  "admin",
+                  "nurse",
+                  "receptionist",
+                  "doctor",
+                  "technician",
+                ].map((role) => (
                   <div key={role} className="flex items-center space-x-2">
                     <Checkbox
                       id={role}
                       checked={formData.roles?.includes(role)}
-                      onCheckedChange={(checked) => handleCheckboxChange(role, checked)}
+                      onCheckedChange={(checked) =>
+                        handleCheckboxChange(role, checked)
+                      }
                     />
                     <label
                       htmlFor={role}
@@ -416,21 +456,25 @@ console.log(location?.state?.staffData)
             <div>
               <Label>Departments</Label>
               <div className="grid grid-cols-2 gap-2">
-                {(departments?.map((d)=>d.name)).map((dep) => (
-                  <div key={dep} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={`department-${dep}`}
-                      checked={formData.department?.includes(dep)}
-                      onCheckedChange={(checked) => handleDepartmentChange(dep, checked)}
-                    />
-                    <label
-                      htmlFor={`department-${dep}`}
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      {dep}
-                    </label>
-                  </div>
-                ))}
+                {departments
+                  ?.map((d) => d.name)
+                  .map((dep) => (
+                    <div key={dep} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`department-${dep}`}
+                        checked={formData.department?.includes(dep)}
+                        onCheckedChange={(checked) =>
+                          handleDepartmentChange(dep, checked)
+                        }
+                      />
+                      <label
+                        htmlFor={`department-${dep}`}
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        {dep}
+                      </label>
+                    </div>
+                  ))}
               </div>
             </div>
             <div>
@@ -504,14 +548,16 @@ console.log(location?.state?.staffData)
           <Button type="button" variant="outline" onClick={handleReset}>
             Reset
           </Button>
-          <Button type="submit" disabled={status === 'loading'}>
-            {status === 'loading' ? (
+          <Button type="submit" disabled={status === "loading"}>
+            {status === "loading" ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {editMode ? 'Updating...' : 'Adding...'}
+                {editMode ? "Updating..." : "Adding..."}
               </>
+            ) : editMode ? (
+              "Update Staff"
             ) : (
-              editMode ? 'Update Staff' : 'Add Staff'
+              "Add Staff"
             )}
           </Button>
         </div>

@@ -12,8 +12,7 @@ const SelectServicesDialog = ({ isOpen, onClose, services, selectedServices, onS
   const [localSelectedServices, setLocalSelectedServices] = useState(selectedServices);
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
- console.log(selectedServices);
-  useEffect(() => {
+   useEffect(() => {
     setLocalSelectedServices(selectedServices );
   }, [selectedServices]);
 
@@ -50,7 +49,6 @@ const SelectServicesDialog = ({ isOpen, onClose, services, selectedServices, onS
       service.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [sortedServices, searchTerm]);
-console.log(filteredServices);
 
   const handleCheckboxChange = useCallback((serviceId) => {
     setLocalSelectedServices((prevSelected) =>

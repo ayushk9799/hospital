@@ -2,7 +2,7 @@
 import * as React from "react"
 
 const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 3000
+const TOAST_REMOVE_DELAY = 2000
 
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
@@ -37,6 +37,8 @@ const addToRemoveQueue = (toastId) => {
 }
 
 export const reducer = (state, action) => {
+  console.log(action)
+  console.log(new Date())
   switch (action.type) {
     case "ADD_TOAST":
       return {
@@ -123,6 +125,9 @@ function toast({
       },
     },
   })
+
+  // Immediately add to remove queue when toast is created
+  addToRemoveQueue(id)
 
   return {
     id: id,

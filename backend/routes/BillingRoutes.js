@@ -115,8 +115,8 @@ router.get("/get-bills", async (req, res) => {
     // Add date range filter if provided
     if (startDate && endDate) {
       query.createdAt = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
+        $gte: new Date(startDate + "T00:00:00"),
+        $lte: new Date(endDate + "T23:59:59"),
       };
     }
 
@@ -129,12 +129,13 @@ router.get("/get-bills", async (req, res) => {
     res.json(bills);
   } catch (error) {
     console.error("Error fetching bills:", error);
-    res.status(500).json({ message: "Error fetching bills", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error fetching bills", error: error.message });
   }
 });
 
 // Get a specific service bill by ID
-
 
 // Create or update a service
 router.post("/service", async (req, res) => {
@@ -298,14 +299,7 @@ router.post("/create-opd-procedure-bill", verifyToken, async (req, res) => {
   session.startTransaction();
 
   try {
-    const {
-      services,
-      patient,
-      totalAmount,
-      subtotal,
-      patientInfo,
-     
-    } = req.body;
+    const { services, patient, totalAmount, subtotal, patientInfo } = req.body;
     const user = req.user;
 
     if (!services || !Array.isArray(services)) {
@@ -319,13 +313,16 @@ router.post("/create-opd-procedure-bill", verifyToken, async (req, res) => {
       patientType: "OPD",
       patient,
       patientInfo,
-      
+
       createdBy: user._id,
     });
- console.log(opdProcedureBill);
     await opdProcedureBill.save({ session });
 
-    await Patient.findByIdAndUpdate(patient, { $push: { opdProcedureBills: opdProcedureBill._id } }, { session });
+    await Patient.findByIdAndUpdate(
+      patient,
+      { $push: { opdProcedureBills: opdProcedureBill._id } },
+      { session }
+    );
     await session.commitTransaction();
     res.status(201).json(opdProcedureBill);
   } catch (error) {
@@ -337,15 +334,15 @@ router.post("/create-opd-procedure-bill", verifyToken, async (req, res) => {
 });
 
 // Add this route handler with your other routes
-router.get('/get-bill/:id', verifyToken, async (req, res) => {
+router.get("/get-bill/:id", verifyToken, async (req, res) => {
   try {
     const bill = await ServicesBill.findById(req.params.id)
-      .populate('patient')
-      .populate('payments')
-      .populate('createdBy');
-      
+      .populate("patient")
+      .populate("payments")
+      .populate("createdBy");
+
     if (!bill) {
-      return res.status(404).json({ message: 'Bill not found' });
+      return res.status(404).json({ message: "Bill not found" });
     }
 
     res.json(bill);

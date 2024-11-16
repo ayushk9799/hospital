@@ -43,6 +43,7 @@ import Customization from './pages/Customization';
 import PatientSearch from './pages/PatientSearch';
 import OPDProcedure from './pages/OPDProcedure';
 import QuickMenu from './pages/QuickMenu';
+import PatientOverview from './pages/PatientOverview';
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -55,13 +56,13 @@ const AppContent = () => {
     dispatch(setLoading(true));
     
     // Get today's date in YYYY-MM-DD format
-    const today = new Date().toISOString().split('T')[0];
+    const today = new Date().toLocaleDateString('en-In').split('/').reverse().join('-');
     
     dispatch(fetchUserData())
       .then(() => {
         if (isAuthenticated) {
           return Promise.all([
-            dispatch(fetchPatients({ startDate: today })), // Pass today's date as parameter
+            dispatch(fetchPatients({ startDate: today })), 
             dispatch(fetchStaffMembers()),
             dispatch(fetchDepartments()),
             dispatch(fetchRooms()),
@@ -111,6 +112,7 @@ const AppContent = () => {
 
             {isAuthenticated && (
               <>
+                <Route path="/patient-overview/:patientId" element={<PatientOverview />} />
                 <Route path="/billings" element={<Billings />} />
                 <Route path="/patients" element={<Patients />} />
                 <Route path="/patients/:patientId" element={<PatientDetails />} />
