@@ -10,6 +10,7 @@ import roomRoutes from "./routes/roomRoutes.js";
 import inventoryRoutes from "./routes/inventoryRoutes.js";
 import staffRoutes from "./routes/staffRoutes.js";
 import prescriptionRoutes from "./routes/prescriptionRoutes.js";
+import opdProcedureRoutes from "./routes/opdProcedure.js";
 import authRoutes from "./routes/authRoutes.js";
 import departmentRoutes from "./routes/departmentRoutes.js";
 import { identifyHospital } from "./middleware/hospitalMiddleware.js";
@@ -62,6 +63,7 @@ app.use("/api/events", eventRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/expenses", expenseRoutes);
+app.use("/api/opd-procedures", opdProcedureRoutes);
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {

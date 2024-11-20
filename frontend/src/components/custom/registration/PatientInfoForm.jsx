@@ -169,7 +169,7 @@ export default function PatientInfoForm({
       <div className="relative">
         <MemoizedInput
           id="registrationNumber"
-          label="Reg. No."
+          label="UHID Number"
           value={formData.registrationNumber}
           onChange={handleInputChange}
           error={errors.registrationNumber}

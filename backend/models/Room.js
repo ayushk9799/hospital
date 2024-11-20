@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 
 const roomSchema = new mongoose.Schema({
-  roomNumber: { type: String, required: true, unique: true },
+  roomNumber: { type: String, required: true},
   type: { type: String },
   floor: Number,
   capacity: { type: Number, required: true },

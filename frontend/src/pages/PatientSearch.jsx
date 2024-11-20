@@ -68,7 +68,7 @@ export default function PatientSearch() {
     {
       name: "View / Edit",
       icon: Eye,
-      action: () => navigate(`/patients/${selectedPatient._id}`),
+      action: () => navigate(`/patient-overview/${selectedPatient._id}`),
     },
     {
       name: "OPD Follow Up",
@@ -118,7 +118,7 @@ export default function PatientSearch() {
       ? format(new Date(Math.max(...dates)), "dd-MM-yyyy")
       : "-";
   };
-  console.log(selectedPatient);
+
   const PatientCard = ({ patient }) => (
     <Card className="mb-4 hover:shadow-md transition-shadow">
       <CardContent className="p-4">

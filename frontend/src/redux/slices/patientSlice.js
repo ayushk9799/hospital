@@ -224,12 +224,15 @@ export const fetchVisitDetails = createLoadingAsyncThunk(
   "patients/fetchVisitDetails",
   async ({ id, type }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/patients/visit-details`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ id, type })
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/patients/visit-details`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id, type }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -237,7 +240,7 @@ export const fetchVisitDetails = createLoadingAsyncThunk(
       }
 
       const data = await response.json();
-      console.log(data)
+
       return data;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -251,10 +254,13 @@ export const searchPatients = createLoadingAsyncThunk(
   "patients/searchPatients",
   async (searchQuery, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/dashboard/search?q=${searchQuery}`, {
-        method: 'GET',
-        credentials: 'include',
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/dashboard/search?q=${searchQuery}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -306,12 +312,15 @@ export const fetchRegistrationDetails = createLoadingAsyncThunk(
   "patients/fetchRegistrationDetails",
   async ({ registrationNumber, type }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/patients/registration-details`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ registrationNumber, type })
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/patients/registration-details`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ registrationNumber, type }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -327,6 +336,32 @@ export const fetchRegistrationDetails = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new thunk
+export const fetchAdmittedPatients = createLoadingAsyncThunk(
+  "patients/fetchAdmittedPatients",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/patients/admittedpatients`,
+        {
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -339,12 +374,14 @@ const initialState = {
   addLabReportStatus: "idle",
   error: null,
   visitDetails: null,
-  visitDetailsStatus: 'idle',
+  visitDetailsStatus: "idle",
   searchResults: [],
-  searchQuery: '',
-  searchStatus: 'idle',
+  searchQuery: "",
+  searchStatus: "idle",
   registrationDetails: null,
-  registrationDetailsStatus: 'idle',
+  registrationDetailsStatus: "idle",
+  admittedPatients: [],
+  admittedPatientsStatus: "idle",
 };
 
 const patientSlice = createSlice({
@@ -494,28 +531,28 @@ const patientSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(fetchVisitDetails.pending, (state) => {
-        state.visitDetailsStatus = 'loading';
+        state.visitDetailsStatus = "loading";
         state.visitDetails = null;
       })
       .addCase(fetchVisitDetails.fulfilled, (state, action) => {
-        state.visitDetailsStatus = 'succeeded';
+        state.visitDetailsStatus = "succeeded";
         state.visitDetails = action.payload;
       })
       .addCase(fetchVisitDetails.rejected, (state, action) => {
-        state.visitDetailsStatus = 'failed';
+        state.visitDetailsStatus = "failed";
         state.visitDetails = null;
         state.error = action.payload;
       })
       .addCase(searchPatients.pending, (state) => {
-        state.searchStatus = 'loading';
+        state.searchStatus = "loading";
       })
       .addCase(searchPatients.fulfilled, (state, action) => {
-        state.searchStatus = 'succeeded';
+        state.searchStatus = "succeeded";
         state.searchResults = action.payload.results;
         state.searchQuery = action.payload.searchQuery;
       })
       .addCase(searchPatients.rejected, (state, action) => {
-        state.searchStatus = 'failed';
+        state.searchStatus = "failed";
         state.error = action.payload;
       })
       .addCase(opdRevisit.pending, (state) => {
@@ -544,16 +581,27 @@ const patientSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(fetchRegistrationDetails.pending, (state) => {
-        state.registrationDetailsStatus = 'loading';
+        state.registrationDetailsStatus = "loading";
         state.registrationDetails = null;
       })
       .addCase(fetchRegistrationDetails.fulfilled, (state, action) => {
-        state.registrationDetailsStatus = 'succeeded';
+        state.registrationDetailsStatus = "succeeded";
         state.registrationDetails = action.payload;
       })
       .addCase(fetchRegistrationDetails.rejected, (state, action) => {
-        state.registrationDetailsStatus = 'failed';
+        state.registrationDetailsStatus = "failed";
         state.registrationDetails = null;
+        state.error = action.payload;
+      })
+      .addCase(fetchAdmittedPatients.pending, (state) => {
+        state.admittedPatientsStatus = "loading";
+      })
+      .addCase(fetchAdmittedPatients.fulfilled, (state, action) => {
+        state.admittedPatientsStatus = "succeeded";
+        state.admittedPatients = action.payload;
+      })
+      .addCase(fetchAdmittedPatients.rejected, (state, action) => {
+        state.admittedPatientsStatus = "failed";
         state.error = action.payload;
       });
   },
@@ -572,12 +620,18 @@ export const selectPatientDetails = createSelector(
 
 // Add a selector for visit details
 export const selectVisitDetails = createSelector(
-  [(state) => state.patients.visitDetails, (state) => state.patients.visitDetailsStatus],
+  [
+    (state) => state.patients.visitDetails,
+    (state) => state.patients.visitDetailsStatus,
+  ],
   (visitDetails, status) => ({ visitDetails, status })
 );
 
 export const selectRegistrationDetails = createSelector(
-  [(state) => state.patients.registrationDetails, (state) => state.patients.registrationDetailsStatus],
+  [
+    (state) => state.patients.registrationDetails,
+    (state) => state.patients.registrationDetailsStatus,
+  ],
   (registrationDetails, status) => ({ registrationDetails, status })
 );
 

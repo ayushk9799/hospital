@@ -199,7 +199,7 @@ export default function Patients() {
           <TableRow>
             <TableHead>S.No</TableHead>
             <TableHead>Name</TableHead>
-            {type === "IPD" && <TableHead>Reg. Number</TableHead>}
+             <TableHead>UHID No</TableHead>
             {type === "IPD" && (
               <>
                 <TableHead>Room</TableHead>
@@ -234,9 +234,9 @@ export default function Patients() {
                   {patient.patient.name}
                 </Button>
               </TableCell>
-              {type === "IPD" && (
+             
                 <TableCell>{patient.registrationNumber || "--"}</TableCell>
-              )}
+              
               {type === "IPD" && (
                 <>
                   <TableCell>
@@ -268,7 +268,11 @@ export default function Patients() {
                 </TableCell>
               )}
               <TableCell>{patient.patient.contactNumber}</TableCell>
-              <TableCell>{patient.patient.address || "--"}</TableCell>
+              <TableCell>
+                <div className="max-w-[150px] truncate" title={patient.patient.address || "--"}>
+                  {patient.patient.address || "--"}
+                </div>
+              </TableCell>
               <TableCell>{patient.patient.gender}</TableCell>
               <TableCell>{patient.doctor?.name || "--"}</TableCell>
 
@@ -280,13 +284,6 @@ export default function Patients() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() =>
-                        navigate(`/patients/${patient.patient._id}`)
-                      }
-                    >
-                      View/Edit
-                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() => handleExistingBills(patient)}
                     >
@@ -323,7 +320,6 @@ export default function Patients() {
   };
 
   const PatientCard = ({ patient }) => {
-    console.log(patient);
     const getStatusBadgeVariant = (status) => {
       switch (status.toLowerCase()) {
         case "admitted":
@@ -374,13 +370,6 @@ export default function Patients() {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() =>
-                        navigate(`/patients/${patient.patient._id}`)
-                      }
-                    >
-                      View/Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
                       onClick={() => handleExistingBills(patient)}
                     >
                       Bills
@@ -400,14 +389,14 @@ export default function Patients() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
-              {patient.type === "IPD" && (
+            
                 <div className="flex items-center col-span-2">
                   <User className="h-4 w-4 text-muted-foreground mr-2" />
                   <span className="text-sm">
-                    Reg. Number: {patient.registrationNumber || "--"}
+                    UHID No: {patient.registrationNumber || "--"}
                   </span>
                 </div>
-              )}
+            
               <div className="flex items-center">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground mr-2" />
                 <span className="text-sm">
@@ -419,8 +408,8 @@ export default function Patients() {
                 <span className="text-sm">{patient.patient.contactNumber}</span>
               </div>
               <div className="flex items-center col-span-2">
-                <MapPin className="h-4 w-4 text-muted-foreground mr-2" />
-                <span className="text-sm">
+                <MapPin className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
+                <span className="text-sm truncate max-w-[200px]" title={patient.patient.address || "--"}>
                   {patient.patient.address || "--"}
                 </span>
               </div>
@@ -588,25 +577,7 @@ export default function Patients() {
                   </AnimatePresence>
                 ) : (
                   <>
-                    {/* <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="ml-auto">
-                          <Filter className="mr-2 h-4 w-4" />
-                          {filterStatus === "All" ? "Filter" : filterStatus}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="start" className="w-[200px]">
-                        <DropdownMenuLabel>Filter Options</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuLabel>Status</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => setFilterStatus("All")}>All</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setFilterStatus("Active")}>Active</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setFilterStatus("Admitted")}>Admitted</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setFilterStatus("Discharged")}>Discharged</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setFilterStatus("Critical")}>Critical</DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setFilterStatus("Pending")}>Pending</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu> */}
+                    {/* */}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline">

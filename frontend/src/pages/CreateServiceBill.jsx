@@ -58,7 +58,7 @@ import {
 
 const CreateServiceBill = ({
   initialBillId,
-  initialBillData,
+  initialBillDatas,
   patientData,
   isEmbedded = false,
 }) => {
@@ -67,17 +67,20 @@ const CreateServiceBill = ({
   const { billId: urlBillId } = useParams();
   const location = useLocation();
   const { toast } = useToast();
-  console.log(patientData);
-  console.log(initialBillData)
+  const [billDataForPrint, setBillDataForPrint] = useState(null);
+  const [newlyAddedServices, setNewlyAddedServices] = useState([]);
+
+  const [initialBillData, setInitialBillData] = useState(initialBillDatas);
+  console.log(patientData)
   // Use either the prop billId or URL billId
   const billId = initialBillId || urlBillId;
-  console.log(billId);
-  console.log(initialBillData)
+console.log(isEmbedded)
   // Initialize state with props if provided
   useEffect(() => {
     if (initialBillData && patientData) {
       setIsEditing(true);
       // Process all services from all bills
+ console.log(initialBillData)
       const formattedServices = initialBillData.services.flatMap(
         (bill, billIndex) =>
           bill.services.map((service, serviceIndex) => ({
@@ -88,14 +91,14 @@ const CreateServiceBill = ({
             rate: service.rate,
             total: service.rate * service.quantity,
             isExisting: true,
-            billId: bill._id, // Store the original bill ID for reference
+            billId: bill._id,
           }))
       );
 
       setAddedServices(formattedServices);
       setSelectedServices(formattedServices.map((service) => service.id));
-      // Sum up all additional discounts from all bills
-      const totalAdditionalDiscount =billData?.services?.[0]?.additionalDiscount
+      const totalAdditionalDiscount =
+        initialBillData?.services?.[0]?.additionalDiscount;
       setAdditionalDiscount(totalAdditionalDiscount.toString());
 
       setBillPatientDetails({
@@ -108,15 +111,16 @@ const CreateServiceBill = ({
         address: patientData.address,
         bloodGroup: patientData.bloodGroup,
         type: patientData.type,
+        bookingDate: patientData.bookingDate || null,
       });
     } else if (billId) {
       // Existing fetch logic for navigation scenario
       dispatch(fetchBillById(billId))
         .unwrap()
         .then((billData) => {
+          console.log(billData)
           setIsEditing(true);
-           console.log(billData)
-          // If we have a lastServiceId from the location state, filter services up to that ID
+          setNewlyAddedServices([])
           const lastServiceId = location.state?.lastServiceId;
           let services = billData.services;
 
@@ -131,20 +135,23 @@ const CreateServiceBill = ({
 
           // Format billData to match initialBillData.services[0] structure
           const formattedBillData = {
-            services: [{
-              _id: billData._id,
-              services: services.map((service) => ({
-                name: service.name,
-                category: service.category,
-                quantity: service.quantity,
-                rate: service.rate,
-              })),
-              createdAt: billData.createdAt,
-              totalAmount: billData.totalAmount,
-              additionalDiscount: billData.additionalDiscount,
-              amountPaid: billData.amountPaid,
-              payments: billData.payments,
-            }]
+            services: [
+              {
+                _id: billData._id,
+                services: services.map((service) => ({
+                  name: service.name,
+                  category: service.category,
+                  quantity: service.quantity,
+                  rate: service.rate,
+                })),
+                createdAt: billData.createdAt,
+                totalAmount: billData.totalAmount,
+                additionalDiscount: billData.additionalDiscount,
+                subtotal: billData.subtotal,
+                amountPaid: billData.amountPaid,
+                payments: billData.payments,
+              },
+            ],
           };
 
           const formattedServices = services.map((service, index) => ({
@@ -160,7 +167,7 @@ const CreateServiceBill = ({
           setAddedServices(formattedServices);
           setSelectedServices(formattedServices.map((service) => service.id));
           setAdditionalDiscount(billData.additionalDiscount || "");
-          console.log(billData)
+
           setBillPatientDetails({
             _id: billData.patient._id,
             name: billData.patientInfo.name,
@@ -171,10 +178,14 @@ const CreateServiceBill = ({
             address: billData.patient.address,
             bloodGroup: billData.patient.bloodGroup,
             type: billData.patientType,
+            bookingDate:
+              billData.patient.bookingDate || billData.createdAt || null,
           });
-          setBillData(formattedBillData); // Now storing in the same format as initialBillData
+          console.log(formattedBillData)
+          setBillData(formattedBillData); // Now storing in the same format as initialBillDat
         })
         .catch((error) => {
+          console.log(error)
           toast({
             title: "Error fetching bill",
             description: "Could not load the bill details. Please try again.",
@@ -185,7 +196,7 @@ const CreateServiceBill = ({
           }
         });
     }
-  }, [initialBillData, patientData, billId, dispatch, isEmbedded]);
+  }, []);
 
   // Modify navigation behavior based on isEmbedded
   const handleAfterSuccess = () => {
@@ -222,16 +233,20 @@ const CreateServiceBill = ({
     useState("amount");
   const [isEditing, setIsEditing] = useState(false);
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-  const [billData, setBillData] = useState(initialBillData||{});
+  const [billData, setBillData] = useState(initialBillData || {});
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState([]);
-
   const calculateTotals = useMemo(() => {
     // Calculate total from all services (both existing and newly added)
-    const subtotal = addedServices.reduce(
+    // const subtotal = addedServices.reduce(
+    //   (sum, service) => sum + service.total,
+    //   0
+    // );
+    console.log(billData)
+    const subtotal = newlyAddedServices.reduce(
       (sum, service) => sum + service.total,
       0
-    );
+    )+(billData?.subtotal||billData?.services?.[0]?.subtotal||0);
 
     let discountValue = 0;
 
@@ -249,9 +264,9 @@ const CreateServiceBill = ({
     const totalAmount = subtotal - discountValue;
 
     // Calculate total amount paid from initialBillData if it exists
-    const totalAmountPaid =billData?.services?.[0]?.amountPaid;
+    const totalAmountPaid = billData?.amountPaid || billData?.services?.[0]?.amountPaid;
     console.log(billData)
- console.log(totalAmountPaid)
+    console.log(totalAmountPaid)
     return {
       subtotal,
       additionalDiscount: discountValue.toFixed(2),
@@ -259,7 +274,13 @@ const CreateServiceBill = ({
       currentServicesSubtotal: subtotal,
       totalAmountPaid,
     };
-  }, [addedServices, additionalDiscount, additionalDiscountType,billData,initialBillData]);
+  }, [
+    addedServices,
+    additionalDiscount,
+    additionalDiscountType,
+    newlyAddedServices,
+    billData,
+  ]);
 
   useEffect(() => {
     if (servicesStatus === "idle") dispatch(fetchServices());
@@ -325,6 +346,7 @@ const CreateServiceBill = ({
         description: "The bill has been successfully updated.",
       });
       dispatch(setCreateBillStatusIdle());
+
       handlePrintBill();
     } else if (updateBillStatus === "failed") {
       toast({
@@ -371,6 +393,8 @@ const CreateServiceBill = ({
     };
 
     setAddedServices((prev) => [...prev, newServiceWithoutDiscount]);
+    setNewlyAddedServices((prev) => [...prev, newServiceWithoutDiscount]); // Track new service
+
     setSelectedServices((prev) => [...prev, newServiceWithoutDiscount.id]);
 
     setNewService({
@@ -385,6 +409,8 @@ const CreateServiceBill = ({
 
   const handleRemoveService = (id) => {
     setAddedServices((prev) => prev.filter((service) => service.id !== id));
+    setNewlyAddedServices((prev) => prev.filter((service) => service.id !== id));
+
     setSelectedServices((prev) => prev.filter((serviceId) => serviceId !== id));
   };
 
@@ -442,18 +468,23 @@ const CreateServiceBill = ({
     };
 
     if (isEditing) {
-      dispatch(updateBill({ billId, billData }));
+      dispatch(
+        updateBill({
+          billId: billId || initialBillData.services[0]._id,
+          billData,
+        })
+      )
+       
     } else {
       dispatch(createBill(billData));
     }
   };
-
-  const handleSaveToDraft = () => {
-    // Implement the save to draft functionality here
-  };
+  
 
   const handleReset = () => {
     setAddedServices([]);
+    setNewlyAddedServices([]); // Clear newly added services
+
     setNewService({
       serviceName: "",
       quantity: "",
@@ -501,9 +532,9 @@ const CreateServiceBill = ({
 
     const totalAfterDiscount = selectedServicesTotal - discountAmount;
 
-    // Get the first bill from initialBillData or existing billData
+    
     const firstBill = billData?.services?.[0] || {};
-
+  console.log(firstBill)
     if (patientDetails?.type === "OPD") {
       const opdBillData = {
         patient: {
@@ -518,20 +549,20 @@ const CreateServiceBill = ({
             name: service.service,
             quantity: service.quantity,
             rate: service.rate,
-            total: service.total
+            total: service.total,
           })),
           createdAt: firstBill.createdAt || new Date(),
-          subtotal: selectedServicesTotal,
+          subtotal: calculateTotals.subtotal,
           additionalDiscount: discountAmount,
-          totalAmount: totalAfterDiscount,
-          amountPaid: firstBill.amountPaid || totalAfterDiscount,
-          payments: firstBill.payments || []
+          totalAmount: calculateTotals.totalAmount,
+          amountPaid: calculateTotals.totalAmountPaid,
+          payments: firstBill.payments || [],
         },
         payment: {
-          paymentMethod: firstBill.paymentMethod || "Cash"
-        }
+          paymentMethod: firstBill.paymentMethod || "Cash",
+        },
       };
-      setBillData(opdBillData);
+      setBillDataForPrint(opdBillData);
       setIsPrintModalOpen(true);
     } else {
       // Format for ViewBillDialog
@@ -544,14 +575,15 @@ const CreateServiceBill = ({
         services: selectedServicesList.map((service) => ({
           name: service.service,
           quantity: service.quantity,
-          rate: service.rate
+          rate: service.rate,
         })),
-        totalAmount: totalAfterDiscount,
+        totalAmount: calculateTotals.totalAmount,
+        subtotal: calculateTotals.subtotal,
         additionalDiscount: discountAmount,
-        amountPaid: firstBill.amountPaid || 0,
-        payments: firstBill.payments || []
+        amountPaid: calculateTotals.totalAmountPaid,
+        payments: firstBill.payments || [],
       };
-      setBillData(viewBillData);
+      setBillDataForPrint(viewBillData);
       setIsViewBillDialogOpen(true);
     }
   };
@@ -581,7 +613,7 @@ const CreateServiceBill = ({
   const renderHeader = () => {
     if (!isEmbedded) {
       return (
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between">
           <div
             className="flex items-center cursor-pointer"
             onClick={() => navigate(-1)}
@@ -598,7 +630,7 @@ const CreateServiceBill = ({
   };
 
   return (
-    <div className="w-full space-y-2 max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+    <div className="w-full  max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
       {/* Conditionally render the header */}
       {renderHeader()}
 
@@ -636,7 +668,10 @@ const CreateServiceBill = ({
                 <CalendarDays className="w-4 h-4 text-gray-400" />
                 <span>
                   {patientDetails?.bookingDate
-                    ? format(patientDetails?.bookingDate, "MMM dd, hh:mm a")
+                    ? format(
+                        new Date(patientDetails.bookingDate),
+                        "MMM dd, yyyy"
+                      )
                     : "N/A"}
                 </span>
               </div>
@@ -859,51 +894,74 @@ const CreateServiceBill = ({
       </Card>
 
       <Card>
-        <CardContent className="p-3">
-          <div className="flex md:flex-row justify-between items-start md:items-center">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 mb-2 md:mb-0">
-              <Label htmlFor="additionalDiscountType">
-                Additional Discount:
-              </Label>
-              <div className="flex items-center space-x-2">
-                <Select
-                  id="additionalDiscountType"
-                  value={additionalDiscountType}
-                  onValueChange={(value) => setAdditionalDiscountType(value)}
-                >
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="amount">Amount</SelectItem>
-                    <SelectItem value="percentage">Percentage</SelectItem>
-                  </SelectContent>
-                </Select>
+        <CardContent className="p-1">
+          <div className="flex flex-col items-end space-y-0.5">
+            {/* Subtotal */}
+            <div className="flex justify-end w-48 items-center text-sm">
+              <span className="text-gray-600 mr-3">Subtotal:</span>
+              <div className="flex items-center">
+                <span className="mr-1">₹</span>
                 <Input
-                  id="additionalDiscount"
-                  type="text"
-                  placeholder={additionalDiscountType === "amount" ? "0.00" : "0%"}
-                  value={additionalDiscount}
-                  onChange={(e) => setAdditionalDiscount(e.target.value)}
-                  className="w-24"
+                 
+                  value={parseFloat(calculateTotals.subtotal||0).toFixed(2)}
+                  onChange={(e) => {
+                    setBillData(prev=>({
+                      ...prev,
+                      subtotal:e.target.value
+                    }))
+                   
+                  }}
+                  className="w-20 h-7 text-right font-medium border-0 p-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  placeholder="0.00"
                 />
               </div>
             </div>
-            <div className="flex flex-col items-start md:items-end space-y-1">
-              <div className="flex items-center space-x-2">
-                <Label>Subtotal:</Label>
-                <span>₹{calculateTotals.subtotal?.toLocaleString("en-IN")}</span>
+
+            {/* Discount */}
+            <div className="flex justify-end w-48 items-center text-sm">
+              <span className="text-gray-600 mr-3">Discount:</span>
+              <div className="flex items-center">
+                <span className="text-red-600 mr-1">₹</span>
+                <Input
+                  value={(parseFloat(additionalDiscount) || 0).toFixed(2)}
+                  onChange={(e) => setAdditionalDiscount(e.target.value)}
+                  className="w-20 h-7 text-right text-red-600 font-medium border-0 p-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
+                  placeholder="0.00"
+                />
               </div>
-              <div className="flex items-center space-x-2">
-                <Label>Amount Paid:</Label>
-                <span>₹{calculateTotals.totalAmountPaid?.toLocaleString("en-IN")}</span>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Label>Total:</Label>
-                <span className="text-xl font-bold">
-                  ₹{calculateTotals.totalAmount?.toLocaleString("en-IN")}
-                </span>
-              </div>
+            </div>
+
+            {/* Total */}
+            <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
+              <span className="font-medium mr-3">Net Total:</span>
+              <span className="font-medium">
+                ₹{calculateTotals.totalAmount?.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+
+            {/* Amount Paid */}
+            <div className="flex justify-end w-48 items-center text-sm">
+              <span className="text-gray-600 mr-3">Paid:</span>
+              <span className="text-green-600">
+                ₹{calculateTotals.totalAmountPaid?.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </div>
+
+            {/* Amount Due */}
+            <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
+              <span className="text-gray-600 mr-3">Balance:</span>
+              <span className="text-red-600">
+                ₹{(calculateTotals.totalAmount - (calculateTotals.totalAmountPaid || 0)).toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
             </div>
           </div>
         </CardContent>
@@ -951,7 +1009,7 @@ const CreateServiceBill = ({
       <OPDBillTokenModal
         isOpen={isPrintModalOpen}
         setIsOpen={setIsPrintModalOpen}
-        patientData={billData}
+        patientData={billDataForPrint}
         services={addedServices}
         selectedServices={selectedServices}
         onSelectService={handleSelectService}
@@ -965,7 +1023,7 @@ const CreateServiceBill = ({
       <ViewBillDialog
         isOpen={isViewBillDialogOpen}
         setIsOpen={setIsViewBillDialogOpen}
-        billData={billData}
+        billData={billDataForPrint}
         services={addedServices}
         selectedServices={selectedServices}
         onSelectService={handleSelectService}

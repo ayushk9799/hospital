@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "../../ui/table";
 
-const BillModal = ({ isOpen, onClose, billData, hospitalInfo }) => {
+const BillModal = ({ isOpen, onClose, billData, hospitalInfo, completedBill }) => {
   const [showPDF, setShowPDF] = useState(false);
 
   useEffect(() => {
@@ -74,7 +74,7 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo }) => {
               </div>
               <div>
                 <span className="font-semibold">Reg. Number:</span>{" "}
-                {billData.patientInfo.registrationNumber || "N/A"}
+                {billData.patientInfo.registrationNumber || completedBill?.patient.registrationNumber || "N/A"}
               </div>
             </div>
 

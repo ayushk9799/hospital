@@ -25,7 +25,6 @@ const allLabTests = labCategories.flatMap((category) =>
 const comorbiditiesList = comorbidities.map((name) => ({ name }));
 
 export default function IPDModule({ patient }) {
-  console.log("patient", patient); 
   const [ipdAdmission, setIpdAdmission] = useState({
     bookingDate: patient.bookingDate,
     bookingNumber: patient.bookingNumber,

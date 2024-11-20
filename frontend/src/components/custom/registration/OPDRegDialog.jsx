@@ -36,6 +36,14 @@ import { useMediaQuery } from "../../../hooks/use-media-query";
 import MemoizedInput from "./MemoizedInput";
 import { fetchServices } from "../../../redux/slices/serviceSlice";
 import OPDBillTokenModal from "./OPDBillTokenModal";
+import MultiSelectInput from "../MultiSelectInput";
+
+const paymentMethods = [
+  { name: "Cash" },
+  { name: "UPI" },
+  { name: "Card" },
+  { name: "Insurance" },
+];
 
 const initialFormData = {
   name: "",
@@ -79,9 +87,8 @@ const initialFormData = {
       policyNumber: "",
     },
     totalFee: "",
-    amountPaid: "",
     discount: "",
-    paymentMethod: "",
+    paymentMethod: [],
   },
 };
 
@@ -176,6 +183,46 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     [handleInputChange]
   );
 
+  const handleAmountPaidChange = (method, amount) => {
+    setFormData((prev) => ({
+      ...prev,
+      visit: {
+        ...prev.visit,
+        paymentMethod: prev.visit.paymentMethod.map((pm) =>
+          pm.method === method ? { ...pm, amount } : pm
+        ),
+      },
+    }));
+  };
+
+  const handlePaymentMethodChange = (newMethods) => {
+    setFormData((prev) => {
+      // Get existing payment methods with their amounts
+      const existingPayments = prev.visit.paymentMethod.reduce((acc, pm) => {
+        acc[pm.method] = pm.amount;
+        return acc;
+      }, {});
+
+      // Create new payment method array preserving existing amounts
+      const updatedPaymentMethods = newMethods.map(method => ({
+        method: method.name,
+        amount: existingPayments[method.name] || "",
+      }));
+
+      return {
+        ...prev,
+        visit: {
+          ...prev.visit,
+          paymentMethod: updatedPaymentMethods,
+          amountPaid: updatedPaymentMethods.reduce(
+            (sum, pm) => sum + (Number(pm.amount) || 0),
+            0
+          ),
+        },
+      };
+    });
+  };
+
   const validateForm = () => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Full name is required";
@@ -187,19 +234,17 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
 
     // Payment validation
     const totalFee = Number(formData.visit.totalFee) || 0;
-    const amountPaid = Number(formData.visit.amountPaid) || 0;
+    const amountPaid = formData.visit.paymentMethod.reduce(
+      (sum, pm) => sum + (Number(pm.amount) || 0),
+      0
+    );
     const discount = Number(formData.visit.discount) || 0;
 
     if (totalFee < 0) newErrors.totalFee = "Total fee cannot be negative";
-    if (amountPaid < 0) newErrors.amountPaid = "Amount paid cannot be negative";
     if (discount < 0) newErrors.discount = "Discount cannot be negative";
-    if (discount > totalFee)
-      newErrors.discount = "Discount cannot exceed total fee";
+    if (discount > totalFee) newErrors.discount = "Discount cannot exceed total fee";
     if (amountPaid > totalFee - discount)
-      newErrors.amountPaid =
-        "Amount paid cannot exceed total fee minus discount";
-    if (amountPaid > 0 && !formData.visit.paymentMethod)
-      newErrors.paymentMethod = "required";
+      newErrors.amountPaid = `Total payments (${amountPaid}) cannot exceed ${totalFee - discount} (Total - Discount)`;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -473,77 +518,56 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                     </div>
                     <div className="flex flex-col gap-6 pt-2 md:pt-1">
                       <div className="flex flex-col gap-2">
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-4">
-                          <div className="relative">
-                            <MemoizedInput
-                              label="Total Fee (₹)"
-                              id="visit.totalFee"
-                              value={formData.visit.totalFee}
-                              onChange={handleInputChange}
-                              error={errors.totalFee}
-                            />
-                            {errors.totalFee && (
-                              <span className="absolute -bottom-5 left-0 text-xs text-red-500">
-                                {errors.totalFee}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="relative">
-                            <MemoizedInput
-                              label="Discount (₹)"
-                              id="visit.discount"
-                              value={formData.visit.discount}
-                              onChange={handleInputChange}
-                              error={errors.discount}
-                            />
-                            {errors.discount && (
-                              <span className="absolute -bottom-5 left-0 text-xs text-red-500">
-                                {errors.discount}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="relative">
-                            <MemoizedInput
-                              label="Amount Paid (₹)"
-                              id="visit.amountPaid"
-                              value={formData.visit.amountPaid}
-                              onChange={handleInputChange}
-                              error={errors.amountPaid}
-                            />
-                            {errors.amountPaid && (
-                              <span className="absolute -bottom-5 left-0 text-xs text-red-500 whitespace-nowrap">
-                                {errors.amountPaid}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className="relative">
-                            <Select
-                              id="visit.paymentMethod"
-                              value={formData.visit.paymentMethod}
-                              onValueChange={(value) =>
-                                handleSelectChange("visit.paymentMethod", value)
-                              }
-                            >
-                              <SelectTrigger
-                                className={`w-full ${
-                                  errors.paymentMethod ? "border-red-500" : ""
-                                }`}
-                              >
-                                <SelectValue placeholder="Payment Method" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Cash">Cash</SelectItem>
-                                <SelectItem value="UPI">UPI</SelectItem>
-                                <SelectItem value="Card">Card</SelectItem>
-                                <SelectItem value="Due">Due</SelectItem>
-                                <SelectItem value="Other">Other</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <MemoizedInput
+                            label="Total Fee (₹)"
+                            id="visit.totalFee"
+                            value={formData.visit.totalFee}
+                            onChange={handleInputChange}
+                            error={errors.totalFee}
+                          />
+                          <MemoizedInput
+                            label="Discount (₹)"
+                            id="visit.discount"
+                            value={formData.visit.discount}
+                            onChange={handleInputChange}
+                            error={errors.discount}
+                          />
                         </div>
+
+                        <div className={formData.visit.paymentMethod.length > 1 ? "grid grid-cols-3 gap-1" : "grid grid-cols-2 gap-2"}>
+                          <MultiSelectInput
+                            id="visit.paymentMethod"
+                            label="Payment Method"
+                            suggestions={paymentMethods}
+                            placeholder={`${formData.visit.paymentMethod.length > 0 ? formData.visit.paymentMethod.map(pm => pm.method).join(", ") : "Payment Method"}`}
+                            selectedValues={formData.visit.paymentMethod.map(
+                              (pm) => ({
+                                name: pm.method,
+                              })
+                            )}
+                            setSelectedValues={handlePaymentMethodChange}
+                          />
+                          {formData.visit.paymentMethod.length > 0 &&
+                            formData.visit.paymentMethod.map((pm) => (
+                              <MemoizedInput
+                                key={pm.method}
+                                id={`visit.${pm.method}`}
+                                label={`${pm.method} Amount`}
+                                value={pm.amount.toLocaleString("en-IN")}
+                                onChange={(e) => {
+                                  handleAmountPaidChange(pm.method, e.target.value);
+                                }}
+                                className="bg-gray-50"
+                                error={errors[`payment.${pm.method}`]}
+                              />
+                            ))}
+                        </div>
+                        {errors.amountPaid && (
+                          <p className="text-red-500 text-xs mt-1">
+                            {errors.amountPaid}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </div>

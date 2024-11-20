@@ -4,11 +4,13 @@ import { Button } from "../components/ui/button";
 import { UserPlus, FileText, Bed, Stethoscope, Plus, ClipboardList } from "lucide-react";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
 import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
+import OPDProcedureDialog from "../components/custom/procedures/OPDProcedureDialog";
 import { useNavigate } from 'react-router-dom';
 
 const QuickMenu = () => {
   const [isOPDDialogOpen, setIsOPDDialogOpen] = useState(false);
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
+  const [isOPDProcedureOpen, setIsOPDProcedureOpen] = useState(false);
   const navigate = useNavigate();
 
   const quickActions = [
@@ -27,11 +29,18 @@ const QuickMenu = () => {
       color: "bg-green-100 text-green-700 hover:bg-green-200"
     },
     {
-      title: "Discharge Summary",
-      description: "Add discharge data or data",
-      icon: ClipboardList,
-      action: () => navigate('/patients/discharge'),
+      title: "OPD Procedure",
+      description: "Register new OPD procedure",
+      icon: FileText,
+      action: () => setIsOPDProcedureOpen(true),
       color: "bg-purple-100 text-purple-700 hover:bg-purple-200"
+    },
+    {
+      title: "Admitted Patients",
+      description: "View and discharge admitted patients",
+      icon: Bed,
+      action: () => navigate('/patients/admitted'),
+      color: "bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
     },
   ];
 
@@ -68,6 +77,11 @@ const QuickMenu = () => {
       <IPDRegDialog
         open={isIPDDialogOpen}
         onOpenChange={setIsIPDDialogOpen}
+      />
+      
+      <OPDProcedureDialog 
+        open={isOPDProcedureOpen} 
+        onOpenChange={setIsOPDProcedureOpen}
       />
     </div>
   );

@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
+import { RegistrationNumber } from "./RegistrationNumber.js";
 
 const servicesBillSchema = new mongoose.Schema({
   services: [{
@@ -15,22 +16,28 @@ const servicesBillSchema = new mongoose.Schema({
   payments : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }],
   patientType : {
     type : String,
-    enum : ["OPD","IPD"],
+    enum : ["OPD","IPD","OPDProcedure"],
     required : true,
   },
   patient : {
     type : mongoose.Schema.Types.ObjectId,
     ref : "Patient",
-    required : true,
+    
   },
   patientInfo : {
     name : String,
-    phone : String
+    phone : String,
+    registrationNumber:String
   },
   createdBy : {
     type : mongoose.Schema.Types.ObjectId,
     ref : "Staff",
     required : true,
+  },
+  invoiceNumber: {
+    type: String,
+    
+   
   }
 }, {timestamps : true});
 

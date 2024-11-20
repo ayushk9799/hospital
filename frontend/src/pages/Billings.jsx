@@ -250,6 +250,7 @@ const Billings = () => {
   };
 
   const handleViewBill = (bill) => {
+    console.log(bill)
     setSelectedBill(bill);
     setIsViewDialogOpen(true);
     setOpenDropdownId(null);
@@ -320,7 +321,7 @@ const Billings = () => {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground mb-2">
-              Bill ID: B{bill._id.slice(-6)}
+              Invoice No: {bill.invoiceNumber}
             </p>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2">
               <div className="flex gap-2 items-center">
@@ -359,9 +360,11 @@ const Billings = () => {
                   <DropdownMenuItem onClick={() => handleViewBill(bill)}>
                     Print Bill
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleEditBill(bill)}>
-                    Edit Bill
-                  </DropdownMenuItem>
+                  {bill.patientType !== "OPDProcedure" && (
+                    <DropdownMenuItem onClick={() => handleEditBill(bill)}>
+                      Edit Bill
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={() => handlePayments(bill)}>
                     Payments
                   </DropdownMenuItem>
@@ -505,6 +508,12 @@ const Billings = () => {
                           >
                             OPD
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => setPatientTypeFilter("OPDProcedure")}
+                          >
+                            OPD Procedure
+                          </DropdownMenuItem>
+
                         </DropdownMenuContent>
                       </DropdownMenu>
                       <DropdownMenu>
@@ -614,6 +623,11 @@ const Billings = () => {
                     >
                       OPD
                     </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setPatientTypeFilter("OPDProcedure")}
+                    >
+                      OPD Procedure
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenu>
@@ -678,9 +692,12 @@ const Billings = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="font-semibold">Bill ID</TableHead>
+                    <TableHead className="font-semibold">Invoice No</TableHead>
                     <TableHead className="font-semibold">
                       Patient Name
+                    </TableHead>
+                    <TableHead className="font-semibold">
+                      UHID No.
                     </TableHead>
                     <TableHead className="font-semibold">Phone</TableHead>
                     {!isMediumScreen && (
@@ -712,8 +729,9 @@ const Billings = () => {
                         }
                       }}
                     >
-                      <TableCell>B{bill._id.slice(-6)}</TableCell>
+                      <TableCell>{bill.invoiceNumber || "N/A"}</TableCell>
                       <TableCell>{bill.patientInfo.name}</TableCell>
+                      <TableCell>{bill?.patient?.registrationNumber || "N/A"}</TableCell>
                       <TableCell>{bill.patientInfo.phone}</TableCell>
                       {!isMediumScreen && (
                         <>
@@ -762,11 +780,13 @@ const Billings = () => {
                             >
                               Print Bill
                             </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => handleEditBill(bill)}
-                            >
-                              Edit Bill
-                            </DropdownMenuItem>
+                            {bill.patientType !== "OPDProcedure" && (
+                              <DropdownMenuItem
+                                onClick={() => handleEditBill(bill)}
+                              >
+                                Edit Bill
+                              </DropdownMenuItem>
+                            )}
                             <DropdownMenuItem
                               onClick={() => handlePayments(bill)}
                             >

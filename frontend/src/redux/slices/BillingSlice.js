@@ -1,19 +1,19 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
-import { Backend_URL } from '../../assets/Data';
+import { Backend_URL } from "../../assets/Data";
 
 // Async thunk to create a bill
 export const createBill = createLoadingAsyncThunk(
-  'billing/createBill',
+  "billing/createBill",
   async (billData, { rejectWithValue }) => {
     try {
       const response = await fetch(`${Backend_URL}/api/billing/create-bill`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(billData),
-        credentials: 'include'
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -32,31 +32,33 @@ export const createBill = createLoadingAsyncThunk(
 
 // Async thunk to fetch all bills
 export const fetchBills = createLoadingAsyncThunk(
-  'billing/fetchBills',
+  "billing/fetchBills",
   async (filters = {}, { rejectWithValue }) => {
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
-      
+
       // Add date range filters if present
       if (filters.dateRange?.startDate) {
-        queryParams.append('startDate', filters.dateRange.startDate);
+        queryParams.append("startDate", filters.dateRange.startDate);
       }
       if (filters.dateRange?.endDate) {
-        queryParams.append('endDate', filters.dateRange.endDate);
+        queryParams.append("endDate", filters.dateRange.endDate);
       }
 
-      const url = `${Backend_URL}/api/billing/get-bills${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
-      
+      const url = `${Backend_URL}/api/billing/get-bills${
+        queryParams.toString() ? `?${queryParams.toString()}` : ""
+      }`;
+
       const response = await fetch(url, {
-        credentials: 'include'
+        credentials: "include",
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         return rejectWithValue(errorData);
       }
-      
+
       const data = await response.json();
       return data;
     } catch (error) {
@@ -68,17 +70,20 @@ export const fetchBills = createLoadingAsyncThunk(
 
 // New async thunk to update a bill
 export const updateBill = createLoadingAsyncThunk(
-  'billing/updateBill',
-  async ({billId, billData}, { rejectWithValue }) => {
+  "billing/updateBill",
+  async ({ billId, billData }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/billing/update-bill/${billId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(billData),
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/billing/update-bill/${billId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(billData),
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -96,13 +101,16 @@ export const updateBill = createLoadingAsyncThunk(
 
 // New async thunk to delete a bill
 export const deleteBill = createLoadingAsyncThunk(
-  'billing/deleteBill',
+  "billing/deleteBill",
   async (billId, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/billing/delete-bill/${billId}`, {
-        method: 'DELETE',
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/billing/delete-bill/${billId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -118,17 +126,20 @@ export const deleteBill = createLoadingAsyncThunk(
 );
 
 export const addPayment = createLoadingAsyncThunk(
-  'bills/addPayment',
+  "bills/addPayment",
   async ({ billId, payment }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/billing/${billId}/payments`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payment),
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/billing/${billId}/payments`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payment),
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -148,17 +159,20 @@ export const addPayment = createLoadingAsyncThunk(
 
 // Add this new async thunk after the other thunks and before the slice definition
 export const createOPDProcedureBill = createLoadingAsyncThunk(
-  'billing/createOPDProcedureBill',
+  "billing/createOPDProcedureBill",
   async (billData, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/billing/create-opd-procedure-bill`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(billData),
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/billing/create-opd-procedure-bill`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(billData),
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -176,12 +190,15 @@ export const createOPDProcedureBill = createLoadingAsyncThunk(
 
 // Add this new async thunk after the other thunks
 export const fetchBillById = createLoadingAsyncThunk(
-  'billing/fetchBillById',
+  "billing/fetchBillById",
   async (billId, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/billing/get-bill/${billId}`, {
-        credentials: 'include'
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/billing/get-bill/${billId}`,
+        {
+          credentials: "include",
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -198,7 +215,7 @@ export const fetchBillById = createLoadingAsyncThunk(
 );
 
 const billingSlice = createSlice({
-  name: 'bills',
+  name: "bills",
   initialState: {
     bills: [],
     billsStatus: "idle",
@@ -247,7 +264,9 @@ const billingSlice = createSlice({
       })
       .addCase(updateBill.fulfilled, (state, action) => {
         state.updateBillStatus = "succeeded";
-        const index = state.bills.findIndex(bill => bill._id === action.payload._id);
+        const index = state.bills.findIndex(
+          (bill) => bill._id === action.payload._id
+        );
         if (index !== -1) {
           state.bills[index] = action.payload;
         }
@@ -260,13 +279,15 @@ const billingSlice = createSlice({
         state.error = null;
       })
       .addCase(deleteBill.fulfilled, (state, action) => {
-        state.bills = state.bills.filter(bill => bill._id !== action.payload);
+        state.bills = state.bills.filter((bill) => bill._id !== action.payload);
       })
       .addCase(deleteBill.rejected, (state, action) => {
         state.error = action.payload;
       })
       .addCase(addPayment.fulfilled, (state, action) => {
-        const index = state.bills.findIndex(bill => bill._id === action.payload._id);
+        const index = state.bills.findIndex(
+          (bill) => bill._id === action.payload._id
+        );
         if (index !== -1) {
           state.bills[index] = action.payload;
         }
@@ -298,8 +319,6 @@ const billingSlice = createSlice({
   },
 });
 
-export const { 
-  setCreateBillStatusIdle
-} = billingSlice.actions;
+export const { setCreateBillStatusIdle } = billingSlice.actions;
 
 export default billingSlice.reducer;

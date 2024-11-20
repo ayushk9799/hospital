@@ -1,50 +1,63 @@
 import React, { useRef, useEffect } from "react";
-import { useReactToPrint } from 'react-to-print';
+import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import { format } from "date-fns";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../../ui/dialog";
 import { Label } from "../../ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/table";
 import { PrinterIcon } from "lucide-react";
 import SimplePrintHeader from "../../../utils/print/SimplePrintHeader";
 
-const OPDBillTokenModal = ({ 
-  isOpen, 
-  setIsOpen, 
+const OPDBillTokenModal = ({
+  isOpen,
+  setIsOpen,
   patientData,
   services,
   selectedServices,
   onSelectService,
   onSelectAll,
-  onClose
+  onClose,
 }) => {
   const componentRef = useRef();
- 
+
   useEffect(() => {
     if (!isOpen) {
-      document.body.style.pointerEvents = '';
-      document.body.style = '';
-      
+      document.body.style.pointerEvents = "";
+      document.body.style = "";
+
       setTimeout(() => {
-        document.body.style.pointerEvents = '';
-        document.body.style = '';
+        document.body.style.pointerEvents = "";
+        document.body.style = "";
       }, 300);
     }
-    
+
     return () => {
-      document.body.style.pointerEvents = '';
-      document.body.style = '';
+      document.body.style.pointerEvents = "";
+      document.body.style = "";
     };
   }, [isOpen]);
 
   const handleClose = () => {
     setIsOpen(false);
-    document.body.style.pointerEvents = '';
-    document.body.style = '';
-    
+    document.body.style.pointerEvents = "";
+    document.body.style = "";
+
     setTimeout(() => {
-      document.body.style.pointerEvents = '';
-      document.body.style = '';
+      document.body.style.pointerEvents = "";
+      document.body.style = "";
     }, 300);
   };
 
@@ -89,7 +102,7 @@ const OPDBillTokenModal = ({
   if (!patientData) return null;
 
   const { patient, bill, payment } = patientData;
-console.log(patientData)
+
   const BillCopy = ({ title }) => (
     <div className="w-full lg:w-1/2 p-2 lg:p-4 border-b lg:border-b-0 lg:border-r border-dashed">
       <div className="mb-2 sm:mb-4">
@@ -97,12 +110,12 @@ console.log(patientData)
         <div className="flex justify-between items-center mt-2">
           <h2 className="font-bold">{title}</h2>
           <div className="text-sm">
-            <span className="font-semibold">Bill No: </span>
-            <span>B{bill?._id?.slice(-6)}</span>
+            <span className="font-semibold">Invoice No: </span>
+            <span>{bill?.invoiceNumber || "N/A"}</span>
           </div>
         </div>
       </div>
-      
+
       <div className="grid gap-2">
         <div className="patient-details text-sm border rounded-md p-2">
           <div className="flex justify-between mb-1">
@@ -112,10 +125,12 @@ console.log(patientData)
             </div>
             <div className="flex gap-1">
               <span className="font-semibold">Age/Sex:</span>
-              <span>{patient.age}/{patient.gender}</span>
+              <span>
+                {patient.age}/{patient.gender}
+              </span>
             </div>
           </div>
-          
+
           <div className="flex justify-between">
             <div className="flex gap-1">
               <span className="font-semibold">Date:</span>
@@ -146,9 +161,15 @@ console.log(patientData)
                   <TableCell className="py-1">
                     <div className="line-clamp-2">{service.name}</div>
                   </TableCell>
-                  <TableCell className="text-right py-1">{service.quantity}</TableCell>
-                  <TableCell className="text-right py-1">₹{service.rate}</TableCell>
-                  <TableCell className="text-right py-1">₹{service.quantity * service.rate}</TableCell>
+                  <TableCell className="text-right py-1">
+                    {service.quantity}
+                  </TableCell>
+                  <TableCell className="text-right py-1">
+                    ₹{service.rate}
+                  </TableCell>
+                  <TableCell className="text-right py-1">
+                    ₹{service.quantity * service.rate}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -170,7 +191,7 @@ console.log(patientData)
             <span>Total Amount:</span>
             <span>₹{bill.totalAmount}</span>
           </div>
-          
+
           <div className="summary-section w-full sm:w-48 border-t border-gray-200 mt-1 pt-1">
             <div className="flex justify-between text-sm">
               <span>Amount Paid:</span>
@@ -178,7 +199,9 @@ console.log(patientData)
             </div>
             <div className="flex justify-between text-sm">
               <span>Due Amount:</span>
-              <span className="text-red-600">₹{Math.max(0, bill.totalAmount - bill.amountPaid)}</span>
+              <span className="text-red-600">
+                ₹{Math.max(0, bill.totalAmount - bill.amountPaid)}
+              </span>
             </div>
             <div className="flex justify-between text-sm pt-1">
               <span>Payment Method:</span>
@@ -186,7 +209,13 @@ console.log(patientData)
             </div>
             <div className="flex justify-between text-sm font-medium pt-1">
               <span>Status:</span>
-              <span className={bill.totalAmount === bill.amountPaid ? "text-green-600" : "text-red-600"}>
+              <span
+                className={
+                  bill.totalAmount === bill.amountPaid
+                    ? "text-green-600"
+                    : "text-red-600"
+                }
+              >
                 {bill.totalAmount === bill.amountPaid ? "PAID" : "DUE"}
               </span>
             </div>
@@ -202,20 +231,25 @@ console.log(patientData)
         <DialogHeader>
           <DialogTitle>OPD Bill Token</DialogTitle>
         </DialogHeader>
-        
-        <div id="printArea" ref={componentRef} className="flex flex-col lg:flex-row">
+
+        <div
+          id="printArea"
+          ref={componentRef}
+          className="flex flex-col lg:flex-row"
+        >
           <BillCopy title="Hospital Copy" />
           <BillCopy title="Patient Copy" />
         </div>
 
         <DialogFooter className="flex-col sm:flex-row gap-2">
-          <Button className="w-full sm:w-auto" variant="outline" onClick={handleClose}>
+          <Button
+            className="w-full sm:w-auto"
+            variant="outline"
+            onClick={handleClose}
+          >
             Close
           </Button>
-          <Button 
-            className="w-full sm:w-auto" 
-            onClick={handlePrint}
-          >
+          <Button className="w-full sm:w-auto" onClick={handlePrint}>
             <PrinterIcon className="mr-2 h-4 w-4" />
             Print Bill
           </Button>

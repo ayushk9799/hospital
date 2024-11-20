@@ -27,21 +27,20 @@ export default function PatientOverview() {
   const [patientDetails, setPatientDetails] = useState(null);
   const [billData, setBillData] = useState(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
- console.log(billData)
   // Fetch patient details when component mounts
   useEffect(() => {
     dispatch(fetchPatientDetails(patientId))
       .unwrap()
       .then((data) => {
         setPatientDetails(data);
-        const allvisits = [...data.visits, ...data.admissionDetails];
+        let allvisits = [...data.visits, ...data.admissionDetails];
+        allvisits = allvisits.sort((a,b)=>new Date(b.bookingDate)-new Date(a.bookingDate))
         if (allvisits.length > 0) {
           const selectedOne = allvisits.find(
             (visit) => visit._id === location?.state?.ID
-          );
+          ) || allvisits[0];
           console.log(selectedOne)
           if (selectedOne?.bills?.services?.length > 0) {
-            console.log("Selected bill data:", selectedOne.bills);
             setBillData({
               billId: selectedOne.bills.services[0]._id,
               billData: selectedOne.bills,
@@ -50,7 +49,6 @@ export default function PatientOverview() {
         }
       })
       .catch((error) => {
-        console.error("Error fetching patient details:", error);
         toast({
           title: "Error",
           description: "Error fetching patient details",
@@ -143,14 +141,13 @@ export default function PatientOverview() {
           <TabsContent value="payments" className="m-0">
             {billData?.billData ? (
               <>
-                {console.log("Rendering payment dialog with data:", billData.billData)}
+              
                 <div className="text-center py-8 text-gray-500">
                   Click here to manage payments
                   <Button
                     variant="outline"
                     className="ml-2"
                     onClick={() => {
-                      console.log("Opening payment dialog with data:", billData.billData);
                       setIsPaymentDialogOpen(true);
                     }}
                   >

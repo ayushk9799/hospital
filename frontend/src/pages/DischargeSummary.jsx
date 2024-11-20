@@ -24,6 +24,7 @@ import {
   Trash2,
   Plus,
   Search,
+  ArrowLeft,
 } from "lucide-react";
 import { Calendar } from "../components/ui/calendar";
 import {
@@ -137,6 +138,9 @@ export default function DischargeSummary() {
   const navigate = useNavigate();
   const location = useLocation();
   const [patient, setPatient] = useState(null);
+  const ignoreList = location.state?.ignoreList || false;
+  const dischargeData = location.state?.dischargeData || null;
+
   // Get initial patient from Redux store
   const patientFromStore = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
@@ -144,12 +148,13 @@ export default function DischargeSummary() {
 
   useEffect(() => {
     const fetchPatient = async () => {
-      if (!patientFromStore) {
+      if (!patientFromStore && !dischargeData) {
         try {
           if (patientId) {
             const result = await dispatch(
               fetchVisitDetails({ id: patientId, type: "IPD" })
             ).unwrap();
+
             setPatient(result);
           } else if (location.state?.patient) {
             const result = await dispatch(
@@ -174,12 +179,23 @@ export default function DischargeSummary() {
           console.error("Error fetching patient details:", error);
         }
       } else {
-        setPatient(patientFromStore);
+        if (!ignoreList && !dischargeData) {
+          setPatient(patientFromStore);
+        } else {
+          if (dischargeData) {
+            setPatient(dischargeData);
+          } else {
+            const result = await dispatch(
+              fetchVisitDetails({ id: patientId, type: "IPD" })
+            ).unwrap();
+            setPatient(result);
+          }
+        }
       }
     };
 
     fetchPatient();
-  }, [dispatch, patientFromStore, location.state?.patient]);
+  }, [dispatch, patientFromStore, location.state?.dischargeData]);
 
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
@@ -742,11 +758,26 @@ export default function DischargeSummary() {
     }
   };
 
+  // Add this function near your other handler functions
+  const handleBack = () => {
+    navigate(-1); // This will go back to the previous page
+  };
+
   return (
     <div className="container mx-auto py-4 px-2 sm:px-4 max-w-5xl">
       <Card className="w-full shadow-lg">
         <CardHeader className="bg-primary text-primary-foreground py-2">
-          <CardTitle className="text-xl">Discharge Summary</CardTitle>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleBack}
+              className="h-8 w-8 text-primary-foreground hover:text-primary hover:bg-primary-foreground"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <CardTitle className="text-xl">Discharge Summary</CardTitle>
+          </div>
         </CardHeader>
         <CardContent className="p-4">
           <div className="bg-secondary/10 rounded-lg p-3 mb-4">

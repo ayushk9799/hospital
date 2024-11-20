@@ -41,6 +41,14 @@ import { fetchServices } from "../../../redux/slices/serviceSlice";
 import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 import BillModal from "./BillModal";
 import { fetchHospitalInfo } from "../../../redux/slices/HospitalSlice";
+import MultiSelectInput from "../MultiSelectInput";
+
+const paymentMethods = [
+  { name: "Cash" },
+  { name: "UPI" },
+  { name: "Card" },
+  { name: "Insurance" },
+];
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const dispatch = useDispatch();
@@ -48,7 +56,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const registerPatientStatus = useSelector(
     (state) => state.patients.registerPatientStatus
   );
-  console.log(patientData);
+
   const departments = useSelector((state) => state.departments.departments);
   const rooms = useSelector((state) => state.rooms.rooms);
   const doctors = useSelector((state) => state.staff.doctors);
@@ -69,6 +77,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const [totalAmount, setTotalAmount] = useState(0);
   const [showBillModal, setShowBillModal] = useState(false);
   const [billData, setBillData] = useState(null);
+  const [completedBill, setCompletedBill] = useState(null);
   const [roomCharge, setRoomCharge] = useState(0);
   const [searchedPatient, setSearchedPatient] = useState(null);
 
@@ -180,8 +189,12 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         current = current[keys[i]];
       }
       current[keys[keys.length - 1]] = type === "checkbox" ? checked : value;
-
-      // If the changed field is the assigned room, update the room charge
+      if (id === "paymentInfo.paymentMethod") {
+        current.paymentInfo.paymentMethod = [
+          ...current.paymentInfo.paymentMethod,
+          { method: value || "", amount: "" },
+        ];
+      }
       if (id === "admission.assignedRoom") {
         const selectedRoom = rooms.find((room) => room._id === value);
         if (selectedRoom) {
@@ -218,8 +231,10 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+console.log("submitting again")
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
+
       if (patientData || searchedPatient) {
         // This is a readmission
         dispatch(
@@ -239,6 +254,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             dispatch(fetchRooms());
             dispatch(fetchBills());
             setBillData(result.bill);
+            setCompletedBill(result);
             setShowBillModal(true);
           })
           .catch((error) => {
@@ -268,6 +284,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             dispatch(fetchRooms());
             dispatch(fetchBills());
             setBillData(result.bill);
+            setCompletedBill(result);
             setShowBillModal(true);
           })
           .catch((error) => {
@@ -283,7 +300,32 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       }
     }
   };
+  const handleAmountPaidChange = (method, amount) => {
+    setFormData((prev) => ({
+      ...prev,
+      paymentInfo: {
+        ...prev.paymentInfo,
+        paymentMethod: prev.paymentInfo.paymentMethod.map((pm) =>
+          pm.method === method ? { ...pm, amount } : pm
+        ),
+        amountPaid: prev.paymentInfo.paymentMethod.reduce(
+          (sum, pm) => sum + (pm.amount ? parseFloat(pm.amount) : 0),
+          0
+        ),
+      },
+    }));
+  };
 
+  useEffect(() => {
+    const amountPaid = formData.paymentInfo.paymentMethod.reduce(
+      (sum, pm) => sum + (pm.amount ? parseFloat(pm.amount) : 0),
+      0
+    );
+    setFormData((prev) => ({
+      ...prev,
+      paymentInfo: { ...prev.paymentInfo, amountPaid },
+    }));
+  }, [formData.paymentInfo.paymentMethod]);
   const handleDialogClose = () => {
     onOpenChange(false);
     resetFormData();
@@ -303,7 +345,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       }, 500);
     }
   }, [open]);
-  console.log(formData.paymentInfo.totalAmount);
+
   const handleInfoClick = (e) => {
     e.preventDefault();
     setIsSelectServicesDialogOpen(true);
@@ -366,6 +408,30 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     } catch (error) {
       console.error("Search failed:", error);
     }
+  };
+
+  const handlePaymentMethodChange = (newMethods) => {
+    setFormData((prev) => {
+      // Get existing payment methods with their amounts
+      const existingPayments = prev.paymentInfo.paymentMethod.reduce((acc, pm) => {
+        acc[pm.method] = pm.amount;
+        return acc;
+      }, {});
+
+      // Create new payment method array preserving existing amounts
+      const updatedPaymentMethods = newMethods.map(method => ({
+        method: method.name,
+        amount: existingPayments[method.name] || "",
+      }));
+
+      return {
+        ...prev,
+        paymentInfo: {
+          ...prev.paymentInfo,
+          paymentMethod: updatedPaymentMethods,
+        },
+      };
+    });
   };
 
   return (
@@ -432,7 +498,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         <div className="relative">
                           <MemoizedInput
                             id="registrationNumber"
-                            label="Reg Number"
+                            label="UHID Number"
                             value={formData.registrationNumber}
                             onChange={handleInputChange}
                             className="pr-10"
@@ -451,7 +517,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         <div className="relative">
                           <MemoizedInput
                             id="registrationNumber"
-                            label="Registration Number"
+                            label="UHID Number"
                             value={formData.registrationNumber}
                             onChange={handleInputChange}
                             className="pr-10"
@@ -485,6 +551,33 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             />
                           </div>
                         </div>
+                        <div>
+                          <Select
+                            id="gender"
+                            value={formData.gender}
+                            onValueChange={(value) =>
+                              handleInputChange({
+                                target: { id: "gender", value },
+                              })
+                            }
+                          >
+                            <SelectTrigger
+                              className={errors.gender ? "border-red-500" : ""}
+                            >
+                              <SelectValue placeholder="Gender" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Male">Male</SelectItem>
+                              <SelectItem value="Female">Female</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {errors.gender && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.gender}
+                            </p>
+                          )}
+                        </div>
                       </>
                     )}
                   </div>
@@ -500,48 +593,78 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         error={errors.contactNumber}
                       />
                     </div>
-                    {/* {!isMobile && (
-                      <div>
-                        <MemoizedInput
-                          id="email"
-                          label="Email"
-                          type="email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    )} */}
-                    <div className={`space-y-4`}>
+
+                    <div className={`space-y-2 `}>
                       <Textarea
                         id="address"
                         placeholder="Address"
                         value={formData.address}
                         onChange={handleInputChange}
-                        className="min-h-[90px]"
+                        className="min-h-9 h-9 no-scrollbar"
                       />
-                      {/* Blood group selection commented out
+                    </div>
+                    <div className={`grid grid-cols-2 gap-2`}>
                       <Select
-                        id="bloodType"
-                        onValueChange={(value) =>
+                        id="admission.assignedRoom"
+                        onValueChange={(value) => {
                           handleInputChange({
-                            target: { id: "bloodType", value },
-                          })
-                        }
+                            target: { id: "admission.assignedRoom", value },
+                          });
+                          setFormData((prev) => ({
+                            ...prev,
+                            admission: {
+                              ...prev.admission,
+                              assignedBed: "",
+                            },
+                          }));
+                        }}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Blood Group" />
+                        <SelectTrigger
+                          className={
+                            errors["admission.assignedRoom"]
+                              ? "border-red-500"
+                              : ""
+                          }
+                        >
+                          <SelectValue placeholder="Room" />
                         </SelectTrigger>
                         <SelectContent>
-                          {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
-                            (type) => (
-                              <SelectItem key={type} value={type}>
-                                {type}
+                          {rooms
+                            .filter((room) => room.status !== "Occupied")
+                            .map((room) => (
+                              <SelectItem key={room._id} value={room._id}>
+                                {room.roomNumber} - {room.type}
                               </SelectItem>
-                            )
-                          )}
+                            ))}
                         </SelectContent>
                       </Select>
-                      */}
+                      <Select
+                        id="admission.assignedBed"
+                        onValueChange={(value) =>
+                          handleInputChange({
+                            target: { id: "admission.assignedBed", value },
+                          })
+                        }
+                        disabled={!formData.admission.assignedRoom}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Bed" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {formData.admission.assignedRoom &&
+                            rooms
+                              .find(
+                                (room) =>
+                                  room._id === formData.admission.assignedRoom
+                              )
+                              ?.beds.filter((bed) => bed.status !== "Occupied")
+                              .map((bed) => (
+                                <SelectItem key={bed._id} value={bed._id}>
+                                  {bed.bedNumber}
+                                </SelectItem>
+                              ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
 
@@ -641,107 +764,56 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         {errors["admission.assignedDoctor"]}
                       </p>
                     )}
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1">
+                        {/* <div className="flex items-center gap-2 text-xs">
+                          <span>Total Amount:</span>
+                          <Input
+                            value={formData.paymentInfo.totalAmount.toLocaleString(
+                              "en-IN"
+                            )}
+                            className="font-semibold w-28 inline-block"
+                            onChange={(e) => {
+                              const value = Number(
+                                e.target.value.replace(/,/g, "")
+                              );
+                              if (!isNaN(value)) {
+                                const servicesTotal = services
+                                  .filter((service) =>
+                                    formData.paymentInfo.services.includes(
+                                      service._id
+                                    )
+                                  )
+                                  .reduce(
+                                    (sum, service) => sum + (service.rate || 0),
+                                    0
+                                  );
 
-                    <div className={`grid grid-cols-2 gap-2`}>
-                      <Select
-                        id="admission.assignedRoom"
-                        onValueChange={(value) => {
-                          handleInputChange({
-                            target: { id: "admission.assignedRoom", value },
-                          });
-                          setFormData((prev) => ({
-                            ...prev,
-                            admission: {
-                              ...prev.admission,
-                              assignedBed: "",
-                            },
-                          }));
-                        }}
-                      >
-                        <SelectTrigger
-                          className={
-                            errors["admission.assignedRoom"]
-                              ? "border-red-500"
-                              : ""
-                          }
-                        >
-                          <SelectValue placeholder="Room" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {rooms
-                            .filter((room) => room.status !== "Occupied")
-                            .map((room) => (
-                              <SelectItem key={room._id} value={room._id}>
-                                {room.roomNumber} - {room.type}
-                              </SelectItem>
-                            ))}
-                        </SelectContent>
-                      </Select>
-                      <Select
-                        id="admission.assignedBed"
-                        onValueChange={(value) =>
-                          handleInputChange({
-                            target: { id: "admission.assignedBed", value },
-                          })
-                        }
-                        disabled={!formData.admission.assignedRoom}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Bed" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {formData.admission.assignedRoom &&
-                            rooms
-                              .find(
-                                (room) =>
-                                  room._id === formData.admission.assignedRoom
-                              )
-                              ?.beds.filter((bed) => bed.status !== "Occupied")
-                              .map((bed) => (
-                                <SelectItem key={bed._id} value={bed._id}>
-                                  {bed.bedNumber}
-                                </SelectItem>
-                              ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div>
-                    <Select
-                      id="gender"
-                      value={formData.gender}
-                      onValueChange={(value) =>
-                        handleInputChange({ target: { id: "gender", value } })
-                      }
-                    >
-                      <SelectTrigger
-                        className={errors.gender ? "border-red-500" : ""}
-                      >
-                        <SelectValue placeholder="Gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Male">Male</SelectItem>
-                        <SelectItem value="Female">Female</SelectItem>
-                        <SelectItem value="Other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    {errors.gender && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors.gender}
-                      </p>
-                    )}
-                  </div>
+                                const totalWithRoom =
+                                  servicesTotal + roomCharge;
 
-                  {/* Bill Details Section */}
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span>Final Bill:</span>
-                        <Input
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  paymentInfo: {
+                                    ...prev.paymentInfo,
+                                    totalAmount: value,
+                                    additionalDiscount: Math.max(
+                                      0,
+                                      totalWithRoom - value
+                                    ),
+                                  },
+                                }));
+                              }
+                            }}
+                          />
+                        </div> */}
+
+                        <MemoizedInput
+                          id="paymentInfo.totalAmount"
+                          label="Total Amount"
                           value={formData.paymentInfo.totalAmount.toLocaleString(
                             "en-IN"
                           )}
-                          className="font-semibold w-28 inline-block"
                           onChange={(e) => {
                             const value = Number(
                               e.target.value.replace(/,/g, "")
@@ -774,77 +846,95 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             }
                           }}
                         />
-                      </div>
-                      <Button
-                        variant="outline"
-                        className="border-primary text-primary"
-                        onClick={handleInfoClick}
-                      >
-                        Modify Bill
-                      </Button>
-                    </div>
-                    {formData.paymentInfo.additionalDiscount > 0 && (
-                      <>
-                        <p className="text-sm text-gray-500">
-                          Services Total: ₹
-                          {(
-                            services
-                              .filter((service) =>
-                                formData.paymentInfo.services.includes(
-                                  service._id
-                                )
-                              )
-                              .reduce(
-                                (sum, service) => sum + (service.rate || 0),
-                                0
-                              ) + roomCharge
+                        <MemoizedInput
+                          id="paymentInfo.balanceDue"
+                          label="Balance Due"
+                          value={(
+                            formData.paymentInfo.totalAmount -
+                            (formData.paymentInfo.amountPaid || 0)
                           ).toLocaleString("en-IN")}
-                        </p>
-                        {roomCharge > 0 && (
+                          disabled={true}
+                          className="bg-gray-50"
+                        />
+                        <Button
+                          variant="outline"
+                          className="border-primary text-primary"
+                          onClick={handleInfoClick}
+                          size="sm"
+                        >
+                          Select Operations
+                        </Button>
+                      </div>
+                      {formData.paymentInfo.additionalDiscount > 0 && (
+                        <>
                           <p className="text-sm text-gray-500">
-                            Room Charge: ₹{roomCharge.toLocaleString("en-IN")}
+                            Services Total: ₹
+                            {(
+                              services
+                                .filter((service) =>
+                                  formData.paymentInfo.services.includes(
+                                    service._id
+                                  )
+                                )
+                                .reduce(
+                                  (sum, service) => sum + (service.rate || 0),
+                                  0
+                                ) + roomCharge
+                            ).toLocaleString("en-IN")}
                           </p>
-                        )}
-                        <p className="text-sm text-gray-500">
-                          Discount Applied: ₹
-                          {formData.paymentInfo.additionalDiscount.toLocaleString(
-                            "en-IN"
+                          {roomCharge > 0 && (
+                            <p className="text-sm text-gray-500">
+                              Room Charge: ₹{roomCharge.toLocaleString("en-IN")}
+                            </p>
                           )}
-                        </p>
-                      </>
-                    )}
-                  </div>
-
-                  {/* Payment Fields */}
-                  <div className="grid grid-cols-2  gap-2">
-                    <div>
-                      <MemoizedInput
-                        id="paymentInfo.amountPaid"
-                        label="Amount Paid"
-                        type="number"
-                        value={formData.paymentInfo.amountPaid}
-                        onChange={handleInputChange}
-                      />
+                          <p className="text-sm text-gray-500">
+                            Discount Applied: ₹
+                            {formData.paymentInfo.additionalDiscount.toLocaleString(
+                              "en-IN"
+                            )}
+                          </p>
+                        </>
+                      )}
                     </div>
-                    <Select
-                      id="paymentInfo.paymentMethod"
-                      value={formData.paymentInfo.paymentMethod}
-                      onValueChange={(value) =>
-                        handleInputChange({
-                          target: { id: "paymentInfo.paymentMethod", value },
-                        })
+                    <div
+                      className={
+                        formData.paymentInfo.paymentMethod.length > 1
+                          ? "grid grid-cols-3 gap-1"
+                          : "grid grid-cols-2 gap-2"
                       }
                     >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Payment Method" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Cash">Cash</SelectItem>
-                        <SelectItem value="UPI">UPI</SelectItem>
-                        <SelectItem value="Card">Card</SelectItem>
-                        <SelectItem value="Insurance">Insurance</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <MultiSelectInput
+                        id="paymentInfo.paymentMethod"
+                        label="Payment Method"
+                        suggestions={paymentMethods}
+                        placeholder={
+                          formData.paymentInfo.paymentMethod.length > 0
+                            ? formData.paymentInfo.paymentMethod
+                                .map((pm) => pm.method)
+                                .join(",")
+                            : "Payment Method"
+                        }
+                        selectedValues={formData.paymentInfo.paymentMethod.map(
+                          (pm) => ({
+                            name: pm.method,
+                          })
+                        )}
+                        setSelectedValues={handlePaymentMethodChange}
+                      />
+                      {formData.paymentInfo.paymentMethod.length > 0 &&
+                        formData.paymentInfo.paymentMethod.map((pm) => (
+                          <MemoizedInput
+                            key={pm.method}
+                            id={`paymentInfo.${pm.method}`}
+                            label={`${pm.method} Paid`}
+                            value={pm.amount.toLocaleString("en-IN")}
+                            onChange={(e) => {
+                              handleAmountPaidChange(pm.method, e.target.value);
+                            }}
+                            className="bg-gray-50"
+                          />
+                        ))}
+                    </div>
                   </div>
                 </div>
               </TabsContent>
@@ -1016,6 +1106,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
           isOpen={showBillModal}
           onClose={() => setShowBillModal(false)}
           billData={billData}
+          completedBill={completedBill}
           hospitalInfo={hospitalInfo}
         />
       )}

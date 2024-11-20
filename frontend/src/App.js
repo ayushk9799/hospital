@@ -44,6 +44,7 @@ import PatientSearch from './pages/PatientSearch';
 import OPDProcedure from './pages/OPDProcedure';
 import QuickMenu from './pages/QuickMenu';
 import PatientOverview from './pages/PatientOverview';
+import AdmittedPatients from './pages/AdmittedPatients';
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -133,6 +134,7 @@ const AppContent = () => {
                 <Route path="/lab/blood-work/create" element={<CreateBloodWork />} />
                 <Route path="/create-room" element={<CreateRoom />} />
                 <Route path="/patients/discharge/:patientId?" element={<DischargeSummary />} />
+                <Route path="/patients/admitted" element={<AdmittedPatients />} />
                 <Route path="/services" element={<Services />} />
                 <Route path="/billings/create-service-bill" element={<CreateServiceBill />} />
                 <Route path="/statistics" element={<Statistics />} />

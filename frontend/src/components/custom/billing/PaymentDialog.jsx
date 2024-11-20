@@ -36,13 +36,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
 
   useEffect(() => {
     if (billData) {
-      console.log("Bill Data Structure:", {
-        hasId: Boolean(billData._id),
-        totalAmount: billData.totalAmount,
-        amountPaid: billData.amountPaid,
-        payments: billData.payments,
-        services: billData.services,
-      });
+     
     }
   }, [billData]);
 

@@ -9,10 +9,10 @@ export const initialFormData = {
   address: "",
   bloodType: "",
   patientType: "IPD",
-  paymentInfo : {
-    includeServices : true,
-    amountPaid : "",
-    paymentMethod: "",
+  paymentInfo: {
+    includeServices: true,
+    amountPaid: "",
+    paymentMethod: [],
     services: [],
     totalAmount: 0,
     additionalDiscount: 0,
@@ -67,10 +67,6 @@ export const validateForm = (formData, setErrors) => {
   if (!formData.gender) newErrors.gender = "Gender is required";
   if (!formData.contactNumber)
     newErrors.contactNumber = "Phone number is required";
-  if (!formData.admission.assignedRoom)
-    newErrors["admission.assignedRoom"] = "Room is required";
-  if (!formData.admission.assignedBed)
-    newErrors["admission.assignedBed"] = "Bed is required";
   if (!formData.admission.bookingDate)
     newErrors["admission.bookingDate"] = "Booking date is required";
   if (!formData.admission.assignedDoctor)
@@ -89,6 +85,8 @@ export const formatSubmissionData = (formData) => ({
   patientType: "IPD",
   admission: {
     ...formData.admission,
+    assignedRoom: formData.admission.assignedRoom || null,
+    assignedBed: formData.admission.assignedBed || null,
     bookingDate: formData.admission.bookingDate,
     vitals: {
       admission: Object.fromEntries(
