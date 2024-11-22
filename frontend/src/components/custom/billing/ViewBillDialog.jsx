@@ -144,7 +144,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                   </div>
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">UHID No:</Label>
-                    <p>{billData.patientInfo?.registrationNumber || "N/A"}</p>
+                    <p>{billData.patientInfo?.registrationNumber || billData.patient?.registrationNumber || "N/A"}</p>
                   </div>
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Invoice Number:</Label>
@@ -160,153 +160,186 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                   </div>
                  
                 </div>
-                {services.length > 0 && hasSelectedServices ? (
-                  <div>
-                    <h3 className="text-lg font-semibold mb-1 no-print">
-                      Bill Items ( <span className="text-sm">{billData.createdAt
-                          ? format(new Date(billData.createdAt), "hh:mm a")
-                          : "N/A"}</span>)
-                    </h3>
-                    <Table className="border-2 border-gray-200">
-                      <TableHeader>
-                        <TableRow className="border-b border-gray-200 bg-gray-200">
-                          <TableHead className="border-r border-gray-300 w-16 no-print">
-                            <Checkbox
-                              checked={
-                                selectedServices.length === services.length
-                              }
-                              onCheckedChange={toggleAllServices}
-                            />
-                          </TableHead>
-                          <TableHead className="border-r border-gray-300 w-16 hidden print:table-cell">
-                            No.
-                          </TableHead>
-                          <TableHead className="border-r border-gray-300 w-1/2">
-                            Service Name
-                          </TableHead>
-                          <TableHead className="border-r border-gray-300 w-24">
-                            Quantity
-                          </TableHead>
-                          <TableHead className="border-r border-gray-300 w-24">
-                            Price (INR)
-                          </TableHead>
-                          <TableHead className="w-24">Total (INR)</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {services.map((service, index) => (
-                          <TableRow
-                            key={index}
-                            className={`border-b border-gray-200 ${
-                              !selectedServices.includes(index) && isPrinting
-                                ? "hidden"
-                                : ""
-                            }`}
-                          >
-                            <TableCell className="border-r border-gray-200 no-print">
+                {services.length > 0 ? (
+                  <div className="flex flex-col gap-4">
+                    <div className="w-full">
+                      <h3 className="text-lg font-semibold mb-1 no-print">Bill Items</h3>
+                      <Table className="border-2 border-gray-200">
+                        <TableHeader>
+                          <TableRow className="border-b border-gray-200 bg-gray-200">
+                            <TableHead className="border-r border-gray-300 w-16 no-print">
                               <Checkbox
-                                checked={selectedServices.includes(index)}
-                                onCheckedChange={(checked) =>
-                                  toggleService(index, checked)
+                                checked={
+                                  selectedServices.length === services.length
                                 }
+                                onCheckedChange={toggleAllServices}
                               />
-                            </TableCell>
-                            <TableCell className="border-r border-gray-200 hidden print:table-cell">
-                              {selectedServices.includes(index)
-                                ? selectedServices.indexOf(index) + 1
-                                : ""}
-                            </TableCell>
-                            <TableCell className="border-r border-gray-200">
-                              {service.name || "N/A"}
-                            </TableCell>
-                            <TableCell className="border-r border-gray-200">
-                              {service.quantity || 0}
-                            </TableCell>
-                            <TableCell className="border-r border-gray-200">
-                              {(service.rate || 0).toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              {(
-                                (service.quantity || 0) * (service.rate || 0)
-                              ).toFixed(2)}
-                            </TableCell>
+                            </TableHead>
+                            <TableHead className="border-r border-gray-300 w-16 hidden print:table-cell">
+                              No.
+                            </TableHead>
+                            <TableHead className="border-r border-gray-300 w-1/2">
+                              Service Name
+                            </TableHead>
+                            <TableHead className="border-r border-gray-300 w-24">
+                              Quantity
+                            </TableHead>
+                            <TableHead className="border-r border-gray-300 w-24">
+                              Price (INR)
+                            </TableHead>
+                            <TableHead className="w-24">Total (INR)</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {services.map((service, index) => (
+                            <TableRow
+                              key={index}
+                              className={`border-b border-gray-200 ${
+                                !selectedServices.includes(index) && isPrinting
+                                  ? "hidden"
+                                  : ""
+                              }`}
+                            >
+                              <TableCell className="border-r border-gray-200 no-print">
+                                <Checkbox
+                                  checked={selectedServices.includes(index)}
+                                  onCheckedChange={(checked) =>
+                                    toggleService(index, checked)
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell className="border-r border-gray-200 hidden print:table-cell">
+                                {selectedServices.includes(index)
+                                  ? selectedServices.indexOf(index) + 1
+                                  : ""}
+                              </TableCell>
+                              <TableCell className="border-r border-gray-200">
+                                {service.name || "N/A"}
+                              </TableCell>
+                              <TableCell className="border-r border-gray-200">
+                                {service.quantity || 0}
+                              </TableCell>
+                              <TableCell className="border-r border-gray-200">
+                                {(service.rate || 0).toFixed(2)}
+                              </TableCell>
+                              <TableCell>
+                                {(
+                                  (service.quantity || 0) * (service.rate || 0)
+                                ).toFixed(2)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                    
+                    <div className="flex justify-end">
+                      <div className="w-64">
+                        <div className="border rounded p-3 space-y-2 bg-white text-sm">
+                          <h3 className="font-semibold text-base border-b pb-1">Payment Summary</h3>
+                          
+                          <div className="flex flex-col items-end space-y-0.5">
+                            <div className="flex justify-end w-full items-center">
+                              <span className="text-gray-600 mr-3">Sub Total:</span>
+                              <span>₹{calculateSelectedTotals().subTotal.toFixed(2)}</span>
+                            </div>
+                            
+                            <div className="flex justify-end w-full items-center">
+                              <span className="text-gray-600 mr-3">Discount:</span>
+                              <span>₹{(billData.additionalDiscount || 0).toFixed(2)}</span>
+                            </div>
+                            
+                            <div className="flex justify-end w-full items-center border-t border-gray-200 pt-0.5">
+                              <span className="font-medium mr-3">Net Total:</span>
+                              <span className="font-medium">
+                                ₹{(calculateSelectedTotals().subTotal - (billData.additionalDiscount || 0)).toFixed(2)}
+                              </span>
+                            </div>
+                            
+                            <div className="flex justify-end w-full items-center">
+                              <span className="text-gray-600 mr-3">Paid:</span>
+                              <span className="text-green-600">₹{(billData.amountPaid || 0).toFixed(2)}</span>
+                            </div>
+                            
+                            <div className="flex justify-end w-full items-center border-t border-gray-200 pt-0.5">
+                              <span className="text-gray-600 mr-3">Balance:</span>
+                              <span className="text-red-600">
+                                ₹{((billData.totalAmount || 0) - (billData.amountPaid || 0)).toFixed(2)}
+                              </span>
+                            </div>
+                            
+                            <div className="w-full text-right text-xs mt-0.5">
+                              <span className="font-medium">Status: </span>
+                              <span className={getBillStatus(billData) === 'Paid' ? 'text-green-600' : 'text-red-600'}>
+                                {getBillStatus(billData)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center space-x-2 text-gray-500 py-4 no-print">
-                    <AlertCircle size={18} />
-                    <span>No services selected</span>
+                  <div className="mx-auto w-full max-w-md">
+                    <div className="border-2 p-6 rounded-lg shadow-sm">
+                      <div className="text-center mb-4">
+                        <h3 className="text-xl font-semibold">Payment Receipt</h3>
+                        <p className="text-sm text-gray-600">
+                          {billData.createdAt
+                            ? format(new Date(billData.createdAt), "dd/MM/yyyy hh:mm a")
+                            : "N/A"}
+                        </p>
+                      </div>
+
+                      <div>
+                        <div className="flex justify-between items-center text-base">
+                          <span className="text-gray-700 font-medium">Sub Total:</span>
+                          <span className="font-medium">₹{calculateSelectedTotals().subTotal.toFixed(2)}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-base">
+                          <span className="text-gray-700 font-medium">Discount:</span>
+                          <span className="font-medium">₹{(billData.additionalDiscount || 0).toFixed(2)}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2">
+                          <span className="font-semibold">Net Total:</span>
+                          <span className="font-semibold">
+                            ₹{(billData.subtotal - (billData.additionalDiscount || 0)).toFixed(2)}
+                          </span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-base">
+                          <span className="text-gray-700 font-medium">Paid:</span>
+                          <span className="text-green-600 font-medium">₹{(billData.amountPaid || 0).toFixed(2)}</span>
+                        </div>
+
+                        <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2">
+                          <span className="font-semibold">Balance:</span>
+                          <span className="text-red-600 font-semibold">
+                            ₹{((billData.totalAmount || 0) - (billData.amountPaid || 0)).toFixed(2)}
+                          </span>
+                        </div>
+
+                        <div className="text-center mt-4 pt-2 border-t-2 border-gray-200">
+                          <div className="font-medium text-base">
+                            <span>Status: </span>
+                            <span className={`${getBillStatus(billData) === 'Paid' ? 'text-green-600' : 'text-red-600'}`}>
+                              {getBillStatus(billData)}
+                            </span>
+                          </div>
+                          
+                          <div className="mt-4 text-sm text-gray-600">
+                            <p>Amount in words:</p>
+                            <p className="font-medium">
+                              {numberToWords(billData.totalAmount)} Rupees Only
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 )}
-                <div className={`mt-1 ${!hasSelectedServices || services.length === 0 
-                  ? 'mx-auto w-full max-w-md print:max-w-sm' 
-                  : 'flex flex-col items-end'}`}>
-                  <div className={`space-y-2 ${!hasSelectedServices || services.length === 0 
-                    ? 'border-2 p-6 rounded-lg shadow-sm print:border print:shadow-none' 
-                    : ''}`}>
-                    <div className="text-center mb-4">
-                      <h3 className="text-xl font-semibold">Payment Receipt</h3>
-                      <p className="text-sm text-gray-600">
-                        {billData.createdAt
-                          ? format(new Date(billData.createdAt), "dd/MM/yyyy hh:mm a")
-                          : "N/A"}
-                      </p>
-                    </div>
-                    
-                    <div className="flex justify-between items-center text-base">
-                      <span className="text-gray-700 font-medium">Sub Total:</span>
-                      <span className="font-medium">₹{calculateSelectedTotals().subTotal.toFixed(2)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center text-base">
-                      <span className="text-gray-700 font-medium">Discount:</span>
-                      <span className="font-medium">₹{(billData.additionalDiscount || 0).toFixed(2)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2 mt-2">
-                      <span className="font-semibold">Net Total:</span>
-                      <span className="font-semibold">
-                        ₹{(billData.subtotal - (billData.additionalDiscount || 0)).toFixed(2)}
-                      </span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center text-base">
-                      <span className="text-gray-700 font-medium">Paid:</span>
-                      <span className="text-green-600 font-medium">₹{(billData.amountPaid || 0).toFixed(2)}</span>
-                    </div>
-                    
-                    <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2 mt-2">
-                      <span className="font-semibold">Balance:</span>
-                      <span className="text-red-600 font-semibold">
-                        ₹{((billData.totalAmount || 0) - (billData.amountPaid || 0)).toFixed(2)}
-                      </span>
-                    </div>
-                    
-                    <div className="text-center mt-4 pt-2 border-t-2 border-gray-200">
-                      <div className="font-medium text-base">
-                        <span>Status: </span>
-                        <span className={`${getBillStatus(billData) === 'Paid' 
-                          ? 'text-green-600' 
-                          : 'text-red-600'}`}>
-                          {getBillStatus(billData)}
-                        </span>
-                      </div>
-                      
-                      {/* Add amount in words when no services */}
-                      {(!hasSelectedServices || services.length === 0) && (
-                        <div className="mt-4 text-sm text-gray-600">
-                          <p>Amount in words:</p>
-                          <p className="font-medium">
-                            {numberToWords(billData.totalAmount)} Rupees Only
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
                 <div className="mt-1">
                   <h3 className="text-lg font-semibold mb-1">
                     Payment History

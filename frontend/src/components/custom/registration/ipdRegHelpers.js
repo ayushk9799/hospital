@@ -17,12 +17,15 @@ export const initialFormData = {
     totalAmount: 0,
     additionalDiscount: 0,
   },
+  upgradegenReg: false,
+  upgradegenIpd: false,
   admission: {
     department: "",
     assignedDoctor: "",
     assignedRoom: "",
     assignedBed: "",
     diagnosis: "",
+    ipdNumber: "",
     vitals: {
       admission: {
         bloodPressure: "",

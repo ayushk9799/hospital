@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "../../ui/dialog";
 import { useDispatch, useSelector } from "react-redux";
-import { revisitPatient } from "../../../redux/slices/patientSlice";
+import { fetchRegistrationAndIPDNumbers } from "../../../redux/slices/patientSlice";
 import { fetchBills } from "../../../redux/slices/BillingSlice";
 import {
   fetchPatients,
@@ -44,7 +44,6 @@ const paymentMethods = [
   { name: "Card" },
   { name: "Insurance" },
 ];
-
 const initialFormData = {
   name: "",
   registrationNumber: "",
@@ -56,6 +55,7 @@ const initialFormData = {
   address: "",
   bloodType: "",
   patientType: "OPD",
+  upgradegenReg:false,
   visit: {
     reasonForVisit: "",
     vitals: {
@@ -116,6 +116,8 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   const [billData, setBillData] = useState(null);
 
   const [searchedPatient, setSearchedPatient] = useState(null);
+
+  const [generatedRegNumber, setGeneratedRegNumber] = useState(null);
 
   const handleInputChange = useCallback(
     (e) => {
@@ -204,7 +206,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       }, {});
 
       // Create new payment method array preserving existing amounts
-      const updatedPaymentMethods = newMethods.map(method => ({
+      const updatedPaymentMethods = newMethods.map((method) => ({
         method: method.name,
         amount: existingPayments[method.name] || "",
       }));
@@ -242,9 +244,12 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
 
     if (totalFee < 0) newErrors.totalFee = "Total fee cannot be negative";
     if (discount < 0) newErrors.discount = "Discount cannot be negative";
-    if (discount > totalFee) newErrors.discount = "Discount cannot exceed total fee";
+    if (discount > totalFee)
+      newErrors.discount = "Discount cannot exceed total fee";
     if (amountPaid > totalFee - discount)
-      newErrors.amountPaid = `Total payments (${amountPaid}) cannot exceed ${totalFee - discount} (Total - Discount)`;
+      newErrors.amountPaid = `Total payments (${amountPaid}) cannot exceed ${
+        totalFee - discount
+      } (Total - Discount)`;
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -253,6 +258,12 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
+   
+      // Add validation for registration number
+      if(formData.registrationNumber===generatedRegNumber.registrationNumber){
+        formData.upgradegenReg=true;
+      }
+
       if (validateForm()) {
         const submissionData = {
           ...formData,
@@ -298,7 +309,15 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
             setRegisteredPatient(response);
             setShowBillModal(true);
 
-            dispatch(fetchPatients({startDate: new Date().toLocaleDateString("en-IN").split("/").reverse().join("-")}));
+            dispatch(
+              fetchPatients({
+                startDate: new Date()
+                  .toLocaleDateString("en-IN")
+                  .split("/")
+                  .reverse()
+                  .join("-"),
+              })
+            );
             dispatch(fetchBills());
             onOpenChange(false);
           })
@@ -406,6 +425,26 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       setSearchedPatient(null);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (open && !patientData && !searchedPatient) {
+      dispatch(fetchRegistrationAndIPDNumbers())
+        .unwrap()
+        .then((numbers) => {
+          const nums=numbers.registrationNumber.split("/");
+          const nextRegNumber = nums[0] + "/" + nums[1] + "/" + (parseInt(nums[2]) + 1);
+          setGeneratedRegNumber({registrationNumber:nextRegNumber});
+
+          setFormData((prev) => ({
+            ...prev,
+            registrationNumber: nextRegNumber,
+          }));
+        })
+        .catch((error) => {
+          console.error("Failed to fetch numbers:", error);
+        });
+    }
+  }, [open, dispatch, patientData, searchedPatient]);
 
   return (
     <>
@@ -535,12 +574,24 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                           />
                         </div>
 
-                        <div className={formData.visit.paymentMethod.length > 1 ? "grid grid-cols-3 gap-1" : "grid grid-cols-2 gap-2"}>
+                        <div
+                          className={
+                            formData.visit.paymentMethod.length > 1
+                              ? "grid grid-cols-3 gap-1"
+                              : "grid grid-cols-2 gap-2"
+                          }
+                        >
                           <MultiSelectInput
                             id="visit.paymentMethod"
                             label="Payment Method"
                             suggestions={paymentMethods}
-                            placeholder={`${formData.visit.paymentMethod.length > 0 ? formData.visit.paymentMethod.map(pm => pm.method).join(", ") : "Payment Method"}`}
+                            placeholder={`${
+                              formData.visit.paymentMethod.length > 0
+                                ? formData.visit.paymentMethod
+                                    .map((pm) => pm.method)
+                                    .join(", ")
+                                : "Payment Method"
+                            }`}
                             selectedValues={formData.visit.paymentMethod.map(
                               (pm) => ({
                                 name: pm.method,
@@ -556,7 +607,10 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                                 label={`${pm.method} Amount`}
                                 value={pm.amount.toLocaleString("en-IN")}
                                 onChange={(e) => {
-                                  handleAmountPaidChange(pm.method, e.target.value);
+                                  handleAmountPaidChange(
+                                    pm.method,
+                                    e.target.value
+                                  );
                                 }}
                                 className="bg-gray-50"
                                 error={errors[`payment.${pm.method}`]}

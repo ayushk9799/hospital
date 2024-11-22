@@ -2,8 +2,8 @@ import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 import { Patient } from "./Patient.js";
 const CounterSchema = new mongoose.Schema({
-  date: { type: Date },
-  seq: { type: Number, default: 0 },
+  year: { type: Number },
+  sequence: { type: Number, default: 0 },
 });
 CounterSchema.plugin(hospitalPlugin);
 const Counter = mongoose.model("IPDCounter", CounterSchema);
@@ -16,6 +16,7 @@ const ipdAdmissionSchema = new mongoose.Schema(
     patientName: { type: String },
     contactNumber: { type: String },
     registrationNumber: { type: String },
+    ipdNumber: { type: String },
     patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
     dateDischarged: { type: Date },
     conditionOnAdmission: { type: String },
@@ -78,16 +79,33 @@ const ipdAdmissionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
+ipdAdmissionSchema.statics.getNextIpdNumber = async function (session) {
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = currentYear.toString().slice(-2);
+  const doc = await Counter.findOneAndUpdate(
+    { year: currentYear },
+    { $inc: { sequence: 1 } },
+    { upsert: true, new: true, setDefaultsOnInsert: true, session }
+  );
+  return `IPD/${yearSuffix}/${doc.sequence.toString()}`;
+}
+ipdAdmissionSchema.statics.getCurrentIPDNumber = async function (session) {
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = currentYear.toString().slice(-2);
+  const doc = await Counter.findOneAndUpdate(
+    { year: currentYear },
+    {},
+    { 
+      upsert: true, 
+      new: true, 
+      setDefaultsOnInsert: true, 
+      session 
+    }
+  );
+  return `IPD/${yearSuffix}/${doc.sequence.toString()}`;
+}
 ipdAdmissionSchema.pre("save", async function (next) {
-  if (!this.bookingNumber) {
-    const counter = await Counter.findOneAndUpdate(
-      { date: this.bookingDate },
-      { $inc: { seq: 1 } },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
-    this.bookingNumber = counter.seq;
-  }
+   
 
   if (!this.registrationNumber && this.patient) {
     const patient = await Patient.findById(this.patient);

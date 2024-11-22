@@ -50,6 +50,7 @@ export default function AdmittedPatients() {
         _id: patient._id,
         name: patient.patient.name,
         registrationNumber: patient.patient.registrationNumber,
+        ipdNumber: patient.ipdNumber,
         age: patient.patient.age,
         gender: patient.patient.gender,
         contactNumber: patient.patient.contactNumber,
@@ -91,6 +92,7 @@ export default function AdmittedPatients() {
                   <TableHeader className="bg-muted/50">
                     <TableRow>
                       <TableHead className="w-[140px]">UHID No.</TableHead>
+                      <TableHead className="w-[120px]">IPD No.</TableHead>
                       <TableHead className="w-[200px]">Name</TableHead>
                       <TableHead className="w-[120px]">Admission Date</TableHead>
                       <TableHead className="text-right w-[120px]">
@@ -118,6 +120,9 @@ export default function AdmittedPatients() {
                       >
                         <TableCell className="font-medium">
                           {patient.patient.registrationNumber}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {patient.ipdNumber || '-'}
                         </TableCell>
                         <TableCell>{patient.patient.name}</TableCell>
                         <TableCell>
@@ -168,9 +173,10 @@ export default function AdmittedPatients() {
                         {/* Header - Name and Registration */}
                         <div className="flex justify-between items-center">
                           <h3 className="font-semibold text-base">{patient.patient.name}</h3>
-                          <span className="text-xs text-muted-foreground">
-                            UHID No: {patient.patient.registrationNumber}
-                          </span>
+                          <div className="text-xs text-muted-foreground space-y-0.5">
+                            <div>UHID No: {patient.patient.registrationNumber}</div>
+                            <div>IPD No: {patient.ipdNumber || '-'}</div>
+                          </div>
                         </div>
                         
                         {/* Info Grid - 2 columns */}

@@ -23,7 +23,27 @@ registrationNumberSchema.statics.getNextRegistrationNumber = async function (
     { upsert: true, new: true, setDefaultsOnInsert: true, session }
   );
 
-  return `U/${yearSuffix}/${doc.sequence.toString()}`;
+  return `KSUC/${yearSuffix}/${doc.sequence.toString()}`;
+};
+
+registrationNumberSchema.statics.getCurrentRegistrationNumber = async function (
+  session
+) {
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = currentYear.toString().slice(-2);
+  
+  const doc = await this.findOneAndUpdate(
+    { year: currentYear },
+    {}, // no updates needed
+    { 
+      upsert: true, 
+      new: true, 
+      setDefaultsOnInsert: true, 
+      session 
+    }
+  );
+  
+  return `KSUC/${yearSuffix}/${doc.sequence.toString()}`;
 };
 
 export const RegistrationNumber = mongoose.model(

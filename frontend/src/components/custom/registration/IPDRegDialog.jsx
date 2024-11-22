@@ -23,6 +23,7 @@ import {
   registerPatient,
   readmitPatient,
   searchPatients,
+  fetchRegistrationAndIPDNumbers,
 } from "../../../redux/slices/patientSlice";
 import { fetchRooms } from "../../../redux/slices/roomSlice";
 import {
@@ -80,6 +81,10 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const [completedBill, setCompletedBill] = useState(null);
   const [roomCharge, setRoomCharge] = useState(0);
   const [searchedPatient, setSearchedPatient] = useState(null);
+  const [generatedNumbers, setGeneratedNumbers] = useState({
+    registrationNumber: null,
+    ipdNumber: null
+  });
 
   useEffect(() => {
     if (status === "idle") {
@@ -178,6 +183,35 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     }
   }, [open, resetFormData, dispatch]);
 
+  useEffect(() => {
+    if (open && !patientData && !searchedPatient) {
+      dispatch(fetchRegistrationAndIPDNumbers())
+        .unwrap()
+        .then((numbers) => {
+          
+          const indireg=numbers.registrationNumber.split("/");
+          const indipd=numbers.ipdNumber.split("/");
+          const nextRegNumber = indireg[0] + "/" + indireg[1] + "/" + (parseInt(indireg[2]) + 1);
+          const nextIpdNumber = indipd[0] + "/" + indipd[1] + "/" + (parseInt(indipd[2]) + 1);
+          setGeneratedNumbers({
+            registrationNumber: nextRegNumber,
+            ipdNumber: nextIpdNumber,
+          });
+          setFormData((prev) => ({
+            ...prev,
+            registrationNumber: nextRegNumber,
+            admission: {
+              ...prev.admission,
+              ipdNumber: nextIpdNumber,
+            },
+          }));
+        })
+        .catch((error) => {
+          console.error("Failed to fetch numbers:", error);
+        });
+    }
+  }, [open, dispatch, patientData, searchedPatient]);
+
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;
     setFormData((prev) => {
@@ -231,7 +265,18 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-console.log("submitting again")
+    console.log(generatedNumbers);
+    console.log(formData.registrationNumber);
+    console.log(formData.admission.ipdNumber);
+
+    // Add validation for registration and IPD numbers
+   if(formData.registrationNumber===generatedNumbers.registrationNumber){
+   formData.upgradegenReg=true;
+   }
+   if(formData.admission.ipdNumber===generatedNumbers.ipdNumber){
+    formData.upgradegenIpd=true;
+   }
+
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
 
@@ -413,13 +458,16 @@ console.log("submitting again")
   const handlePaymentMethodChange = (newMethods) => {
     setFormData((prev) => {
       // Get existing payment methods with their amounts
-      const existingPayments = prev.paymentInfo.paymentMethod.reduce((acc, pm) => {
-        acc[pm.method] = pm.amount;
-        return acc;
-      }, {});
+      const existingPayments = prev.paymentInfo.paymentMethod.reduce(
+        (acc, pm) => {
+          acc[pm.method] = pm.amount;
+          return acc;
+        },
+        {}
+      );
 
       // Create new payment method array preserving existing amounts
-      const updatedPaymentMethods = newMethods.map(method => ({
+      const updatedPaymentMethods = newMethods.map((method) => ({
         method: method.name,
         amount: existingPayments[method.name] || "",
       }));
@@ -583,6 +631,20 @@ console.log("submitting again")
                   </div>
 
                   <div className="space-y-4">
+                    <MemoizedInput
+                      id="ipdNumber"
+                      label="IPD Number"
+                      value={formData.admission.ipdNumber}
+                      onChange={(e) =>
+                        handleInputChange({
+                          target: {
+                            id: "admission.ipdNumber",
+                            value: e.target.value,
+                          },
+                        })
+                      }
+                      error={errors.ipdNumber}
+                    />
                     <div>
                       <MemoizedInput
                         id="contactNumber"

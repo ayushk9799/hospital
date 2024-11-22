@@ -197,11 +197,12 @@ export default function Patients() {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>S.No</TableHead>
+            {type==="OPD"&&<TableHead>Sl. No</TableHead>}
             <TableHead>Name</TableHead>
-             <TableHead>UHID No</TableHead>
+            <TableHead>UHID No</TableHead>
             {type === "IPD" && (
               <>
+                <TableHead>IPD Number</TableHead>
                 <TableHead>Room</TableHead>
                 <TableHead>Admit Date</TableHead>
                 <TableHead>Discharge Date</TableHead>
@@ -220,7 +221,7 @@ export default function Patients() {
         <TableBody>
           {patients.map((patient) => (
             <TableRow key={patient._id}>
-              <TableCell>{patient.bookingNumber}</TableCell>
+              {type==="OPD"&&<TableCell>{patient.bookingNumber}</TableCell>}
               <TableCell>
                 <Button
                   variant="link"
@@ -234,11 +235,10 @@ export default function Patients() {
                   {patient.patient.name}
                 </Button>
               </TableCell>
-             
-                <TableCell>{patient.registrationNumber || "--"}</TableCell>
-              
+              <TableCell>{patient.registrationNumber || "--"}</TableCell>
               {type === "IPD" && (
                 <>
+                  <TableCell>{patient.ipdNumber || "N/A"}</TableCell>
                   <TableCell>
                     {patient.assignedRoom?.roomNumber || "--"}
                   </TableCell>

@@ -15,6 +15,32 @@ import { RegistrationNumber } from "../models/RegistrationNumber.js";
 
 const router = express.Router();
 
+// Add this route near the top of the file, before any parameterized routes
+router.get("/registration-ipd-numbers", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    // Get next registration number
+    const registrationNumber = await RegistrationNumber.getCurrentRegistrationNumber(session);
+    
+    // Get next IPD number
+    const ipdNumber = await IPDAdmission.getCurrentIPDNumber(session);
+
+    await session.commitTransaction();
+    
+    res.json({
+      registrationNumber,
+      ipdNumber,
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(500).json({ error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
 // Move this route BEFORE any routes with parameters (/:id)
 router.get("/admittedpatients", verifyToken, async (req, res) => {
   try {
@@ -76,6 +102,7 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
         patient: {
           name: admission.patientName,
           registrationNumber: admission.registrationNumber,
+          ipdNumber: admission.ipdNumber,
           ...plainAdmission.patient,
         },
         admissionDate: admission.bookingDate,
@@ -141,7 +168,7 @@ router.post(
     session.startTransaction();
 
     try {
-      const { patientType, visit, admission, paymentInfo, ...patientData } =
+      const { patientType, visit, admission, paymentInfo, upgradegenReg,upgradegenIpd ,...patientData } =
         req.body;
       const user = req.user;
 
@@ -149,19 +176,27 @@ router.post(
         throw new Error("Invalid or missing patient type");
       }
 
-      let registrationNumber = patientData.registrationNumber;
+      if(upgradegenReg){
+        let registrationNumber=await RegistrationNumber.getNextRegistrationNumber(session);
+        console.log(registrationNumber);
+        if(!patientData.registrationNumber){
+          patientData.registrationNumber=registrationNumber;
+        }
 
-      // Generate registration number only for IPD patients if not provided
-      if (!registrationNumber) {
-        registrationNumber = await RegistrationNumber.getNextRegistrationNumber(
-          session
-        );
       }
+      if(upgradegenIpd){
+        let ipdNumber=await IPDAdmission.getNextIpdNumber(session);
+        console.log(ipdNumber);
+        if(!admission.ipdNumber){
+          admission.ipdNumber=ipdNumber;
+        }
+      }
+    
 
       const patient = new Patient({
         ...patientData,
-        registrationNumber,
-        patientType,
+        registrationNumber: patientData.registrationNumber,
+        patientType: patientType,
       });
       await patient.save({ session });
 
@@ -186,9 +221,9 @@ router.post(
         const totalFee = Number(visit.totalFee) || 0;
         const discount = Number(visit.discount) || 0;
         const amountPaid = Number(visit.amountPaid) || 0;
-         let invoiceNumber=await BillCounter.getNextBillNumber(session);
+        let invoiceNumber = await BillCounter.getNextBillNumber(session);
         bill = new ServicesBill({
-          invoiceNumber:invoiceNumber || null,
+          invoiceNumber: invoiceNumber || null,
           services: [
             {
               name: "Consultation Fee",
@@ -250,6 +285,7 @@ router.post(
           patient: patient._id,
           patientName: patient.name,
           contactNumber: patient.contactNumber,
+          ipdNumber: admission.ipdNumber || null,
           registrationNumber: patient.registrationNumber,
           doctor: admission.doctor || null,
           department: admission.department || null,
@@ -293,9 +329,9 @@ router.post(
               roomCharge = room.ratePerDay || 0;
             }
           }
-         let invoiceNumber=await BillCounter.getNextBillNumber(session);
+          let invoiceNumber = await BillCounter.getNextBillNumber(session);
           bill = new ServicesBill({
-            invoiceNumber:invoiceNumber || null,
+            invoiceNumber: invoiceNumber || null,
             services: [
               ...services.map((service) => ({
                 name: service.name,
@@ -493,6 +529,7 @@ router.post("/details", verifyToken, async (req, res) => {
       bookingNumber: admission.bookingNumber,
       patient: admission.patient,
       registrationNumber: admission.registrationNumber,
+      ipdNumber: admission.ipdNumber,
       bookingDate: admission.bookingDate,
       doctor: admission.assignedDoctor,
       assignedRoom: admission.assignedRoom,
@@ -831,9 +868,9 @@ router.post(
       const totalFee = Number(visit.totalFee) || 0;
       const discount = Number(visit.discount) || 0;
       const amountPaid = Number(visit.amountPaid) || 0;
-      let invoiceNumber=await BillCounter.getNextBillNumber(session);
+      let invoiceNumber = await BillCounter.getNextBillNumber(session);
       const bill = new ServicesBill({
-        invoiceNumber:invoiceNumber || null,
+        invoiceNumber: invoiceNumber || null,
         services: [
           {
             name: "Consultation Fee",
@@ -1292,9 +1329,9 @@ router.post(
             roomCharge = room.ratePerDay || 0;
           }
         }
-        let invoiceNumber=await BillCounter.getNextBillNumber(session);
+        let invoiceNumber = await BillCounter.getNextBillNumber(session);
         bill = new ServicesBill({
-          invoiceNumber:invoiceNumber || null,
+          invoiceNumber: invoiceNumber || null,
           services: [
             ...services.map((service) => ({
               name: service.name,

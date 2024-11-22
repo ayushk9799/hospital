@@ -112,6 +112,7 @@ console.log(isEmbedded)
         bloodGroup: patientData.bloodGroup,
         type: patientData.type,
         bookingDate: patientData.bookingDate || null,
+        ipdNumber: patientData.ipdNumber || null,
       });
     } else if (billId) {
       // Existing fetch logic for navigation scenario
@@ -150,6 +151,7 @@ console.log(isEmbedded)
                 subtotal: billData.subtotal,
                 amountPaid: billData.amountPaid,
                 payments: billData.payments,
+                invoiceNumber: billData.invoiceNumber,
               },
             ],
           };
@@ -534,6 +536,8 @@ console.log(isEmbedded)
 
     
     const firstBill = billData?.services?.[0] || {};
+    console.log(billData)
+    console.log(patientDetails)
   console.log(firstBill)
     if (patientDetails?.type === "OPD") {
       const opdBillData = {
@@ -542,6 +546,8 @@ console.log(isEmbedded)
           age: patientDetails?.age,
           gender: patientDetails?.gender,
           contactNumber: patientDetails?.contactNumber,
+          registrationNumber: patientDetails?.registrationNumber,
+          address: patientDetails?.address,
         },
         bill: {
           _id: firstBill._id || Date.now().toString(),
@@ -557,6 +563,7 @@ console.log(isEmbedded)
           totalAmount: calculateTotals.totalAmount,
           amountPaid: calculateTotals.totalAmountPaid,
           payments: firstBill.payments || [],
+          invoiceNumber: firstBill.invoiceNumber || null,
         },
         payment: {
           paymentMethod: firstBill.paymentMethod || "Cash",
@@ -571,6 +578,11 @@ console.log(isEmbedded)
         createdAt: firstBill.createdAt || new Date(),
         patientInfo: {
           name: patientDetails?.name,
+          age: patientDetails?.age,
+          gender: patientDetails?.gender,
+          contactNumber: patientDetails?.contactNumber,
+          registrationNumber: patientDetails?.registrationNumber,
+          ipdNumber: patientDetails?.ipdNumber,
         },
         services: selectedServicesList.map((service) => ({
           name: service.service,
@@ -657,7 +669,12 @@ console.log(isEmbedded)
                   )}
                   {patientDetails?.registrationNumber && (
                     <Badge variant="outline">
-                      Reg: {patientDetails.registrationNumber}
+                      UHID No: {patientDetails.registrationNumber}
+                    </Badge>
+                  )}
+                  {patientDetails?.ipdNumber && (
+                    <Badge variant="outline">
+                      IPD No: {patientDetails.ipdNumber}
                     </Badge>
                   )}
                 </div>
@@ -977,7 +994,6 @@ console.log(isEmbedded)
           >
             Reset
           </Button>
-          {addedServices.length > 0 && selectedServices.length > 0 && (
             <Button
               variant="outline"
               onClick={handlePrintBill}
@@ -986,7 +1002,7 @@ console.log(isEmbedded)
               <PrinterIcon className="mr-2 h-4 w-4" />
               Print Bill
             </Button>
-          )}
+          
           <Button
             onClick={handleCreate}
             disabled={isLoading}

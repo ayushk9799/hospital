@@ -67,18 +67,30 @@ const OPDBillTokenModal = ({
       @media print {
         @page {
           size: A4 landscape;
-          scale: 2;
+          margin: 0;
+          padding: 0;
         }
         
-        /* Force desktop layout when printing regardless of device */
+        * {
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+
+        body {
+          margin: 0;
+          padding: 0;
+        }
+
         #printArea {
           display: flex !important;
           flex-direction: row !important;
+          width: 100% !important;
+          height: 100% !important;
         }
 
         #printArea > div {
           width: 50% !important;
-          padding: 1rem !important;
+          padding: 8px 12px !important;
           border-bottom: none !important;
         }
 
@@ -86,14 +98,51 @@ const OPDBillTokenModal = ({
           border-right: 1px dashed #000 !important;
         }
 
-        /* Force two-column layout for patient details */
-        .patient-details {
-          grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        /* Simple Print Header Styles */
+        .print-header {
+          border-bottom: 1px solid #000 !important;
+          padding-bottom: 4px !important;
+          margin-bottom: 4px !important;
         }
 
-        /* Ensure proper widths for summary sections */
+        .print-header h1 {
+          font-size: 16px !important;
+          line-height: 1.2 !important;
+          margin-bottom: 2px !important;
+        }
+
+        .print-header p {
+          font-size: 14px !important;
+          line-height: 1.2 !important;
+        }
+
+        /* Patient Details */
+        .patient-details {
+          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+          gap: 4px !important;
+          margin-top: 4px !important;
+          padding: 4px !important;
+          font-size: 12px !important;
+        }
+
         .summary-section {
-          width: 12rem !important;  /* equivalent to w-48 */
+          width: 16rem !important;
+          font-size: 12px !important;
+        }
+
+        /* Table Styles */
+        table {
+          margin-top: 4px !important;
+          font-size: 12px !important;
+        }
+
+        td, th {
+          padding: 2px 4px !important;
+          line-height: 1.2 !important;
+        }
+
+        .grid {
+          gap: 4px !important;
         }
       }
     `,
@@ -104,8 +153,8 @@ const OPDBillTokenModal = ({
   const { patient, bill, payment } = patientData;
 
   const BillCopy = ({ title }) => (
-    <div className="w-full lg:w-1/2 p-2 lg:p-4 border-b lg:border-b-0 lg:border-r border-dashed">
-      <div className="mb-2 sm:mb-4">
+    <div className="w-full lg:w-1/2 p-2 lg:p-4 border-b lg:border-b-0 lg:border-r border-dashed border-red-500">
+      <div className="mb-1 sm:mb-2">
         <SimplePrintHeader />
         <div className="flex justify-between items-center mt-2">
           <h2 className="font-bold">{title}</h2>
@@ -117,33 +166,39 @@ const OPDBillTokenModal = ({
       </div>
 
       <div className="grid gap-2">
-        <div className="patient-details text-sm border rounded-md p-2">
-          <div className="flex justify-between mb-1">
-            <div className="flex gap-1">
+        <div className="patient-details text-sm border rounded-md p-1 bg-gray-50">
+          <div className="grid grid-cols-3 gap-4 pb-3 border-b">
+            <div className="flex gap-2">
               <span className="font-semibold">Name:</span>
               <span>{patient.name}</span>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-2">
               <span className="font-semibold">Age/Sex:</span>
-              <span>
-                {patient.age}/{patient.gender}
-              </span>
+              <span>{patient.age}/{patient.gender}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="font-semibold">Reg No:</span>
+              <span>{patient.registrationNumber}</span>
             </div>
           </div>
 
-          <div className="flex justify-between">
-            <div className="flex gap-1">
+          <div className="grid grid-cols-3 gap-4 pt-3">
+            <div className="flex gap-2 whitespace-nowrap overflow-hidden">
+              <span className="font-semibold flex-shrink-0">Address:</span>
+              <span className="truncate" title={patient.address}>{patient.address}</span>
+            </div>
+            <div className="flex gap-2">
+              <span className="font-semibold">Contact:</span>
+              <span>{patient.contactNumber}</span>
+            </div>
+            <div className="flex gap-2">
               <span className="font-semibold">Date:</span>
               <span>{format(new Date(bill.createdAt), "dd/MM/yyyy")}</span>
-            </div>
-            <div className="flex gap-1">
-              <span className="font-semibold">Ph:</span>
-              <span>{patient.contactNumber}</span>
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto -mx-2 px-2">
+        <div className="overflow-x-auto  px-2">
           <Table className="border-2 border-gray-200 mt-2 w-full text-sm">
             <TableHeader>
               <TableRow className="bg-gray-100">
@@ -235,7 +290,7 @@ const OPDBillTokenModal = ({
         <div
           id="printArea"
           ref={componentRef}
-          className="flex flex-col lg:flex-row"
+          className="flex flex-col lg:flex-row border-red-500"
         >
           <BillCopy title="Hospital Copy" />
           <BillCopy title="Patient Copy" />

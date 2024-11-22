@@ -362,6 +362,31 @@ export const fetchAdmittedPatients = createLoadingAsyncThunk(
   }
 );
 
+// Add these new thunks after the other thunks
+export const fetchRegistrationAndIPDNumbers = createLoadingAsyncThunk(
+  "patients/fetchRegistrationAndIPDNumbers",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/patients/registration-ipd-numbers`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -382,6 +407,9 @@ const initialState = {
   registrationDetailsStatus: "idle",
   admittedPatients: [],
   admittedPatientsStatus: "idle",
+  registrationNumber: null,
+  ipdNumber: null,
+  numbersStatus: "idle",
 };
 
 const patientSlice = createSlice({
@@ -602,6 +630,18 @@ const patientSlice = createSlice({
       })
       .addCase(fetchAdmittedPatients.rejected, (state, action) => {
         state.admittedPatientsStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(fetchRegistrationAndIPDNumbers.pending, (state) => {
+        state.numbersStatus = "loading";
+      })
+      .addCase(fetchRegistrationAndIPDNumbers.fulfilled, (state, action) => {
+        state.numbersStatus = "succeeded";
+        state.registrationNumber = action.payload.registrationNumber;
+        state.ipdNumber = action.payload.ipdNumber;
+      })
+      .addCase(fetchRegistrationAndIPDNumbers.rejected, (state, action) => {
+        state.numbersStatus = "failed";
         state.error = action.payload;
       });
   },

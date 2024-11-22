@@ -4,18 +4,41 @@ import { OPDProcedure } from "../models/OPDProcedure.js";
 import { Payment } from "../models/Payment.js";
 import { ServicesBill } from "../models/ServicesBill.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { BillCounter } from "../models/BillCounter.js";
 const router = express.Router();
 //get all opd procedures
 router.get("/", async (req, res) => {
   try {
-    const opdProcedures = await OPDProcedure.find();
+    const { startDate, endDate } = req.query;
+
+    // Build date filter
+    let dateFilter = {};
+    if (startDate || endDate) {
+      dateFilter.createdAt = {};
+      if (startDate && !endDate) {
+        dateFilter.createdAt = new Date(startDate);
+      } else if (startDate && endDate) {
+        dateFilter.createdAt = {
+          $gte: new Date(startDate),
+          $lt: new Date(endDate),
+        };
+      }
+    }
+
+    const opdProcedures = await OPDProcedure.find(dateFilter)
+      .populate({
+        path: 'servicesBill',
+        populate: {
+          path: 'payments'
+        }
+      });
+
     res.status(200).json(opdProcedures);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
 });
 
-// Create new OPD procedure with services bill and payments
 router.post("/",verifyToken,async (req, res) => {
   // Start a new session for the transaction
   const session = await mongoose.startSession();
