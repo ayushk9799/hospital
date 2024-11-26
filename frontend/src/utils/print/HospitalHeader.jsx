@@ -4,32 +4,32 @@ import { useSelector } from "react-redux";
 const HospitalHeader = () => {
   const { hospitalInfo } = useSelector((state) => state.hospital);
   return (
-    <div className="border-b border-[#000000] pb-2 print:pb-1">
-      <div className="text-center">
-        <h1 className="text-4xl tracking-wide text-[#1a5f7a] uppercase print:text-lg print:mb-1"
-          style={stylesFont.fontFamilyName}>
+    <div className="mb-2 border-b border-[#000000] pb-2 ">
+      <div>
+        <h1
+          className="text-4xl tracking-wide text-center text-[#1a5f7a] uppercase"
+          style={stylesFont.fontFamilyName}
+        >
           {hospitalInfo?.name}
         </h1>
       </div>
-      <div className="flex items-center justify-center print:mt-1">
-        <div className="print:w-[40px] print:h-[40px] flex-shrink-0">
+      <div style={{ display: "flex", flexDirection: "row" }}>
+        <div style={{ marginLeft: 50 }}>
           <img
             src={require("../../components/custom/reports/Capture2.png")}
             alt="Clinic Logo"
-            className="w-[100px] h-[100px] print:w-[40px] print:h-[40px]"
+            className="w-[100px] h-[100px]"
           />
         </div>
-        <div className="ml-8 print:ml-4 flex flex-col items-center">
-          <p className="text-center text-[#333333] print:text-[9px] print:leading-tight">
-            {hospitalInfo?.address}
-          </p>
-          <h2 className="text-center text-[#1a5f7a] text-xl print:text-xs print:font-bold print:my-0.5">
+        <div className="ml-8">
+          <p className="text-center text-[#333333]">{hospitalInfo?.address}</p>
+          <h2 className="text-center text-[#1a5f7a] text-xl ">
             {hospitalInfo?.doctorName}
           </h2>
-          <p className="text-center text-[#333333] print:text-[9px] print:leading-tight">
+          <p className="text-center text-[#333333]">
             {hospitalInfo?.doctorInfo}
           </p>
-          <p className="text-center text-[#333333] print:text-[9px] print:leading-tight">
+          <p className="text-center text-[#333333]">
             Mob : {hospitalInfo?.contactNumber}
           </p>
         </div>

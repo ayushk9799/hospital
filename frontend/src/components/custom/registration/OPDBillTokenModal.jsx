@@ -177,7 +177,7 @@ const OPDBillTokenModal = ({
               <span>{patient.age}/{patient.gender}</span>
             </div>
             <div className="flex gap-2">
-              <span className="font-semibold">Reg No:</span>
+              <span className="font-semibold">UHID No:</span>
               <span>{patient.registrationNumber}</span>
             </div>
           </div>

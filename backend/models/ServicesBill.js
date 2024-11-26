@@ -24,10 +24,12 @@ const servicesBillSchema = new mongoose.Schema({
     ref : "Patient",
     
   },
+  
   patientInfo : {
     name : String,
     phone : String,
-    registrationNumber:String
+    registrationNumber:String,
+    ipdNumber:String,
   },
   createdBy : {
     type : mongoose.Schema.Types.ObjectId,

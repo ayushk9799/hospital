@@ -200,8 +200,8 @@ router.post(
       });
       await patient.save({ session });
 
-      let admissionRecord, bill, payment;
-
+      let admissionRecord, bill;
+      let payment = [];
       if (patientType === "OPD") {
         if (!visit) {
           throw new Error("Visit details are required for OPD patients");
@@ -253,15 +253,16 @@ router.post(
         ) {
           await Promise.all(
             visit.paymentMethod.map(async (pm) => {
-              let payment = new Payment({
+              let payments = new Payment({
                 amount: pm.amount,
                 paymentMethod: pm.method,
                 paymentType: { name: "Services", id: bill._id },
                 type: "Income",
                 createdBy: user._id,
               });
-              await payment.save({ session });
-              bill.payments.push(payment._id);
+              await payments.save({ session });
+              bill.payments.push(payments._id);
+              payment.push(payments);
             })
           );
         }
@@ -356,6 +357,7 @@ router.post(
               name: patient.name,
               phone: patient?.contactNumber,
               registrationNumber: patient.registrationNumber,
+              ipdNumber: admission.ipdNumber,
             },
             totalAmount: Number(paymentInfo.totalAmount),
             subtotal: services.reduce((sum, service) => sum + service.rate, 0)
@@ -367,22 +369,22 @@ router.post(
             patientType: "IPD",
             createdBy: user._id,
           });
-
           if (
             paymentInfo?.paymentMethod.length > 0 &&
             paymentInfo.amountPaid > 0
           ) {
             await Promise.all(
               paymentInfo.paymentMethod.map(async (pm) => {
-                let payment = new Payment({
+                let payments = new Payment({
                   amount: pm.amount,
                   paymentMethod: pm.method,
                   paymentType: { name: "Services", id: bill._id },
                   type: "Income",
                   createdBy: user._id,
                 });
-                await payment.save({ session });
-                bill.payments.push(payment._id);
+                await payments.save({ session });
+                payment.push(payments);
+                bill.payments.push(payments._id);
               })
             );
           }
@@ -1278,7 +1280,7 @@ router.post(
 
     try {
       const { id } = req.params;
-      const { admission, paymentInfo, ...patientData } = req.body;
+      const { admission, paymentInfo,upgradegenIpd, upgradegenReg,...patientData } = req.body;
       const user = req.user;
 
       const patient = await Patient.findById(id).session(session);
@@ -1291,7 +1293,13 @@ router.post(
         Object.assign(patient, patientData);
         await patient.save({ session });
       }
-
+      if(upgradegenIpd){
+       let ipdNumber= await IPDAdmission.getNextIpdNumber(session);
+       console.log(ipdNumber);
+       if(!admission.ipdNumber){
+        admission.ipdNumber=ipdNumber;
+       }
+      }
       // Create new IPD admission
       const newAdmission = new IPDAdmission({
         patient: patient._id,
@@ -1301,6 +1309,7 @@ router.post(
         bookingDate: admission.bookingDate || new Date(),
         reasonForAdmission: admission.reasonForAdmission || "Not specified",
         assignedDoctor: admission.assignedDoctor || null,
+        ipdNumber: admission.ipdNumber || null,
         assignedRoom: admission.assignedRoom || null,
         assignedBed: admission.assignedBed || null,
         diagnosis: admission.diagnosis || null,
@@ -1311,7 +1320,8 @@ router.post(
         comorbidities: admission.comorbidities || [],
       });
 
-      let bill, payment;
+      let bill;
+      let payment= [];
 
       // Handle initial services bill if any
       if (paymentInfo?.includeServices) {
@@ -1356,6 +1366,7 @@ router.post(
             name: patient.name,
             phone: patient?.contactNumber,
             registrationNumber: patient.registrationNumber,
+            ipdNumber: admission.ipdNumber,
           },
           totalAmount: Number(paymentInfo.totalAmount),
           subtotal: services.reduce((sum, service) => sum + service.rate, 0)
@@ -1372,17 +1383,19 @@ router.post(
           paymentInfo?.paymentMethod.length > 0 &&
           paymentInfo.amountPaid > 0
         ) {
-          paymentInfo.paymentMethod.map(async (pm) => {
-            let payment = new Payment({
+          await Promise.all(paymentInfo.paymentMethod.map(async (pm) => {
+            let payments = new Payment({
               amount: pm.amount,
               paymentMethod: pm.method,
               paymentType: { name: "Services", id: bill._id },
               type: "Income",
               createdBy: user._id,
             });
-            await payment.save({ session });
-            bill.payments.push(payment._id);
-          });
+            await payments.save({ session });
+              bill.payments.push(payments._id);
+              payment.push(payments);
+            })
+          );
         }
 
         await bill.save({ session });
@@ -1507,6 +1520,7 @@ router.post("/visit-details", verifyToken, async (req, res) => {
         bookingNumber: result.bookingNumber,
         patient: result.patient,
         registrationNumber: result.registrationNumber,
+        ipdNumber: result.ipdNumber,
         bookingDate: result.bookingDate,
         doctor: result.assignedDoctor,
         assignedRoom: result.assignedRoom,
@@ -1607,6 +1621,7 @@ router.post("/registration-details", verifyToken, async (req, res) => {
         patient: result.patient,
         registrationNumber: result.registrationNumber,
         bookingDate: result.bookingDate,
+        ipdNumber: result.ipdNumber,
         doctor: result.assignedDoctor,
         assignedRoom: result.assignedRoom,
         assignedBed: result.assignedBed,

@@ -71,16 +71,16 @@ const CreateServiceBill = ({
   const [newlyAddedServices, setNewlyAddedServices] = useState([]);
 
   const [initialBillData, setInitialBillData] = useState(initialBillDatas);
-  console.log(patientData)
+  console.log(patientData);
   // Use either the prop billId or URL billId
   const billId = initialBillId || urlBillId;
-console.log(isEmbedded)
+  console.log(isEmbedded);
   // Initialize state with props if provided
   useEffect(() => {
     if (initialBillData && patientData) {
       setIsEditing(true);
       // Process all services from all bills
- console.log(initialBillData)
+      console.log(initialBillData);
       const formattedServices = initialBillData.services.flatMap(
         (bill, billIndex) =>
           bill.services.map((service, serviceIndex) => ({
@@ -119,9 +119,9 @@ console.log(isEmbedded)
       dispatch(fetchBillById(billId))
         .unwrap()
         .then((billData) => {
-          console.log(billData)
+          console.log(billData);
           setIsEditing(true);
-          setNewlyAddedServices([])
+          setNewlyAddedServices([]);
           const lastServiceId = location.state?.lastServiceId;
           let services = billData.services;
 
@@ -179,15 +179,16 @@ console.log(isEmbedded)
             gender: billData.patient.gender,
             address: billData.patient.address,
             bloodGroup: billData.patient.bloodGroup,
+            ipdNumber: billData.patientInfo.ipdNumber,
             type: billData.patientType,
             bookingDate:
               billData.patient.bookingDate || billData.createdAt || null,
           });
-          console.log(formattedBillData)
+          console.log(formattedBillData);
           setBillData(formattedBillData); // Now storing in the same format as initialBillDat
         })
         .catch((error) => {
-          console.log(error)
+          console.log(error);
           toast({
             title: "Error fetching bill",
             description: "Could not load the bill details. Please try again.",
@@ -238,17 +239,31 @@ console.log(isEmbedded)
   const [billData, setBillData] = useState(initialBillData || {});
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState([]);
+  const [breakTotalMode, setBreakTotalMode] = useState(false);
+  const [targetTotal, setTargetTotal] = useState("");
+
   const calculateTotals = useMemo(() => {
-    // Calculate total from all services (both existing and newly added)
-    // const subtotal = addedServices.reduce(
-    //   (sum, service) => sum + service.total,
-    //   0
-    // );
-    console.log(billData)
-    const subtotal = newlyAddedServices.reduce(
-      (sum, service) => sum + service.total,
-      0
-    )+(billData?.subtotal||billData?.services?.[0]?.subtotal||0);
+    // If in break total mode, use target total as the main total
+    if (breakTotalMode && targetTotal) {
+      const currentServicesSubtotal = newlyAddedServices.reduce(
+        (sum, service) => sum + service.total,
+        0
+      );
+
+      return {
+        subtotal: parseFloat(targetTotal),
+        additionalDiscount: "0.00",
+        totalAmount: parseFloat(targetTotal),
+        currentServicesSubtotal,
+        totalAmountPaid:
+          billData?.amountPaid || billData?.services?.[0]?.amountPaid || 0,
+      };
+    }
+
+    // Normal mode calculation
+    const subtotal =
+      newlyAddedServices.reduce((sum, service) => sum + service.total, 0) +
+      (billData?.subtotal || billData?.services?.[0]?.subtotal || 0);
 
     let discountValue = 0;
 
@@ -265,16 +280,13 @@ console.log(isEmbedded)
 
     const totalAmount = subtotal - discountValue;
 
-    // Calculate total amount paid from initialBillData if it exists
-    const totalAmountPaid = billData?.amountPaid || billData?.services?.[0]?.amountPaid;
-    console.log(billData)
-    console.log(totalAmountPaid)
     return {
       subtotal,
       additionalDiscount: discountValue.toFixed(2),
       totalAmount,
       currentServicesSubtotal: subtotal,
-      totalAmountPaid,
+      totalAmountPaid:
+        billData?.amountPaid || billData?.services?.[0]?.amountPaid,
     };
   }, [
     addedServices,
@@ -282,6 +294,8 @@ console.log(isEmbedded)
     additionalDiscountType,
     newlyAddedServices,
     billData,
+    breakTotalMode,
+    targetTotal,
   ]);
 
   useEffect(() => {
@@ -379,11 +393,40 @@ console.log(isEmbedded)
     }
   }, [serviceName]);
 
+  const handleBreakTotalModeChange = (e) => {
+    const isChecked = e.target.checked;
+    setBreakTotalMode(isChecked);
+
+    // Auto-fill target total with calculateTotals.totalAmount when enabling break mode
+    if (isChecked && calculateTotals.totalAmount) {
+      setTargetTotal(calculateTotals.totalAmount.toString());
+    } else {
+      // Reset only the target total when disabling, don't clear services
+      setTargetTotal("");
+    }
+  };
+
   const handleAddService = (e) => {
     e.preventDefault();
 
     const totalValue = parseFloat(newService.total);
     const quantityValue = parseFloat(newService.quantity);
+
+    if (breakTotalMode && targetTotal) {
+      // Check if adding this service would exceed target total
+      const currentTotal = addedServices.reduce(
+        (sum, service) => sum + service.total,
+        0
+      );
+      if (currentTotal + totalValue > parseFloat(targetTotal)) {
+        toast({
+          title: "Exceeds Target Total",
+          description: "This service would exceed the target total amount.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
 
     const newServiceWithoutDiscount = {
       id: addedServices.length + 1,
@@ -395,8 +438,7 @@ console.log(isEmbedded)
     };
 
     setAddedServices((prev) => [...prev, newServiceWithoutDiscount]);
-    setNewlyAddedServices((prev) => [...prev, newServiceWithoutDiscount]); // Track new service
-
+    setNewlyAddedServices((prev) => [...prev, newServiceWithoutDiscount]);
     setSelectedServices((prev) => [...prev, newServiceWithoutDiscount.id]);
 
     setNewService({
@@ -411,7 +453,9 @@ console.log(isEmbedded)
 
   const handleRemoveService = (id) => {
     setAddedServices((prev) => prev.filter((service) => service.id !== id));
-    setNewlyAddedServices((prev) => prev.filter((service) => service.id !== id));
+    setNewlyAddedServices((prev) =>
+      prev.filter((service) => service.id !== id)
+    );
 
     setSelectedServices((prev) => prev.filter((serviceId) => serviceId !== id));
   };
@@ -475,13 +519,11 @@ console.log(isEmbedded)
           billId: billId || initialBillData.services[0]._id,
           billData,
         })
-      )
-       
+      );
     } else {
       dispatch(createBill(billData));
     }
   };
-  
 
   const handleReset = () => {
     setAddedServices([]);
@@ -534,11 +576,10 @@ console.log(isEmbedded)
 
     const totalAfterDiscount = selectedServicesTotal - discountAmount;
 
-    
     const firstBill = billData?.services?.[0] || {};
-    console.log(billData)
-    console.log(patientDetails)
-  console.log(firstBill)
+    console.log(billData);
+    console.log(patientDetails);
+    console.log(firstBill);
     if (patientDetails?.type === "OPD") {
       const opdBillData = {
         patient: {
@@ -590,6 +631,7 @@ console.log(isEmbedded)
           rate: service.rate,
         })),
         totalAmount: calculateTotals.totalAmount,
+        invoiceNumber: firstBill.invoiceNumber || null,
         subtotal: calculateTotals.subtotal,
         additionalDiscount: discountAmount,
         amountPaid: calculateTotals.totalAmountPaid,
@@ -621,7 +663,6 @@ console.log(isEmbedded)
     });
   };
 
-  // Only render the header section if not embedded (i.e., opened through navigation)
   const renderHeader = () => {
     if (!isEmbedded) {
       return (
@@ -641,9 +682,63 @@ console.log(isEmbedded)
     return null;
   };
 
+  const remainingAmount = useMemo(() => {
+    if (!breakTotalMode || !targetTotal) return 0;
+    const currentTotal = addedServices.reduce(
+      (sum, service) => sum + service.total,
+      0
+    );
+    return parseFloat(targetTotal) - currentTotal;
+  }, [breakTotalMode, targetTotal, addedServices]);
+
+  // Add this component definition before the return statement
+  const BreakTotalModeToggle = () => (
+    <div className="flex items-center justify-between mb-4 p-2 bg-gray-50 rounded-lg  h-5">
+      <div className="flex items-center space-x-2">
+        <input
+          type="checkbox"
+          id="breakTotalMode"
+          checked={breakTotalMode}
+          onChange={handleBreakTotalModeChange}
+          className="h-4 w-4 rounded border-gray-300"
+        />
+        <label htmlFor="breakTotalMode" className="text-sm font-medium">
+          Break Total Mode
+        </label>
+      </div>
+      {breakTotalMode && (
+        <div className="flex items-center space-x-2 ">
+          <label htmlFor="targetTotal" className="text-sm font-medium">
+            Target Total:
+          </label>
+          <Input
+            id="targetTotal"
+            value={targetTotal}
+            onChange={(e) => setTargetTotal(e.target.value)}
+            className="w-32 h-6"
+            placeholder="Enter total"
+          />
+          {targetTotal && (
+            <div className="text-sm">
+              Remaining:{" "}
+              <span
+                className={
+                  remainingAmount < 0
+                    ? "text-red-500 font-bold"
+                    : "text-green-500 font-bold"
+                }
+              >
+                ₹{remainingAmount.toFixed(2)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="w-full  max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
-      {/* Conditionally render the header */}
       {renderHeader()}
 
       <Card>
@@ -710,6 +805,7 @@ console.log(isEmbedded)
 
       <Card>
         <CardContent className="p-3">
+          <BreakTotalModeToggle />
           <form
             onSubmit={handleAddService}
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 items-end mb-2"
@@ -919,14 +1015,12 @@ console.log(isEmbedded)
               <div className="flex items-center">
                 <span className="mr-1">₹</span>
                 <Input
-                 
-                  value={parseFloat(calculateTotals.subtotal||0).toFixed(2)}
+                  value={parseFloat(calculateTotals.subtotal || 0).toFixed(2)}
                   onChange={(e) => {
-                    setBillData(prev=>({
+                    setBillData((prev) => ({
                       ...prev,
-                      subtotal:e.target.value
-                    }))
-                   
+                      subtotal: e.target.value,
+                    }));
                   }}
                   className="w-20 h-7 text-right font-medium border-0 p-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
                   placeholder="0.00"
@@ -952,7 +1046,8 @@ console.log(isEmbedded)
             <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
               <span className="font-medium mr-3">Net Total:</span>
               <span className="font-medium">
-                ₹{calculateTotals.totalAmount?.toLocaleString("en-IN", {
+                ₹
+                {calculateTotals.totalAmount?.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -962,8 +1057,9 @@ console.log(isEmbedded)
             {/* Amount Paid */}
             <div className="flex justify-end w-48 items-center text-sm">
               <span className="text-gray-600 mr-3">Paid:</span>
-              <span className="text-green-600">
-                ₹{calculateTotals.totalAmountPaid?.toLocaleString("en-IN", {
+              <span className="text-green-600 font-bold">
+                ₹
+                {calculateTotals.totalAmountPaid?.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -973,8 +1069,12 @@ console.log(isEmbedded)
             {/* Amount Due */}
             <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
               <span className="text-gray-600 mr-3">Balance:</span>
-              <span className="text-red-600">
-                ₹{(calculateTotals.totalAmount - (calculateTotals.totalAmountPaid || 0)).toLocaleString("en-IN", {
+              <span className="text-red-600 font-bold">
+                ₹
+                {(
+                  calculateTotals.totalAmount -
+                  (calculateTotals.totalAmountPaid || 0)
+                ).toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -994,15 +1094,15 @@ console.log(isEmbedded)
           >
             Reset
           </Button>
-            <Button
-              variant="outline"
-              onClick={handlePrintBill}
-              className="w-1/2 sm:w-auto"
-            >
-              <PrinterIcon className="mr-2 h-4 w-4" />
-              Print Bill
-            </Button>
-          
+          <Button
+            variant="outline"
+            onClick={handlePrintBill}
+            className="w-1/2 sm:w-auto"
+          >
+            <PrinterIcon className="mr-2 h-4 w-4" />
+            Print Bill
+          </Button>
+
           <Button
             onClick={handleCreate}
             disabled={isLoading}

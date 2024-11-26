@@ -279,12 +279,13 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
-
+ console.log(patientData);
+ console.log(searchedPatient);
       if (patientData || searchedPatient) {
         // This is a readmission
         dispatch(
           readmitPatient({
-            patientId: patientData._id,
+            patientId: patientData?._id || searchedPatient?._id,
             admission: submissionData,
           })
         )

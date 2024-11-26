@@ -25,18 +25,20 @@ import { ScrollArea } from "../components/ui/scroll-area";
 export default function AdmittedPatients() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const { admittedPatients, admittedPatientsStatus } = useSelector(
-    (state) => state.patients
-  );
+  // const { admittedPatients, admittedPatientsStatus } = useSelector(
+  //   (state) => state.patients
+  // );
+const [admittedPatients,setAdmittedPatients] = useState([]);
 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showBilling, setShowBilling] = useState(false);
 
   useEffect(() => {
-    if (admittedPatientsStatus === "idle") {
-      dispatch(fetchAdmittedPatients());
-    }
-  }, [dispatch, admittedPatientsStatus]);
+    dispatch(fetchAdmittedPatients()).unwrap().then((res)=>
+    {
+      setAdmittedPatients(res);
+    });
+  }, []);
 
   const handleDischarge = (patientId, patient) => {
     navigate(`/patients/discharge/${patientId}`, {
@@ -72,9 +74,7 @@ export default function AdmittedPatients() {
     dispatch(fetchAdmittedPatients());
   };
 
-  if (admittedPatientsStatus === "loading") {
-    return <div>Loading...</div>;
-  }
+ 
 
   return (
     <div className=" pb-6">

@@ -28,7 +28,7 @@ const CreateLabReport = ({
   type,
   patientData,
   onClose,
-  
+  onSave,
   searchWhere,
 }) => {
   const navigate = useNavigate();
@@ -137,20 +137,24 @@ const CreateLabReport = ({
     };
 
     try {
-      const resultAction = await dispatch(addLabReport({
-        visitId: patientData._id,
-        labReport: labReportData,
-        searchWhere: searchWhere,
-      }));
+      const resultAction = await dispatch(
+        addLabReport({
+          visitId: patientData._id,
+          labReport: labReportData,
+          searchWhere: searchWhere,
+        })
+      );
 
       if (addLabReport.fulfilled.match(resultAction)) {
         toast({
           title: "Success",
           description: "Lab Report added successfully",
-          variant:"success"
+          variant: "success",
         });
-       
-        onClose();
+
+        if (onSave) {
+          onSave(labReportData);
+        }
       } else {
         throw new Error("Failed to add lab report");
       }

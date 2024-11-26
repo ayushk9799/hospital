@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
@@ -50,7 +50,7 @@ import { fetchTemplates } from "../redux/slices/templatesSlice";
 import { labCategories, labReportFields } from "../assets/Data";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
 import CreateLabReport from "./CreateLabReport";
-import { PDFViewer } from "@react-pdf/renderer";
+import { useReactToPrint } from "react-to-print";
 import DischargeSummaryPDF from "../components/custom/reports/DischargeSummaryPDF";
 import {
   dischargePatient,
@@ -246,7 +246,6 @@ export default function DischargeSummary() {
 
   const [isLabReportOpen, setIsLabReportOpen] = useState(false); // State to manage modal visibility
   const [selectedInvestigation, setSelectedInvestigation] = useState(null); // State to track selected investigation
-  const [isPdfPreviewOpen, setIsPdfPreviewOpen] = useState(false);
   const diagnosisTemplate = useSelector(
     (state) => state.templates.diagnosisTemplate
   );
@@ -259,6 +258,7 @@ export default function DischargeSummary() {
     address: "",
     roomNumber: "",
     registrationNumber: "",
+    ipdNumber: "",
   });
   useEffect(() => {
     if (patient) {
@@ -312,6 +312,7 @@ export default function DischargeSummary() {
         address: patient.patient.address || "",
         roomNumber: patient.assignedRoom?.roomNumber || "",
         registrationNumber: patient.registrationNumber || "",
+        ipdNumber: patient.ipdNumber || "",
       });
     }
   }, [patient]);
@@ -496,6 +497,7 @@ export default function DischargeSummary() {
       inv.name === selectedInvestigation.name
         ? {
             ...inv,
+            name: reportData.name,
             report: reportData.report,
             date: reportData.date,
           }
@@ -511,7 +513,18 @@ export default function DischargeSummary() {
       });
     }
 
-    setFormData((prev) => ({ ...prev, investigations: updatedInvestigations }));
+    setFormData((prev) => ({
+      ...prev,
+      investigations: updatedInvestigations,
+    }));
+
+    // Update selectedInvestigation to show the new data immediately
+    setSelectedInvestigation({
+      name: reportData.name,
+      report: reportData.report,
+      date: reportData.date,
+    });
+
     handleCloseLabReport();
   };
 
@@ -527,7 +540,7 @@ export default function DischargeSummary() {
   const handleMedicineAdviceSuggestionSelect = (index, suggestion) => {
     handleMedicineAdviceChange(index, "name", suggestion.name);
   };
-
+console.log(formData.diagnosis)
   const addMedicineAdvice = () => {
     setFormData((prev) => ({
       ...prev,
@@ -556,14 +569,6 @@ export default function DischargeSummary() {
         },
       },
     }));
-  };
-
-  const handlePreviewPDF = () => {
-    setIsPdfPreviewOpen(true);
-  };
-
-  const handleClosePdfPreview = () => {
-    setIsPdfPreviewOpen(false);
   };
 
   const getCategoryAndTypeForTest = (testName) => {
@@ -763,6 +768,35 @@ export default function DischargeSummary() {
     navigate(-1); // This will go back to the previous page
   };
 
+  const componentRef = useRef();
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+    pageStyle: `
+      @media print {
+        @page {
+          size: A4;
+           margin:20mm;
+          
+        }
+        body {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        .print-only {
+          display: block !important;
+        }
+        .no-print {
+          display: none !important;
+        }
+        .print-content {
+          position: relative;
+          min-height: 100vh;
+         padding:20px;
+        }
+      }
+    `,
+  });
+
   return (
     <div className="container mx-auto py-4 px-2 sm:px-4 max-w-5xl">
       <Card className="w-full shadow-lg">
@@ -825,7 +859,7 @@ export default function DischargeSummary() {
               </div>
               <div className="flex items-center">
                 <Label htmlFor="registrationNumber" className="w-24 font-bold">
-                  Registration Number:
+                  UHID No:
                 </Label>
                 <div className="relative flex-1">
                   <Input
@@ -848,6 +882,31 @@ export default function DischargeSummary() {
                   )}
                 </div>
               </div>
+              <div className="flex items-center">
+                <Label htmlFor="ipdNumber" className="w-24 font-bold">
+                  IPD No:
+                </Label>
+                <div className="relative flex-1">
+                  <Input
+                    id="ipdNumber"
+                    name="ipdNumber"
+                    value={patientInfo.ipdNumber}
+                    onChange={handlePatientInfoChange}
+                    className="h-8 pr-8"
+                  />
+                  {(!patient || !patientInfo.name) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 absolute right-0 top-0"
+                    >
+                    </Button>
+                  )}
+                </div>
+              </div>
+              
+              
               <div className="flex items-center">
                 <Label htmlFor="contactNumber" className="w-24 font-bold">
                   Contact:
@@ -919,19 +978,22 @@ export default function DischargeSummary() {
                 <Label htmlFor="diagnosis">Diagnosis</Label>
                 <div className="mt-1 space-y-2">
                   <div className="flex flex-wrap gap-1">
-                    {formData.diagnosis.split(", ").map((diagnosis, index) => (
-                      <Badge
-                        key={index}
-                        variant="primary"
-                        className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
-                      >
-                        {diagnosis}
-                        <X
-                          className="ml-1 h-3 w-3 cursor-pointer"
-                          onClick={() => handleRemoveDiagnosis(diagnosis)}
-                        />
-                      </Badge>
-                    ))}
+                    {formData.diagnosis && formData.diagnosis.split(",")
+                      .map(diagnosis => diagnosis.trim())
+                      .filter(diagnosis => diagnosis)
+                      .map((diagnosis, index) => (
+                        <Badge
+                          key={index}
+                          variant="primary"
+                          className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
+                        >
+                          {diagnosis}
+                          <X
+                            className="ml-1 h-3 w-3 cursor-pointer"
+                            onClick={() => handleRemoveDiagnosis(diagnosis)}
+                          />
+                        </Badge>
+                      ))}
                   </div>
                   <div className="flex gap-2">
                     <MultiSelectInput
@@ -1080,23 +1142,31 @@ export default function DischargeSummary() {
                       key={index}
                       className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
                     >
-                      <SearchSuggestion
-                        suggestions={medicines.map((item) => ({
-                          name: item.name,
-                        }))}
-                        placeholder="Select medicine/advice"
-                        value={item.name}
-                        setValue={(value) =>
-                          handleMedicineAdviceChange(index, "name", value)
+                      <div onKeyDown={(e) => {
+                        // Prevent form submission on Enter key
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
                         }
-                        onSuggestionSelect={(suggestion) =>
-                          handleMedicineAdviceSuggestionSelect(
-                            index,
-                            suggestion
-                          )
-                        }
-                      />
+                      }}>
+                        <SearchSuggestion
+                          suggestions={medicines.map((item) => ({
+                            name: item.name,
+                          }))}
+                          placeholder="Select medicine/advice"
+                          value={item.name}
+                          setValue={(value) =>
+                            handleMedicineAdviceChange(index, "name", value)
+                          }
+                          onSuggestionSelect={(suggestion) =>
+                            handleMedicineAdviceSuggestionSelect(
+                              index,
+                              suggestion
+                            )
+                          }
+                        />
+                      </div>
                       <Input
+                        type="text"
                         placeholder="Dosage"
                         value={item.dosage}
                         onChange={(e) =>
@@ -1107,8 +1177,15 @@ export default function DischargeSummary() {
                           )
                         }
                         className="font-medium"
+                        onKeyDown={(e) => {
+                          // Prevent form submission on Enter key
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                          }
+                        }}
                       />
                       <Input
+                        type="text"
                         placeholder="Duration"
                         value={item.duration}
                         onChange={(e) =>
@@ -1119,8 +1196,15 @@ export default function DischargeSummary() {
                           )
                         }
                         className="font-medium"
+                        onKeyDown={(e) => {
+                          // Prevent form submission on Enter key
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                          }
+                        }}
                       />
                       <Button
+                        type="button" // Add type="button" to prevent form submission
                         variant="destructive"
                         size="icon"
                         onClick={() => removeMedicineAdvice(index)}
@@ -1131,6 +1215,7 @@ export default function DischargeSummary() {
                     </div>
                   ))}
                   <Button
+                    type="button" // Add type="button" to prevent form submission
                     onClick={addMedicineAdvice}
                     variant="outline"
                     className="mt-2 font-semibold"
@@ -1144,10 +1229,10 @@ export default function DischargeSummary() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handlePreviewPDF}
+                  onClick={handlePrint}
                   className="w-full sm:w-auto"
                 >
-                  Preview
+                  Print
                 </Button>
                 <Button
                   type="button"
@@ -1216,40 +1301,23 @@ export default function DischargeSummary() {
           </div>
         </div>
       )}
-      {isPdfPreviewOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg w-11/12 h-5/6 p-4">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-lg font-semibold">
-                Discharge Summary Preview
-              </h2>
-              <Button
-                onClick={handleClosePdfPreview}
-                variant="ghost"
-                size="icon"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <PDFViewer width="100%" height="90%">
-              <DischargeSummaryPDF
-                formData={{
-                  ...formData,
-                  investigations: formData.investigations
-                    .filter((inv) => inv.name.trim() !== "" && inv.report) // Only include if has name and report
-                    .map((inv) => ({
-                      name: inv.name,
-                      report: inv.report,
-                      date: inv.date || new Date().toISOString(),
-                    })),
-                }}
-                patient={patientInfo}
-                hospital={hospital}
-              />
-            </PDFViewer>
-          </div>
-        </div>
-      )}
+      <div style={{ display: "none" }}>
+        <DischargeSummaryPDF
+          ref={componentRef}
+          formData={{
+            ...formData,
+            investigations: formData.investigations
+              .filter((inv) => inv.name.trim() !== "" && inv.report)
+              .map((inv) => ({
+                name: inv.name,
+                report: inv.report,
+                date: inv.date || new Date().toISOString(),
+              })),
+          }}
+          patient={patientInfo}
+          hospital={hospital}
+        />
+      </div>
     </div>
   );
 }
