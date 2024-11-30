@@ -55,8 +55,15 @@ import { Pill } from "lucide-react";
 import { PieChart, Pie, Cell, Label } from "recharts";
 import { useMediaQuery } from "../hooks/use-media-query";
 
+
+const hasFinancialViewPermission = (userData) => {
+  return userData?.permissions?.includes("view_financial") || false;
+};
+
 const Dashboard = () => {
   const dispatch = useDispatch();
+  const { userData } = useSelector((state) => state.user);
+
   const { dashboardData, dashboardDataStatus } = useSelector(
     (state) => state.dashboard
   );
@@ -93,14 +100,27 @@ const Dashboard = () => {
 
   const filteredData = useMemo(() => {
     if (typeof dashboardData !== "object" || dashboardData === null) {
-      // console.error("dashboardData is not an object:", dashboardData);
       return { currentValue: [], previousValue: [] };
     }
 
     const dataArray = Object.values(dashboardData);
 
-    if (dateFilter === "Custom")
-      return { currentValue: dataArray, previousValue: [] };
+    if (dateFilter === "Custom") {
+      if (!selectedDateRange.from || !selectedDateRange.to) {
+        return { currentValue: [], previousValue: [] };
+      }
+      
+      const startDate = startOfDay(selectedDateRange.from);
+      const endDate = endOfDay(selectedDateRange.to);
+      
+      const currentValue = dataArray.filter((item) => {
+        const itemDate = new Date(item.date);
+        return isWithinInterval(itemDate, { start: startDate, end: endDate });
+      });
+      
+      return { currentValue, previousValue: [] };
+    }
+
     const dates = convertFilterToDateRange(dateFilter);
     const startDate = new Date(dates.from);
     const endDate = new Date(dates.to);
@@ -138,13 +158,12 @@ const Dashboard = () => {
           })
         : [];
     return { currentValue, previousValue };
-  }, [dashboardData, dateFilter]);
+  }, [dashboardData, dateFilter, selectedDateRange]);
 
   const dashboardTotals = useMemo(() => {
     //
 
     if (!Array.isArray(filteredData.currentValue)) {
-      // console.error("filteredData.currentValue is not an array:", filteredData.currentValue);
       return {
         totalRevenue: 0,
         totalPatients: 0,
@@ -156,8 +175,8 @@ const Dashboard = () => {
     const totals = filteredData.currentValue.reduce(
       (acc, curr) => {
         acc.totalRevenue += curr.revenue || 0;
-        acc.totalPatients += curr.uniquePatientCount || 0;
-        acc.totalAppointments += curr.totalAppointments || 0;
+        acc.totalPatients += curr.visitCount || 0;
+        acc.totalAppointments += curr.ipdCount || 0;
 
         // Combine payment methods from services and pharmacy
         const allPaymentMethods = [
@@ -269,12 +288,21 @@ const Dashboard = () => {
         range = "All";
         break;
       case "Custom":
+        if (!selectedDateRange.from || !selectedDateRange.to) {
+          console.warn("Invalid date range selected");
+          return;
+        }
         startDate = selectedDateRange.from;
         endDate = selectedDateRange.to;
         break;
       default:
         startDate = startOfDay(subDays(today, 6));
         endDate = endOfDay(today);
+    }
+
+    if (!startDate || !endDate) {
+      console.warn("Invalid date range");
+      return;
     }
 
     const ISO_time = {
@@ -347,9 +375,11 @@ const Dashboard = () => {
   };
 
   const handleDateRangeSearch = () => {
-    setDateFilter("Custom");
-    setSelectedDateRange(tempDateRange);
-    fetchData("Custom");
+    if (tempDateRange.from && tempDateRange.to) {
+      setDateFilter("Custom");
+      setSelectedDateRange(tempDateRange);
+      fetchData("Custom");
+    }
   };
 
   const handleDateRangeCancel = () => {
@@ -455,8 +485,8 @@ const Dashboard = () => {
         <div className="flex items-center space-x-4 flex-wrap">
           {dateFilter === "Custom" && (
             <DateRangePicker
-              from={tempDateRange.from}
-              to={tempDateRange.to}
+              from={tempDateRange?.from}
+              to={tempDateRange?.to}
               onSelect={(range) => setTempDateRange(range)}
               onSearch={handleDateRangeSearch}
               onCancel={handleDateRangeCancel}
@@ -521,7 +551,7 @@ const Dashboard = () => {
                     <p className="text-xl md:text-2xl font-bold text-pink-600">
                       {dashboardTotals.totalPatients}
                     </p>
-                    <p className="text-xs md:text-sm text-gray-600">Total Patients</p>
+                    <p className="text-xs md:text-sm text-gray-600">OPD Patients</p>
                     {calculatePercentageChanges.totalPatients !== null &&
                       dateFilter !== "Custom" &&
                       dateFilter !== "All" && (
@@ -546,7 +576,7 @@ const Dashboard = () => {
                     <p className="text-xl md:text-2xl font-bold text-orange-600">
                       {dashboardTotals.totalAppointments}
                     </p>
-                    <p className="text-xs md:text-sm text-gray-600">Total Appointments</p>
+                    <p className="text-xs md:text-sm text-gray-600">IPD Patients</p>
                     {calculatePercentageChanges.totalAppointments !== null &&
                       dateFilter !== "Custom" &&
                       dateFilter !== "All" && (
@@ -569,8 +599,12 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <ChartLine className="w-8 h-8 md:w-10 md:h-10 text-purple-600" />
-                    <p className="text-xl md:text-2xl font-bold text-purple-600">
-                      ₹{parseInt(dashboardTotals.totalRevenue).toLocaleString()}
+                    <p className={`text-xl md:text-2xl font-bold text-purple-600 ${
+                      !hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""
+                    }`}>
+                      {hasFinancialViewPermission(userData) 
+                        ? `₹${parseInt(dashboardTotals.totalRevenue).toLocaleString()}`
+                        : "₹XXXXX"}
                     </p>
                     <p className="text-xs md:text-sm text-gray-600">Total Revenue</p>
                     {calculatePercentageChanges.totalRevenue !== null &&
@@ -580,9 +614,13 @@ const Dashboard = () => {
                           calculatePercentageChanges.totalRevenue >= 0
                             ? "text-green-600"
                             : "text-red-600"
-                          } mt-1`}>
-                          {calculatePercentageChanges.totalRevenue >= 0 ? "+" : ""}
-                          {calculatePercentageChanges.totalRevenue}% {getComparisonText()}
+                          } mt-1 ${!hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""}`}>
+                          {hasFinancialViewPermission(userData) ? (
+                            <>
+                              {calculatePercentageChanges.totalRevenue >= 0 ? "+" : ""}
+                              {calculatePercentageChanges.totalRevenue}% {getComparisonText()}
+                            </>
+                          ) : "XX%"}
                         </p>
                       )}
                   </div>
@@ -597,8 +635,12 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Activity className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
-                    <p className="text-xl md:text-2xl font-bold text-blue-600">
-                      ₹{parseInt(calculateCollections.serviceCollection).toLocaleString()}
+                    <p className={`text-xl md:text-2xl font-bold text-blue-600 ${
+                      !hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""
+                    }`}>
+                      {hasFinancialViewPermission(userData)
+                        ? `₹${parseInt(calculateCollections.serviceCollection).toLocaleString()}`
+                        : "₹XXXXX"}
                     </p>
                     <p className="text-xs md:text-sm text-gray-600">Service Collection</p>
                     {calculatePercentageChanges.serviceCollection !== null &&
@@ -608,9 +650,13 @@ const Dashboard = () => {
                           calculatePercentageChanges.serviceCollection >= 0
                             ? "text-green-600"
                             : "text-red-600"
-                          } mt-1`}>
-                          {calculatePercentageChanges.serviceCollection >= 0 ? "+" : ""}
-                          {calculatePercentageChanges.serviceCollection}% {getComparisonText()}
+                          } mt-1 ${!hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""}`}>
+                          {hasFinancialViewPermission(userData) ? (
+                            <>
+                              {calculatePercentageChanges.serviceCollection >= 0 ? "+" : ""}
+                              {calculatePercentageChanges.serviceCollection}% {getComparisonText()}
+                            </>
+                          ) : "XX%"}
                         </p>
                       )}
                   </div>
@@ -622,8 +668,12 @@ const Dashboard = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <Pill className="w-8 h-8 md:w-10 md:h-10 text-green-600" />
-                    <p className="text-xl md:text-2xl font-bold text-green-600">
-                      ₹{parseInt(calculateCollections.pharmacyCollection).toLocaleString()}
+                    <p className={`text-xl md:text-2xl font-bold text-green-600 ${
+                      !hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""
+                    }`}>
+                      {hasFinancialViewPermission(userData)
+                        ? `₹${parseInt(calculateCollections.pharmacyCollection).toLocaleString()}`
+                        : "₹XXXXX"}
                     </p>
                     <p className="text-xs md:text-sm text-gray-600">Pharmacy Collection</p>
                     {calculatePercentageChanges.pharmacyCollection !== null &&
@@ -633,9 +683,13 @@ const Dashboard = () => {
                           calculatePercentageChanges.pharmacyCollection >= 0
                             ? "text-green-600"
                             : "text-red-600"
-                          } mt-1`}>
-                          {calculatePercentageChanges.pharmacyCollection >= 0 ? "+" : ""}
-                          {calculatePercentageChanges.pharmacyCollection}% {getComparisonText()}
+                          } mt-1 ${!hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""}`}>
+                          {hasFinancialViewPermission(userData) ? (
+                            <>
+                              {calculatePercentageChanges.pharmacyCollection >= 0 ? "+" : ""}
+                              {calculatePercentageChanges.pharmacyCollection}% {getComparisonText()}
+                            </>
+                          ) : "XX%"}
                         </p>
                       )}
                   </div>
@@ -651,7 +705,7 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle>Weekly Performance</CardTitle>
               <CardDescription>
-                Patient visits and Revenue for this week
+                Patient visits{hasFinancialViewPermission(userData) && " and Revenue"} for this week
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -660,12 +714,21 @@ const Dashboard = () => {
                   <BarChart data={weeklyPerformanceData}>
                     <XAxis dataKey="formattedDate" />
                     <YAxis yAxisId="left" orientation="left" stroke="#2563eb" />
-                    <YAxis
-                      yAxisId="right"
-                      orientation="right"
-                      stroke="#60a5fa"
+                    {hasFinancialViewPermission(userData) && (
+                      <YAxis
+                        yAxisId="right"
+                        orientation="right"
+                        stroke="#60a5fa"
+                      />
+                    )}
+                    <Tooltip 
+                      formatter={(value, name) => {
+                        if (!hasFinancialViewPermission(userData) && name === "Revenue") {
+                          return ["Hidden", "Revenue"];
+                        }
+                        return name === "Revenue" ? [`₹${value}`, name] : [value, name];
+                      }}
                     />
-                    <Tooltip />
                     <Legend />
                     <Bar
                       yAxisId="left"
@@ -673,12 +736,14 @@ const Dashboard = () => {
                       fill="#2563eb"
                       name="Patients"
                     />
-                    <Bar
-                      yAxisId="right"
-                      dataKey="revenue"
-                      fill="#60a5fa"
-                      name="Revenue (₹)"
-                    />
+                    {hasFinancialViewPermission(userData) && (
+                      <Bar
+                        yAxisId="right"
+                        dataKey="revenue"
+                        fill="#60a5fa"
+                        name="Revenue (₹)"
+                      />
+                    )}
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
@@ -752,7 +817,12 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {calculatePaymentMethods.servicePayments.length > 0 ? (
+            {!hasFinancialViewPermission(userData) ? (
+              <div className="h-[230px] flex flex-col items-center justify-center text-gray-500">
+                <AlertCircle className="w-12 h-12 mb-2" />
+                <p className="text-sm">You don't have permission to view financial data</p>
+              </div>
+            ) : calculatePaymentMethods.servicePayments.length > 0 ? (
               <>
                 <div className="h-[230px]">
                   <ResponsiveContainer width="100%" height="100%">
@@ -838,7 +908,12 @@ const Dashboard = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {calculatePaymentMethods.pharmacyPayments.length > 0 ? (
+            {!hasFinancialViewPermission(userData) ? (
+              <div className="h-[230px] flex flex-col items-center justify-center text-gray-500">
+                <AlertCircle className="w-12 h-12 mb-2" />
+                <p className="text-sm">You don't have permission to view financial data</p>
+              </div>
+            ) : calculatePaymentMethods.pharmacyPayments.length > 0 ? (
               <>
                 <div className="h-[230px]">
                   <ResponsiveContainer width="100%" height="100%">

@@ -24,7 +24,13 @@ export const fetchPatients = createLoadingAsyncThunk(
       }
 
       const data = await response.json();
-      return data;
+      
+      // Check if startDate is today
+      const isToday = dateRange?.startDate ? 
+        new Date(dateRange.startDate).toDateString() === new Date().toDateString() 
+        : false;
+
+      return { data, isToday };
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -392,6 +398,7 @@ const initialState = {
   patientsStatus: "idle",
   selectedPatient: null,
   status: "idle",
+  todaysPatientList:[],
   prescriptionUpdateStatus: "idle",
   registerPatientStatus: "idle",
   patientDetails: null,
@@ -432,7 +439,12 @@ const patientSlice = createSlice({
       })
       .addCase(fetchPatients.fulfilled, (state, action) => {
         state.status = "succeeded";
-        state.patientlist = action.payload;
+        state.patientlist = action.payload.data;
+        
+        // If the date range is for today, also update todaysPatientList
+        if (action.payload.isToday) {
+          state.todaysPatientList = action.payload.data;
+        }
       })
       .addCase(fetchPatients.rejected, (state, action) => {
         state.status = "failed";

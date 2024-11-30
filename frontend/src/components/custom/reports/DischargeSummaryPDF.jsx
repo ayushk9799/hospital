@@ -4,7 +4,6 @@ import HospitalHeader from "../../../utils/print/HospitalHeader";
 
 // Keep the exact same styles but convert to CSS
 const styles = {
-  
   title: {
     fontSize: "15px",
     textAlign: "center",
@@ -234,7 +233,6 @@ const InvestigationDisplay = ({ investigation }) => {
 
 const DischargeSummaryPDF = forwardRef(
   ({ formData, patient, hospital }, ref) => {
-    console.log(formData);
     const hasComorbidities =
       formData.comorbidities && formData.comorbidities.some((c) => c.name);
     const hasInvestigations =
@@ -359,19 +357,37 @@ const DischargeSummaryPDF = forwardRef(
             <span style={styles.sectionTitle}>Admission Vitals</span>
             <span style={styles.sectionContent}>
               {formData.vitals.admission.bloodPressure && (
-                <>Blood Pressure: <strong>{formData.vitals.admission.bloodPressure}</strong> mmHg, </>
+                <>
+                  Blood Pressure:{" "}
+                  <strong>{formData.vitals.admission.bloodPressure}</strong>{" "}
+                  mmHg,{" "}
+                </>
               )}
               {formData.vitals.admission.heartRate && (
-                <>Heart Rate: <strong>{formData.vitals.admission.heartRate}</strong> bpm, </>
+                <>
+                  Heart Rate:{" "}
+                  <strong>{formData.vitals.admission.heartRate}</strong> bpm,{" "}
+                </>
               )}
               {formData.vitals.admission.temperature && (
-                <>Temperature: <strong>{formData.vitals.admission.temperature}</strong>°C, </>
+                <>
+                  Temperature:{" "}
+                  <strong>{formData.vitals.admission.temperature}</strong>°C,{" "}
+                </>
               )}
               {formData.vitals.admission.oxygenSaturation && (
-                <>Oxygen Saturation: <strong>{formData.vitals.admission.oxygenSaturation}</strong>%, </>
+                <>
+                  Oxygen Saturation:{" "}
+                  <strong>{formData.vitals.admission.oxygenSaturation}</strong>
+                  %,{" "}
+                </>
               )}
               {formData.vitals.admission.respiratoryRate && (
-                <>Respiratory Rate: <strong>{formData.vitals.admission.respiratoryRate}</strong> /min</>
+                <>
+                  Respiratory Rate:{" "}
+                  <strong>{formData.vitals.admission.respiratoryRate}</strong>{" "}
+                  /min
+                </>
               )}
             </span>
           </div>
@@ -413,19 +429,37 @@ const DischargeSummaryPDF = forwardRef(
             <span style={styles.sectionTitle}>Discharge Vitals</span>
             <span style={styles.sectionContent}>
               {formData.vitals.discharge.bloodPressure && (
-                <>Blood Pressure: <strong>{formData.vitals.discharge.bloodPressure}</strong> mmHg, </>
+                <>
+                  Blood Pressure:{" "}
+                  <strong>{formData.vitals.discharge.bloodPressure}</strong>{" "}
+                  mmHg,{" "}
+                </>
               )}
               {formData.vitals.discharge.heartRate && (
-                <>Heart Rate: <strong>{formData.vitals.discharge.heartRate}</strong> bpm, </>
+                <>
+                  Heart Rate:{" "}
+                  <strong>{formData.vitals.discharge.heartRate}</strong> bpm,{" "}
+                </>
               )}
               {formData.vitals.discharge.temperature && (
-                <>Temperature: <strong>{formData.vitals.discharge.temperature}</strong>°C, </>
+                <>
+                  Temperature:{" "}
+                  <strong>{formData.vitals.discharge.temperature}</strong>°C,{" "}
+                </>
               )}
               {formData.vitals.discharge.oxygenSaturation && (
-                <>Oxygen Saturation: <strong>{formData.vitals.discharge.oxygenSaturation}</strong>%, </>
+                <>
+                  Oxygen Saturation:{" "}
+                  <strong>{formData.vitals.discharge.oxygenSaturation}</strong>
+                  %,{" "}
+                </>
               )}
               {formData.vitals.discharge.respiratoryRate && (
-                <>Respiratory Rate: <strong>{formData.vitals.discharge.respiratoryRate}</strong> /min</>
+                <>
+                  Respiratory Rate:{" "}
+                  <strong>{formData.vitals.discharge.respiratoryRate}</strong>{" "}
+                  /min
+                </>
               )}
             </span>
           </div>

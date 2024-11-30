@@ -25,13 +25,12 @@ router.get("/", async (req, res) => {
       }
     }
 
-    const opdProcedures = await OPDProcedure.find(dateFilter)
-      .populate({
-        path: 'servicesBill',
-        populate: {
-          path: 'payments'
-        }
-      });
+    const opdProcedures = await OPDProcedure.find(dateFilter).populate({
+      path: "servicesBill",
+      populate: {
+        path: "payments",
+      },
+    });
 
     res.status(200).json(opdProcedures);
   } catch (error) {
@@ -39,7 +38,7 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.post("/",verifyToken,async (req, res) => {
+router.post("/", verifyToken, async (req, res) => {
   // Start a new session for the transaction
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -57,30 +56,31 @@ router.post("/",verifyToken,async (req, res) => {
       amountPaid,
       paymentMethod,
       address,
-      
     } = req.body;
- console.log(req.user);
- let invoiceNumber=await BillCounter.getNextBillNumber(session);
+
+    let invoiceNumber = await BillCounter.getNextBillNumber(session);
     // First create the ServicesBill
     const servicesBill = new ServicesBill({
-      invoiceNumber:invoiceNumber || null,
-      services: [{
-        name: procedureName,
-        quantity: 1,
-        rate: totalAmount,
-        category: 'OPDProcedure'
-      }],
+      invoiceNumber: invoiceNumber || null,
+      services: [
+        {
+          name: procedureName,
+          quantity: 1,
+          rate: totalAmount,
+          category: "OPDProcedure",
+        },
+      ],
       totalAmount: totalAmount,
       subtotal: totalAmount,
       amountPaid: amountPaid,
       patientType: "OPDProcedure",
       patientInfo: {
         name: name,
-        phone: contactNumber
+        phone: contactNumber,
       },
-      createdBy: req.user._id
+      createdBy: req.user._id,
     });
- console.log("hello")
+
     // Create OPD Procedure
     const opdProcedure = new OPDProcedure({
       name,
@@ -93,7 +93,7 @@ router.post("/",verifyToken,async (req, res) => {
       totalAmount,
       amountPaid,
       address,
-      servicesBill: servicesBill._id
+      servicesBill: servicesBill._id,
     });
 
     // Create payment records for each payment method
@@ -103,14 +103,14 @@ router.post("/",verifyToken,async (req, res) => {
         amount: Number(payment.amount),
         paymentMethod: payment.method,
         paymentType: {
-          name: 'Services',
-          id: servicesBill._id.toString()
+          name: "Services",
+          id: servicesBill._id.toString(),
         },
-        type: 'Income',
+        type: "Income",
         description: `Payment for OPD Procedure - ${procedureName} for patient ${name}`,
-        createdBy: req.user._id
+        createdBy: req.user._id,
       });
-      
+
       // Save payment with session
       await newPayment.save({ session });
       payments.push(newPayment);
@@ -128,16 +128,15 @@ router.post("/",verifyToken,async (req, res) => {
       message: "OPD Procedure created successfully",
       opdProcedure,
       servicesBill,
-      payments
+      payments,
     });
-
   } catch (error) {
     // If an error occurs, abort the transaction
     await session.abortTransaction();
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       message: "Error creating OPD Procedure",
-      error: error.message 
+      error: error.message,
     });
   } finally {
     // End the session

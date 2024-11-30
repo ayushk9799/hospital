@@ -11,23 +11,15 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "../../ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { ColorfulLogo } from "./VerticalNav";
 import { clearUserData } from "../../../redux/slices/userSlice";
 import { Backend_URL } from "../../../assets/Data";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useToast } from "../../../hooks/use-toast";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../../ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Separator } from "../../ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-} from "../../ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "../../ui/sheet";
 import { searchPatients } from "../../../redux/slices/patientSlice";
 
 const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
@@ -43,8 +35,8 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const handleLogout = async () => {
     try {
       const response = await fetch(`${Backend_URL}/api/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
+        method: "POST",
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -57,7 +49,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
           variant: "success",
         });
         // Redirect to login page
-        navigate('/');
+        navigate("/");
       } else {
         // Show error toast
         toast({
@@ -77,7 +69,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
 
   const handleNavigation = (path) => {
     navigate(path);
-    setIsOpen(false);  // Close the drawer after navigation
+    setIsOpen(false); // Close the drawer after navigation
   };
 
   const handleSearch = async (e) => {
@@ -86,18 +78,19 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
 
     try {
       const resultAction = await dispatch(searchPatients(searchQuery));
-      console.log(resultAction)
+
       if (searchPatients.fulfilled.match(resultAction)) {
-        navigate('/search', { 
-          state: { 
+        navigate("/search", {
+          state: {
             searchResults: resultAction.payload.results,
-            searchQuery: searchQuery 
-          } 
+            searchQuery: searchQuery,
+          },
         });
       } else {
         toast({
           title: "Search failed",
-          description: "There was an error performing the search. Please try again.",
+          description:
+            "There was an error performing the search. Please try again.",
           variant: "destructive",
         });
       }
@@ -127,10 +120,15 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
               <Menu className="h-5 w-5 sm:h-10 sm:w-10" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="w-[250px] sm:w-[250px] pt-6 px-4">
+          <SheetContent
+            side="left"
+            className="w-[250px] sm:w-[250px] pt-6 px-4"
+          >
             <div className="flex items-center mb-4">
               <ColorfulLogo className="h-6 w-6 sm:h-8 sm:w-8" />
-              <span className="ml-2 text-lg sm:text-xl font-bold text-gray-800">The Hospital</span>
+              <span className="ml-2 text-lg sm:text-xl font-bold text-gray-800">
+                The Hospital
+              </span>
             </div>
             <Separator className="mb-4" />
             <nav className="flex flex-col space-y-1">
@@ -138,7 +136,11 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
                 <Button
                   key={item.name}
                   variant="ghost"
-                  className={`justify-start ${location.pathname === item.path ? 'bg-blue-100 text-blue-900' : ''}`}
+                  className={`justify-start ${
+                    location.pathname === item.path
+                      ? "bg-blue-100 text-blue-900"
+                      : ""
+                  }`}
                   onClick={() => handleNavigation(item.path)}
                 >
                   <item.icon className="mr-2 h-4 w-4" />
@@ -158,24 +160,26 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
         </Button>
         <div className="hidden sm:flex items-center">
           <ColorfulLogo className="h-5 w-5 sm:h-6 sm:w-6" />
-          <span className="ml-2 text-base sm:text-lg font-bold text-gray-800">The Hospital</span>
+          <span className="ml-2 text-base sm:text-lg font-bold text-gray-800">
+            The Hospital
+          </span>
         </div>
       </div>
       <div className="mx-2 sm:mx-4 flex-grow max-w-xl">
         <form onSubmit={handleSearch} className="flex">
           <div className="relative flex-grow">
             <Search className="flex absolute left-2 sm:left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4 pointer-events-none" />
-            <Input 
-              type="search" 
-              placeholder="Patient ID/Name" 
+            <Input
+              type="search"
+              placeholder="Patient ID/Name"
               className="w-full pl-8 sm:pl-10 pr-2 sm:pr-4 py-1 sm:py-2 text-sm sm:text-base rounded-l-full border-r-0 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 focus:border-gray-300 focus:outline-none"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button 
+          <Button
             type="submit"
-            variant="outline" 
+            variant="outline"
             className="px-2 sm:px-4 rounded-r-full border-l-0 bg-gray-100 hover:bg-gray-200 focus:ring-0 focus:outline-none"
           >
             <Search className="h-4 w-4" />
@@ -185,7 +189,11 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
       <div className="flex items-center">
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="sm" className="relative hidden sm:inline-flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="relative hidden sm:inline-flex"
+            >
               <Bell className="h-4 w-4" />
               {notifications.length > 0 && (
                 <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
@@ -209,14 +217,19 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
                     ))}
                   </div>
                   <Separator className="my-2" />
-                  <Button variant="ghost" className="w-full justify-center mt-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-center mt-2"
+                  >
                     View All Notifications
                   </Button>
                 </>
               ) : (
                 <div className="text-center py-4">
                   <Bell className="h-8 w-8 text-gray-400 mx-auto mb-2" />
-                  <p className="text-sm text-gray-500">No notifications at the moment</p>
+                  <p className="text-sm text-gray-500">
+                    No notifications at the moment
+                  </p>
                 </div>
               )}
             </div>
@@ -224,19 +237,35 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
         </Popover>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="ml-2 sm:ml-3 flex items-center justify-end ">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2 sm:ml-3 flex items-center justify-end "
+            >
               <Avatar className="h-6 w-6 ring-2 ring-primary ring-offset-2 md:ring-0 md:ring-offset-0">
-                <AvatarFallback>{(user?.name?.charAt(0))?.toUpperCase()}</AvatarFallback>
+                <AvatarFallback>
+                  {user?.name?.charAt(0)?.toUpperCase()}
+                </AvatarFallback>
               </Avatar>
-              <span className="text-sm capitalize ml-2 hidden lg:inline">{user?.name}</span>
+              <span className="text-sm capitalize ml-2 hidden lg:inline">
+                {user?.name}
+              </span>
               <ChevronDown className="ml-1 h-3 w-3 hidden lg:inline" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onSelect={() => navigate(`/staff/${user?._id}`, { state: { staffData: user } })}>Profile</DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => navigate("/settings")}>Settings</DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() =>
+                navigate(`/staff/${user?._id}`, { state: { staffData: user } })
+              }
+            >
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => navigate("/settings")}>
+              Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />

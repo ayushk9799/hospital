@@ -148,7 +148,10 @@ const Billings = () => {
       }
     };
 
-    if (dateFilter !== "Custom" || (dateFilter === "Custom" && dateRange.from && dateRange.to)) {
+    if (
+      dateFilter !== "Custom" ||
+      (dateFilter === "Custom" && dateRange.from && dateRange.to)
+    ) {
       const dateRangeParams = getDateRange();
       dispatch(fetchBills({ dateRange: dateRangeParams }));
     }
@@ -250,7 +253,6 @@ const Billings = () => {
   };
 
   const handleViewBill = (bill) => {
-    console.log(bill)
     setSelectedBill(bill);
     setIsViewDialogOpen(true);
     setOpenDropdownId(null);
@@ -300,11 +302,11 @@ const Billings = () => {
   };
 
   const BillCard = ({ bill }) => (
-    <Card 
+    <Card
       className="mb-4 hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
       onClick={(e) => {
         // Only open view modal if not clicking dropdown or its children
-        if (!e.target.closest('[data-prevent-view]')) {
+        if (!e.target.closest("[data-prevent-view]")) {
           handleViewBill(bill);
         }
       }}
@@ -347,9 +349,9 @@ const Billings = () => {
             <div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     className="h-8 w-8 p-0"
                     data-prevent-view
                   >
@@ -509,11 +511,12 @@ const Billings = () => {
                             OPD
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => setPatientTypeFilter("OPDProcedure")}
+                            onSelect={() =>
+                              setPatientTypeFilter("OPDProcedure")
+                            }
                           >
                             OPD Procedure
                           </DropdownMenuItem>
-
                         </DropdownMenuContent>
                       </DropdownMenu>
                       <DropdownMenu>
@@ -643,10 +646,14 @@ const Billings = () => {
                     <DropdownMenuItem onSelect={() => setDateFilter("Today")}>
                       Today
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>
+                    <DropdownMenuItem
+                      onSelect={() => setDateFilter("Yesterday")}
+                    >
                       Yesterday
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>
+                    <DropdownMenuItem
+                      onSelect={() => setDateFilter("This Week")}
+                    >
                       This Week
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setDateFilter("All")}>
@@ -696,9 +703,7 @@ const Billings = () => {
                     <TableHead className="font-semibold">
                       Patient Name
                     </TableHead>
-                    <TableHead className="font-semibold">
-                      UHID No.
-                    </TableHead>
+                    <TableHead className="font-semibold">UHID No.</TableHead>
                     <TableHead className="font-semibold">Phone</TableHead>
                     {!isMediumScreen && (
                       <>
@@ -719,19 +724,21 @@ const Billings = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredBills.map((bill) => (
-                    <TableRow 
+                    <TableRow
                       key={bill._id}
                       className="cursor-pointer hover:bg-blue-50 transition-colors duration-200"
                       onClick={(e) => {
                         // Only open view modal if not clicking dropdown or its children
-                        if (!e.target.closest('[data-prevent-view]')) {
+                        if (!e.target.closest("[data-prevent-view]")) {
                           handleViewBill(bill);
                         }
                       }}
                     >
                       <TableCell>{bill.invoiceNumber || "N/A"}</TableCell>
                       <TableCell>{bill.patientInfo.name}</TableCell>
-                      <TableCell>{bill?.patient?.registrationNumber || "N/A"}</TableCell>
+                      <TableCell>
+                        {bill?.patient?.registrationNumber || "N/A"}
+                      </TableCell>
                       <TableCell>{bill.patientInfo.phone}</TableCell>
                       {!isMediumScreen && (
                         <>
@@ -766,8 +773,8 @@ const Billings = () => {
                           }
                         >
                           <DropdownMenuTrigger asChild>
-                            <Button 
-                              variant="ghost" 
+                            <Button
+                              variant="ghost"
                               className="h-8 w-8 p-0"
                               data-prevent-view
                             >

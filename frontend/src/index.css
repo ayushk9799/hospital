@@ -2,7 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -17,8 +16,9 @@
     --secondary-foreground: 222.2 47.4% 11.2%;
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
+    --accent: 210 100% 80%;
     --accent-foreground: 222.2 47.4% 11.2%;
+    
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     --border: 214.3 31.8% 91.4%;
@@ -60,7 +60,6 @@
   }
 }
 
-
 @layer base {
   * {
     @apply border-border;
@@ -75,11 +74,11 @@
     size: A4;
     margin: 0;
   }
-  
+
   body {
     visibility: hidden;
   }
-  
+
   .print-content {
     visibility: visible;
     position: absolute;
@@ -87,7 +86,7 @@
     top: 0;
     width: 100%;
   }
-  
+
   .print-content * {
     visibility: visible;
   }

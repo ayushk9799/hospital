@@ -1,52 +1,59 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch } from 'react-redux';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../ui/dialog";
+import React, { useState, useEffect } from "react";
+import { useDispatch } from "react-redux";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../../ui/table";
-import { addPayment } from '../../../redux/slices/BillingSlice';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../../ui/table";
+import { addPayment } from "../../../redux/slices/BillingSlice";
 import { useToast } from "../../../hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import { Separator } from "../../ui/separator";
-import { AlertCircle, CreditCard } from 'lucide-react';
-import { useMediaQuery } from '../../../hooks/useMediaQuery';
+import { AlertCircle, CreditCard } from "lucide-react";
+import { useMediaQuery } from "../../../hooks/useMediaQuery";
 
-const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
+const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const [paymentAmount, setPaymentAmount] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const isMobile = useMediaQuery('(max-width: 640px)');
-  const [amountError, setAmountError] = useState('');
-  console.log(billData)
-  useEffect(() => {
-    console.log("PaymentDialog rendered with billData:", billData);
-  }, [billData]);
+  const isMobile = useMediaQuery("(max-width: 640px)");
+  const [amountError, setAmountError] = useState("");
 
   useEffect(() => {
     if (isOpen) {
-      console.log("PaymentDialog opened with data:", billData);
-      setPaymentAmount('');
-      setPaymentMethod('');
-      setAmountError('');
+      setPaymentAmount("");
+      setPaymentMethod("");
+      setAmountError("");
     }
   }, [isOpen]);
-
-  useEffect(() => {
-    if (billData) {
-     
-    }
-  }, [billData]);
 
   // Calculate total amount and due amount
   const totalAmount = billData?.totalAmount || 0;
   const paidAmount = billData?.amountPaid || 0;
   const dueAmount = totalAmount - paidAmount;
   const isFullyPaid = dueAmount <= 0;
-
-  console.log("Calculated amounts:", { totalAmount, paidAmount, dueAmount });
 
   const handleAddPayment = () => {
     if (!paymentAmount || !paymentMethod) {
@@ -64,15 +71,18 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
       amount: parseFloat(paymentAmount),
       paymentMethod,
     };
-    console.log(billData)
+
     dispatch(addPayment({ billId: billData._id, payment }))
       .unwrap()
-      .then(() => {
+      .then((updatedBill) => {
         toast({
           title: "Payment added successfully",
           description: `Payment of ₹${paymentAmount} has been added successfully.`,
           variant: "success",
         });
+        if (onPaymentSuccess) {
+          onPaymentSuccess(updatedBill);
+        }
         setIsOpen(false);
       })
       .catch((error) => {
@@ -94,15 +104,21 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
   const handlePaymentAmountChange = (e) => {
     const amount = e.target.value;
     setPaymentAmount(amount);
-    
+
     if (parseFloat(amount) > dueAmount) {
-      setAmountError(`Amount cannot exceed the due amount of ₹${dueAmount.toFixed(2)}`);
+      setAmountError(
+        `Amount cannot exceed the due amount of ₹${dueAmount.toFixed(2)}`
+      );
     } else {
-      setAmountError('');
+      setAmountError("");
     }
   };
 
-  const isPaymentValid = paymentAmount && paymentMethod && !amountError && parseFloat(paymentAmount) > 0;
+  const isPaymentValid =
+    paymentAmount &&
+    paymentMethod &&
+    !amountError &&
+    parseFloat(paymentAmount) > 0;
 
   if (!billData) return null;
 
@@ -113,20 +129,58 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="w-[90vw] max-w-[425px] max-h-[90vh] overflow-y-auto rounded-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold">Add Payment</DialogTitle>
+          <DialogTitle className="text-xl font-semibold">
+            Add Payment
+          </DialogTitle>
           <DialogDescription>Manage payments for the bill.</DialogDescription>
         </DialogHeader>
-        
+
         <div className="space-y-1">
           <div className="flex justify-between text-sm font-medium">
-            <span className="sm:hidden">Total: <span className="text-primary">₹{totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></span>
-            <span className="sm:hidden">Due: <span className="text-red-600">₹{dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></span>
-            <span className="hidden sm:inline">Total Amount: <span className="text-primary">₹{totalAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></span>
-            <span className="hidden sm:inline">Due Amount: <span className="text-red-600">₹{dueAmount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span></span>
+            <span className="sm:hidden">
+              Total:{" "}
+              <span className="text-primary">
+                ₹
+                {totalAmount.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </span>
+            <span className="sm:hidden">
+              Due:{" "}
+              <span className="text-red-600">
+                ₹
+                {dueAmount.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </span>
+            <span className="hidden sm:inline">
+              Total Amount:{" "}
+              <span className="text-primary">
+                ₹
+                {totalAmount.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </span>
+            <span className="hidden sm:inline">
+              Due Amount:{" "}
+              <span className="text-red-600">
+                ₹
+                {dueAmount.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
+            </span>
           </div>
-          
+
           <Separator />
-          
+
           <div className="space-y-1">
             <Label htmlFor="paymentAmount">Payment Amount</Label>
             <div className="relative">
@@ -136,7 +190,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
                 value={paymentAmount}
                 onChange={handlePaymentAmountChange}
                 placeholder="Enter amount"
-                className={`pr-10 ${amountError ? 'border-red-500' : ''}`}
+                className={`pr-10 ${amountError ? "border-red-500" : ""}`}
                 disabled={isFullyPaid}
               />
               <Button
@@ -154,24 +208,30 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
               <p className="text-xs text-red-500 mt-1">{amountError}</p>
             )}
           </div>
-          
+
           <div className="space-y-1">
             <Label htmlFor="paymentMethod">Payment Method</Label>
-            <Select onValueChange={setPaymentMethod} value={paymentMethod} disabled={isFullyPaid}>
+            <Select
+              onValueChange={setPaymentMethod}
+              value={paymentMethod}
+              disabled={isFullyPaid}
+            >
               <SelectTrigger id="paymentMethod">
                 <SelectValue placeholder="Select method" />
               </SelectTrigger>
               <SelectContent>
                 {paymentMethods.map((method) => (
-                  <SelectItem key={method} value={method}>{method}</SelectItem>
+                  <SelectItem key={method} value={method}>
+                    {method}
+                  </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
         </div>
-        
+
         <Separator />
-        
+
         <div className="space-y-0">
           <h4 className="text-sm font-semibold">Recent Payments</h4>
           {billData?.payments && billData?.payments?.length > 0 ? (
@@ -180,7 +240,9 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[80px]">Date</TableHead>
-                    {!isMobile && <TableHead className="w-[80px]">Time</TableHead>}
+                    {!isMobile && (
+                      <TableHead className="w-[80px]">Time</TableHead>
+                    )}
                     <TableHead>Amount</TableHead>
                     <TableHead>Method</TableHead>
                   </TableRow>
@@ -188,14 +250,27 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
                 <TableBody>
                   {billData.payments.map((payment, index) => (
                     <TableRow key={index}>
-                      <TableCell className="text-xs">{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-xs">
+                        {new Date(payment.createdAt).toLocaleDateString("en_IN")}
+                      </TableCell>
                       {!isMobile && (
                         <TableCell className="text-xs">
-                          {new Date(payment.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
+                          {new Date(payment.createdAt).toLocaleTimeString(
+                            "en-IN",
+                            { hour: "numeric", minute: "numeric", hour12: true }
+                          )}
                         </TableCell>
                       )}
-                      <TableCell className="text-xs font-medium">₹{payment.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>
-                      <TableCell className="text-xs">{payment.paymentMethod}</TableCell>
+                      <TableCell className="text-xs font-medium">
+                        ₹
+                        {payment.amount.toLocaleString("en-IN", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        {payment.paymentMethod}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -208,17 +283,29 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData }) => {
             </div>
           )}
         </div>
-        
+
         <DialogFooter className="mt-6 flex-col-reverse gap-2  sm:flex-row sm:space-y-0 sm:space-x-2">
-          <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isLoading} className="w-full sm:w-auto">
+          <Button
+            variant="outline"
+            onClick={() => setIsOpen(false)}
+            disabled={isLoading}
+            className="w-full sm:w-auto"
+          >
             Close
           </Button>
           {isFullyPaid ? (
-            <Button disabled className="w-full sm:w-auto bg-green-500 hover:bg-green-600">
+            <Button
+              disabled
+              className="w-full sm:w-auto bg-green-500 hover:bg-green-600"
+            >
               Fully Paid
             </Button>
           ) : (
-            <Button onClick={handleAddPayment} disabled={isLoading || !isPaymentValid} className="w-full sm:w-auto">
+            <Button
+              onClick={handleAddPayment}
+              disabled={isLoading || !isPaymentValid}
+              className="w-full sm:w-auto"
+            >
               {isLoading ? "Processing..." : "Add Payment"}
             </Button>
           )}

@@ -59,7 +59,7 @@ export const ColorfulLogo = ({ className }) => (
     fill="none"
     xmlns="http://www.w3.org/2000/svg"
   >
-    <circle cx="50" cy="50" r="45" fill="#4299E1" /> 
+    <circle cx="50" cy="50" r="45" fill="#4299E1" />
     <path
       d="M30 50H70"
       stroke="white"
@@ -116,8 +116,8 @@ export default function VerticalNav({ isCollapsed }) {
                       className={cn(
                         "w-full justify-start",
                         isActive(item.path)
-                          ? "bg-blue-100 text-blue-900"
-                          : "text-gray-600 hover:bg-blue-50 hover:text-blue-900",
+                          ? "bg-blue-400 text-white"
+                          : "text-gray-600 hover:bg-blue-300 hover:text-white",
                         isCollapsed ? "px-2" : "px-4"
                       )}
                       onClick={() => navigate(item.path)}

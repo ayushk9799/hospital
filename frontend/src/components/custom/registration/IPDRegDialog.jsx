@@ -83,7 +83,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const [searchedPatient, setSearchedPatient] = useState(null);
   const [generatedNumbers, setGeneratedNumbers] = useState({
     registrationNumber: null,
-    ipdNumber: null
+    ipdNumber: null,
   });
 
   useEffect(() => {
@@ -188,11 +188,12 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       dispatch(fetchRegistrationAndIPDNumbers())
         .unwrap()
         .then((numbers) => {
-          
-          const indireg=numbers.registrationNumber.split("/");
-          const indipd=numbers.ipdNumber.split("/");
-          const nextRegNumber = indireg[0] + "/" + indireg[1] + "/" + (parseInt(indireg[2]) + 1);
-          const nextIpdNumber = indipd[0] + "/" + indipd[1] + "/" + (parseInt(indipd[2]) + 1);
+          const indireg = numbers.registrationNumber.split("/");
+          const indipd = numbers.ipdNumber.split("/");
+          const nextRegNumber =
+            indireg[0] + "/" + indireg[1] + "/" + (parseInt(indireg[2]) + 1);
+          const nextIpdNumber =
+            indipd[0] + "/" + indipd[1] + "/" + (parseInt(indipd[2]) + 1);
           setGeneratedNumbers({
             registrationNumber: nextRegNumber,
             ipdNumber: nextIpdNumber,
@@ -265,22 +266,18 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(generatedNumbers);
-    console.log(formData.registrationNumber);
-    console.log(formData.admission.ipdNumber);
 
     // Add validation for registration and IPD numbers
-   if(formData.registrationNumber===generatedNumbers.registrationNumber){
-   formData.upgradegenReg=true;
-   }
-   if(formData.admission.ipdNumber===generatedNumbers.ipdNumber){
-    formData.upgradegenIpd=true;
-   }
+    if (formData.registrationNumber === generatedNumbers.registrationNumber) {
+      formData.upgradegenReg = true;
+    }
+    if (formData.admission.ipdNumber === generatedNumbers.ipdNumber) {
+      formData.upgradegenIpd = true;
+    }
 
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
- console.log(patientData);
- console.log(searchedPatient);
+
       if (patientData || searchedPatient) {
         // This is a readmission
         dispatch(

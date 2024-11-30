@@ -11,6 +11,7 @@ import {
   AlertCircle,
   Loader2,
   PrinterIcon,
+  Wallet,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -55,6 +56,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "../components/ui/dialog";
+import PaymentDialog from "../components/custom/billing/PaymentDialog";
 
 const CreateServiceBill = ({
   initialBillId,
@@ -71,16 +73,16 @@ const CreateServiceBill = ({
   const [newlyAddedServices, setNewlyAddedServices] = useState([]);
 
   const [initialBillData, setInitialBillData] = useState(initialBillDatas);
-  console.log(patientData);
+
   // Use either the prop billId or URL billId
   const billId = initialBillId || urlBillId;
-  console.log(isEmbedded);
+
   // Initialize state with props if provided
   useEffect(() => {
     if (initialBillData && patientData) {
       setIsEditing(true);
       // Process all services from all bills
-      console.log(initialBillData);
+
       const formattedServices = initialBillData.services.flatMap(
         (bill, billIndex) =>
           bill.services.map((service, serviceIndex) => ({
@@ -119,7 +121,6 @@ const CreateServiceBill = ({
       dispatch(fetchBillById(billId))
         .unwrap()
         .then((billData) => {
-          console.log(billData);
           setIsEditing(true);
           setNewlyAddedServices([]);
           const lastServiceId = location.state?.lastServiceId;
@@ -184,11 +185,10 @@ const CreateServiceBill = ({
             bookingDate:
               billData.patient.bookingDate || billData.createdAt || null,
           });
-          console.log(formattedBillData);
+
           setBillData(formattedBillData); // Now storing in the same format as initialBillDat
         })
         .catch((error) => {
-          console.log(error);
           toast({
             title: "Error fetching bill",
             description: "Could not load the bill details. Please try again.",
@@ -241,6 +241,7 @@ const CreateServiceBill = ({
   const [selectedServices, setSelectedServices] = useState([]);
   const [breakTotalMode, setBreakTotalMode] = useState(false);
   const [targetTotal, setTargetTotal] = useState("");
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
   const calculateTotals = useMemo(() => {
     // If in break total mode, use target total as the main total
@@ -577,9 +578,7 @@ const CreateServiceBill = ({
     const totalAfterDiscount = selectedServicesTotal - discountAmount;
 
     const firstBill = billData?.services?.[0] || {};
-    console.log(billData);
-    console.log(patientDetails);
-    console.log(firstBill);
+
     if (patientDetails?.type === "OPD") {
       const opdBillData = {
         patient: {
@@ -736,6 +735,49 @@ const CreateServiceBill = ({
       )}
     </div>
   );
+
+  const handlePaymentSuccess = (updatedBill) => {
+    // Update the billData state with the new data
+    const formattedBillData = {
+      services: [
+        {
+          _id: updatedBill._id,
+          services: updatedBill.services,
+          createdAt: updatedBill.createdAt,
+          totalAmount: updatedBill.totalAmount,
+          additionalDiscount: updatedBill.additionalDiscount,
+          subtotal: updatedBill.subtotal,
+          amountPaid: updatedBill.amountPaid,
+          payments: updatedBill.payments,
+          invoiceNumber: updatedBill.invoiceNumber,
+        },
+      ],
+    };
+
+    setBillData(formattedBillData);
+
+    // Update billDataForPrint if needed
+    const formattedBillDataForPrint = {
+      _id: updatedBill._id,
+      totalAmount: updatedBill.totalAmount,
+      amountPaid: updatedBill.amountPaid,
+      payments: updatedBill.payments,
+    };
+    setBillDataForPrint(formattedBillDataForPrint);
+  };
+
+  // Modify the handleOpenPayment function
+  const handleOpenPayment = () => {
+    const formattedBillData = {
+      _id: billData?.services?.[0]?._id || billId,
+      totalAmount: calculateTotals.totalAmount,
+      amountPaid: calculateTotals.totalAmountPaid,
+      payments: billData?.services?.[0]?.payments || [],
+    };
+
+    setBillDataForPrint(formattedBillData);
+    setIsPaymentDialogOpen(true);
+  };
 
   return (
     <div className="w-full  max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
@@ -1102,7 +1144,15 @@ const CreateServiceBill = ({
             <PrinterIcon className="mr-2 h-4 w-4" />
             Print Bill
           </Button>
-
+          <Button
+            variant="outline"
+            onClick={handleOpenPayment}
+            className="w-1/2 sm:w-auto"
+            disabled={!billId && !initialBillData} // Disable if no bill exists yet
+          >
+            <Wallet className="mr-2 h-4 w-4" />
+            Pay
+          </Button>
           <Button
             onClick={handleCreate}
             disabled={isLoading}
@@ -1148,6 +1198,13 @@ const CreateServiceBill = ({
           setIsViewBillDialogOpen(false);
           navigate("/billings");
         }}
+      />
+
+      <PaymentDialog
+        isOpen={isPaymentDialogOpen}
+        setIsOpen={setIsPaymentDialogOpen}
+        billData={billDataForPrint}
+        onPaymentSuccess={handlePaymentSuccess}
       />
     </div>
   );

@@ -540,7 +540,7 @@ export default function DischargeSummary() {
   const handleMedicineAdviceSuggestionSelect = (index, suggestion) => {
     handleMedicineAdviceChange(index, "name", suggestion.name);
   };
-console.log(formData.diagnosis)
+
   const addMedicineAdvice = () => {
     setFormData((prev) => ({
       ...prev,
@@ -900,13 +900,11 @@ console.log(formData.diagnosis)
                       variant="ghost"
                       size="icon"
                       className="h-8 w-8 absolute right-0 top-0"
-                    >
-                    </Button>
+                    ></Button>
                   )}
                 </div>
               </div>
-              
-              
+
               <div className="flex items-center">
                 <Label htmlFor="contactNumber" className="w-24 font-bold">
                   Contact:
@@ -978,22 +976,24 @@ console.log(formData.diagnosis)
                 <Label htmlFor="diagnosis">Diagnosis</Label>
                 <div className="mt-1 space-y-2">
                   <div className="flex flex-wrap gap-1">
-                    {formData.diagnosis && formData.diagnosis.split(",")
-                      .map(diagnosis => diagnosis.trim())
-                      .filter(diagnosis => diagnosis)
-                      .map((diagnosis, index) => (
-                        <Badge
-                          key={index}
-                          variant="primary"
-                          className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
-                        >
-                          {diagnosis}
-                          <X
-                            className="ml-1 h-3 w-3 cursor-pointer"
-                            onClick={() => handleRemoveDiagnosis(diagnosis)}
-                          />
-                        </Badge>
-                      ))}
+                    {formData.diagnosis &&
+                      formData.diagnosis
+                        .split(",")
+                        .map((diagnosis) => diagnosis.trim())
+                        .filter((diagnosis) => diagnosis)
+                        .map((diagnosis, index) => (
+                          <Badge
+                            key={index}
+                            variant="primary"
+                            className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
+                          >
+                            {diagnosis}
+                            <X
+                              className="ml-1 h-3 w-3 cursor-pointer"
+                              onClick={() => handleRemoveDiagnosis(diagnosis)}
+                            />
+                          </Badge>
+                        ))}
                   </div>
                   <div className="flex gap-2">
                     <MultiSelectInput
@@ -1142,12 +1142,14 @@ console.log(formData.diagnosis)
                       key={index}
                       className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
                     >
-                      <div onKeyDown={(e) => {
-                        // Prevent form submission on Enter key
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                        }
-                      }}>
+                      <div
+                        onKeyDown={(e) => {
+                          // Prevent form submission on Enter key
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                          }
+                        }}
+                      >
                         <SearchSuggestion
                           suggestions={medicines.map((item) => ({
                             name: item.name,
@@ -1179,7 +1181,7 @@ console.log(formData.diagnosis)
                         className="font-medium"
                         onKeyDown={(e) => {
                           // Prevent form submission on Enter key
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             e.preventDefault();
                           }
                         }}
@@ -1198,7 +1200,7 @@ console.log(formData.diagnosis)
                         className="font-medium"
                         onKeyDown={(e) => {
                           // Prevent form submission on Enter key
-                          if (e.key === 'Enter') {
+                          if (e.key === "Enter") {
                             e.preventDefault();
                           }
                         }}

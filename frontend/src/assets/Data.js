@@ -26,6 +26,30 @@ export const formatDate = (dateString) => {
     day: "numeric",
   });
 };
+export  const permissionGroups = {
+  "Patient Management": [{ id: "delete_patients", label: "Delete Patients" }],
+  "Inventory Management": [
+    { id: "edit_inventory_price", label: "Edit Prices" },
+  ],
+  "Financial Management": [
+    { id: "view_financial", label: "View Financial Data" },
+
+    { id: "edit_bills", label: "Edit Bills" },
+    { id: "delete_bills", label: "Delete Bills" },
+    { id: "view_reports", label: "View Reports" },
+  ],
+ 
+  "Staff Management": [
+    { id: "view_staff", label: "View Staff" },
+    { id: "create_staff", label: "Create Staff" },
+    { id: "edit_staff", label: "Edit Staff" },
+    { id: "delete_staff", label: "Delete Staff" },
+  ],
+  "Hospital Management": [
+   
+    { id: "edit_hospital", label: "Edit Hospital" },
+  ],
+};
 
 export const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
   const [open, setOpen] = useState(false);

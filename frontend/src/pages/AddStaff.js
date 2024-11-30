@@ -9,6 +9,7 @@ import {
   SelectItem,
   SelectContent,
 } from "../components/ui/select";
+import { permissionGroups } from "../assets/Data";
 import { Textarea } from "../components/ui/textarea";
 import { Checkbox } from "../components/ui/checkbox";
 import { Plus, X } from "lucide-react";
@@ -20,39 +21,108 @@ import {
   updateStaffMember,
 } from "../redux/slices/staffSlice";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { Separator } from "../components/ui/separator";
+
 export default function AddStaff() {
   const { toast } = useToast();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { staffId } = useParams();
-  console.log(staffId);
   const { status, error } = useSelector((state) => state.staff);
+  const {userData}=useSelector((state)=>state.user)
   const departments = useSelector((state) => state.departments.departments);
-  const [formData, setFormData] = useState({ roles: [] });
+  // const { userData } = useSelector((state) => state.user);
+
+  // Define initial form state
+  const initialFormState = {
+    roles: [],
+    permissions: [],
+    name: "",
+    username: "",
+    password: "",
+    employeeID: "",
+    contactNumber: "",
+    email: "",
+    dateOfBirth: "",
+    gender: "",
+    hireDate: "",
+    yearsOfExperience: "",
+    shift: {
+      type: "",
+      hours: {
+        start: "",
+        end: "",
+      },
+    },
+    salary: "",
+    payrollInfo: {
+      bankName: "",
+      accountNumber: "",
+      ifscCode: "",
+    },
+    department: [],
+    qualifications: [],
+    certifications: [],
+    address: "",
+  };
+
+  const [formData, setFormData] = useState(initialFormState);
   const [editMode, setEditMode] = useState(false);
 
-  useEffect(() => {
-    if (location.state?.editMode && location.state?.staffData) {
-      setEditMode(true);
-      setFormData(location.state.staffData);
-    } else if (staffId) {
-      // Fetch staff data by ID if needed
-      // This is just a placeholder, implement the actual fetch logic
-      // dispatch(fetchStaffById(staffId)).then(data => setFormData(data));
-      setEditMode(true);
-    }
-  }, [location, staffId]);
-  console.log(location?.state?.staffData);
   const [errors, setErrors] = useState({});
   const [newQualification, setNewQualification] = useState("");
   const [newCertification, setNewCertification] = useState("");
+
+  // Check if user has permission to create staff
+  const hasCreateStaffPermission = userData.permissions?.includes("create_staff");
+  const hasEditStaffPermission = userData.permissions?.includes("edit_staff");
+
+  // Reset form function
+  const resetForm = () => {
+    setFormData(JSON.parse(JSON.stringify(initialFormState))); // Deep clone to ensure clean state
+    setErrors({});
+    setNewQualification("");
+    setNewCertification("");
+  };
+  useEffect(() => {}, [formData]); // This effect runs whenever formData changes
+
+  useEffect(() => {
+    if (location.state?.editMode && location.state?.staffData) {
+      if (!hasEditStaffPermission) {
+        toast({
+          variant: "destructive",
+          title: "Access Denied",
+          description: "You don't have permission to edit staff members.",
+        });
+        navigate(-1);
+        return;
+      }
+      setEditMode(true);
+      setFormData(location.state.staffData);
+    } else if (staffId) {
+      setEditMode(true);
+    } else if (!hasCreateStaffPermission) {
+      toast({
+        variant: "destructive",
+        title: "Access Denied",
+        description: "You don't have permission to create staff members.",
+      });
+      navigate(-1);
+      return;
+    } else {
+      // Reset form when adding new staff
+      setEditMode(false);
+      resetForm();
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     const keys = id.split(".");
     if (keys.length === 2) {
       const [parent, child] = id.split(".");
+
       setFormData((prev) => ({
         ...prev,
         [parent]: {
@@ -72,13 +142,21 @@ export default function AddStaff() {
         },
       }));
     } else {
-      setFormData({ ...formData, [id]: value });
+      setFormData((prev) => ({
+        ...prev,
+        [id]: value,
+      }));
     }
+  };
+
+  const handleReset = () => {
+    resetForm();
   };
 
   const handleSelectChange = (id, value) => {
     if (id.includes(".")) {
       const [parent, child] = id.split(".");
+
       setFormData((prev) => ({
         ...prev,
         [parent]: {
@@ -96,6 +174,7 @@ export default function AddStaff() {
     const updatedRoles = checked
       ? [...currentRoles, id]
       : currentRoles?.filter((role) => role !== id);
+
     setFormData({ ...formData, roles: updatedRoles });
   };
 
@@ -115,6 +194,7 @@ export default function AddStaff() {
       : currentDepartments?.filter((dep) => dep !== department); // Remove if unchecked
 
     // Update the formData with the new department list
+
     setFormData({ ...formData, department: updatedDepartments });
   };
 
@@ -155,6 +235,7 @@ export default function AddStaff() {
     const updatedCertifications = formData.certifications.filter(
       (_, i) => i !== index
     );
+
     setFormData({ ...formData, certifications: updatedCertifications });
   };
 
@@ -164,8 +245,6 @@ export default function AddStaff() {
     if (formData.roles?.includes("admin")) {
       if (!formData.username)
         newErrors.username = "Username is required for admin";
-      if (!formData.password)
-        newErrors.password = "Password is required for admin";
     }
     // Check if roles exist and have a length greater than 0
     if (!formData.roles || formData.roles.length === 0)
@@ -195,7 +274,7 @@ export default function AddStaff() {
             description: "Staff member has been added successfully.",
           });
         }
-        navigate("/reports");
+        navigate("/staff");
       } catch (error) {
         toast({
           title: "Error",
@@ -210,10 +289,292 @@ export default function AddStaff() {
     }
   };
 
-  const handleReset = () => {
-    setFormData({});
-    setErrors({});
+  const handlePermissionChange = (permissionId, checked) => {
+    setFormData((prev) => ({
+      ...prev,
+      permissions: checked
+        ? [...(prev.permissions || []), permissionId]
+        : (prev.permissions || []).filter((p) => p !== permissionId),
+    }));
   };
+
+  const handleSelectAllInGroup = (groupPermissions, checked) => {
+    const permissionIds = groupPermissions.map((permission) => permission.id);
+
+    setFormData((prev) => {
+      const currentPermissions = new Set(prev.permissions || []);
+
+      permissionIds.forEach((id) => {
+        if (checked) {
+          currentPermissions.add(id);
+        } else {
+          currentPermissions.delete(id);
+        }
+      });
+
+      return {
+        ...prev,
+        permissions: Array.from(currentPermissions),
+      };
+    });
+  };
+
+  const renderPermissionsSection = () => (
+    <div className="space-y-6 bg-gray-50 p-4 rounded-lg">
+      <div>
+        <h3 className="text-lg font-semibold mb-4">Staff Permissions</h3>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Column 1: Patient & Clinical */}
+          <div className="space-y-6">
+            {/* Patient Management */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold text-gray-700">
+                  Patient Management
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    handleSelectAllInGroup(
+                      permissionGroups["Patient Management"],
+                      true
+                    )
+                  }
+                  className="h-7 px-2 text-xs"
+                >
+                  Select All
+                </Button>
+              </div>
+              <div className="space-y-2 grid grid-col-2">
+                {permissionGroups["Patient Management"].map((permission) => (
+                  <div
+                    key={permission.id}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
+                      id={permission.id}
+                      checked={(formData.permissions || []).includes(
+                        permission.id
+                      )}
+                      onCheckedChange={(checked) =>
+                        handlePermissionChange(permission.id, checked)
+                      }
+                    />
+                    <label htmlFor={permission.id} className="text-sm">
+                      {permission.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <Separator className="my-4" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold text-gray-700">
+                Inventory Management
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  handleSelectAllInGroup(
+                    permissionGroups["Inventory Management"],
+                    true
+                  )
+                }
+                className="h-7 px-2 text-xs"
+              >
+                Select All
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {permissionGroups["Inventory Management"].map((permission) => (
+                <div
+                  key={permission.id}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    id={permission.id}
+                    checked={(formData.permissions || []).includes(
+                      permission.id
+                    )}
+                    onCheckedChange={(checked) =>
+                      handlePermissionChange(permission.id, checked)
+                    }
+                  />
+                  <label htmlFor={permission.id} className="text-sm">
+                    {permission.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <Separator className="my-4" />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold text-gray-700">
+                Hospital Management
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  handleSelectAllInGroup(
+                    permissionGroups["Hospital Management"],
+                    true
+                  )
+                }
+                className="h-7 px-2 text-xs"
+              >
+                Select All
+              </Button>
+            </div>
+            <div className="space-y-2 grid grid-cols-2">
+              {permissionGroups["Hospital Management"].map((permission) => (
+                <div
+                  key={permission.id}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    id={permission.id}
+                    checked={(formData.permissions || []).includes(
+                      permission.id
+                    )}
+                    onCheckedChange={(checked) =>
+                      handlePermissionChange(permission.id, checked)
+                    }
+                  />
+                  <label htmlFor={permission.id} className="text-sm">
+                    {permission.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+            <Separator className="my-4" />
+          </div>
+
+          {/* Financial Management */}
+          <div className="space-y-2 ">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-semibold text-gray-700">
+                Financial Management
+              </Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  handleSelectAllInGroup(
+                    permissionGroups["Financial Management"],
+                    true
+                  )
+                }
+                className="h-7 px-2 text-xs"
+              >
+                Select All
+              </Button>
+            </div>
+            <div className="grid grid-cols-2 space-y-2">
+              {permissionGroups["Financial Management"].map((permission) => (
+                <div
+                  key={permission.id}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    id={permission.id}
+                    checked={(formData.permissions || []).includes(
+                      permission.id
+                    )}
+                    onCheckedChange={(checked) =>
+                      handlePermissionChange(permission.id, checked)
+                    }
+                  />
+                  <label htmlFor={permission.id} className="text-sm">
+                    {permission.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Column 3: Staff, Hospital & Other Management */}
+          <div className="space-y-6">
+            {/* Staff Management */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold text-gray-700">
+                  Staff Management
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    handleSelectAllInGroup(
+                      permissionGroups["Staff Management"],
+                      true
+                    )
+                  }
+                  className="h-7 px-2 text-xs"
+                >
+                  Select All
+                </Button>
+              </div>
+              <div className="space-y-2 grid grid-cols-2">
+                {permissionGroups["Staff Management"].map((permission) => (
+                  <div
+                    key={permission.id}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
+                      id={permission.id}
+                      checked={(formData.permissions || []).includes(
+                        permission.id
+                      )}
+                      onCheckedChange={(checked) =>
+                        handlePermissionChange(permission.id, checked)
+                      }
+                    />
+                    <label htmlFor={permission.id} className="text-sm">
+                      {permission.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <Separator className="my-4" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (!hasCreateStaffPermission && !editMode) {
+    toast({
+      variant: "destructive",
+      title: "Access Denied",
+      description: "You don't have permission to create staff members.",
+    });
+    navigate(-1);
+    return null;
+  }
+
+  if (editMode && !hasEditStaffPermission) {
+    toast({
+      variant: "destructive",
+      title: "Access Denied",
+      description: "You don't have permission to edit staff members.",
+    });
+    navigate(-1);
+    return null;
+  }
+
   return (
     <div className="max-w-[1200px] mx-auto p-4">
       <h2 className="text-xl font-bold mb-0">
@@ -244,7 +605,6 @@ export default function AddStaff() {
                 placeholder="johndoe"
                 value={formData.username}
                 onChange={handleInputChange}
-                disabled={editMode} // Disable username field in edit mode
               />
               {errors.username && (
                 <span className="text-red-500 text-sm">{errors.username}</span>
@@ -453,6 +813,7 @@ export default function AddStaff() {
                 <span className="text-red-500 text-sm">{errors.roles}</span>
               )}
             </div>
+            <div></div>
             <div>
               <Label>Departments</Label>
               <div className="grid grid-cols-2 gap-2">
@@ -544,6 +905,8 @@ export default function AddStaff() {
             </div>
           </div>
         </div>
+        {renderPermissionsSection()}
+
         <div className="mt-4 flex justify-end space-x-4">
           <Button type="button" variant="outline" onClick={handleReset}>
             Reset

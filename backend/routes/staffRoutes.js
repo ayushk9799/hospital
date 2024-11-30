@@ -8,7 +8,7 @@ import bcrypt from 'bcryptjs';
 const router = express.Router();
 
 // Create a new staff member (Admin only)
-router.post('/', verifyToken, checkPermission('write:all'), async (req, res) => {
+router.post('/', verifyToken, checkPermission('create_staff'),  async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -45,8 +45,7 @@ router.post('/', verifyToken, checkPermission('write:all'), async (req, res) => 
   }
 });
 
-// Get all staff members (Admin and Manager)
-router.get('/', verifyToken, checkPermission('read:all'), async (req, res) => {
+router.get('/', verifyToken,  async (req, res) => {
   try {
     const staffMembers = await Staff.find().select('-password');
     res.json(staffMembers);
@@ -76,7 +75,7 @@ router.get('/:id', verifyToken, async (req, res) => {
   }
 });
 
-router.put('/:id', verifyToken, checkPermission('write:all'), async (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -128,7 +127,7 @@ router.put('/:id', verifyToken, checkPermission('write:all'), async (req, res) =
 });
 
 // Delete a staff member (Admin only)
-router.delete('/:id', verifyToken,checkPermission('write:all'), async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
   try {
     const staff = await Staff.findByIdAndDelete(req.params.id);
     if (!staff) {

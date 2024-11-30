@@ -31,12 +31,11 @@ import { Checkbox } from "../../ui/checkbox";
 import { X } from "lucide-react";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
-  console.log(billData);
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [selectedServices, setSelectedServices] = useState([]);
-  console.log(billData);
+
   React.useEffect(() => {
     if (billData?.services) {
       setSelectedServices(billData.services.map((_, index) => index));
@@ -452,13 +451,13 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                               <TableCell className="text-xs">
                                 {new Date(
                                   payment.createdAt
-                                ).toLocaleDateString()}
+                                ).toLocaleDateString("en-IN")}
                               </TableCell>
                               {!isMobile && (
                                 <TableCell className="text-xs">
                                   {new Date(
                                     payment.createdAt
-                                  ).toLocaleTimeString("en-US", {
+                                  ).toLocaleTimeString("en-IN", {
                                     hour: "numeric",
                                     minute: "numeric",
                                     hour12: true,

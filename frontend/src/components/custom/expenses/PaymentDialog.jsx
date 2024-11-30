@@ -153,10 +153,10 @@ const PaymentDialog = ({ isOpen, setIsOpen, expenseData }) => {
                 <TableBody>
                   {expenseData.payments.map((payment, index) => (
                     <TableRow key={index}>
-                      <TableCell className="text-xs">{new Date(payment.createdAt).toLocaleDateString()}</TableCell>
+                      <TableCell className="text-xs">{new Date(payment.createdAt).toLocaleDateString("en_IN")}</TableCell>
                       {!isMobile && (
                         <TableCell className="text-xs">
-                          {new Date(payment.createdAt).toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true })}
+                          {new Date(payment.createdAt).toLocaleTimeString('en_IN', { hour: 'numeric', minute: 'numeric', hour12: true })}
                         </TableCell>
                       )}
                       <TableCell className="text-xs font-medium">₹{payment.amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</TableCell>

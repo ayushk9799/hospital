@@ -22,13 +22,14 @@ router.get("/registration-ipd-numbers", verifyToken, async (req, res) => {
 
   try {
     // Get next registration number
-    const registrationNumber = await RegistrationNumber.getCurrentRegistrationNumber(session);
-    
+    const registrationNumber =
+      await RegistrationNumber.getCurrentRegistrationNumber(session);
+
     // Get next IPD number
     const ipdNumber = await IPDAdmission.getCurrentIPDNumber(session);
 
     await session.commitTransaction();
-    
+
     res.json({
       registrationNumber,
       ipdNumber,
@@ -168,30 +169,36 @@ router.post(
     session.startTransaction();
 
     try {
-      const { patientType, visit, admission, paymentInfo, upgradegenReg,upgradegenIpd ,...patientData } =
-        req.body;
+      const {
+        patientType,
+        visit,
+        admission,
+        paymentInfo,
+        upgradegenReg,
+        upgradegenIpd,
+        ...patientData
+      } = req.body;
       const user = req.user;
 
       if (!patientType || !["OPD", "IPD"].includes(patientType)) {
         throw new Error("Invalid or missing patient type");
       }
 
-      if(upgradegenReg){
-        let registrationNumber=await RegistrationNumber.getNextRegistrationNumber(session);
-        console.log(registrationNumber);
-        if(!patientData.registrationNumber){
-          patientData.registrationNumber=registrationNumber;
-        }
+      if (upgradegenReg) {
+        let registrationNumber =
+          await RegistrationNumber.getNextRegistrationNumber(session);
 
-      }
-      if(upgradegenIpd){
-        let ipdNumber=await IPDAdmission.getNextIpdNumber(session);
-        console.log(ipdNumber);
-        if(!admission.ipdNumber){
-          admission.ipdNumber=ipdNumber;
+        if (!patientData.registrationNumber) {
+          patientData.registrationNumber = registrationNumber;
         }
       }
-    
+      if (upgradegenIpd) {
+        let ipdNumber = await IPDAdmission.getNextIpdNumber(session);
+
+        if (!admission.ipdNumber) {
+          admission.ipdNumber = ipdNumber;
+        }
+      }
 
       const patient = new Patient({
         ...patientData,
@@ -494,9 +501,7 @@ router.post("/details", verifyToken, async (req, res) => {
       )
       .populate("doctor", "name");
 
-    const ipdAdmissions = await IPDAdmission.find({
-      $or: [dateFilter, { status: "Admitted" }],
-    })
+    const ipdAdmissions = await IPDAdmission.find(dateFilter)
       .populate(
         "patient",
         "name dateOfBirth gender contactNumber email address bloodType age"
@@ -1280,7 +1285,13 @@ router.post(
 
     try {
       const { id } = req.params;
-      const { admission, paymentInfo,upgradegenIpd, upgradegenReg,...patientData } = req.body;
+      const {
+        admission,
+        paymentInfo,
+        upgradegenIpd,
+        upgradegenReg,
+        ...patientData
+      } = req.body;
       const user = req.user;
 
       const patient = await Patient.findById(id).session(session);
@@ -1293,12 +1304,12 @@ router.post(
         Object.assign(patient, patientData);
         await patient.save({ session });
       }
-      if(upgradegenIpd){
-       let ipdNumber= await IPDAdmission.getNextIpdNumber(session);
-       console.log(ipdNumber);
-       if(!admission.ipdNumber){
-        admission.ipdNumber=ipdNumber;
-       }
+      if (upgradegenIpd) {
+        let ipdNumber = await IPDAdmission.getNextIpdNumber(session);
+
+        if (!admission.ipdNumber) {
+          admission.ipdNumber = ipdNumber;
+        }
       }
       // Create new IPD admission
       const newAdmission = new IPDAdmission({
@@ -1321,7 +1332,7 @@ router.post(
       });
 
       let bill;
-      let payment= [];
+      let payment = [];
 
       // Handle initial services bill if any
       if (paymentInfo?.includeServices) {
@@ -1383,15 +1394,16 @@ router.post(
           paymentInfo?.paymentMethod.length > 0 &&
           paymentInfo.amountPaid > 0
         ) {
-          await Promise.all(paymentInfo.paymentMethod.map(async (pm) => {
-            let payments = new Payment({
-              amount: pm.amount,
-              paymentMethod: pm.method,
-              paymentType: { name: "Services", id: bill._id },
-              type: "Income",
-              createdBy: user._id,
-            });
-            await payments.save({ session });
+          await Promise.all(
+            paymentInfo.paymentMethod.map(async (pm) => {
+              let payments = new Payment({
+                amount: pm.amount,
+                paymentMethod: pm.method,
+                paymentType: { name: "Services", id: bill._id },
+                type: "Income",
+                createdBy: user._id,
+              });
+              await payments.save({ session });
               bill.payments.push(payments._id);
               payment.push(payments);
             })

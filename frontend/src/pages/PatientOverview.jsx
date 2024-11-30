@@ -34,12 +34,14 @@ export default function PatientOverview() {
       .then((data) => {
         setPatientDetails(data);
         let allvisits = [...data.visits, ...data.admissionDetails];
-        allvisits = allvisits.sort((a,b)=>new Date(b.bookingDate)-new Date(a.bookingDate))
+        allvisits = allvisits.sort(
+          (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)
+        );
         if (allvisits.length > 0) {
-          const selectedOne = allvisits.find(
-            (visit) => visit._id === location?.state?.ID
-          ) || allvisits[0];
-          console.log(selectedOne)
+          const selectedOne =
+            allvisits.find((visit) => visit._id === location?.state?.ID) ||
+            allvisits[0];
+
           if (selectedOne?.bills?.services?.length > 0) {
             setBillData({
               billId: selectedOne.bills.services[0]._id,
@@ -141,7 +143,6 @@ export default function PatientOverview() {
           <TabsContent value="payments" className="m-0">
             {billData?.billData ? (
               <>
-              
                 <div className="text-center py-8 text-gray-500">
                   Click here to manage payments
                   <Button

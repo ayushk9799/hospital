@@ -1245,4 +1245,4 @@ const arr = [
 
 const filteredArr = arr.filter(p => p.patient.name.toLowerCase().includes('ayush'))
 
-filteredArr.forEach(p => console.log(p.patient.name))
+filteredArr.forEach(p => 

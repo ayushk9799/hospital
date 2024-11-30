@@ -24,7 +24,13 @@ router.get("/daily-stats", async (req, res) => {
     }
 
     const start = new Date(startDate);
-    const end = new Date(endDate);
+    let end = new Date(endDate);
+
+    // Check if startDate and endDate are the same
+    if (start.getTime() === end.getTime()) {
+      end.setDate(end.getDate() + 1);
+    }
+
     //
     //
     // Existing payment aggregation
@@ -32,8 +38,8 @@ router.get("/daily-stats", async (req, res) => {
       {
         $match: {
           createdAt: {
-            $gte: new Date(startDate),
-            $lte: new Date(endDate),
+            $gte: new Date(start),
+            $lte: new Date(end),
           },
           type: "Income",
         },
@@ -269,26 +275,24 @@ router.get("/daily-stats", async (req, res) => {
   }
 });
 
-
-router.get('/search', async (req, res) => {
+router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
-    console.log(q)
-    const searchRegex = new RegExp(q, 'i');
+
+    const searchRegex = new RegExp(q, "i");
 
     const patients = await Patient.find({
       $or: [
         { name: searchRegex },
         { contactNumber: searchRegex },
-        { registrationNumber: searchRegex }
+        { registrationNumber: searchRegex },
       ],
     })
-    .populate('visits', 'bookingDate')
-    .populate('admissionDetails', 'bookingDate')
-    .limit(10);
+      .populate("visits", "bookingDate")
+      .populate("admissionDetails", "bookingDate")
+      .limit(10);
 
     res.status(200).json(patients);
-
   } catch (error) {
     console.error("Patient search route error:", error);
     res.status(500).json({ error: error.message });
