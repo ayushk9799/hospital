@@ -233,7 +233,7 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
               <MemoizedInput
                 id="registrationNumber"
                 name="registrationNumber"
-                label="UHID No."
+                label="UHID No"
                 value={formData.registrationNumber}
                 onChange={handleInputChange}
               />

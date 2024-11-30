@@ -35,10 +35,10 @@ const QuickMenu = () => {
 
   // Filter today's patients
   const opdPatients = todaysPatient.filter(
-    (patient) => patient.patientType === "OPD"
+    (patient) => patient.type === "OPD"
   );
   const ipdPatients = todaysPatient.filter(
-    (patient) => patient.patientType === "IPD"
+    (patient) => patient.type === "IPD"
   );
 
   const quickActions = [

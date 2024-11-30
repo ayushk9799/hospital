@@ -163,7 +163,7 @@ router.get("/:id", verifyToken, async (req, res) => {
 router.post(
   "/",
   verifyToken,
-  checkPermission("write:patients"),
+  checkPermission("create_patients"),
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -483,7 +483,14 @@ router.post("/details", verifyToken, async (req, res) => {
       dateFilter.bookingDate = {};
       if (startDate && !endDate) {
         // If only startDate is provided, make it equal to that date
-        dateFilter.bookingDate = new Date(startDate);
+        let nextDay = new Date(startDate);
+  nextDay.setDate(nextDay.getDate() + 1);
+  
+  // If only startDate is provided, search from start of startDate to start of next day
+  dateFilter.bookingDate = {
+    $gte: new Date(startDate),
+    $lt: nextDay
+  };
       } else if (startDate && endDate) {
         // If both dates are provided, use gte and lt
         dateFilter.bookingDate = {
@@ -579,7 +586,7 @@ router.post("/details", verifyToken, async (req, res) => {
   }
 });
 
-router.delete("/admissions", async (req, res) => {
+router.delete("/admissions", checkPermission("delete_patients"), async (req, res) => {
   try {
     const result = await Visit.deleteMany();
 
@@ -697,7 +704,6 @@ router.get("/:id", verifyToken, async (req, res) => {
 router.put(
   "/:id",
   verifyToken,
-  checkPermission("write:patients"),
   async (req, res) => {
     try {
       // could be changed according to frontend
@@ -720,7 +726,7 @@ router.put(
 router.delete(
   "/:id",
   verifyToken,
-  checkPermission("write:patients"),
+  checkPermission("delete_patients"),
   async (req, res) => {
     try {
       const patient = await Patient.findByIdAndDelete(req.params.id);
@@ -738,7 +744,6 @@ router.delete(
 router.post(
   "/:id/admit",
   verifyToken,
-  checkPermission("write:patients"),
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -840,7 +845,7 @@ router.post(
 router.post(
   "/:id/revisit",
   verifyToken,
-  checkPermission("write:patients"),
+  checkPermission("create_patients"),
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -952,7 +957,7 @@ router.post(
 router.put(
   "/visit/:id",
   verifyToken,
-  checkPermission("write:patients"),
+  checkPermission("create_patients"),
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -999,7 +1004,7 @@ router.put(
 router.put(
   "/admission/:id",
   verifyToken,
-  checkPermission("write:patients"),
+  checkPermission("create_patients"),
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -1147,7 +1152,6 @@ router.post("/addLabReport", async (req, res) => {
 router.post(
   "/discharge/:id",
   verifyToken,
-  checkPermission("write:patients"),
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -1222,7 +1226,6 @@ router.post(
 router.post(
   "/SaveButNotDischarge/:id",
   verifyToken,
-  checkPermission("write:patients"),
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
@@ -1278,7 +1281,7 @@ router.post(
 router.post(
   "/:id/readmission",
   verifyToken,
-  checkPermission("write:patients"),
+  checkPermission("create_patients"),
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();

@@ -27,7 +27,7 @@ export const formatDate = (dateString) => {
   });
 };
 export  const permissionGroups = {
-  "Patient Management": [{ id: "delete_patients", label: "Delete Patients" }],
+  "Patient Management": [{id:"create_patients",label:"Create Patients"},{ id: "delete_patients", label: "Delete Patients" }],
   "Inventory Management": [
     { id: "edit_inventory_price", label: "Edit Prices" },
   ],

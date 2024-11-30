@@ -737,7 +737,7 @@ const Billings = () => {
                       <TableCell>{bill.invoiceNumber || "N/A"}</TableCell>
                       <TableCell>{bill.patientInfo.name}</TableCell>
                       <TableCell>
-                        {bill?.patient?.registrationNumber || "N/A"}
+                        {bill?.patient?.registrationNumber || bill?.patientInfo?.registrationNumber|| "N/A"}
                       </TableCell>
                       <TableCell>{bill.patientInfo.phone}</TableCell>
                       {!isMediumScreen && (

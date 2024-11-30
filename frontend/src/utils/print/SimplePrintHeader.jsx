@@ -12,7 +12,7 @@ const SimplePrintHeader = () => {
         {hospitalInfo.name}
       </h1>
       <p className="text-sm m-0 p-0 print:text-sm print:leading-tight">
-        Dr. {hospitalInfo.doctorName}
+        {hospitalInfo.doctorName}
       </p>
     </div>
   );

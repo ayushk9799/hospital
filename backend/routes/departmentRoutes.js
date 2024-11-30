@@ -7,7 +7,7 @@ import mongoose from 'mongoose';
 const router = express.Router();
 
 // Create a new department (Admin only)
-router.post('/', verifyToken, checkPermission('write:all'), async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -62,7 +62,7 @@ router.get('/', verifyToken, async (req, res) => {
 });
 
 // Add a doctor to a department
-router.post('/:id/addDoctor', verifyToken, checkPermission('write:all'), async (req, res) => {
+router.post('/:id/addDoctor', verifyToken, checkPermission("create_staff"), async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -106,7 +106,7 @@ router.post('/:id/addDoctor', verifyToken, checkPermission('write:all'), async (
 });
 
 // Remove a doctor from a department
-router.post('/:id/removeDoctor', verifyToken, checkPermission('write:all'), async (req, res) => {
+router.post('/:id/removeDoctor', verifyToken, checkPermission('delete_staff'), async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 

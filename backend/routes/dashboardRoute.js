@@ -279,13 +279,12 @@ router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
 
-    const searchRegex = new RegExp(q, "i");
 
     const patients = await Patient.find({
       $or: [
-        { name: searchRegex },
-        { contactNumber: searchRegex },
-        { registrationNumber: searchRegex },
+        { name: { $regex: `^${q}`, $options: 'i' }  },
+        { contactNumber: q },
+        { registrationNumber: { $regex: `^${q}$`, $options: 'i' } },
       ],
     })
       .populate("visits", "bookingDate")

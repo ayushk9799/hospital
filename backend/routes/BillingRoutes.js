@@ -122,7 +122,7 @@ router.get("/get-bills", async (req, res) => {
 
     const bills = await ServicesBill.find(query)
       .sort({ createdAt: -1 })
-      .populate("patient", "name phone registrationNumber age gender")
+      .populate("patient", "name phone registrationNumber age gender address")
       .populate("createdBy", "name")
       .populate("payments");
 

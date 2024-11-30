@@ -138,52 +138,62 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                     <Label className="font-semibold mr-2">Name:</Label>
                     <p>{billData.patientInfo?.name || "N/A"}</p>
                   </div>
-                  <div className="flex items-center">
-                    <Label className="font-semibold mr-2">UHID No:</Label>
-                    <p>
-                      {billData.patientInfo?.registrationNumber ||
-                        billData.patient?.registrationNumber ||
-                        "N/A"}
-                    </p>
-                  </div>
-                  <div className="flex items-center">
-                    <Label className="font-semibold mr-2">Contact:</Label>
-                    <p>
-                      {billData.patientInfo?.contactNumber ||
-                        billData.patientInfo?.phone ||
-                        "N/A"}
-                    </p>
-                  </div>
-                  <div className="flex items-center">
-                    <Label className="font-semibold mr-2">IPD No:</Label>
-                    <p>{billData.patientInfo?.ipdNumber || "N/A"}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <Label className="font-semibold mr-2">Age/Gender:</Label>
-                    <p>{`${
-                      billData.patientInfo?.age ||
-                      billData.patient?.age ||
-                      "N/A"
-                    }/${
-                      billData.patientInfo?.gender ||
-                      billData.patient?.gender ||
-                      "N/A"
-                    }`}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <Label className="font-semibold mr-2">
-                      Invoice Number:
-                    </Label>
-                    <p>{billData.invoiceNumber || "N/A"}</p>
-                  </div>
-                  <div className="flex items-center">
-                    <Label className="font-semibold mr-2">Date:</Label>
-                    <p>
-                      {billData.createdAt
-                        ? format(new Date(billData.createdAt), "dd/MM/yyyy")
-                        : "N/A"}
-                    </p>
-                  </div>
+                  {billData.patientInfo?.registrationNumber || billData.patient?.registrationNumber ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">UHID No:</Label>
+                      <p>
+                        {billData.patientInfo?.registrationNumber ||
+                          billData.patient?.registrationNumber}
+                      </p>
+                    </div>
+                  ) : null}
+                  {billData.patientInfo?.contactNumber || billData.patientInfo?.phone ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Contact:</Label>
+                      <p>
+                        {billData.patientInfo?.contactNumber ||
+                          billData.patientInfo?.phone}
+                      </p>
+                    </div>
+                  ) : null}
+                  {billData.patientInfo?.ipdNumber ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">IPD No:</Label>
+                      <p>{billData.patientInfo?.ipdNumber}</p>
+                    </div>
+                  ) : null}
+                  {billData.patientInfo?.age || billData.patient?.age ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Age/Gender:</Label>
+                      <p>{`${
+                        billData.patientInfo?.age ||
+                        billData.patient?.age
+                      }/${
+                        billData.patientInfo?.gender ||
+                        billData.patient?.gender
+                      }`}</p>
+                    </div>
+                  ) : null}
+                  {billData.patientInfo?.address || billData.patient?.address ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Address:</Label>
+                      <p>{billData.patientInfo?.address || billData.patient?.address}</p>
+                    </div>
+                  ) : null}
+                  {billData.invoiceNumber ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Invoice Number:</Label>
+                      <p>{billData.invoiceNumber}</p>
+                    </div>
+                  ) : null}
+                  {billData.createdAt ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Date:</Label>
+                      <p>
+                        {format(new Date(billData.createdAt), "dd/MM/yyyy")}
+                      </p>
+                    </div>
+                  ) : null}
                 </div>
                 {services.length > 0 ? (
                   <div className="flex flex-col gap-4">

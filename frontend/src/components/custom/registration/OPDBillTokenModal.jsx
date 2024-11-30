@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect ,useState} from "react";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import { format } from "date-fns";
@@ -60,89 +60,74 @@ const OPDBillTokenModal = ({
       document.body.style = "";
     }, 300);
   };
-
+ const [isPrinting,setIsPrinting]=useState(false)
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
+    onBeforeGetContent: () => {
+      setIsPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setIsPrinting(false);
+          resolve();
+        }, 0);
+      });
+    },
     pageStyle: `
       @media print {
         @page {
-          size: A4 landscape;
-          margin: 0;
-          padding: 0;
+          size: 297mm 210mm;  /* A4 Landscape dimensions explicitly set */
+          margin: 10mm;
         }
         
-        * {
-          margin: 0 !important;
-          padding: 0 !important;
-        }
-
         body {
           margin: 0;
-          padding: 0;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
 
         #printArea {
-          display: flex !important;
-          flex-direction: row !important;
-          width: 100% !important;
-          height: 100% !important;
+          display: grid !important;
+          grid-template-columns: 1fr 1fr !important;
+          width: 277mm !important; /* 297mm - 20mm margins */
+          height: 190mm !important; /* 210mm - 20mm margins */
         }
 
         #printArea > div {
-          width: 50% !important;
-          padding: 8px 12px !important;
-          border-bottom: none !important;
+          width: 138.5mm !important; /* Half of available width */
+          height: 190mm !important;
+          padding: 5mm !important;
+          overflow: hidden !important;
+          page-break-inside: avoid !important;
         }
 
         #printArea > div:first-child {
-          border-right: 1px dashed #000 !important;
+          border-right: 2px dashed #000 !important;
         }
 
-        /* Simple Print Header Styles */
-        .print-header {
-          border-bottom: 1px solid #000 !important;
-          padding-bottom: 4px !important;
-          margin-bottom: 4px !important;
-        }
-
+        /* Adjust font sizes and spacing for landscape layout */
         .print-header h1 {
-          font-size: 16px !important;
-          line-height: 1.2 !important;
-          margin-bottom: 2px !important;
+          font-size: 14px !important;
         }
 
         .print-header p {
-          font-size: 14px !important;
-          line-height: 1.2 !important;
+          font-size: 12px !important;
         }
 
-        /* Patient Details */
         .patient-details {
-          grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-          gap: 4px !important;
-          margin-top: 4px !important;
-          padding: 4px !important;
-          font-size: 12px !important;
+          font-size: 11px !important;
         }
 
-        .summary-section {
-          width: 16rem !important;
-          font-size: 12px !important;
-        }
-
-        /* Table Styles */
         table {
-          margin-top: 4px !important;
-          font-size: 12px !important;
+          font-size: 11px !important;
         }
 
         td, th {
-          padding: 2px 4px !important;
-          line-height: 1.2 !important;
+          padding: 1mm 2mm !important;
         }
 
-        .grid {
-          gap: 4px !important;
+        .summary-section {
+          width: 120mm !important;
+          font-size: 11px !important;
         }
       }
     `,
@@ -151,9 +136,9 @@ const OPDBillTokenModal = ({
   if (!patientData) return null;
 
   const { patient, bill, payment } = patientData;
-
+  console.log(patientData);
   const BillCopy = ({ title }) => (
-    <div className="w-full lg:w-1/2 p-2 lg:p-4 border-b lg:border-b-0 lg:border-r border-dashed border-red-500">
+    <div className="w-full lg:w-1/2 p-2 lg:p-4 border-b lg:border-b-0 lg:border-r border-dashed">
       <div className="mb-1 sm:mb-2">
         <SimplePrintHeader />
         <div className="flex justify-between items-center mt-2">
@@ -174,7 +159,9 @@ const OPDBillTokenModal = ({
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">Age/Sex:</span>
-              <span>{patient.age}/{patient.gender}</span>
+              <span>
+                {patient.age}/{patient.gender}
+              </span>
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">UHID No:</span>
@@ -185,7 +172,9 @@ const OPDBillTokenModal = ({
           <div className="grid grid-cols-3 gap-4 pt-3">
             <div className="flex gap-2 whitespace-nowrap overflow-hidden">
               <span className="font-semibold flex-shrink-0">Address:</span>
-              <span className="truncate" title={patient.address}>{patient.address}</span>
+              <span className="truncate" title={patient.address}>
+                {patient.address}
+              </span>
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">Contact:</span>
@@ -260,7 +249,9 @@ const OPDBillTokenModal = ({
             </div>
             <div className="flex justify-between text-sm pt-1">
               <span>Payment Method:</span>
-              <span>{payment?.paymentMethod}</span>
+              <span>
+                {payment.map((payment) => payment.paymentMethod).join(",")}
+              </span>
             </div>
             <div className="flex justify-between text-sm font-medium pt-1">
               <span>Status:</span>
@@ -290,7 +281,11 @@ const OPDBillTokenModal = ({
         <div
           id="printArea"
           ref={componentRef}
-          className="flex flex-col lg:flex-row border-red-500"
+          className={`${
+            isPrinting 
+              ? "print-content print-landscape" 
+              : "flex flex-col lg:flex-row"
+          } w-full`}
         >
           <BillCopy title="Hospital Copy" />
           <BillCopy title="Patient Copy" />

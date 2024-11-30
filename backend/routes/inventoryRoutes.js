@@ -1,11 +1,11 @@
 import express from 'express';
 import { Inventory } from '../models/Inventory.js';
-import { verifyToken, checkPermission } from '../middleware/authMiddleware.js';
+import { verifyToken } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
 // Create a new inventory item or update quantity if it exists
-router.post('/', verifyToken, checkPermission('write:inventory'), async (req, res) => {
+router.post('/', verifyToken, async (req, res) => {
     try {
         const { name, quantityNotFromOrders, ...otherFields } = req.body;
         
@@ -27,7 +27,7 @@ router.post('/', verifyToken, checkPermission('write:inventory'), async (req, re
 });
 
 // Get all inventory items
-router.get('/', verifyToken, checkPermission('read:inventory'), async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
     try {
         const items = await Inventory.find();
         res.json(items);
@@ -37,7 +37,7 @@ router.get('/', verifyToken, checkPermission('read:inventory'), async (req, res)
 });
 
 // Get a specific inventory item by ID
-router.get('/:id', verifyToken, checkPermission('read:inventory'), async (req, res) => {
+router.get('/:id', verifyToken, async (req, res) => {
     try {
         const item = await Inventory.findById(req.params.id);
         if (!item) return res.status(404).json({ message: 'Item not found' });
@@ -48,7 +48,7 @@ router.get('/:id', verifyToken, checkPermission('read:inventory'), async (req, r
 });
 
 // Update an inventory item
-router.put('/:id', verifyToken, checkPermission('write:inventory'), async (req, res) => {
+router.put('/:id', verifyToken, async (req, res) => {
     try {
         const updatedItem = await Inventory.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!updatedItem) return res.status(404).json({ message: 'Item not found' });
@@ -59,7 +59,7 @@ router.put('/:id', verifyToken, checkPermission('write:inventory'), async (req, 
 });
 
 // Delete an inventory item
-router.delete('/:id', verifyToken, checkPermission('write:inventory'), async (req, res) => {
+router.delete('/:id', verifyToken, async (req, res) => {
     try {
         const deletedItem = await Inventory.findByIdAndDelete(req.params.id);
         if (!deletedItem) return res.status(404).json({ message: 'Item not found' });
@@ -70,7 +70,7 @@ router.delete('/:id', verifyToken, checkPermission('write:inventory'), async (re
 });
 
 // Search inventory items by name or generic name
-router.get('/search/:query', verifyToken, checkPermission('read:inventory'), async (req, res) => {
+router.get('/search/:query', verifyToken, async (req, res) => {
     try {
         const items = await Inventory.find({
             $or: [
@@ -85,7 +85,7 @@ router.get('/search/:query', verifyToken, checkPermission('read:inventory'), asy
 });
 
 // Get low stock items (quantity below a certain threshold)
-router.get('/low-stock/:threshold', verifyToken, checkPermission('read:inventory'), async (req, res) => {
+router.get('/low-stock/:threshold', verifyToken, async (req, res) => {
     try {
         const threshold = parseInt(req.params.threshold);
         const items = await Inventory.find({ quantity: { $lt: threshold } });
@@ -96,7 +96,7 @@ router.get('/low-stock/:threshold', verifyToken, checkPermission('read:inventory
 });
 
 // Get items expiring soon (within the next 30 days)
-router.get('/expiring-soon', verifyToken, checkPermission('read:inventory'), async (req, res) => {
+router.get('/expiring-soon', verifyToken, async (req, res) => {
     try {
         const thirtyDaysFromNow = new Date();
         thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
@@ -110,7 +110,7 @@ router.get('/expiring-soon', verifyToken, checkPermission('read:inventory'), asy
 });
 
 // Update quantity of an item (for restocking or sales)
-router.patch('/:id/update-quantity', verifyToken, checkPermission('write:inventory'), async (req, res) => {
+router.patch('/:id/update-quantity', verifyToken, async (req, res) => {
     try {
         const { quantity } = req.body;
         const updatedItem = await Inventory.findByIdAndUpdate(

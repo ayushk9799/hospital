@@ -251,7 +251,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                   {billData.payments.map((payment, index) => (
                     <TableRow key={index}>
                       <TableCell className="text-xs">
-                        {new Date(payment.createdAt).toLocaleDateString("en_IN")}
+                        {new Date(payment.createdAt).toLocaleDateString("en-IN")}
                       </TableCell>
                       {!isMobile && (
                         <TableCell className="text-xs">

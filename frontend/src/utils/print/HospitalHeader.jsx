@@ -33,6 +33,13 @@ const HospitalHeader = () => {
             Mob : {hospitalInfo?.contactNumber}
           </p>
         </div>
+        <div >
+          <img
+            src={require("../../components/custom/reports/nabh.png")}
+            alt="Clinic Logo"
+            className="w-[120px] h-[100px]"
+          />
+        </div>
       </div>
     </div>
   );

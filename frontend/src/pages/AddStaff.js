@@ -347,7 +347,7 @@ export default function AddStaff() {
                   Select All
                 </Button>
               </div>
-              <div className="space-y-2 grid grid-col-2">
+              <div className="space-y-2 grid grid-cols-2">
                 {permissionGroups["Patient Management"].map((permission) => (
                   <div
                     key={permission.id}

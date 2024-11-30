@@ -30,6 +30,9 @@ const servicesBillSchema = new mongoose.Schema({
     phone : String,
     registrationNumber:String,
     ipdNumber:String,
+    age:Number,
+    gender:String,
+    address:String
   },
   createdBy : {
     type : mongoose.Schema.Types.ObjectId,

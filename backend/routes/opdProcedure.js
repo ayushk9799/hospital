@@ -77,6 +77,11 @@ router.post("/", verifyToken, async (req, res) => {
       patientInfo: {
         name: name,
         phone: contactNumber,
+        registrationNumber:registrationNumber,
+        age:age,
+        ipdNumber:ipdNumber,
+        gender:gender,
+        address:address
       },
       createdBy: req.user._id,
     });

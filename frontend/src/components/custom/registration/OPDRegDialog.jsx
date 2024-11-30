@@ -193,10 +193,25 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
         paymentMethod: prev.visit.paymentMethod.map((pm) =>
           pm.method === method ? { ...pm, amount } : pm
         ),
+       
       },
     }));
   };
-
+useEffect(()=>
+{
+  const amount=formData.visit.paymentMethod.reduce(
+    (sum, pm) => sum + (pm.amount ? parseFloat(pm.amount) : 0),
+    0
+  );
+  setFormData((prev)=>
+  ({
+    ...prev,
+    visit:{
+      ...prev.visit,
+      amountPaid:amount
+    }
+  }))
+},[formData.visit.paymentMethod])
   const handlePaymentMethodChange = (newMethods) => {
     setFormData((prev) => {
       // Get existing payment methods with their amounts

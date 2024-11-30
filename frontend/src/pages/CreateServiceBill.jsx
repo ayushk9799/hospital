@@ -605,9 +605,7 @@ const CreateServiceBill = ({
           payments: firstBill.payments || [],
           invoiceNumber: firstBill.invoiceNumber || null,
         },
-        payment: {
-          paymentMethod: firstBill.paymentMethod || "Cash",
-        },
+        payment: firstBill.payments||[]
       };
       setBillDataForPrint(opdBillData);
       setIsPrintModalOpen(true);
