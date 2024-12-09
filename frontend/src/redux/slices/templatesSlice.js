@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import  createLoadingAsyncThunk  from "./createLoadingAsyncThunk";
+import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 import { Backend_URL } from "../../assets/Data";
 
 // Async thunk for fetching templates
@@ -60,32 +60,35 @@ export const updateTemplate = createLoadingAsyncThunk(
 // Async thunk for updating service bill collections
 export const updateServiceBillCollections = createAsyncThunk(
   "templates/updateServiceBillCollections",
-  async (serviceBillCollections, { rejectWithValue }) => {  
-    try{
-      const response=await fetch(`${Backend_URL}/api/hospitals/template/service_collections`,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
-        credentials:"include",
-        body:JSON.stringify(serviceBillCollections)
-      })
-      if(!response.ok){
-        throw new Error("Failed to update service bill collections")
+  async (serviceBillCollections, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/hospitals/template/service_collections`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(serviceBillCollections),
+        }
+      );
+      if (!response.ok) {
+        throw new Error("Failed to update service bill collections");
       }
-      const data=await response.json()
-      return data
-    }catch(error){
-      return rejectWithValue(error.message)
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
     }
   }
-);  
+);
 
 const initialState = {
   labTestsTemplate: [],
   headerTemplate: {},
   diagnosisTemplate: [],
-  status: "idle", 
+  status: "idle",
   error: null,
-  serviceBillCollections:[]
+  serviceBillCollections: [],
 };
 
 const templatesSlice = createSlice({
@@ -102,7 +105,7 @@ const templatesSlice = createSlice({
         state.labTestsTemplate = action.payload.labTestsTemplate;
         state.headerTemplate = action.payload.headerTemplate;
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
-        state.serviceBillCollections=action.payload.service_collections;
+        state.serviceBillCollections = action.payload.service_collections;
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
         state.status = "failed";
@@ -116,13 +119,13 @@ const templatesSlice = createSlice({
         if (action.payload.labTestsTemplate) {
           state.labTestsTemplate = action.payload.labTestsTemplate;
         }
-        if(action.payload.headerTemplate){
-          state.headerTemplate=action.payload.headerTemplate;
+        if (action.payload.headerTemplate) {
+          state.headerTemplate = action.payload.headerTemplate;
         }
       })
-      .addCase(updateServiceBillCollections.fulfilled,(state,action)=>{
-        state.serviceBillCollections=action.payload;
-      })
+      .addCase(updateServiceBillCollections.fulfilled, (state, action) => {
+        state.serviceBillCollections = action.payload;
+      });
   },
 });
 

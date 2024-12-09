@@ -37,6 +37,7 @@ const HospitalInfo = () => {
   const [formData, setFormData] = useState({
     name: "",
     logo: "",
+    logo2: "",
     address: "",
     contactNumber: "",
     email: "",
@@ -55,6 +56,8 @@ const HospitalInfo = () => {
   const [newCategory, setNewCategory] = useState("");
   const [logoPreview, setLogoPreview] = useState(null);
   const [logoFile, setLogoFile] = useState(null);
+  const [logo2Preview, setLogo2Preview] = useState(null);
+  const [logo2File, setLogo2File] = useState(null);
 
   useEffect(() => {
     if (hospitalInfoStatus === "idle") {
@@ -93,6 +96,18 @@ const HospitalInfo = () => {
       const reader = new FileReader();
       reader.onloadend = () => {
         setLogoPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogo2Upload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setLogo2File(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setLogo2Preview(reader.result);
       };
       reader.readAsDataURL(file);
     }
@@ -138,8 +153,52 @@ const HospitalInfo = () => {
     }
   };
 
+  const uploadLogo2 = async () => {
+    if (!logo2File) return null;
+
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/hospitals/getUploadUrl`,
+        {
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to upload logo2");
+      }
+
+      const data = await response.json();
+
+      const res = await fetch(data.url, {
+        method: "PUT",
+        body: logo2File,
+        headers: {
+          "Content-Type": "image/png",
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to upload logo2");
+      } else {
+        return `${s3Domain}/${data.key}`;
+      }
+    } catch (error) {
+      console.error("Error uploading logo2:", error);
+      toast({
+        title: "Logo2 Upload Failed",
+        description: "Failed to upload the second logo. Please try again.",
+        variant: "destructive",
+      });
+      return null;
+    }
+  };
+
   const triggerLogoUpload = () => {
     document.getElementById("logo-upload").click();
+  };
+
+  const triggerLogo2Upload = () => {
+    document.getElementById("logo2-upload").click();
   };
 
   const handleSubmit = async (e) => {
@@ -154,6 +213,13 @@ const HospitalInfo = () => {
         }
       }
 
+      if (logo2File) {
+        const logo2Url = await uploadLogo2();
+        if (logo2Url) {
+          updatedFormData.logo2 = logo2Url;
+        }
+      }
+
       await dispatch(updateHospitalInfo(updatedFormData)).unwrap();
       toast({
         variant: "success",
@@ -162,7 +228,6 @@ const HospitalInfo = () => {
       });
     } catch (error) {
       toast({
-        title: "Unable to update",
         title: "Unable to update",
         description: "Failed to update hospital information. Please try again.",
         variant: "destructive",
@@ -261,7 +326,7 @@ const HospitalInfo = () => {
                   onChange={handleChange}
                 />
                 <InputField
-                  label="Doctor Name"
+                  label="Doctor's Name (Only for Clinic)"
                   name="doctorName"
                   value={formData.doctorName}
                   onChange={handleChange}
@@ -281,10 +346,11 @@ const HospitalInfo = () => {
                 />
               </div>
               <div className="col-span-1">
-                <div className="mb-6">
-                  <Label htmlFor="logo-upload" className="text-sm font-medium">
+              <Label htmlFor="logo-upload" className="text-sm font-medium">
                     Hospital Logo
                   </Label>
+                <div className="mb-6 grid grid-cols-2 gap-6">
+                  
                   <div
                     className="mt-2 flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-full sm:w-40 h-40 cursor-pointer"
                     onClick={triggerLogoUpload}
@@ -317,7 +383,45 @@ const HospitalInfo = () => {
                       />
                     </div>
                   </div>
+                  <div
+                    className="mt-2 flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-full sm:w-40 h-40 cursor-pointer"
+                    onClick={triggerLogo2Upload}
+                  >
+                    <div className="text-center">
+                      {logo2Preview || formData.logo2 ? (
+                        <img
+                          src={logo2Preview || formData.logo2}
+                          alt="Secondary Logo Preview"
+                          className="mx-auto h-32 w-32 object-cover"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center">
+                          <Upload
+                            className="h-10 w-10 text-gray-300"
+                            aria-hidden="true"
+                          />
+                          <span className="mt-2 block text-sm font-semibold text-gray-900">
+                            Upload
+                          </span>
+                        </div>
+                      )}
+                      <input
+                        id="logo2-upload"
+                        name="logo2-upload"
+                        type="file"
+                        className="hidden"
+                        onChange={handleLogo2Upload}
+                        accept="image/*"
+                      />
+                    </div>
+                  </div>
                 </div>
+
+                <div className="mb-6">
+                 
+                 
+                </div>
+
                 <CategoryField
                   label="Hospital Service Categories"
                   categories={formData.hospitalServiceCategories}

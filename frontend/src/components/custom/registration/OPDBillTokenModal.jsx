@@ -76,7 +76,7 @@ const OPDBillTokenModal = ({
       @media print {
         @page {
           size: 297mm 210mm;  /* A4 Landscape dimensions explicitly set */
-          margin: 10mm;
+          margin: 7mm;
         }
         
         body {
@@ -106,19 +106,19 @@ const OPDBillTokenModal = ({
 
         /* Adjust font sizes and spacing for landscape layout */
         .print-header h1 {
-          font-size: 14px !important;
+          font-size: 20px !important;
         }
 
         .print-header p {
-          font-size: 12px !important;
+          font-size: 16px !important;
         }
 
         .patient-details {
-          font-size: 11px !important;
+          font-size: 14px !important;
         }
 
         table {
-          font-size: 11px !important;
+          font-size: 12px !important;
         }
 
         td, th {
@@ -127,7 +127,8 @@ const OPDBillTokenModal = ({
 
         .summary-section {
           width: 120mm !important;
-          font-size: 11px !important;
+          font-size: 12px !important;
+          font-weight: 600;
         }
       }
     `,
@@ -141,10 +142,10 @@ const OPDBillTokenModal = ({
     <div className="w-full lg:w-1/2 p-2 lg:p-4 border-b lg:border-b-0 lg:border-r border-dashed">
       <div className="mb-1 sm:mb-2">
         <SimplePrintHeader />
-        <div className="flex justify-between items-center mt-2">
-          <h2 className="font-bold">{title}</h2>
+        <div className="flex justify-between items-center mt-2 font ">
+          <h2 className="font-bold text-lg">{title}</h2>
           <div className="text-sm">
-            <span className="font-semibold">Invoice No: </span>
+            <span className="font-semibold text-base">Invoice No: </span>
             <span>{bill?.invoiceNumber || "N/A"}</span>
           </div>
         </div>
@@ -155,34 +156,34 @@ const OPDBillTokenModal = ({
           <div className="grid grid-cols-3 gap-4 pb-3 border-b">
             <div className="flex gap-2">
               <span className="font-semibold">Name:</span>
-              <span>{patient.name}</span>
+              <span className="font-semibold">{patient.name}</span>
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">Age/Sex:</span>
-              <span>
+              <span className="font-semibold">
                 {patient.age}/{patient.gender}
               </span>
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">UHID No:</span>
-              <span>{patient.registrationNumber}</span>
+              <span className="font-semibold">{patient.registrationNumber}</span>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 pt-3">
             <div className="flex gap-2 whitespace-nowrap overflow-hidden">
               <span className="font-semibold flex-shrink-0">Address:</span>
-              <span className="truncate" title={patient.address}>
+              <span className="truncate font-semibold"title={patient.address}>
                 {patient.address}
               </span>
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">Contact:</span>
-              <span>{patient.contactNumber}</span>
+              <span className="font-semibold">{patient.contactNumber}</span>
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">Date:</span>
-              <span>{format(new Date(bill.createdAt), "dd/MM/yyyy")}</span>
+              <span className="font-semibold">{format(new Date(bill.createdAt), "dd/MM/yyyy")}</span>
             </div>
           </div>
         </div>

@@ -13,6 +13,7 @@ const HospitalSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  logo2:String,
   pharmacyName: String,
   pharmacyAddress: String,
   pharmacyContactNumber: String,
@@ -20,7 +21,7 @@ const HospitalSchema = new mongoose.Schema({
   pharmacyExpiryThreshold: {
     type: Number,
     min: 0,
-    default: 3 // Default to 3 months, for example
+    default: 3 
   },
   pharmacyItemCategories: {
     type: [String],

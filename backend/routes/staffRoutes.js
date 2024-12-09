@@ -45,14 +45,17 @@ router.post('/', verifyToken, checkPermission('create_staff'),  async (req, res)
   }
 });
 
-router.get('/', verifyToken,  async (req, res) => {
+router.get('/', verifyToken, async (req, res) => {
   try {
-    const staffMembers = await Staff.find().select('-password');
+    // Check if user has edit_staff permission
+   
+    const staffMembers = await Staff.find().select("-password");
     res.json(staffMembers);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
+
 router.get('/me',verifyToken,async(req,res)=>{
   try {
     const staff = await Staff.findById(req.user._id).select('-password');

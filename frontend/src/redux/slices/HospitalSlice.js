@@ -1,71 +1,154 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { Backend_URL } from '../../assets/Data';
+import { createSlice } from "@reduxjs/toolkit";
+import { Backend_URL } from "../../assets/Data";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 
 // Create an async thunk for fetching hospital data
 export const fetchHospitalInfo = createLoadingAsyncThunk(
-  'hospital/fetchHospitalInfo',
+  "hospital/fetchHospitalInfo",
   async () => {
-    const response = await fetch(`${Backend_URL}/api/hospitals/getHospital`,{credentials:'include'});
-    if (!response.ok) {
-      throw new Error('Failed to fetch hospital data');
-    }
-    return response.json();
-  }, {useGlobalLoading: true}
-);
-
-// New async thunk for updating hospital info
-export const updateHospitalInfo = createLoadingAsyncThunk(
-  'hospital/updateHospitalInfo',
-  async (hospitalData) => {
-    const response = await fetch(`${Backend_URL}/api/hospitals/${hospitalData.hospitalId}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(hospitalData),
+    const response = await fetch(`${Backend_URL}/api/hospitals/getHospital`, {
+      credentials: "include",
     });
     if (!response.ok) {
-      throw new Error('Failed to update hospital data');
+      throw new Error("Failed to fetch hospital data");
     }
-    return response.json();
-  }, {useGlobalLoading: true}
+    const hospitalData = await response.json();
+    console.log(hospitalData);
+
+    // Handle logo1
+    if (hospitalData.logo) {
+      try {
+        const imageResponse = await fetch(hospitalData.logo);
+        const blob = await imageResponse.blob();
+        hospitalData.hospitalLogoBlob = URL.createObjectURL(blob);
+      } catch (error) {
+        console.error("Failed to fetch hospital logo:", error);
+        hospitalData.hospitalLogoBlob = null;
+      }
+    }
+
+    // Handle logo2
+    if (hospitalData.logo2) {
+      try {
+        const imageResponse = await fetch(hospitalData.logo2);
+        const blob = await imageResponse.blob();
+        hospitalData.hospitalLogo2Blob = URL.createObjectURL(blob);
+      } catch (error) {
+        console.error("Failed to fetch hospital logo2:", error);
+        hospitalData.hospitalLogo2Blob = null;
+      }
+    }
+
+    return hospitalData;
+  },
+  { useGlobalLoading: true }
+);
+
+// New async thunk for updating hospital info  ///need to check 
+export const updateHospitalInfo = createLoadingAsyncThunk(
+  "hospital/updateHospitalInfo",
+  async (hospitalData) => {
+    const response = await fetch(
+      `${Backend_URL}/api/hospitals/${hospitalData.hospitalId}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(hospitalData),
+      }
+    );
+    if (!response.ok) {
+      throw new Error("Failed to update hospital data");
+    }
+    const updatedData = await response.json();
+    console.log(updatedData);
+    // Fetch the new image if URL exists
+    if (updatedData.logo) {
+      try {
+        const imageResponse = await fetch(updatedData.logo);
+        const blob = await imageResponse.blob();
+        updatedData.hospitalLogoBlob = URL.createObjectURL(blob);
+      } catch (error) {
+        console.error("Failed to fetch updated hospital logo:", error);
+        updatedData.hospitalLogoBlob = null;
+      }
+    }
+
+    return updatedData;
+  },
+  { useGlobalLoading: true }
 );
 
 const hospitalSlice = createSlice({
-  name: 'hospital',
+  name: "hospital",
   initialState: {
     hospitalInfo: null,
-    hospitalInfoStatus: 'idle',
-    updateStatus: 'idle',
+    hospitalLogoBlob: null,
+    hospitalLogo2Blob: null, // Added for second logo
+    hospitalInfoStatus: "idle",
+    updateStatus: "idle",
     error: null,
   },
-  reducers: {},
+  reducers: {
+    cleanupLogoBlob: (state) => {
+      if (state.hospitalLogoBlob) {
+        URL.revokeObjectURL(state.hospitalLogoBlob);
+        state.hospitalLogoBlob = null;
+      }
+      if (state.hospitalLogo2Blob) {
+        URL.revokeObjectURL(state.hospitalLogo2Blob);
+        state.hospitalLogo2Blob = null;
+      }
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchHospitalInfo.pending, (state) => {
-        state.hospitalInfoStatus = 'loading';
+        state.hospitalInfoStatus = "loading";
+        // Cleanup previous blob URLs if they exist
+        if (state.hospitalLogoBlob) {
+          URL.revokeObjectURL(state.hospitalLogoBlob);
+        }
+        if (state.hospitalLogo2Blob) {
+          URL.revokeObjectURL(state.hospitalLogo2Blob);
+        }
       })
       .addCase(fetchHospitalInfo.fulfilled, (state, action) => {
-        state.hospitalInfoStatus = 'succeeded';
+        state.hospitalInfoStatus = "succeeded";
         state.hospitalInfo = action.payload;
+        state.hospitalLogoBlob = action.payload.hospitalLogoBlob;
+        state.hospitalLogo2Blob = action.payload.hospitalLogo2Blob;
       })
       .addCase(fetchHospitalInfo.rejected, (state, action) => {
-        state.hospitalInfoStatus = 'failed';
+        state.hospitalInfoStatus = "failed";
         state.error = action.error.message;
       })
       .addCase(updateHospitalInfo.pending, (state) => {
-        state.updateStatus = 'loading';
+        state.updateStatus = "loading";
+        // Cleanup previous blob URLs if they exist
+        if (state.hospitalLogoBlob) {
+          URL.revokeObjectURL(state.hospitalLogoBlob);
+        }
+        if (state.hospitalLogo2Blob) {
+          URL.revokeObjectURL(state.hospitalLogo2Blob);
+        }
       })
       .addCase(updateHospitalInfo.fulfilled, (state, action) => {
-        state.updateStatus = 'succeeded';
+        state.updateStatus = "succeeded";
         state.hospitalInfo = action.payload.hospital;
+        state.hospitalLogoBlob = action.payload.hospital.hospitalLogoBlob;
+        state.hospitalLogo2Blob = action.payload.hospital.hospitalLogo2Blob;
       })
       .addCase(updateHospitalInfo.rejected, (state, action) => {
-        state.updateStatus = 'failed';
+        state.updateStatus = "failed";
         state.error = action.error.message;
       });
   },
 });
+
+export const { cleanupLogoBlob } = hospitalSlice.actions;
+export const selectHospitalLogoBlob = (state) => state.hospital.hospitalLogoBlob;
+export const selectHospitalLogo2Blob = (state) => state.hospital.hospitalLogo2Blob; // New selector for logo2
 
 export default hospitalSlice.reducer;

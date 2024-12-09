@@ -23,7 +23,7 @@ export default function Customization() {
 
   const handleAddDiagnosis = () => {
     if (newDiagnosis.trim()) {
-      setSelectedDiagnoses([...selectedDiagnoses, newDiagnosis.trim()]);
+      setSelectedDiagnoses([...selectedDiagnoses, ...(newDiagnosis.trim().split(","))]);
       setNewDiagnosis("");
     }
   };
@@ -33,6 +33,7 @@ export default function Customization() {
   };
 
   const handleSave = () => {
+    console.log(selectedDiagnoses)
     dispatch(updateTemplate({ diagnosisTemplate: selectedDiagnoses }));
   };
 

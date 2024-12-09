@@ -6,6 +6,7 @@ import { store } from './redux/store';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchPatients } from './redux/slices/patientSlice';
 import { fetchStaffMembers } from './redux/slices/staffSlice';
+import { fetchTemplates } from './redux/slices/templatesSlice';
 import  CreateRoom  from './pages/CreateRoom';
 import Home from './pages/Home';
 import VerticalNav, { navItems } from './components/custom/Navigations/VerticalNav';
@@ -67,7 +68,8 @@ const AppContent = () => {
             dispatch(fetchStaffMembers()),
             dispatch(fetchDepartments()),
             dispatch(fetchRooms()),
-            dispatch(fetchHospitalInfo())
+            dispatch(fetchHospitalInfo()),
+            dispatch(fetchTemplates())
           ]);
         }
       })

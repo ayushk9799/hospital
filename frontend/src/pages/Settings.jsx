@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch } from 'react-redux';
-import { updateTemplate } from '../redux/slices/templatesSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { updateTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import {
   Dialog,
@@ -14,6 +14,10 @@ import { Checkbox } from "../components/ui/checkbox";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { labCategories, labReportFields, Backend_URL } from "../assets/Data";
+import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
+import HospitalHeader, {
+  headerTemplateString,
+} from "../utils/print/HospitalHeader";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -23,7 +27,8 @@ export default function Settings() {
   const [selectedFields, setSelectedFields] = useState({});
   const [templateName, setTemplateName] = useState("");
   const [nameError, setNameError] = useState("");
-
+  const { hospitalInfo } = useSelector((state) => state.hospital);
+  const HeaderComponent = createDynamicComponentFromString(headerTemplateString);
   const handleAddStaff = () => {
     navigate("/addstaff");
   };
@@ -91,7 +96,7 @@ export default function Settings() {
             value: field.value,
             unit: field.unit,
             normalRange: field.normalRange,
-            options: field.options, 
+            options: field.options,
             isSelected:
               !prev[formattedCategory]?.[formattedTest]?.[field.name]
                 ?.isSelected,
@@ -145,14 +150,40 @@ export default function Settings() {
     setNameError("");
   };
 
+  const handleSaveHeaderTemplate = async () => {
+    try {
+      // Use the clean template string instead of toString()
+      console.log(headerTemplateString);
+      console.log(hospitalInfo);
+
+      // Update Redux state with clean template
+      dispatch(updateTemplate({ headerTemplate: headerTemplateString }));
+      console.log("Template saved to Redux");
+
+      alert("Header template saved successfully!");
+    } catch (error) {
+      console.log("Error details:", error);
+      console.error("Error saving header template:", error);
+      alert("Failed to save header template: " + error.message);
+    }
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <h1 className="text-xl sm:text-2xl font-bold mb-4">Settings</h1>
       <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
-        <Button onClick={handleAddStaff} className="w-full sm:w-auto">Add Staff</Button>
-        <Button onClick={handleCreateRoom} className="w-full sm:w-auto">Create Room</Button>
-        <Button onClick={handleHospitalInfo} className="w-full sm:w-auto">Hospital Info</Button>
-        <Button onClick={handleCustomization} className="w-full sm:w-auto">Customization</Button>
+        <Button onClick={handleAddStaff} className="w-full sm:w-auto">
+          Add Staff
+        </Button>
+        <Button onClick={handleCreateRoom} className="w-full sm:w-auto">
+          Create Room
+        </Button>
+        <Button onClick={handleHospitalInfo} className="w-full sm:w-auto">
+          Hospital Info
+        </Button>
+        <Button onClick={handleCustomization} className="w-full sm:w-auto">
+          Customization
+        </Button>
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
           <DialogTrigger asChild>
             <Button className="w-full sm:w-auto">Create Test Template</Button>
@@ -251,8 +282,34 @@ export default function Settings() {
             <Button onClick={handleCreateTemplate}>Create Template</Button>
           </DialogContent>
         </Dialog>
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-4">Header Template Settings</h2>
+
+          {/* Preview section */}
+          <div className="mb-4">
+            <h3 className="text-lg font-semibold mb-2">
+              Current Header Preview
+            </h3>
+            <div className="border p-4 rounded-lg">
+              {HeaderComponent ? (
+                <HeaderComponent hospitalInfo={hospitalInfo} />
+              ) : (
+                <div>No preview available</div>
+              )}
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex gap-4">
+            <Button
+              onClick={handleSaveHeaderTemplate}
+              className="bg-primary text-white"
+            >
+              Save As Default Header Template
+            </Button>
+          </div>
+        </div>
       </div>
-      
     </div>
   );
 }

@@ -64,6 +64,7 @@ import { fetchPatients } from "../redux/slices/patientSlice";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "../components/ui/badge";
+import OPDPrescriptionPrint from "../components/custom/print/OPDPrescriptionPrint";
 
 export default function Patients() {
   const dispatch = useDispatch();
@@ -197,7 +198,7 @@ export default function Patients() {
       <Table>
         <TableHeader>
           <TableRow>
-            {type==="OPD"&&<TableHead>Sl. No</TableHead>}
+            {type === "OPD" && <TableHead>Sl. No</TableHead>}
             <TableHead>Name</TableHead>
             <TableHead>UHID No</TableHead>
             {type === "IPD" && (
@@ -221,7 +222,7 @@ export default function Patients() {
         <TableBody>
           {patients.map((patient) => (
             <TableRow key={patient._id}>
-              {type==="OPD"&&<TableCell>{patient.bookingNumber}</TableCell>}
+              {type === "OPD" && <TableCell>{patient.bookingNumber}</TableCell>}
               <TableCell>
                 <Button
                   variant="link"
@@ -269,7 +270,10 @@ export default function Patients() {
               )}
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>
-                <div className="max-w-[150px] truncate" title={patient.patient.address || "--"}>
+                <div
+                  className="max-w-[150px] truncate"
+                  title={patient.patient.address || "--"}
+                >
                   {patient.patient.address || "--"}
                 </div>
               </TableCell>
@@ -289,8 +293,12 @@ export default function Patients() {
                     >
                       Bills
                     </DropdownMenuItem>
-
-                    {type === "IPD" && (
+                    {patient.type === "OPD" && (
+                      <DropdownMenuItem asChild>
+                        <OPDPrescriptionPrint patient={patient} />
+                      </DropdownMenuItem>
+                    )}
+                    {patient.type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
                       >
@@ -374,7 +382,11 @@ export default function Patients() {
                     >
                       Bills
                     </DropdownMenuItem>
-
+                    {patient.type === "OPD" && (
+                      <DropdownMenuItem asChild>
+                        <OPDPrescriptionPrint patient={patient} />
+                      </DropdownMenuItem>
+                    )}
                     {patient.type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
@@ -389,14 +401,13 @@ export default function Patients() {
               </div>
             </div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-2 mb-3">
-            
-                <div className="flex items-center col-span-2">
-                  <User className="h-4 w-4 text-muted-foreground mr-2" />
-                  <span className="text-sm">
-                    UHID No: {patient.registrationNumber || "--"}
-                  </span>
-                </div>
-            
+              <div className="flex items-center col-span-2">
+                <User className="h-4 w-4 text-muted-foreground mr-2" />
+                <span className="text-sm">
+                  UHID No: {patient.registrationNumber || "--"}
+                </span>
+              </div>
+
               <div className="flex items-center">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground mr-2" />
                 <span className="text-sm">
@@ -409,7 +420,10 @@ export default function Patients() {
               </div>
               <div className="flex items-center col-span-2">
                 <MapPin className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
-                <span className="text-sm truncate max-w-[200px]" title={patient.patient.address || "--"}>
+                <span
+                  className="text-sm truncate max-w-[200px]"
+                  title={patient.patient.address || "--"}
+                >
                   {patient.patient.address || "--"}
                 </span>
               </div>

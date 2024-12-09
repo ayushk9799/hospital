@@ -85,7 +85,7 @@ export default function AddStaff() {
     setNewQualification("");
     setNewCertification("");
   };
-  useEffect(() => {}, [formData]); // This effect runs whenever formData changes
+  useEffect(() => {}, [formData]); 
 
   useEffect(() => {
     if (location.state?.editMode && location.state?.staffData) {
@@ -610,7 +610,6 @@ export default function AddStaff() {
                 <span className="text-red-500 text-sm">{errors.username}</span>
               )}
             </div>
-            {!editMode && ( // Only show password field when not in edit mode
               <div>
                 <Label htmlFor="password">Password</Label>
                 <Input
@@ -626,7 +625,7 @@ export default function AddStaff() {
                   </span>
                 )}
               </div>
-            )}
+            
             <div>
               <Label htmlFor="employeeID">Employee ID</Label>
               <Input

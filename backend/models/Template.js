@@ -5,12 +5,14 @@ const templateSchema = new mongoose.Schema({
   labTestsTemplate: [
     {
       name: String,
-      fields: mongoose.Schema.Types.Mixed
+      fields: mongoose.Schema.Types.Mixed,
     },
   ],
-  headerTemplate: mongoose.Schema.Types.Mixed,
+  headerTemplate: String,
   diagnosisTemplate: [String],
-  service_collections: [{ ref: "Service", type: mongoose.Schema.Types.ObjectId }],
+  service_collections: [
+    { ref: "Service", type: mongoose.Schema.Types.ObjectId },
+  ],
 });
 
 templateSchema.plugin(hospitalPlugin);

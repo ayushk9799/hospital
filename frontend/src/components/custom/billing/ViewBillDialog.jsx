@@ -21,13 +21,13 @@ import {
 } from "../../ui/table";
 import { PrinterIcon } from "lucide-react";
 import { numberToWords } from "../../../assets/Data";
-import { stylesFont } from "../reports/LabReportPDF";
 import { useSelector } from "react-redux";
-import HospitalHeader from "../../../utils/print/HospitalHeader";
+import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { AlertCircle } from "lucide-react";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Checkbox } from "../../ui/checkbox";
+import {headerTemplateString} from "../../../utils/print/HospitalHeader";
 import { X } from "lucide-react";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
@@ -35,7 +35,10 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [selectedServices, setSelectedServices] = useState([]);
-
+  const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
+  const headerTemplateStrings = useSelector((state) => state.templates.headerTemplate);
+  console.log(headerTemplateStrings)
+  const HeaderComponent = createDynamicComponentFromString(headerTemplateStrings||headerTemplateString);
   React.useEffect(() => {
     if (billData?.services) {
       setSelectedServices(billData.services.map((_, index) => index));
@@ -124,7 +127,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
         <ScrollArea className="max-h-[80vh] ">
           <div ref={componentRef} className={isPrinting ? "print-content" : ""}>
             <div className="hidden print:block mb-2">
-              <HospitalHeader />
+              <HeaderComponent hospitalInfo={hospitalInfo} />
             </div>
             <div className="print:pb-6">
               <div className="no-print">
