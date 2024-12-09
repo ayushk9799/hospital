@@ -147,7 +147,7 @@ export const HeaderTemplate = ({ hospital }) => {
           }}
         >
           <View style={{ marginLeft: 50 }}>
-            <Image src={hospital.logo} style={{ width: 70 }} />
+            <Image src={hospital.hospitalLogoBlob} style={{ width: 70 }} />
           </View>
           <View style={{ position: "absolute", width: "100%" }}>
             <Text style={styles.clinicInfo}>{hospital.address}</Text>
@@ -159,7 +159,7 @@ export const HeaderTemplate = ({ hospital }) => {
             </Text>
           </View>
           <View style={{ marginRight: 50 }}>
-            <Image src={nabhLogo} style={{ height: 70 }} />
+            <Image src={hospital.hospitalLogo2Blob} style={{ height: 70 }} />
           </View>
         </View>
       </View>

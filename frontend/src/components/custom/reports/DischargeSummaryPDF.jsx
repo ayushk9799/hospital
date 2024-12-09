@@ -270,7 +270,7 @@ const DischargeSummaryPDF = forwardRef(
     return (
       <div ref={ref} style={styles.page} className="print-content">
         <div className="hidden print:block mb-2">
-          <HospitalHeader />
+          <HospitalHeader hospitalInfo={hospital} />
         </div>
         <div style={styles.title}>Discharge Summary</div>
 
