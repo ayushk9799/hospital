@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +26,7 @@ import { searchPatients } from "../../../redux/slices/patientSlice";
 import { Search } from "lucide-react";
 import { useSelector } from "react-redux";
 import OPDProcedureBillDialog from "./OPDProcedureBillDialog";
+import SearchSuggestion from "../registration/CustomSearchSuggestion";
 
 const OPDProcedureDialog = ({ open, onOpenChange }) => {
   const initialFormData = {
@@ -47,11 +48,32 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
   const proceduresList = [
-    { name: "Dressing", amount: 500 },
-    { name: "Injection", amount: 300 },
-    { name: "Nebulization", amount: 400 },
+    { name: "UROFLOWMETRY", amount: "" },
+    { name: "UROFLOWMETRY+PVR", amount: "" },
+    { name: "FOLEYS", amount: "" },
+    {
+      name:"CYSTOSCOPY",
+      amount:"",
+    },
+    {
+      name:"CISC",
+      amount:"",
+    },
+    {
+      name:"DJ STENT REMOVE",
+      amount:"",
+    },
+    
     // Add more procedures as needed
   ];
+
+  // Convert proceduresList to the format expected by SearchSuggestion
+  const proceduresSuggestions = useMemo(() => 
+    proceduresList.map(proc => ({
+      name: `${proc.name} - ₹${proc.amount}`,
+      ...proc
+    }))
+  , [proceduresList]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -61,14 +83,12 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
     });
   };
 
-  const handleProcedureSelect = (selectedProcedure) => {
-    const procedure = proceduresList.find((p) => p.name === selectedProcedure);
-    const total = procedure?.amount || 0;
-
+  // Update handleProcedureSelect to work with SearchSuggestion
+  const handleProcedureSelect = (suggestion) => {
     setFormData({
       ...formData,
-      procedureName: selectedProcedure,
-      totalAmount: total,
+      procedureName: suggestion.name,
+      totalAmount: suggestion.amount,
     });
   };
 
@@ -104,6 +124,7 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
           toast({
             title: "Success",
             description: "OPD Procedure registered successfully",
+            variant:"success"
           });
           setResponseData(res);
           setShowBill(true);
@@ -228,23 +249,21 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
                 error={errors.name}
               />
             </div>
-
-            <div className="relative">
-              <MemoizedInput
-                id="registrationNumber"
-                name="registrationNumber"
-                label="UHID No"
-                value={formData.registrationNumber}
-                onChange={handleInputChange}
+            <div className="space-y-2">
+              <SearchSuggestion
+                suggestions={proceduresSuggestions}
+                placeholder="Select procedure"
+                value={formData.procedureName}
+                setValue={(value) => 
+                  setFormData(prev => ({
+                    ...prev,
+                    procedureName: value
+                  }))
+                }
+                onSuggestionSelect={handleProcedureSelect}
               />
-              <button
-                type="button"
-                onClick={handleSearchClick}
-                className="absolute right-2 top-[50%] transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                <Search className="h-4 w-4" />
-              </button>
             </div>
+           
 
            
 
@@ -298,24 +317,23 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
                 error={errors.contactNumber}
               />
             </div>
-
-            <div className="space-y-2">
-              <Select
-                value={formData.procedureName}
-                onValueChange={handleProcedureSelect}
+            <div className="relative">
+              <MemoizedInput
+                id="registrationNumber"
+                name="registrationNumber"
+                label="UHID No"
+                value={formData.registrationNumber}
+                onChange={handleInputChange}
+              />
+              <button
+                type="button"
+                onClick={handleSearchClick}
+                className="absolute right-2 top-[50%] transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
               >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select procedure" />
-                </SelectTrigger>
-                <SelectContent>
-                  {proceduresList.map((procedure) => (
-                    <SelectItem key={procedure.name} value={procedure.name}>
-                      {procedure.name} - ₹{procedure.amount}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <Search className="h-4 w-4" />
+              </button>
             </div>
+            
             <div className="space-y-2">
               <MemoizedInput
                 id="totalAmount"
