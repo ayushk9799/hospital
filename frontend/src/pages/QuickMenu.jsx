@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState ,useEffect} from "react";
 import { Card, CardContent } from "../components/ui/card";
+import { useDispatch } from "react-redux";
+import { fetchPatients } from "../redux/slices/patientSlice";
 import { Button } from "../components/ui/button";
 import {
   UserPlus,
@@ -28,9 +30,13 @@ const QuickMenu = () => {
   const [isOPDDialogOpen, setIsOPDDialogOpen] = useState(false);
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
   const [isOPDProcedureOpen, setIsOPDProcedureOpen] = useState(false);
+  const dispatch = useDispatch();
   const todaysPatient = useSelector(
     (state) => state.patients.todaysPatientList
   );
+  useEffect(() => {
+    dispatch(fetchPatients({ startDate: new Date().toLocaleDateString('en-In').split('/').reverse().join('-') }));
+  }, []);
   const navigate = useNavigate();
 
   // Filter today's patients

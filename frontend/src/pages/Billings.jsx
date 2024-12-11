@@ -318,8 +318,12 @@ const Billings = () => {
               <h3 className="text-lg font-semibold capitalize">
                 {bill.patientInfo.name}
               </h3>
-              <Badge variant="outline" className="ml-2 text-xs">
-                {bill.patientType}
+              <Badge variant="outline" className="ml-2 text-xs font-bold">
+              
+  {bill.patientType === "OPDProcedure" && bill.opdProcedure?.procedureName 
+    ? `${bill.patientType} (${bill.opdProcedure.procedureName})` 
+    : bill.patientType}
+
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground mb-2">
@@ -742,7 +746,12 @@ const Billings = () => {
                       <TableCell>{bill.patientInfo.phone}</TableCell>
                       {!isMediumScreen && (
                         <>
-                          <TableCell>{bill.patientType}</TableCell>
+                        <TableCell className="font-bold">
+  {bill.patientType === "OPDProcedure" && bill.opdProcedure?.procedureName 
+    ? `${bill.patientType} (${bill.opdProcedure.procedureName})` 
+    : bill.patientType}
+</TableCell>
+
                           <TableCell>
                             {formatDateOrTime(bill.createdAt)}
                           </TableCell>

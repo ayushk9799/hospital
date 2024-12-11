@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import { format } from "date-fns";
+import { useSelector } from "react-redux";
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -68,7 +70,6 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
   });
 
   if (!procedureData) return null;
-
   const { opdProcedure, servicesBill, payments } = procedureData;
 
   return (
@@ -77,7 +78,7 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
         <ScrollArea className="max-h-[80vh]">
           <div ref={componentRef} className={isPrinting ? "print-content" : ""}>
             <div className="hidden print:block mb-2">
-              <HospitalHeader />
+              <HospitalHeader hospitalInfo={hospitalInfo} />
             </div>
             <div className="print:pb-6">
               <div className="no-print">

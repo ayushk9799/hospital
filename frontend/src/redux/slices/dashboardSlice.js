@@ -14,9 +14,7 @@ export const fetchDashboardData = createLoadingAsyncThunk(
   "dashboard/fetchData",
   async ({ startDate, endDate, range }, { getState }) => {
     const state = getState();
-    if (range === state.dashboard.dashboardRange) {
-      return state.dashboard.dashboardData;
-    }
+  
 
     const params = new URLSearchParams({ startDate, endDate });
     const response = await fetch(

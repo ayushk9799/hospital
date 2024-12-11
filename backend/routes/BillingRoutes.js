@@ -124,6 +124,7 @@ router.get("/get-bills", async (req, res) => {
       .sort({ createdAt: -1 })
       .populate("patient", "name phone registrationNumber age gender address")
       .populate("createdBy", "name")
+      .populate("opdProcedure", "procedureName")
       .populate("payments");
 
     res.json(bills);

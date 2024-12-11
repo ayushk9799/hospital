@@ -248,10 +248,10 @@ const Dashboard = () => {
   );
 
   useEffect(() => {
-    if (dashboardDataStatus === "idle") {
+    console.log("fetching data");
       fetchData("Last 7 Days");
-    }
-  }, [dashboardDataStatus, dispatch]);
+    
+  }, []);
 
   useEffect(() => {
     if (dateFilter !== "Custom") {
@@ -310,7 +310,7 @@ const Dashboard = () => {
       endDate: endDate.toISOString(),
       range: range,
     };
-
+console.log(ISO_time);
     dispatch(fetchDashboardData(ISO_time));
   };
 

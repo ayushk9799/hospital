@@ -34,6 +34,10 @@ const servicesBillSchema = new mongoose.Schema({
     gender:String,
     address:String
   },
+  opdProcedure : {
+    type : mongoose.Schema.Types.ObjectId,
+    ref : "OPDProcedure",
+  },
   createdBy : {
     type : mongoose.Schema.Types.ObjectId,
     ref : "Staff",

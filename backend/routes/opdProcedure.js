@@ -100,7 +100,7 @@ router.post("/", verifyToken, async (req, res) => {
       address,
       servicesBill: servicesBill._id,
     });
-
+    servicesBill.opdProcedure = opdProcedure._id;
     // Create payment records for each payment method
     const payments = [];
     for (const payment of paymentMethod) {
