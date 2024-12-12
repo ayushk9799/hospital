@@ -142,7 +142,7 @@ router.get("/get-bills", async (req, res) => {
 router.post("/service", async (req, res) => {
   try {
     const { name, category, rate } = req.body;
-    if (!name || !rate)
+    if (!name)
       return res.status(400).json({ message: "Name and rate are required" });
 
     const serviceData = { name, category, rate };

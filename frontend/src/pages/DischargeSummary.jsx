@@ -66,46 +66,12 @@ import {
   TableRow,
 } from "../components/ui/table";
 
-const comorbiditiesList = [
-  "Hypertension",
-  "Diabetes mellitus",
-  "Obesity",
-  "COPD",
-  "Asthma",
-  "Coronary artery disease",
-  "Congestive heart failure",
-  "Chronic kidney disease",
-  "Osteoarthritis",
-  "Rheumatoid arthritis",
-  "Depression",
-  "Anxiety disorders",
-  "Hypothyroidism",
-  "Hyperlipidemia",
-  "GERD",
-  "Sleep apnea",
-  "Osteoporosis",
-  "Chronic liver disease",
-  "Anemia",
-  "Atrial fibrillation",
-].map((name) => ({ name }));
+
 const allLabTests = labCategories.flatMap((category) =>
   category.types.map((type) => ({ name: type }))
 );
 
-// Add this near the top of the file, with other constant declarations
-const diagnosisList = [
-  "Pneumonia",
-  "Myocardial Infarction",
-  "Diabetes Mellitus",
-  "Hypertension",
-  "Chronic Obstructive Pulmonary Disease",
-  "Asthma",
-  "Gastroenteritis",
-  "Urinary Tract Infection",
-  "Appendicitis",
-  "Fracture",
-  // Add more common diagnoses as needed
-].map((name) => ({ name }));
+
 
 const LabReportTable = ({ report }) => {
   return (
@@ -140,7 +106,7 @@ export default function DischargeSummary() {
   const [patient, setPatient] = useState(null);
   const ignoreList = location.state?.ignoreList || false;
   const dischargeData = location.state?.dischargeData || null;
-
+   const {diagnosisTemplate=[],comorbidities=[],medicinelist=[]}=useSelector((state)=>state.templates)
   // Get initial patient from Redux store
   const patientFromStore = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
@@ -246,9 +212,7 @@ export default function DischargeSummary() {
 
   const [isLabReportOpen, setIsLabReportOpen] = useState(false); // State to manage modal visibility
   const [selectedInvestigation, setSelectedInvestigation] = useState(null); // State to track selected investigation
-  const diagnosisTemplate = useSelector(
-    (state) => state.templates.diagnosisTemplate
-  );
+  
 
   const [patientInfo, setPatientInfo] = useState({
     name: "",
@@ -997,7 +961,7 @@ export default function DischargeSummary() {
                   </div>
                   <div className="flex gap-2">
                     <MultiSelectInput
-                      suggestions={diagnosisList}
+                      suggestions={diagnosisTemplate?.map((name)=>({name}))}
                       selectedValues={formData.diagnosis
                         .split(", ")
                         .map((d) => ({ name: d }))}
@@ -1029,7 +993,7 @@ export default function DischargeSummary() {
                   </div>
                   <div className="flex gap-2">
                     <MultiSelectInput
-                      suggestions={comorbiditiesList}
+                      suggestions={comorbidities?.map((name)=>({name}))}
                       selectedValues={formData.comorbidities}
                       setSelectedValues={handleComorbiditiesChange}
                       placeholder="Select comorbidities"
@@ -1151,8 +1115,8 @@ export default function DischargeSummary() {
                         }}
                       >
                         <SearchSuggestion
-                          suggestions={medicines.map((item) => ({
-                            name: item.name,
+                          suggestions={medicinelist?.map((item) => ({
+                            name: item,
                           }))}
                           placeholder="Select medicine/advice"
                           value={item.name}

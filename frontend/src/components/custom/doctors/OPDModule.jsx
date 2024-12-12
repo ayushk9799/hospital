@@ -50,7 +50,7 @@ export default function OPDModule({ patient }) {
 
   // const [comorbidities, setComorbidities] = useState([]);
   const [selectedComorbidities, setSelectedComorbidities] = useState([]);
-  const { diagnosisTemplate, status } = useSelector((state) => state.templates);
+  const { diagnosisTemplate=[],comorbidities=[],medicinelist=[], status } = useSelector((state) => state.templates);
 
   useEffect(() => {
     if (status === "idle") {
@@ -59,7 +59,7 @@ export default function OPDModule({ patient }) {
   }, [status, dispatch]);
   const [selectedDiagnoses, setSelectedDiagnoses] = useState([]);
 
-  const medicines = useSelector((state) => state.pharmacy.items);
+ 
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const prescriptionUpdateStatus = useSelector(
     (state) => state.patients.prescriptionUpdateStatus
@@ -115,8 +115,9 @@ export default function OPDModule({ patient }) {
   }, [patient]);
 
   const commonMedications = useMemo(() => {
-    return medicines.map((item) => ({ name: item.name }));
-  }, [medicines]);
+    console.log(medicinelist)
+    return medicinelist.map((item) => ({ name: item }));
+  }, [medicinelist]);
   const handleVitalChange = (e) => {
     const { name, value } = e.target;
     setVitals((prev) => {
@@ -422,7 +423,7 @@ export default function OPDModule({ patient }) {
                         }))}
                         selectedValues={selectedDiagnoses}
                         setSelectedValues={handleDiagnosisChange}
-                        placeholder="Select diagnoses"
+                        placeholder="Select diagnosis"
                       />
                     </div>
                     <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
@@ -757,7 +758,7 @@ export default function OPDModule({ patient }) {
                       }))}
                       selectedValues={selectedDiagnoses}
                       setSelectedValues={handleDiagnosisChange}
-                      placeholder="Select diagnoses"
+                      placeholder="Select diagnosis"
                     />
                   </div>
                   <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">

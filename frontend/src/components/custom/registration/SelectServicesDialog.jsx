@@ -44,11 +44,11 @@ const SelectServicesDialog = ({ isOpen, onClose, services, selectedServices, onS
   }, [services, localSelectedServices]);
 
   const filteredServices = useMemo(() => {
-    return sortedServices.filter(service =>
+    return [...services].filter(service =>
       service.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       service.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [sortedServices, searchTerm]);
+  }, [ searchTerm]);
 
   const handleCheckboxChange = useCallback((serviceId) => {
     setLocalSelectedServices((prevSelected) =>
@@ -114,7 +114,7 @@ const SelectServicesDialog = ({ isOpen, onClose, services, selectedServices, onS
                     </TableCell>
                     <TableCell>{service.name}</TableCell>
                     <TableCell className="hidden md:block">{service.category}</TableCell>
-                    <TableCell className="text-right font-semibold">₹{service.rate.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right font-semibold">{service.rate?`₹${service.rate.toLocaleString('en-IN')}`:""}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -123,7 +123,7 @@ const SelectServicesDialog = ({ isOpen, onClose, services, selectedServices, onS
         </div>
         <Separator/>
         <div className="text-right font-bold md:text-lg text-md">
-          Total: ₹{total.toLocaleString('en-IN')}
+          Total: ₹{total?.toLocaleString('en-IN')}
         </div>
         <DialogFooter className="grid grid-cols-2 gap-2">
           <Button variant="outline" onClick={onClose} className="w-full sm:w-auto">

@@ -553,11 +553,11 @@ const Billings = () => {
                           >
                             This Week
                           </DropdownMenuItem>
-                          <DropdownMenuItem
+                          {/* <DropdownMenuItem
                             onSelect={() => setDateFilter("All")}
                           >
                             All Time
-                          </DropdownMenuItem>
+                          </DropdownMenuItem> */}
                           <DropdownMenuItem
                             onSelect={() => setDateFilter("Custom")}
                           >
@@ -660,9 +660,9 @@ const Billings = () => {
                     >
                       This Week
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDateFilter("All")}>
+                    {/* <DropdownMenuItem onSelect={() => setDateFilter("All")}>
                       All Time
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
                     <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>
                       Custom Range
                     </DropdownMenuItem>

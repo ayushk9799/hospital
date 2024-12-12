@@ -614,7 +614,7 @@ useEffect(()=>
                             )}
                             setSelectedValues={handlePaymentMethodChange}
                           />
-                          {formData.visit.paymentMethod.length > 0 &&
+                          {formData.visit.paymentMethod.length > 0 ?
                             formData.visit.paymentMethod.map((pm) => (
                               <MemoizedInput
                                 key={pm.method}
@@ -630,7 +630,14 @@ useEffect(()=>
                                 className="bg-gray-50"
                                 error={errors[`payment.${pm.method}`]}
                               />
-                            ))}
+                            )): <MemoizedInput
+                            key="Rajiv"
+                            id="invalid"
+                            label={`Amount Paid`}
+                            disabled={true}
+                            className="bg-gray-50"
+                            
+                          />}
                         </div>
                         {errors.amountPaid && (
                           <p className="text-red-500 text-xs mt-1">

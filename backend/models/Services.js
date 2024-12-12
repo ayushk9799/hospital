@@ -12,7 +12,6 @@ const serviceSchema = new mongoose.Schema({
   },
   rate: {
     type: Number,
-    required: true,
   },
 });
 serviceSchema.plugin(hospitalPlugin);

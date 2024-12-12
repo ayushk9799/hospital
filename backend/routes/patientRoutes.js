@@ -564,6 +564,7 @@ router.post("/details", verifyToken, async (req, res) => {
       timeSlot: admission.timeSlot,
       vitals: admission.vitals,
       type: "IPD",
+      operationName:admission.operationName,
       createdAt: admission.createdAt,
       bills: admission.bills,
     }));

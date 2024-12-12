@@ -10,6 +10,8 @@ const templateSchema = new mongoose.Schema({
   ],
   headerTemplate: String,
   diagnosisTemplate: [String],
+  comorbidities:[String],
+  medicinelist:[String],
   service_collections: [
     { ref: "Service", type: mongoose.Schema.Types.ObjectId },
   ],

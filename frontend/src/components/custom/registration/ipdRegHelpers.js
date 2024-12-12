@@ -1,68 +1,6 @@
-export const initialFormData = {
-  name: "",
-  registrationNumber: "",
-  dateOfBirth: "",
-  age: "",
-  gender: "",
-  contactNumber: "",
-  email: "",
-  address: "",
-  bloodType: "",
-  patientType: "IPD",
-  paymentInfo: {
-    includeServices: true,
-    amountPaid: "",
-    paymentMethod: [],
-    services: [],
-    totalAmount: 0,
-    additionalDiscount: 0,
-  },
-  upgradegenReg: false,
-  upgradegenIpd: false,
-  admission: {
-    department: "",
-    assignedDoctor: "",
-    assignedRoom: "",
-    assignedBed: "",
-    diagnosis: "",
-    ipdNumber: "",
-    vitals: {
-      admission: {
-        bloodPressure: "",
-        heartRate: "",
-        temperature: "",
-        oxygenSaturation: "",
-        respiratoryRate: "",
-      },
-      discharge: {
-        bloodPressure: "",
-        heartRate: "",
-        temperature: "",
-        oxygenSaturation: "",
-        respiratoryRate: "",
-      },
-    },
-    bookingDate: new Date()
-      .toLocaleDateString("en-IN", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      })
-      .split("/")
-      .reverse()
-      .join("-"),
-    timeSlot: {
-      start: "",
-      end: "",
-    },
-    insuranceDetails: {
-      provider: "",
-      policyNumber: "",
-    },
-  },
-};
 
 export const validateForm = (formData, setErrors) => {
+  console.log(formData)
   const newErrors = {};
   if (!formData.name.trim()) newErrors.name = "Full name is required";
   if (!formData.dateOfBirth && !formData.age)
@@ -76,6 +14,10 @@ export const validateForm = (formData, setErrors) => {
     newErrors["admission.assignedDoctor"] = "Doctor is required";
   if (!formData.admission.department)
     newErrors["admission.department"] = "Department is required";
+  if(!formData.admission.operationName)
+  {
+    newErrors["admission.operationName"]="Operation name is required";
+  }
 
   setErrors(newErrors);
 

@@ -14,6 +14,7 @@ const categories = [
   "General",
   "OPD Procedure",
   "Surgery",
+  "Sub Category",
   "Other"
 ];
 
@@ -101,7 +102,6 @@ export default function AddServiceDialog({ isOpen, onClose }) {
                 type="number" 
                 value={rate} 
                 onChange={(e) => setRate(e.target.value)} 
-                required 
                 className="w-full"
               />
             </div>

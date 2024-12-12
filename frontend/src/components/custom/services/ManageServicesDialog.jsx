@@ -96,7 +96,7 @@ const ManageServicesDialog = ({ isOpen, onClose, services }) => {
                     </TableCell>
                     <TableCell>{service.name}</TableCell>
                     <TableCell className="hidden md:block">{service.category}</TableCell> {/* New cell for category */}
-                    <TableCell className="text-right font-semibold">₹{service.rate.toLocaleString('en-IN')}</TableCell>
+                    <TableCell className="text-right font-semibold">{service.rate?`₹${service.rate.toLocaleString('en-IN')}`:""}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>

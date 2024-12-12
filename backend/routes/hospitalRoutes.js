@@ -116,6 +116,8 @@ router.post("/template/create", identifyHospital, async (req, res) => {
         labTestsTemplate: [],
         headerTemplate: {},
         diagnosisTemplate: [],
+        comorbidities:[],
+        medicinelist:[]
       });
     }
 
@@ -127,6 +129,14 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     }
     if (req.body.diagnosisTemplate) {
       template.diagnosisTemplate = req.body.diagnosisTemplate;
+    }
+    if(req.body.comorbidities)
+    {
+      template.comorbidities=req.body.comorbidities;
+    }
+    if(req.body.medicinelist)
+    {
+      template.medicinelist=req.body.medicinelist;
     }
 
     await template.save({ session });

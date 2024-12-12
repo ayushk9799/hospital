@@ -82,7 +82,7 @@ const CreateServiceBill = ({
     if (initialBillData && patientData) {
       setIsEditing(true);
       // Process all services from all bills
-
+     console.log(initialBillData)
       const formattedServices = initialBillData.services.flatMap(
         (bill, billIndex) =>
           bill.services.map((service, serviceIndex) => ({
@@ -134,7 +134,7 @@ const CreateServiceBill = ({
               services = services.slice(0, lastServiceIndex + 1);
             }
           }
-
+console.log(billData)
           // Format billData to match initialBillData.services[0] structure
           const formattedBillData = {
             services: [
@@ -144,7 +144,7 @@ const CreateServiceBill = ({
                   name: service.name,
                   category: service.category,
                   quantity: service.quantity,
-                  rate: service.rate,
+                  rate: service.category === 'Surgery' ? service.rate - billData.additionalDiscount : service.rate
                 })),
                 createdAt: billData.createdAt,
                 totalAmount: billData.totalAmount,
@@ -155,17 +155,24 @@ const CreateServiceBill = ({
                 invoiceNumber: billData.invoiceNumber,
               },
             ],
+            operationName:billData.services.filter((ser)=>ser.category==="Surgery").map((ser)=>ser.name).join(",")
           };
 
-          const formattedServices = services.map((service, index) => ({
-            id: index + 1,
-            service: service.name,
-            category: service.category,
-            quantity: service.quantity,
-            rate: service.rate,
-            total: service.rate * service.quantity,
-            isExisting: true,
-          }));
+          const formattedServices = services.map((service, index) => {
+            const discountedRate = service.category === 'Surgery' 
+              ? service.rate - billData.additionalDiscount 
+              : service.rate;
+          
+            return {
+              id: index + 1,
+              service: service.name,
+              category: service.category,
+              quantity: service.quantity,
+              rate: discountedRate,
+              total: discountedRate * service.quantity,
+              isExisting: true,
+            };
+          });
 
           setAddedServices(formattedServices);
           setSelectedServices(formattedServices.map((service) => service.id));
@@ -239,7 +246,7 @@ const CreateServiceBill = ({
   const [billData, setBillData] = useState(initialBillData || {});
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState([]);
-  const [breakTotalMode, setBreakTotalMode] = useState(false);
+  const [breakTotalMode, setBreakTotalMode] = useState(true);
   const [targetTotal, setTargetTotal] = useState("");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
 
@@ -393,7 +400,10 @@ const CreateServiceBill = ({
       setNewService((prev) => ({ ...prev, serviceName }));
     }
   }, [serviceName]);
-
+useEffect(()=>
+{
+      handleBreakTotalModeChange({target:{checked:true}})
+},[calculateTotals.totalAmount])
   const handleBreakTotalModeChange = (e) => {
     const isChecked = e.target.checked;
     setBreakTotalMode(isChecked);
@@ -415,7 +425,7 @@ const CreateServiceBill = ({
 
     if (breakTotalMode && targetTotal) {
       // Check if adding this service would exceed target total
-      const currentTotal = addedServices.reduce(
+      const currentTotal = addedServices.filter((ser)=>ser.category!=="Surgery").reduce(
         (sum, service) => sum + service.total,
         0
       );
@@ -492,7 +502,7 @@ const CreateServiceBill = ({
     }
 
     const billData = {
-      services: addedServices.map((service) => ({
+      services: addedServices.filter((ser)=>ser.category!=="Surgery").map((service) => ({
         name: service.service,
         quantity: service.quantity,
         rate: service.rate,
@@ -561,7 +571,7 @@ const CreateServiceBill = ({
   const handlePrintBill = () => {
     // Filter services based on selection
     const selectedServicesList = addedServices.filter((service) =>
-      selectedServices.includes(service.id)
+      selectedServices.includes(service.id) && service.category!=="Surgery"
     );
 
     // Calculate totals for selected services only
@@ -633,6 +643,7 @@ const CreateServiceBill = ({
         additionalDiscount: discountAmount,
         amountPaid: calculateTotals.totalAmountPaid,
         payments: firstBill.payments || [],
+        operationName:billData?.operationName
       };
       setBillDataForPrint(viewBillData);
       setIsViewBillDialogOpen(true);
@@ -681,7 +692,7 @@ const CreateServiceBill = ({
 
   const remainingAmount = useMemo(() => {
     if (!breakTotalMode || !targetTotal) return 0;
-    const currentTotal = addedServices.reduce(
+    const currentTotal = addedServices.filter((ser)=>ser.category!=="Surgery").reduce(
       (sum, service) => sum + service.total,
       0
     );
@@ -812,6 +823,13 @@ const CreateServiceBill = ({
                       IPD No: {patientDetails.ipdNumber}
                     </Badge>
                   )}
+                  {billData?.operationName && (
+                    <Badge variant="outline">
+                    Operation : {billData?.operationName}
+                  </Badge>
+                  )
+                   
+                  }
                 </div>
               </div>
             </div>
@@ -853,7 +871,7 @@ const CreateServiceBill = ({
             <div className="col-span-full sm:col-span-1 md:col-span-2">
               <Label htmlFor="serviceName">Service Name</Label>
               <SearchSuggestion
-                suggestions={services}
+                suggestions={breakTotalMode?services.filter((ser)=>ser.category==="Sub Category"):services}
                 placeholder="Enter service name"
                 value={serviceName}
                 setValue={setServiceName}
@@ -940,7 +958,7 @@ const CreateServiceBill = ({
           </form>
           <Separator className="my-2" />
           <div className="sm:hidden space-y-1">
-            {addedServices.map((service) => (
+            {addedServices.filter((ser)=>ser.category!=="Surgery").map((service) => (
               <Card key={service.id} className="mb-1">
                 <CardContent className="p-2">
                   <div className="flex justify-between items-center mb-2">
@@ -965,7 +983,7 @@ const CreateServiceBill = ({
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>Category: {service.category}</div>
+                   
                     <div>Quantity: {service.quantity}</div>
                     <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
                     <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
@@ -990,7 +1008,6 @@ const CreateServiceBill = ({
                       />
                     </TableHead>
                     <TableHead>Service</TableHead>
-                    <TableHead>Category</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Rate</TableHead>
                     <TableHead>Total</TableHead>
@@ -998,7 +1015,7 @@ const CreateServiceBill = ({
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {addedServices.map((service) => (
+                  {addedServices.filter((ser)=>ser.category!=="Surgery").map((service) => (
                     <TableRow key={service.id}>
                       <TableCell>
                         <input
@@ -1009,7 +1026,6 @@ const CreateServiceBill = ({
                         />
                       </TableCell>
                       <TableCell>{service.service}</TableCell>
-                      <TableCell>{service.category}</TableCell>
                       <TableCell>{service.quantity}</TableCell>
                       <TableCell>
                         {service.rate.toLocaleString("en-IN")}

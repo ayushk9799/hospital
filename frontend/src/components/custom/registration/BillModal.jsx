@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState ,useEffect} from "react";
 import { useReactToPrint } from "react-to-print";
 import {
   Dialog,
@@ -22,10 +22,10 @@ import { numberToWords } from "../../../assets/Data";
 import HospitalHeader from "../../../utils/print/HospitalHeader";
 import { ScrollArea } from "../../ui/scroll-area";
 
-const BillModal = ({ isOpen, onClose, billData, hospitalInfo, completedBill }) => {
+const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completedBill }) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
-
+  
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
@@ -66,17 +66,42 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo, completedBill }) =
     if (!bill) return "N/A";
     return bill.amountPaid === bill.totalAmount ? "Paid" : "Due";
   };
+  useEffect(() => {
+    if (!isOpen) {
+      document.body.style.pointerEvents = "";
+      document.body.style = "";
 
+      setTimeout(() => {
+        document.body.style.pointerEvents = "";
+        document.body.style = "";
+      }, 300);
+    }
+
+    return () => {
+      document.body.style.pointerEvents = "";
+      document.body.style = "";
+    };
+  }, [isOpen]);
+  const handleClose = () => {
+    setShowBillModal(false);
+    document.body.style.pointerEvents = "";
+    document.body.style = "";
+
+    setTimeout(() => {
+      document.body.style.pointerEvents = "";
+      document.body.style = "";
+    }, 300);
+  };
   const bill = completedBill?.bill || billData;
   const patient = completedBill?.patient || billData?.patientInfo;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-visible rounded-lg">
         <ScrollArea className="max-h-[80vh]">
           <div ref={componentRef} className={isPrinting ? "print-content" : ""}>
             <div className="hidden print:block mb-2">
-              <HospitalHeader />
+              <HospitalHeader hospitalInfo={hospitalInfo} />
             </div>
             <div className="print:pb-6">
               <div className="no-print">
@@ -116,7 +141,11 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo, completedBill }) =
                     </p>
                   </div>
                 </div>
+                <div className="flex items-center">
+                <Label className="font-semibold mr-2">Operation:</Label>
 
+                  {completedBill.admissionRecord?.operationName}
+                </div>
                 <div className="mx-auto w-full max-w-md">
                   <div className="border-2 p-6 rounded-lg shadow-sm">
                     <div className="text-center mb-4">
@@ -224,7 +253,7 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo, completedBill }) =
           </div>
 
           <div className="flex flex-col-reverse gap-1 sm:flex-row sm:space-y-0 sm:space-x-2 mt-4 justify-end">
-            <Button type="button" variant="secondary" onClick={onClose}>
+            <Button type="button" variant="secondary" onClick={handleClose}>
               Close
             </Button>
             <Button type="button" variant="outline" onClick={handlePrint}>
@@ -236,7 +265,7 @@ const BillModal = ({ isOpen, onClose, billData, hospitalInfo, completedBill }) =
 
         <button
           className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground"
-          onClick={onClose}
+          onClick={handleClose}
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Close</span>

@@ -30,7 +30,7 @@ export default function EditServiceDialog({ isOpen, onClose, service }) {
     if (service) {
       setName(service.name);
       setCategory(service.category);
-      setRate(service.rate.toString());
+      setRate(service.rate?.toString());
     }
   }, [service]);
 

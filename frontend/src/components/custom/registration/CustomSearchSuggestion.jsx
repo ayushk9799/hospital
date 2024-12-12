@@ -11,7 +11,7 @@ export const SearchSuggestion = forwardRef(({ suggestions=[], placeholder, value
 
   useEffect(() => {
     const filtered = suggestions.filter(suggestion =>
-      suggestion.name.toLowerCase().includes((value || '').toLowerCase())
+      suggestion?.name?.toLowerCase()?.includes((value || '')?.toLowerCase())
     );
     setFilteredSuggestions(filtered);
     setSelectedIndex(-1);

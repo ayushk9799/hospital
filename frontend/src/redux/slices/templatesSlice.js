@@ -105,6 +105,8 @@ const templatesSlice = createSlice({
         state.labTestsTemplate = action.payload.labTestsTemplate;
         state.headerTemplate = action.payload.headerTemplate;
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
+        state.comorbidities=action.payload.comorbidities;
+        state.medicinelist=action.payload.medicinelist;
         state.serviceBillCollections = action.payload.service_collections;
       })
       .addCase(fetchTemplates.rejected, (state, action) => {

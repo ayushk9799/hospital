@@ -100,7 +100,7 @@ export default function VerticalNav({ isCollapsed }) {
   return (
     <div
       className={cn(
-        "hidden md:flex flex-col h-full bg-white border-r transition-all duration-300 fixed top-19 left-0 z-10",
+        "hidden md:flex flex-col h-full bg-white border-r transition-all duration-300 fixed top-19 left-0 z-10 ",
         isCollapsed ? "w-16" : "w-56"
       )}
     >

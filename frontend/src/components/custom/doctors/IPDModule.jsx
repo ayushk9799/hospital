@@ -11,7 +11,6 @@ import { useToast } from "../../../hooks/use-toast";
 import { fetchItems } from "../../../redux/slices/pharmacySlice";
 import { labCategories } from "../../../assets/Data";
 import { Badge } from "../../ui/badge";
-import { comorbidities } from "../../../assets/Data";
 import MultiSelectInput from "../MultiSelectInput";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
@@ -22,7 +21,6 @@ const allLabTests = labCategories.flatMap((category) =>
   category.types.map((type) => ({ name: type }))
 );
 
-const comorbiditiesList = comorbidities.map((name) => ({ name }));
 
 export default function IPDModule({ patient }) {
   const [ipdAdmission, setIpdAdmission] = useState({
@@ -149,13 +147,12 @@ export default function IPDModule({ patient }) {
 
   const dispatch = useDispatch();
   const { toast } = useToast();
-  const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const prescriptionUpdateStatus = useSelector(
     (state) => state.patients.prescriptionUpdateStatus
   );
   const [selectedDiagnoses, setSelectedDiagnoses] = useState([]);
-  const { diagnosisTemplate, status } = useSelector((state) => state.templates);
+  const { diagnosisTemplate=[],comorbidities=[],medicinelist=[], status } = useSelector((state) => state.templates);
 
   useEffect(() => {
     if (itemsStatus === "idle") {
@@ -170,8 +167,8 @@ export default function IPDModule({ patient }) {
   }, [status, dispatch]);
 
   const commonMedications = useMemo(() => {
-    return medicines.map((item) => ({ name: item.name }));
-  }, [medicines]);
+    return medicinelist.map((item) => ({ name: item }));
+  }, [medicinelist]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -584,7 +581,7 @@ export default function IPDModule({ patient }) {
                         }))}
                         selectedValues={selectedDiagnoses}
                         setSelectedValues={handleDiagnosisChange}
-                        placeholder="Select diagnoses"
+                        placeholder="Select diagnosis"
                       />
                     </div>
                     <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
@@ -703,7 +700,7 @@ export default function IPDModule({ patient }) {
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <MultiSelectInput
-                      suggestions={comorbiditiesList}
+                      suggestions={comorbidities?.map((name)=>({name}))}
                       selectedValues={ipdAdmission.comorbidities}
                       setSelectedValues={handleComorbiditiesChange}
                       placeholder="Select comorbidities"
@@ -964,7 +961,7 @@ export default function IPDModule({ patient }) {
                       }))}
                       selectedValues={selectedDiagnoses}
                       setSelectedValues={handleDiagnosisChange}
-                      placeholder="Select diagnoses"
+                      placeholder="Select diagnosis"
                     />
                   </div>
                   <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
@@ -1073,7 +1070,7 @@ export default function IPDModule({ patient }) {
               <div className="space-y-2">
                 <div className="flex gap-2">
                   <MultiSelectInput
-                    suggestions={comorbiditiesList}
+                    suggestions={comorbidities?.map((name)=>({name}))}
                     selectedValues={ipdAdmission.comorbidities}
                     setSelectedValues={handleComorbiditiesChange}
                     placeholder="Select comorbidities"

@@ -44,7 +44,13 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
       setSelectedServices(billData.services.map((_, index) => index));
     }
   }, [billData]);
-
+React.useEffect(()=>
+{
+  return ()=>
+  {
+    document.body.style="";
+  }
+},[])
   const toggleAllServices = (checked) => {
     if (checked) {
       setSelectedServices(services.map((_, index) => index));
@@ -197,7 +203,16 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                       </p>
                     </div>
                   ) : null}
+                  
                 </div>
+                <div> {billData.operationName ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Operation:</Label>
+                      <p>
+                       {billData.operationName}
+                      </p>
+                    </div>
+                  ) : null}</div>
                 {services.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     <div className="w-full">

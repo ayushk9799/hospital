@@ -884,7 +884,7 @@ console.log(ISO_time);
                           className="w-3 h-3 mr-1"
                           style={{ backgroundColor: entry.fill }}
                         ></div>
-                        <span className="text-xs">{entry.method}</span>
+                        <span className="text-xs font-bold">{`${entry.method} ₹(${entry.value})`}</span>
                       </div>
                     )
                   )}

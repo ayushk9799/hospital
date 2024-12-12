@@ -27,7 +27,6 @@ import {
 } from "../../../redux/slices/patientSlice";
 import { fetchRooms } from "../../../redux/slices/roomSlice";
 import {
-  initialFormData,
   validateForm,
   formatSubmissionData,
 } from "./ipdRegHelpers";
@@ -52,21 +51,98 @@ const paymentMethods = [
 ];
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
+  const departments = useSelector((state) => state.departments.departments);
+  const rooms = useSelector((state) => state.rooms.rooms);
+  const doctors = useSelector((state) => state.staff.doctors);
+   const initialFormData = {
+    name: "",
+    registrationNumber: "",
+    dateOfBirth: "",
+    age: "",
+    gender: "",
+    contactNumber: "",
+    email: "",
+    address: "",
+    bloodType: "",
+    patientType: "IPD",
+    paymentInfo: {
+      includeServices: true,
+      amountPaid: "",
+      paymentMethod: [],
+      services: [],
+      totalAmount: "",
+      additionalDiscount: 0,
+    },
+    upgradegenReg: false,
+    upgradegenIpd: false,
+    admission: {
+      department:departments.length===1?departments[0]._id:"",
+          assignedDoctor:doctors.length===1?doctors[0]._id:"",
+      operationName:"",
+  
+      assignedRoom: "",
+      assignedBed: "",
+      diagnosis: "",
+      ipdNumber: "",
+      vitals: {
+        admission: {
+          bloodPressure: "",
+          heartRate: "",
+          temperature: "",
+          oxygenSaturation: "",
+          respiratoryRate: "",
+        },
+        discharge: {
+          bloodPressure: "",
+          heartRate: "",
+          temperature: "",
+          oxygenSaturation: "",
+          respiratoryRate: "",
+        },
+      },
+      bookingDate: new Date()
+        .toLocaleDateString("en-IN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+        })
+        .split("/")
+        .reverse()
+        .join("-"),
+      timeSlot: {
+        start: "",
+        end: "",
+      },
+      insuranceDetails: {
+        provider: "",
+        policyNumber: "",
+      },
+    },
+  };
+  
   const dispatch = useDispatch();
   const { toast } = useToast();
   const registerPatientStatus = useSelector(
     (state) => state.patients.registerPatientStatus
   );
 
-  const departments = useSelector((state) => state.departments.departments);
-  const rooms = useSelector((state) => state.rooms.rooms);
-  const doctors = useSelector((state) => state.staff.doctors);
+ 
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const hospitalInfoStatus = useSelector(
     (state) => state.hospital.hospitalInfoStatus
   );
 
   const [formData, setFormData] = useState(initialFormData);
+  useEffect(()=>{
+setFormData((prev)=>({
+  ...prev,
+  admission:{
+    ...prev.admission,
+    department:departments.length===1?departments[0]._id:"",
+    assignedDoctor:doctors.length===1?doctors[0]._id:"",
+  }
+}))
+  },[departments,doctors])
   const [errors, setErrors] = useState({});
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [isSelectServicesDialogOpen, setIsSelectServicesDialogOpen] =
@@ -75,7 +151,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const { serviceBillCollections, status } = useSelector(
     (state) => state.templates
   );
-  const [totalAmount, setTotalAmount] = useState(0);
+  const [totalAmount, setTotalAmount] = useState("");
   const [showBillModal, setShowBillModal] = useState(false);
   const [billData, setBillData] = useState(null);
   const [completedBill, setCompletedBill] = useState(null);
@@ -138,7 +214,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     if (!open) {
       setFormData(initialFormData);
       setErrors({});
-      setTotalAmount(0);
+      setTotalAmount("");
       setRoomCharge(0);
       setSearchedPatient(null);
     }
@@ -174,7 +250,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     if (!open) {
       dispatch(fetchRooms());
       resetFormData();
-      setTotalAmount(0); // Reset total amount
+      setTotalAmount(""); // Reset total amount
       setRoomCharge(0); // Reset room charge
       setTimeout(() => {
         document.body.style = "";
@@ -274,7 +350,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     if (formData.admission.ipdNumber === generatedNumbers.ipdNumber) {
       formData.upgradegenIpd = true;
     }
-
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
 
@@ -293,7 +368,13 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
               description: "The patient has been admitted.",
               variant: "success",
             });
-            dispatch(fetchPatients());
+            dispatch(fetchPatients({
+              startDate: new Date()
+                .toLocaleDateString("en-IN")
+                .split("/")
+                .reverse()
+                .join("-"),
+            }));
             dispatch(fetchRooms());
             dispatch(fetchBills());
             setBillData(result.bill);
@@ -323,7 +404,13 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
               variant: "success",
             });
             onOpenChange(false);
-            dispatch(fetchPatients());
+            dispatch(fetchPatients({
+              startDate: new Date()
+                .toLocaleDateString("en-IN")
+                .split("/")
+                .reverse()
+                .join("-"),
+            }));
             dispatch(fetchRooms());
             dispatch(fetchBills());
             setBillData(result.bill);
@@ -370,6 +457,10 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     }));
   }, [formData.paymentInfo.paymentMethod]);
   const handleDialogClose = () => {
+    setTimeout(()=>
+    {
+      document.body.style="";
+    },500)
     onOpenChange(false);
     resetFormData();
   };
@@ -377,7 +468,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const handleReset = () => {
     setFormData(initialFormData);
     setErrors({});
-    setTotalAmount(0); // Reset total amount
+    setTotalAmount(""); // Reset total amount
     setRoomCharge(0); // Reset room charge
   };
 
@@ -398,8 +489,19 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     const actualServices = selectedServices.filter(
       (id) => id !== "room-charge"
     );
+
     setFormData((prevData) => ({
       ...prevData,
+      admission: {
+        ...prevData.admission,
+        operationName: services
+          .filter(
+            (ser) =>
+              ser.category === "Surgery" && actualServices.includes(ser._id)
+          )
+          .map((ser) => ser.name)
+          .join(","),
+      },
       paymentInfo: {
         ...prevData.paymentInfo,
         services: actualServices,
@@ -423,10 +525,12 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       : null;
 
     // Get all available services from the services array
-    const availableServices = services.map((service) => ({
-      ...service,
-      isRoom: false,
-    }));
+    const availableServices = services
+      .filter((service) => service.category === "Surgery")
+      .map((service) => ({
+        ...service,
+        isRoom: false,
+      }));
 
     // Combine room service (if exists) with available services
     return roomService
@@ -486,7 +590,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         <DialogContent
           className={` ${
             isMobile ? "w-[95vw] p-4 rounded-lg gap-0 " : "max-w-[1000px]"
-          } h-[${isMobile ? "70vh" : "60vh"}] overflow-y-auto`}
+          } h-[${isMobile ? "70vh" : "60vh"}] overflow-y-auto px-4`}
         >
           <DialogHeader className="mb-4 md:mb-0">
             <DialogTitle>
@@ -739,9 +843,14 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                                 target: { id: "admission.department", value },
                               })
                             }
+                            
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Department" />
+                              <SelectValue placeholder={
+                              departments.length === 1
+                                ? departments[0].name
+                                : "Department"
+                            } />
                             </SelectTrigger>
                             <SelectContent>
                               {departments.map((dept) => (
@@ -764,12 +873,16 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Assigned Doctor" />
+                              <SelectValue placeholder={
+                              doctors.length === 1
+                                ? `Dr. ${doctors[0].name}`
+                                : "Select Doctor"
+                            } />
                             </SelectTrigger>
                             <SelectContent>
                               {doctors.map((doctor) => (
                                 <SelectItem key={doctor._id} value={doctor._id}>
-                                  {doctor.name}
+                                  Dr.{doctor.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -787,7 +900,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           }
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Department" />
+                            <SelectValue placeholder={
+                              departments.length === 1
+                                ? departments[0].name
+                                : "Department"
+                            } />
                           </SelectTrigger>
                           <SelectContent>
                             {departments.map((dept) => (
@@ -807,12 +924,16 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           }
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Assigned Doctor" />
+                            <SelectValue placeholder={
+                              doctors.length === 1
+                                ? `Dr. ${doctors[0].name}`
+                                : "Select Doctor"
+                            } />
                           </SelectTrigger>
                           <SelectContent>
                             {doctors.map((doctor) => (
                               <SelectItem key={doctor._id} value={doctor._id}>
-                                {doctor.name}
+                                Dr. {doctor.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -870,14 +991,14 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
                         <MemoizedInput
                           id="paymentInfo.totalAmount"
-                          label="Total Amount"
+                          label="Amount"
                           value={formData.paymentInfo.totalAmount.toLocaleString(
                             "en-IN"
                           )}
                           onChange={(e) => {
                             const value = Number(
-                              e.target.value.replace(/,/g, "")
-                            );
+                              e.target.value.replace(/,/g, ""))
+                          
                             if (!isNaN(value)) {
                               const servicesTotal = services
                                 .filter((service) =>
@@ -916,18 +1037,30 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           disabled={true}
                           className="bg-gray-50"
                         />
+
                         <Button
                           variant="outline"
-                          className="border-primary text-primary"
+                          className={`
+                                 ${
+                                        errors["admission.operationName"]
+                                  ? "border-red-500 text-red-500 hover:bg-red-50 "
+                               : "border-primary text-primary"
+                                 }
+                               `}
                           onClick={handleInfoClick}
                           size="sm"
                         >
-                          Select Operations
+                          {formData.admission?.operationName 
+  ? (formData.admission?.operationName.length > 15 
+     ? `${formData.admission?.operationName.slice(0, 15)}...` 
+     : formData.admission?.operationName)
+  : "Select Operations"
+}
                         </Button>
                       </div>
                       {formData.paymentInfo.additionalDiscount > 0 && (
-                        <>
-                          <p className="text-sm text-gray-500">
+                        <div className="grid grid-cols-2">
+                          <div className="text-sm text-gray-500 ">
                             Services Total: ₹
                             {(
                               services
@@ -941,19 +1074,19 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                                   0
                                 ) + roomCharge
                             ).toLocaleString("en-IN")}
-                          </p>
+                          </div>
                           {roomCharge > 0 && (
-                            <p className="text-sm text-gray-500">
+                            <div className="text-sm text-gray-500">
                               Room Charge: ₹{roomCharge.toLocaleString("en-IN")}
-                            </p>
+                            </div>
                           )}
-                          <p className="text-sm text-gray-500">
-                            Discount Applied: ₹
+                          <div className="text-sm text-gray-500">
+                            Discount: ₹
                             {formData.paymentInfo.additionalDiscount.toLocaleString(
                               "en-IN"
                             )}
-                          </p>
-                        </>
+                          </div>
+                        </div>
                       )}
                     </div>
                     <div
@@ -981,7 +1114,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         )}
                         setSelectedValues={handlePaymentMethodChange}
                       />
-                      {formData.paymentInfo.paymentMethod.length > 0 &&
+                      {formData.paymentInfo.paymentMethod.length > 0 ?
                         formData.paymentInfo.paymentMethod.map((pm) => (
                           <MemoizedInput
                             key={pm.method}
@@ -993,7 +1126,14 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             }}
                             className="bg-gray-50"
                           />
-                        ))}
+                        )):<MemoizedInput
+                        key="Ayush"
+                        id={`hallelujah`}
+                        label={`Amount Paid`}
+                       
+                        disabled
+                        className="bg-gray-50 "
+                      />}
                     </div>
                   </div>
                 </div>
@@ -1164,7 +1304,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       {showBillModal && hospitalInfo && (
         <BillModal
           isOpen={showBillModal}
-          onClose={() => setShowBillModal(false)}
+          setShowBillModal={setShowBillModal}
           billData={billData}
           completedBill={completedBill}
           hospitalInfo={hospitalInfo}

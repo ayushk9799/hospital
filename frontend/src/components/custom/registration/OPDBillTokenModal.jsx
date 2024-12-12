@@ -1,4 +1,4 @@
-import React, { useRef, useEffect ,useState} from "react";
+import React, { useRef, useEffect, useState, useMemo } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import { format } from "date-fns";
@@ -20,6 +20,7 @@ import {
 } from "../../ui/table";
 import { PrinterIcon } from "lucide-react";
 import SimplePrintHeader from "../../../utils/print/SimplePrintHeader";
+import { useSelector } from "react-redux";
 
 const OPDBillTokenModal = ({
   isOpen,
@@ -32,7 +33,19 @@ const OPDBillTokenModal = ({
   onClose,
 }) => {
   const componentRef = useRef();
-
+  const { hospitalInfo } = useSelector((state) => state.hospital);
+  const terms = useMemo(() => {
+    let city = hospitalInfo?.address?.split(",").at(-1).trim();
+    return [
+      "This receipt is valid only once.",
+      "Receipt is not Refundable.",
+      "Valid only for patient mentioned above.",
+      "Slot once booked cannot be changed.",
+      `Subjected to ${
+        city?.charAt(0)?.toUpperCase() + city?.slice(1)
+      } Jurisdiction Only.`,
+    ];
+  }, [hospitalInfo]);
   useEffect(() => {
     if (!isOpen) {
       document.body.style.pointerEvents = "";
@@ -60,7 +73,7 @@ const OPDBillTokenModal = ({
       document.body.style = "";
     }, 300);
   };
- const [isPrinting,setIsPrinting]=useState(false)
+  const [isPrinting, setIsPrinting] = useState(false);
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
@@ -76,7 +89,7 @@ const OPDBillTokenModal = ({
       @media print {
         @page {
           size: 297mm 210mm;  /* A4 Landscape dimensions explicitly set */
-          margin: 7mm;
+          margin: 5mm;
         }
         
         body {
@@ -118,7 +131,7 @@ const OPDBillTokenModal = ({
         }
 
         table {
-          font-size: 12px !important;
+          font-size: 17px !important;
         }
 
         td, th {
@@ -126,8 +139,8 @@ const OPDBillTokenModal = ({
         }
 
         .summary-section {
-          width: 120mm !important;
-          font-size: 12px !important;
+          width: 50mm !important;
+          font-size: 17px !important;
           font-weight: 600;
         }
       }
@@ -151,7 +164,7 @@ const OPDBillTokenModal = ({
         </div>
       </div>
 
-      <div className="grid gap-2">
+      <div className="grid gap-1">
         <div className="patient-details text-sm border rounded-md p-1 bg-gray-50">
           <div className="grid grid-cols-3 gap-4 pb-3 border-b">
             <div className="flex gap-2">
@@ -166,14 +179,16 @@ const OPDBillTokenModal = ({
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">UHID No:</span>
-              <span className="font-semibold">{patient.registrationNumber}</span>
+              <span className="font-semibold">
+                {patient.registrationNumber}
+              </span>
             </div>
           </div>
 
           <div className="grid grid-cols-3 gap-4 pt-3">
             <div className="flex gap-2 whitespace-nowrap overflow-hidden">
               <span className="font-semibold flex-shrink-0">Address:</span>
-              <span className="truncate font-semibold"title={patient.address}>
+              <span className="truncate font-semibold" title={patient.address}>
                 {patient.address}
               </span>
             </div>
@@ -183,13 +198,15 @@ const OPDBillTokenModal = ({
             </div>
             <div className="flex gap-2">
               <span className="font-semibold">Date:</span>
-              <span className="font-semibold">{format(new Date(bill.createdAt), "dd/MM/yyyy")}</span>
+              <span className="font-semibold">
+                {format(new Date(bill.createdAt), "dd/MM/yyyy")}
+              </span>
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto  px-2">
-          <Table className="border-2 border-gray-200 mt-2 w-full text-sm">
+        <div className="overflow-x-auto  ">
+          <Table className="border-2 border-gray-200 mt-2 w-full text-[17px]">
             <TableHeader>
               <TableRow className="bg-gray-100">
                 <TableHead className="w-[40px]">No</TableHead>
@@ -221,53 +238,70 @@ const OPDBillTokenModal = ({
           </Table>
         </div>
 
-        <div className="flex flex-col items-end space-y-1 mt-2">
-          <div className="summary-section flex justify-between w-full sm:w-48 text-sm px-2 sm:px-0">
+        <div className="flex flex-col items-end  mt-1 text-[17px]">
+          <div className="summary-section flex justify-between w-full sm:w-48  px-2 sm:px-0">
             <span>Sub Total:</span>
             <span>₹{bill.subtotal}</span>
           </div>
           {bill.additionalDiscount > 0 && (
-            <div className="summary-section flex justify-between w-full sm:w-48 text-sm text-red-600">
+            <div className="summary-section flex justify-between w-full sm:w-4  text-red-600">
               <span>Discount:</span>
               <span>- ₹{bill.additionalDiscount}</span>
             </div>
           )}
-          <div className="summary-section flex justify-between w-full sm:w-48 text-sm font-bold border-t border-gray-200 pt-1">
+          <div className="summary-section flex justify-between w-full sm:w-48  font-bold  border-gray-200">
             <span>Total Amount:</span>
             <span>₹{bill.totalAmount}</span>
           </div>
 
-          <div className="summary-section w-full sm:w-48 border-t border-gray-200 mt-1 pt-1">
-            <div className="flex justify-between text-sm">
+          <div className="summary-section w-full sm:w-48 border-t border-gray-200 ">
+            <div className="flex justify-between ">
               <span>Amount Paid:</span>
-              <span className="text-green-600">₹{bill.amountPaid}</span>
+              <span className="text-green-600 font-bold">
+                ₹{bill.amountPaid}
+              </span>
             </div>
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between">
               <span>Due Amount:</span>
               <span className="text-red-600">
                 ₹{Math.max(0, bill.totalAmount - bill.amountPaid)}
               </span>
             </div>
-            <div className="flex justify-between text-sm pt-1">
+            <div className="flex justify-between  pt-1">
               <span>Payment Method:</span>
               <span>
                 {payment.map((payment) => payment.paymentMethod).join(",")}
               </span>
             </div>
-            <div className="flex justify-between text-sm font-medium pt-1">
+            <div className="flex justify-between  font-medium pt-1">
               <span>Status:</span>
               <span
-                className={
+                className={`${
                   bill.totalAmount === bill.amountPaid
-                    ? "text-green-600"
+                    ? "text-green-600 "
                     : "text-red-600"
-                }
+                } font-bold`}
               >
                 {bill.totalAmount === bill.amountPaid ? "PAID" : "DUE"}
               </span>
             </div>
           </div>
         </div>
+        <div>
+          <ul className="text-xs font-bold hidden print:block">
+            {terms.map((term, index) => (
+              <li key={index} className="flex items-start text-gray-700">
+                <span className="mr-2 text-red-500 font-bold">•</span>
+                <span className="flex-1">{term}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-col items-end font-bold hidden print:flex print:items-end">
+          {hospitalInfo.name}
+        </div>
+
+       <div className="flex flex-col items-center justify-center hidden print:flex print:items-center print:justify-center pt-3">Get Well Soon</div>
       </div>
     </div>
   );
@@ -283,8 +317,8 @@ const OPDBillTokenModal = ({
           id="printArea"
           ref={componentRef}
           className={`${
-            isPrinting 
-              ? "print-content print-landscape" 
+            isPrinting
+              ? "print-content print-landscape"
               : "flex flex-col lg:flex-row"
           } w-full`}
         >

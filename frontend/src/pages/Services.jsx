@@ -217,7 +217,7 @@ const Services = () => {
                   <TableRow key={service._id}>
                     <TableCell className='capitalize'>{service.name}</TableCell>
                     <TableCell className="hidden md:table-cell">{service.category}</TableCell>
-                    <TableCell>₹{service.rate.toLocaleString('en-IN')}</TableCell>
+                    <TableCell>{service.rate?`₹${service.rate.toLocaleString('en-IN')}`:""}</TableCell>
                     <TableCell className="flex">
                       <Button variant="ghost" size="sm" onClick={() => handleEdit(service)}>
                         <Pencil className="h-3 w-3" />

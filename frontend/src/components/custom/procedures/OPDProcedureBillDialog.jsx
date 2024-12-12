@@ -89,15 +89,16 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
 
               {/* Patient Information */}
               <div className="grid gap-2 py-1">
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-2">
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Name:</Label>
                     <p>{opdProcedure.name || "N/A"}</p>
                   </div>
-                  <div className="flex items-center">
+                  { opdProcedure.registrationNumber && <div className="flex items-center">
                     <Label className="font-semibold mr-2">UHID. No:</Label>
                     <p>{opdProcedure.registrationNumber || "N/A"}</p>
-                  </div>
+                  </div> }
+                  
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Contact:</Label>
                     <p>{opdProcedure.contactNumber || "N/A"}</p>
@@ -133,7 +134,6 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
                 {/* Services Table */}
                 <div className="flex flex-col gap-4">
                   <div className="w-full">
-                    <h3 className="text-lg font-semibold mb-1">Services</h3>
                     <Table className="border-2 border-gray-200">
                       <TableHeader>
                         <TableRow className="border-b border-gray-200 bg-gray-200">
@@ -222,8 +222,8 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
                             <span
                               className={
                                 servicesBill.amountPaid === servicesBill.totalAmount
-                                  ? "text-green-600"
-                                  : "text-red-600"
+                                  ? "text-green-600 font-bold"
+                                  : "text-red-600 font-bold"
                               }
                             >
                               {servicesBill.amountPaid === servicesBill.totalAmount

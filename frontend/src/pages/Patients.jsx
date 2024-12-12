@@ -204,10 +204,11 @@ export default function Patients() {
             {type === "IPD" && (
               <>
                 <TableHead>IPD Number</TableHead>
-                <TableHead>Room</TableHead>
+                {/* <TableHead>Room</TableHead> */}
                 <TableHead>Admit Date</TableHead>
                 <TableHead>Discharge Date</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Operation</TableHead>
               </>
             )}
             {type === "OPD" && <TableHead>Date</TableHead>}
@@ -240,9 +241,9 @@ export default function Patients() {
               {type === "IPD" && (
                 <>
                   <TableCell>{patient.ipdNumber || "N/A"}</TableCell>
-                  <TableCell>
+                  {/* <TableCell>
                     {patient.assignedRoom?.roomNumber || "--"}
-                  </TableCell>
+                  </TableCell> */}
                   <TableCell>
                     {format(new Date(patient.bookingDate), "dd-MM-yyyy")}
                   </TableCell>
@@ -255,6 +256,11 @@ export default function Patients() {
                     <Badge variant={getStatusBadgeVariant(patient.status)}>
                       {patient.status}
                     </Badge>
+                  </TableCell>
+                  <TableCell className="font-bold">
+                    {patient.operationName
+                      ?patient.operationName
+                      : "--"}
                   </TableCell>
                 </>
               )}
@@ -564,11 +570,11 @@ export default function Patients() {
                               >
                                 This Week
                               </DropdownMenuItem>
-                              <DropdownMenuItem
+                              {/* <DropdownMenuItem
                                 onSelect={() => setDateFilter("All")}
                               >
                                 All Time
-                              </DropdownMenuItem>
+                              </DropdownMenuItem> */}
                               <DropdownMenuItem
                                 onSelect={() => setDateFilter("Custom")}
                               >
@@ -619,9 +625,9 @@ export default function Patients() {
                         >
                           This Week
                         </DropdownMenuItem>
-                        <DropdownMenuItem onSelect={() => setDateFilter("All")}>
+                        {/* <DropdownMenuItem onSelect={() => setDateFilter("All")}>
                           All Time
-                        </DropdownMenuItem>
+                        </DropdownMenuItem> */}
                         <DropdownMenuItem
                           onSelect={() => setDateFilter("Custom")}
                         >
