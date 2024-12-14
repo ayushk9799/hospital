@@ -1,16 +1,16 @@
 {
   "files": {
     "main.css": "/static/css/main.0cc8197d.css",
-    "main.js": "/static/js/main.5680e7b4.js",
+    "main.js": "/static/js/main.4e3cc19b.js",
     "static/media/Tinos-Regular.ttf": "/static/media/Tinos-Regular.83a9accf4fde7027b6d2.ttf",
     "static/media/Tinos-Bold.ttf": "/static/media/Tinos-Bold.662a7db453c400fa9397.ttf",
     "static/media/nabh.png": "/static/media/nabh.b952c3b2d48dbf91d2e0.png",
     "index.html": "/index.html",
     "main.0cc8197d.css.map": "/static/css/main.0cc8197d.css.map",
-    "main.5680e7b4.js.map": "/static/js/main.5680e7b4.js.map"
+    "main.4e3cc19b.js.map": "/static/js/main.4e3cc19b.js.map"
   },
   "entrypoints": [
     "static/css/main.0cc8197d.css",
-    "static/js/main.5680e7b4.js"
+    "static/js/main.4e3cc19b.js"
   ]
 }

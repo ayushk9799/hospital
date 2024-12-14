@@ -253,15 +253,27 @@ console.log(billData)
   const calculateTotals = useMemo(() => {
     // If in break total mode, use target total as the main total
     if (breakTotalMode && targetTotal) {
+      let discountValue = 0;
+      let v=parseFloat(billData?.subtotal || billData?.services?.[0]?.subtotal);
+
+      if (additionalDiscount !== "") {
+        if (additionalDiscountType === "amount") {
+          discountValue = parseFloat(additionalDiscount);
+        } else {
+          discountValue = (parseFloat(additionalDiscount) / 100) * v;
+        }
+      }
+  
+      // Ensure discount doesn't exceed subtotal
+      discountValue = Math.min(discountValue, v);
       const currentServicesSubtotal = newlyAddedServices.reduce(
         (sum, service) => sum + service.total,
         0
       );
-
       return {
-        subtotal: parseFloat(targetTotal),
+        subtotal: v,
         additionalDiscount: "0.00",
-        totalAmount: parseFloat(targetTotal),
+        totalAmount: v-discountValue,
         currentServicesSubtotal,
         totalAmountPaid:
           billData?.amountPaid || billData?.services?.[0]?.amountPaid || 0,
@@ -746,21 +758,23 @@ useEffect(()=>
   );
 
   const handlePaymentSuccess = (updatedBill) => {
+    console.log(updatedBill)
     // Update the billData state with the new data
     const formattedBillData = {
-      services: [
-        {
-          _id: updatedBill._id,
-          services: updatedBill.services,
-          createdAt: updatedBill.createdAt,
-          totalAmount: updatedBill.totalAmount,
-          additionalDiscount: updatedBill.additionalDiscount,
-          subtotal: updatedBill.subtotal,
-          amountPaid: updatedBill.amountPaid,
-          payments: updatedBill.payments,
-          invoiceNumber: updatedBill.invoiceNumber,
-        },
-      ],
+      // services: [
+      //   {
+      //     _id: updatedBill._id,
+      //     services: updatedBill.services,
+      //     createdAt: updatedBill.createdAt,
+      //     totalAmount: updatedBill.totalAmount,
+      //     additionalDiscount: updatedBill.additionalDiscount,
+      //     subtotal: updatedBill.subtotal,
+      //     amountPaid: updatedBill.amountPaid,
+      //     payments: updatedBill.payments,
+      //     invoiceNumber: updatedBill.invoiceNumber,
+      //   },
+      // ],
+      updatedBill
     };
 
     setBillData(formattedBillData);
@@ -772,7 +786,8 @@ useEffect(()=>
       amountPaid: updatedBill.amountPaid,
       payments: updatedBill.payments,
     };
-    setBillDataForPrint(formattedBillDataForPrint);
+    setBillDataForPrint(updatedBill);
+    setIsViewBillDialogOpen(true)
   };
 
   // Modify the handleOpenPayment function

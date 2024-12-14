@@ -26,7 +26,7 @@ export const validateForm = (formData, setErrors) => {
 
 export const formatSubmissionData = (formData) => ({
   ...formData,
-  age: parseInt(formData.age, 10),
+  age: Number(formData.age),
   patientType: "IPD",
   admission: {
     ...formData.admission,

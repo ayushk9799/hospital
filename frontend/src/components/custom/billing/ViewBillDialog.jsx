@@ -177,7 +177,7 @@ React.useEffect(()=>
                       <p>{`${
                         billData.patientInfo?.age ||
                         billData.patient?.age
-                      }/${
+                      } yrs/${
                         billData.patientInfo?.gender ||
                         billData.patient?.gender
                       }`}</p>

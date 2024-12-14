@@ -105,7 +105,7 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
                   </div>
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Age/Gender:</Label>
-                    <p>{`${opdProcedure.age || "N/A"}/${
+                    <p>{`${opdProcedure.age || "N/A"} yrs/${
                       opdProcedure.gender || "N/A"
                     }`}</p>
                   </div>

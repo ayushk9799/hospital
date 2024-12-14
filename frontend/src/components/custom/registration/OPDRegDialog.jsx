@@ -285,7 +285,7 @@ useEffect(()=>
           dateOfBirth: formData.dateOfBirth
             ? new Date(formData.dateOfBirth).toISOString()
             : null,
-          age: parseInt(formData.age, 10),
+          age: Number(formData.age, 10),
           visit: {
             ...formData.visit,
             bookingDate: formData.visit.bookingDate,
