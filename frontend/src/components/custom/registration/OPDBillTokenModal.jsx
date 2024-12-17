@@ -89,7 +89,7 @@ const OPDBillTokenModal = ({
       @media print {
         @page {
           size: 297mm 210mm;  /* A4 Landscape dimensions explicitly set */
-          margin: 5mm;
+          margin: 0mm;
         }
         
         body {
@@ -101,14 +101,14 @@ const OPDBillTokenModal = ({
         #printArea {
           display: grid !important;
           grid-template-columns: 1fr 1fr !important;
-          width: 277mm !important; /* 297mm - 20mm margins */
-          height: 190mm !important; /* 210mm - 20mm margins */
+          width: 297mm !important; /* 297mm - 20mm margins */
+          height: 210mm !important; /* 210mm - 20mm margins */
         }
 
         #printArea > div {
-          width: 138.5mm !important; /* Half of available width */
-          height: 190mm !important;
-          padding: 5mm !important;
+          width: 148.5mm !important; /* Half of available width */
+          height: 210mm !important;
+          padding: 4mm !important;
           overflow: hidden !important;
           page-break-inside: avoid !important;
         }
@@ -149,7 +149,7 @@ const OPDBillTokenModal = ({
 
   if (!patientData) return null;
 
-  const { patient, bill, payment } = patientData;
+  const { patient, bill, payment, admissionRecord } = patientData;
   console.log(patientData);
   const BillCopy = ({ title }) => (
     <div className="w-full lg:w-1/2 p-2 lg:p-4 border-b lg:border-b-0 lg:border-r border-dashed">
@@ -165,9 +165,9 @@ const OPDBillTokenModal = ({
       </div>
 
       <div className="grid gap-1">
-        <div className="patient-details text-sm border rounded-md p-1 bg-gray-50">
-          <div className="grid grid-cols-3 gap-4 pb-3 border-b">
-            <div className="flex gap-2">
+        <div className="patient-details text-sm border rounded-md bg-gray-50">
+          <div className="grid grid-cols-3 p-2  border-b">
+            <div className="flex gap-2 ">
               <span className="font-semibold">Name:</span>
               <span className="font-semibold">{patient.name}</span>
             </div>
@@ -184,10 +184,9 @@ const OPDBillTokenModal = ({
               </span>
             </div>
           </div>
-
-          <div className="grid grid-cols-3 gap-4 pt-3">
-            <div className="flex gap-2 whitespace-nowrap overflow-hidden">
-              <span className="font-semibold flex-shrink-0">Address:</span>
+          <div className="grid grid-cols-3 gap-4 p-2">
+            <div className="flex  whitespace-nowrap overflow-hidden gap-2">
+              <span className="font-semibold flex-shrink-0 ">Address:</span>
               <span className="truncate font-semibold" title={patient.address}>
                 {patient.address}
               </span>
@@ -196,7 +195,7 @@ const OPDBillTokenModal = ({
               <span className="font-semibold">Contact:</span>
               <span className="font-semibold">{patient.contactNumber}</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 ">
               <span className="font-semibold">Date:</span>
               <span className="font-semibold">
                 {format(new Date(bill.createdAt), "dd/MM/yyyy")}
@@ -204,9 +203,64 @@ const OPDBillTokenModal = ({
             </div>
           </div>
         </div>
+        <div>
+          <span className="font-bold text-base">Slot No :</span>
+          <span className="font-bold"> {admissionRecord?.bookingNumber}</span>
+        </div>
+        <div>
+          <div className="vitals-section">
+            <h2 className="font-bold ">Vitals</h2>
+            <div className="grid grid-cols-3 gap-0">
+              <div className="flex gap-2">
+                <span className="font-semibold">BP:</span>
+                <span>
+                  {admissionRecord?.vitals?.bloodPressure
+                    ? `${admissionRecord.vitals.bloodPressure} mmHg`
+                    : ""}
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <span className="font-semibold">Weight:</span>
+                <span>
+                  {admissionRecord?.vitals?.weight
+                    ? `${admissionRecord.vitals.weight} kg`
+                    : ""}
+                </span>
+              </div>
 
+              {admissionRecord?.vitals?.heartRate && (
+    <div className="flex gap-2">
+      <span className="font-semibold">Heart Rate:</span>
+      <span>{admissionRecord.vitals.heartRate} bpm</span>
+    </div>
+  )}
+
+  {admissionRecord?.vitals?.temperature && (
+    <div className="flex gap-2">
+      <span className="font-semibold">Temp:</span>
+      <span>{admissionRecord.vitals.temperature} °C</span>
+    </div>
+  )}
+
+  {admissionRecord?.vitals?.oxygenSaturation && (
+    <div className="flex gap-2">
+        <span className="font-semibold">O<span style={{ verticalAlign: "sub" }}>₂</span> Saturation:</span>
+
+      <span>{admissionRecord.vitals.oxygenSaturation}%</span>
+    </div>
+  )}
+
+  {admissionRecord?.vitals?.respiratoryRate && (
+    <div className="flex gap-2">
+      <span className="font-semibold">Respiration:</span>
+      <span>{admissionRecord.vitals.respiratoryRate} br/min</span>
+    </div>
+  )}
+            </div>
+          </div>
+        </div>
         <div className="overflow-x-auto  ">
-          <Table className="border-2 border-gray-200 mt-2 w-full text-[17px]">
+          <Table className="border-2 border-gray-200 mt-2 w-full text-[17px] ">
             <TableHeader>
               <TableRow className="bg-gray-100">
                 <TableHead className="w-[40px]">No</TableHead>
@@ -301,14 +355,16 @@ const OPDBillTokenModal = ({
           {hospitalInfo.name}
         </div>
 
-       <div className="flex flex-col items-center justify-center hidden print:flex print:items-center print:justify-center pt-3">Get Well Soon</div>
+        <div className="flex flex-col items-center justify-center hidden print:flex print:items-center print:justify-center pt-3">
+          Get Well Soon
+        </div>
       </div>
     </div>
   );
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[95vw] h-[90vh] overflow-y-auto lg:max-w-6xl">
+      <DialogContent className="max-w-[95vw] h-[90vh] overflow-y-auto lg:max-w-6xl gap-0">
         <DialogHeader>
           <DialogTitle>OPD Bill Token</DialogTitle>
         </DialogHeader>

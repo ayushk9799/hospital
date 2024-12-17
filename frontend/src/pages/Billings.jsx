@@ -168,7 +168,7 @@ const Billings = () => {
       bill.patientInfo.phone.includes(searchTerm);
 
     let dateMatch = true;
-    const billDate = new Date(bill.createdAt);
+    const billDate = new Date(bill.updatedAt);
     const today = new Date();
 
     switch (dateFilter) {
@@ -345,7 +345,7 @@ const Billings = () => {
               </div>
               <div className="flex gap-2 items-center col-span-2">
                 <p className="text-sm text-muted-foreground">Date:</p>
-                <p className="font-sm">{formatDateOrTime(bill.createdAt)}</p>
+                <p className="font-sm">{formatDateOrTime(bill.updatedAt)}</p>
               </div>
             </div>
           </div>
@@ -753,7 +753,7 @@ const Billings = () => {
 </TableCell>
 
                           <TableCell>
-                            {formatDateOrTime(bill.createdAt)}
+                            {formatDateOrTime(bill.updatedAt)}
                           </TableCell>
                         </>
                       )}

@@ -114,14 +114,14 @@ router.get("/get-bills", async (req, res) => {
 
     // Add date range filter if provided
     if (startDate && endDate) {
-      query.createdAt = {
+      query.updatedAt = {
         $gte: new Date(startDate + "T00:00:00"),
         $lte: new Date(endDate + "T23:59:59"),
       };
     }
 
     const bills = await ServicesBill.find(query)
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .populate("patient", "name phone registrationNumber age gender address")
       .populate("createdBy", "name")
       .populate("opdProcedure", "procedureName")
@@ -339,6 +339,7 @@ router.get("/get-bill/:id", verifyToken, async (req, res) => {
   try {
     const bill = await ServicesBill.findById(req.params.id)
       .populate("patient")
+      .populate("visit")
       .populate("payments")
       .populate("createdBy");
 

@@ -82,7 +82,6 @@ const CreateServiceBill = ({
     if (initialBillData && patientData) {
       setIsEditing(true);
       // Process all services from all bills
-     console.log(initialBillData)
       const formattedServices = initialBillData.services.flatMap(
         (bill, billIndex) =>
           bill.services.map((service, serviceIndex) => ({
@@ -134,7 +133,6 @@ const CreateServiceBill = ({
               services = services.slice(0, lastServiceIndex + 1);
             }
           }
-console.log(billData)
           // Format billData to match initialBillData.services[0] structure
           const formattedBillData = {
             services: [
@@ -155,6 +153,7 @@ console.log(billData)
                 invoiceNumber: billData.invoiceNumber,
               },
             ],
+            visit:billData?.visit,
             operationName:billData.services.filter((ser)=>ser.category==="Surgery").map((ser)=>ser.name).join(",")
           };
 
@@ -598,8 +597,8 @@ useEffect(()=>
     }
 
     const totalAfterDiscount = selectedServicesTotal - discountAmount;
-
     const firstBill = billData?.services?.[0] || {};
+
 
     if (patientDetails?.type === "OPD") {
       const opdBillData = {
@@ -627,6 +626,7 @@ useEffect(()=>
           payments: firstBill.payments || [],
           invoiceNumber: firstBill.invoiceNumber || null,
         },
+       admissionRecord:billData?.visit,
         payment: firstBill.payments||[]
       };
       setBillDataForPrint(opdBillData);

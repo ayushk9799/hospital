@@ -38,6 +38,14 @@ const servicesBillSchema = new mongoose.Schema({
     type : mongoose.Schema.Types.ObjectId,
     ref : "OPDProcedure",
   },
+  visit:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"visit"
+  },
+  admission:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"ipdAdmission"
+  },
   createdBy : {
     type : mongoose.Schema.Types.ObjectId,
     ref : "Staff",

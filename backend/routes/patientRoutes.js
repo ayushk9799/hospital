@@ -251,6 +251,7 @@ router.post(
           amountPaid: amountPaid,
           patientType: "OPD",
           createdBy: user._id,
+          visit:admissionRecord._id
         });
 
         if (
@@ -366,6 +367,7 @@ router.post(
               registrationNumber: patient.registrationNumber,
               ipdNumber: admission.ipdNumber,
             },
+            admission:admissionRecord._id,
             totalAmount: Number(paymentInfo.totalAmount),
             subtotal: services.reduce((sum, service) => sum + service.rate, 0)
               ? services.reduce((sum, service) => sum + service.rate, 0) +
