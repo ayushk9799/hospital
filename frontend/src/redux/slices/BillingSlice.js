@@ -40,10 +40,12 @@ export const fetchBills = createLoadingAsyncThunk(
 
       // Add date range filters if present
       if (filters.dateRange?.startDate) {
-        queryParams.append("startDate", filters.dateRange.startDate);
+        const startDate = new Date(filters.dateRange.startDate + "T00:00:00");
+        queryParams.append("startDate", startDate);
       }
       if (filters.dateRange?.endDate) {
-        queryParams.append("endDate", filters.dateRange.endDate);
+        const endDate = new Date(filters.dateRange.endDate + "T23:59:59");
+        queryParams.append("endDate", endDate);
       }
 
       const url = `${Backend_URL}/api/billing/get-bills${
