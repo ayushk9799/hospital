@@ -114,12 +114,18 @@ router.get("/get-bills", async (req, res) => {
 
     // Add date range filter if provided
     if (startDate && endDate) {
+      // Create dates with timezone consideration
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+
       query.updatedAt = {
-        $gte: new Date(startDate + "T00:00:00"),
-        $lte: new Date(endDate + "T23:59:59"),
+        $gte: start,
+        $lte: end
       };
     }
-
     const bills = await ServicesBill.find(query)
       .sort({ updatedAt: -1 })
       .populate("patient", "name phone registrationNumber age gender address")
