@@ -353,4 +353,29 @@ router.get("/get-bill/:id", verifyToken, async (req, res) => {
   }
 });
 
+// Add this route after the "get-bills" route
+router.post("/search-invoice", async (req, res) => {
+  try {
+    const { invoiceNumber } = req.body;
+    if(invoiceNumber)
+    {
+      const bill = await ServicesBill.findOne( {invoiceNumber:invoiceNumber} )
+      .populate("patient", "name phone registrationNumber age gender address")
+      .populate("createdBy", "name")
+      .populate("opdProcedure", "procedureName")
+      .populate("payments");
+    if (!bill) {
+      throw new Error("Bill not found")
+    }
+    res.status(200).json([bill]);
+    }
+    else{
+      throw new Error("No invoice Number")
+    }
+    // Return as array to match get-bills format
+  } catch (error) {
+    res.status(500).json({ message: "Error searching bill", error: error.message });
+  }
+});
+
 export default router;

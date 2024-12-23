@@ -599,7 +599,6 @@ useEffect(()=>
     const totalAfterDiscount = selectedServicesTotal - discountAmount;
     const firstBill = billData?.services?.[0] || {};
 
-
     if (patientDetails?.type === "OPD") {
       const opdBillData = {
         patient: {
@@ -630,7 +629,14 @@ useEffect(()=>
         payment: firstBill.payments||[]
       };
       setBillDataForPrint(opdBillData);
-      setIsPrintModalOpen(true);
+      if(patientDetails?.name)
+      {
+        setIsPrintModalOpen(true);
+
+      }
+      else{
+        setIsPrintModalOpen(false)
+      }
     } else {
       // Format for ViewBillDialog
       const viewBillData = {
@@ -654,11 +660,18 @@ useEffect(()=>
         subtotal: calculateTotals.subtotal,
         additionalDiscount: discountAmount,
         amountPaid: calculateTotals.totalAmountPaid,
-        payments: firstBill.payments || [],
+        payments: firstBill.payments || billData.payments || [],
         operationName:billData?.operationName
       };
       setBillDataForPrint(viewBillData);
-      setIsViewBillDialogOpen(true);
+      if(patientDetails?.name)
+      {
+        setIsViewBillDialogOpen(true);
+
+      }
+      else{
+        setIsViewBillDialogOpen(false)
+      }
     }
   };
 
@@ -758,7 +771,6 @@ useEffect(()=>
   );
 
   const handlePaymentSuccess = (updatedBill) => {
-    console.log(updatedBill)
     // Update the billData state with the new data
     const formattedBillData = {
       // services: [
@@ -777,7 +789,7 @@ useEffect(()=>
       updatedBill
     };
 
-    setBillData(formattedBillData);
+    setBillData(updatedBill);
 
     // Update billDataForPrint if needed
     const formattedBillDataForPrint = {
@@ -838,9 +850,9 @@ useEffect(()=>
                       IPD No: {patientDetails.ipdNumber}
                     </Badge>
                   )}
-                  {billData?.operationName && (
+                  {(billData?.operationName || initialBillData?.operationName) && (
                     <Badge variant="outline">
-                    Operation : {billData?.operationName}
+                    Operation : {billData?.operationName || initialBillData?.operationName}
                   </Badge>
                   )
                    

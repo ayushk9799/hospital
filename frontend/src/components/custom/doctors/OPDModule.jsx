@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
@@ -20,6 +20,7 @@ import { X } from "lucide-react";
 import MultiSelectInput from "../MultiSelectInput";
 import { Separator } from "../../ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+import { useReactToPrint } from 'react-to-print';
 
 // Flatten the lab categories
 const allLabTests = labCategories.flatMap((category) =>
@@ -51,7 +52,7 @@ export default function OPDModule({ patient }) {
   // const [comorbidities, setComorbidities] = useState([]);
   const [selectedComorbidities, setSelectedComorbidities] = useState([]);
   const { diagnosisTemplate=[],comorbidities=[],medicinelist=[], status } = useSelector((state) => state.templates);
-
+  const [isPrinting,setIsPrinting]=useState(false)
   useEffect(() => {
     if (status === "idle") {
       dispatch(fetchTemplates());
@@ -66,7 +67,132 @@ export default function OPDModule({ patient }) {
   );
   const { toast } = useToast();
 
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
+  const prescriptionRef = useRef();
+  
+  const handlePrint = useReactToPrint({
+    content: () => prescriptionRef.current,
+    onBeforeGetContent: () => {
+      setIsPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setIsPrinting(false);
+          resolve();
+        }, 500);
+      });
+    },
+    pageStyle:`
+    @media print {
+     @page {
+          size: A4;
+          margin: 20mm;
+        }
+       body * {
+    visibility: hidden;
+  }
+  .prescription-container, 
+  .prescription-container * {
+    visibility: visible;
+  }
+  .prescription-container {
+    position: absolute;
+    padding:20px;
+    width: 100%;
+  }
+      .title-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .title {
+        font-size: 15px;
+        color: #1a5f7a;
+        font-weight: bold;
+        text-align: center;
+        flex: 1;
+      }
+      .date {
+        font-size: 10px;
+        color: #2c3e50;
+      }
+      .section {
+        margin-bottom: 10px;
+      }
+      .patient-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+      .info-row {
+        display: flex;
+        gap: 5px;
+      }
+      .label {
+        font-weight: bold;
+        font-size: 11px;
+      }
+      .value {
+        font-size: 10px;
+      }
+      .section-title {
+        font-size: 12px;
+        font-weight: bold;
+        color: #34495e;
+        margin-bottom: 5px;
+      }
+      .section-content {
+        font-size: 10px;
+      }
+      .vitals-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+      }
+      .vital-item {
+        font-size: 8px;
+      }
+      .vital-inner {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+      }
+      .vital-label {
+        font-weight: bold;
+        color: #34495e;
+      }
+      .vital-value {
+        color: #2c3e50;
+      }
+      .medications-list {
+        width: 100%;
+      }
+      .medication-row {
+        display: grid;
+        grid-template-columns: 5% 35% 30% 30%;
+        margin-bottom: 3px;
+        font-size: 10px;
+      }
+      .doctor-signature {
+        margin-top: 20px;
+        text-align: right;
+        font-size: 10px;
+      }
+    }`
+  });
+
+  const handlePreviewClick = async () => {
+    try {
+      await handlePrint();
+    } catch (error) {
+      console.error('Print failed:', error);
+      toast({
+        title: "Print Error",
+        description: "Failed to generate prescription preview",
+        variant: "destructive",
+      });
+    }
+  };
 
   useEffect(() => {
     if (itemsStatus === "idle") {
@@ -115,7 +241,6 @@ export default function OPDModule({ patient }) {
   }, [patient]);
 
   const commonMedications = useMemo(() => {
-    console.log(medicinelist)
     return medicinelist.map((item) => ({ name: item }));
   }, [medicinelist]);
   const handleVitalChange = (e) => {
@@ -268,7 +393,7 @@ export default function OPDModule({ patient }) {
             className="font-semibold hidden lg:block"
             size="sm"
             variant="outline"
-            onClick={() => setShowPDFPreview(true)}
+            onClick={handlePreviewClick}
           >
             Preview PDF
           </Button>
@@ -944,34 +1069,17 @@ export default function OPDModule({ patient }) {
           </div>
         </div>
       </ScrollArea>
-      {showPDFPreview && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg w-[850px] h-[90vh] p-4">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-lg font-semibold">
-                OPD Prescription Preview
-              </h2>
-              <Button
-                onClick={() => setShowPDFPreview(false)}
-                variant="ghost"
-                size="icon"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
-            <PDFViewer width="100%" height="90%">
-              <OPDPrescriptionPDF
-                patient={patient.patient}
-                vitals={vitals}
-                prescription={prescription}
-                labTests={labTests}
-                selectedComorbidities={selectedComorbidities}
-                hospital={hospital}
-              />
-            </PDFViewer>
-          </div>
-        </div>
-      )}
+      <div>
+        <OPDPrescriptionPDF
+          ref={prescriptionRef}
+          patient={patient.patient}
+          vitals={vitals}
+          prescription={prescription}
+          labTests={labTests}
+          selectedComorbidities={selectedComorbidities}
+          hospital={hospital}
+        />
+      </div>
     </div>
   );
 }

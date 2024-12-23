@@ -21,6 +21,13 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
     amountPaid: '',
     paymentMethod: '' // Add this line
   });
+  const [errors, setErrors] = useState({
+    category: '',
+    description: '',
+    amount: '',
+    date: '',
+    paymentMethod: ''
+  });
 
   useEffect(() => {
     if (expenseToEdit) {
@@ -62,8 +69,65 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
     });
   };
 
+  const validateForm = () => {
+    let isValid = true;
+    const newErrors = {
+      category: '',
+      description: '',
+      amount: '',
+      date: '',
+      paymentMethod: ''
+    };
+
+    // Category validation
+    if (!formData.category.trim()) {
+      newErrors.category = 'Category is required';
+      isValid = false;
+    }
+
+    // Description validation
+    if (!formData.description.trim()) {
+      newErrors.description = 'Description is required';
+      isValid = false;
+    }
+
+    // Amount validation
+    if (!formData.amount) {
+      newErrors.amount = 'Amount is required';
+      isValid = false;
+    } else if (isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
+      newErrors.amount = 'Please enter a valid amount';
+      isValid = false;
+    }
+
+    // Date validation
+    if (!formData.date) {
+      newErrors.date = 'Date is required';
+      isValid = false;
+    }
+
+    // Payment Method validation
+    if (!formData.paymentMethod) {
+      newErrors.paymentMethod = 'Payment method is required';
+      isValid = false;
+    }
+
+    setErrors(newErrors);
+    return isValid;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      toast({
+        title: "Validation Error",
+        description: "Please fill in all required fields correctly.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const expenseData = {
       ...formData,
       amount: parseFloat(formData.amount),
@@ -103,6 +167,25 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
       });
   };
 
+  const getDescriptionPlaceholder = (category) => {
+    switch (category) {
+      case 'OPDReturn':
+        return 'Enter Patient Details';
+      case 'Salaries':
+        return 'Enter Salary Description';
+      case 'Supplies':
+        return 'Enter Supply Details';
+      case 'Utilities':
+        return 'Enter Utility Bill Details';
+      case 'Equipment':
+        return 'Enter Equipment Details';
+      case 'Maintenance':
+        return 'Enter Maintenance Details';
+      default:
+        return 'Enter description of the expense';
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className=" sm:max-w-[425px] max-w-[90vw] rounded-lg">
@@ -117,13 +200,13 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">Category *</Label>
               <Select 
                 name="category" 
                 value={formData.category} 
                 onValueChange={(value) => handleChange({ target: { name: 'category', value } })}
               >
-                <SelectTrigger className="w-full">
+                <SelectTrigger className={`w-full ${errors.category ? 'border-red-500 ring-red-500' : ''}`}>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
@@ -132,22 +215,24 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
                   <SelectItem value="Salaries">Salaries</SelectItem>
                   <SelectItem value="Equipment">Equipment</SelectItem>
                   <SelectItem value="Maintenance">Maintenance</SelectItem>
+                  <SelectItem value="OPDReturn">OPD Return</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="description">Description/PAID To * </Label>
               <Input
                 id="description"
                 name="description"
                 value={formData.description}
                 onChange={handleChange}
-                placeholder="Enter expense description"
+                placeholder={getDescriptionPlaceholder(formData.category)}
+                className={errors.description ? 'border-red-500 ring-red-500' : ''}
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">Amount</Label>
+                <Label htmlFor="amount">Amount *</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
                   <Input
@@ -157,11 +242,11 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
                     value={formData.amount}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className="pl-7"
+                    className={`pl-7 ${errors.amount ? 'border-red-500 ring-red-500' : ''}`}
                   />
                 </div>
               </div>
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="amountPaid">Amount Paid</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
@@ -175,27 +260,28 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
                     className="pl-7"
                   />
                 </div>
-              </div>
+              </div> */}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="date">Date</Label>
+                <Label htmlFor="date">Date *</Label>
                 <Input
                   id="date"
                   name="date"
                   type="date" 
                   value={formData.date}
                   onChange={handleChange}
+                  className={errors.date ? 'border-red-500 ring-red-500' : ''}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="paymentMethod">Payment Method</Label>
+                <Label htmlFor="paymentMethod">Payment Method *</Label>
                 <Select 
                   name="paymentMethod" 
                   value={formData.paymentMethod} 
                   onValueChange={(value) => handleChange({ target: { name: 'paymentMethod', value } })}
                 >
-                  <SelectTrigger className="w-full">
+                  <SelectTrigger className={`w-full ${errors.paymentMethod ? 'border-red-500 ring-red-500' : ''}`}>
                     <SelectValue placeholder="Select method" />
                   </SelectTrigger>
                   <SelectContent>

@@ -196,15 +196,14 @@ export default function Patients() {
 
     return (
       <Table>
-        <TableHeader>
+        <TableHeader >
           <TableRow>
             {type === "OPD" && <TableHead>Sl. No</TableHead>}
-            <TableHead>Name</TableHead>
+            <TableHead >Name</TableHead>
             <TableHead>UHID No</TableHead>
             {type === "IPD" && (
               <>
                 <TableHead>IPD Number</TableHead>
-                {/* <TableHead>Room</TableHead> */}
                 <TableHead>Admit Date</TableHead>
                 <TableHead>Discharge Date</TableHead>
                 <TableHead>Status</TableHead>
@@ -220,14 +219,14 @@ export default function Patients() {
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody >
           {patients.map((patient) => (
             <TableRow key={patient._id}>
               {type === "OPD" && <TableCell>{patient.bookingNumber}</TableCell>}
               <TableCell>
                 <Button
                   variant="link"
-                  className="p-0 h-auto font-normal text-black capitalize"
+                  className="p-0 h-auto font-bold text-black capitalize"
                   onClick={() =>
                     navigate(`/patient-overview/${patient.patient._id}`, {
                       state: { ID: patient._id },
@@ -494,9 +493,9 @@ export default function Patients() {
           className="w-full"
           onValueChange={setActiveTab}
         >
-          <TabsList>
-            <TabsTrigger value="OPD">OPD</TabsTrigger>
-            <TabsTrigger value="IPD">IPD</TabsTrigger>
+          <TabsList >
+            <TabsTrigger className="data-[state=active]:bg-blue-400 data-[state=active]:text-white" value="OPD">OPD</TabsTrigger>
+            <TabsTrigger className="data-[state=active]:bg-blue-400 data-[state=active]:text-white" value="IPD">IPD</TabsTrigger>
           </TabsList>
           <div className="flex flex-col space-y-4 mb-4 mt-4">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center">

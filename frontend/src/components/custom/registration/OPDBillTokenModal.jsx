@@ -126,7 +126,7 @@ const OPDBillTokenModal = ({
           font-size: 16px !important;
         }
 
-        .patient-details {
+        .patient-detailsprint {
           font-size: 14px !important;
         }
 
@@ -150,7 +150,6 @@ const OPDBillTokenModal = ({
   if (!patientData) return null;
 
   const { patient, bill, payment, admissionRecord } = patientData;
-  console.log(patientData);
   const BillCopy = ({ title }) => (
     <div className="w-full lg:w-1/2 p-2 lg:p-4 border-b lg:border-b-0 lg:border-r border-dashed">
       <div className="mb-1 sm:mb-2">
@@ -165,7 +164,7 @@ const OPDBillTokenModal = ({
       </div>
 
       <div className="grid gap-1">
-        <div className="patient-details text-sm border rounded-md bg-gray-50">
+        <div className="patient-detailsprint text-sm border rounded-md bg-gray-50">
           <div className="grid grid-cols-3 p-2  border-b">
             <div className="flex gap-2 ">
               <span className="font-semibold">Name:</span>
@@ -298,7 +297,7 @@ const OPDBillTokenModal = ({
             <span>₹{bill.subtotal}</span>
           </div>
           {bill.additionalDiscount > 0 && (
-            <div className="summary-section flex justify-between w-full sm:w-4  text-red-600">
+            <div className="summary-section flex justify-between w-full sm:w-48  text-red-600">
               <span>Discount:</span>
               <span>- ₹{bill.additionalDiscount}</span>
             </div>

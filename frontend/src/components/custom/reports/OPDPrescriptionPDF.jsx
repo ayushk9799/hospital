@@ -1,185 +1,20 @@
 import React from "react";
-import {
-  Document,
-  Page,
-  Text,
-  View,
-  StyleSheet,
-  Font,
-} from "@react-pdf/renderer";
 import { format } from "date-fns";
-import tinosRegular from "../../../fonts/Tinos-Regular.ttf";
-import tinosBold from "../../../fonts/Tinos-Bold.ttf";
-import { HeaderTemplate } from "./LabReportPDF";
+import HospitalHeader from "../../../utils/print/HospitalHeader";
 
-// Register fonts
-Font.register({
-  family: "Tinos",
-  fonts: [
-    { src: tinosRegular, fontWeight: "normal" },
-    { src: tinosBold, fontWeight: "bold" },
-  ],
-});
+const OPDPrescriptionPDF = React.forwardRef((props, ref) => {
+  const { patient, vitals, prescription, labTests, selectedComorbidities, hospital } = props;
 
-const styles = StyleSheet.create({
-  page: {
-    fontFamily: "Tinos",
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    backgroundColor: "white",
-  },
-  titleContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 10,
-    width: '100%',
-  },
-  titleWrapper: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  title: {
-    fontSize: 15,
-    color: "#1a5f7a",
-    fontWeight: "bold",
-  },
-  date: {
-    fontSize: 10,
-    color: "#2c3e50",
-  },
-  section: {
-    marginBottom: 10,
-  },
-  sectionTitle: {
-    fontSize: 12,
-    fontWeight: "bold",
-    color: "#34495e",
-    marginBottom: 5,
-  },
-  sectionContent: {
-    fontSize: 10,
+  
+
+  // Return early with a div if essential props are missing
+  if (!patient || !vitals || !prescription) {
    
-  },
-  row: {
-    flexDirection: "row",
-    marginBottom: 5,
-  },
-  column: {
-    flexDirection: "column",
-    flexGrow: 1,
-    flexBasis: 0,
-  },
-  label: {
-    fontSize: 11,
-    color: "black",
-    marginRight: 5,
-    fontWeight: "bold",
-  },
-  value: {
-    fontSize: 10,
-    color: "black",
-    marginLeft: 2,
-  },
-  medicationRow: {
-    flexDirection: "row",
-    marginBottom: 3,
-  },
-  medicationCell: {
-    fontSize: 10,
-    color: "#2c3e50",
-  },
-  vitalsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 5,
-  },
-  vitalItem: {
-    width: '25%',
-    marginBottom: 4,
-    paddingRight: 5, // Add right padding to prevent touching adjacent items
-  },
-  vitalInner: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'baseline',
-    marginHorizontal:5
-  },
-  vitalLabel: {
-    fontSize: 8,
-    color: '#34495e',
-    fontWeight: 'bold',
-    flexShrink: 1, // Allow label to shrink if needed
-    marginRight: 4, // Add a small gap between label and value
-  },
-  vitalValue: {
-    fontSize: 8,
-    color: '#2c3e50',
-    textAlign: 'right',
-    flexShrink: 0, // Prevent value from shrinking
-    marginLeft: 4, // Add left margin to separate from label
-  },
-  subscript: {
-    fontSize: 6,
-    verticalAlign: 'sub',
-  },
-  medicationSection: {
-    flexDirection: 'row',
-    
-    justifyContent:"space-between",
-    marginBottom: 10,
-  },
-  medicationTitle: {
-    fontSize: 12,
-    
-    fontWeight: 'bold',
-    color: '#34495e',
-    width: '15%', // Reduced from 20%
-    marginRight: 10, // Add some space between title and list
-  },
-  medicationList: {
-   
+    return <div ref={ref}>No data available for printing</div>;
+  }
 
-    width:"70%",
-   
-  },
-  medicationRow: {
-    flexDirection: 'row',
-    marginBottom: 3,
-    alignItems: 'flex-start',
-  },
-  medicationNumber: {
-    fontSize: 10,
-    color: '#2c3e50',
-    width: '5%',
-  },
-  medicationName: {
-    fontSize: 10,
-    color: '#2c3e50',
-    width: '35%', // Reduced from 40%
-  },
-  medicationDosage: {
-    fontSize: 10,
-    color: '#2c3e50',
-    width: '20%', // Reduced from 25%
-  },
-  medicationDuration: {
-    fontSize: 10,
-    color: '#2c3e50',
-    width: '25%', // Reduced from 30%
-    textAlign: 'right',
-  },
-  comorbidityItem: {
-    fontSize: 10,
-    color: '#2c3e50',
-    marginBottom: 2,
-  },
-});
-
-const OPDPrescriptionPDF = ({ patient, vitals, prescription, labTests,selectedComorbidities,hospital }) => {
-    
   const capitalizeAll = (str) => {
-    return str.toUpperCase();
+    return str?.toUpperCase() || '';
   };
 
   const VitalItem = ({ label, value, unit }) => {
@@ -187,22 +22,22 @@ const OPDPrescriptionPDF = ({ patient, vitals, prescription, labTests,selectedCo
       return null;
     }
     return (
-      <View style={styles.vitalItem}>
-        <View style={styles.vitalInner}>
-          <Text style={styles.vitalLabel}>
+      <div className="vital-item">
+        <div className="vital-inner">
+          <span className="vital-label">
             {label === "O2" ? (
               <>
-                O<Text style={styles.subscript}>2</Text>%
+                O<sub>2</sub>%
               </>
             ) : (
               capitalizeAll(label)
             )}:
-          </Text>
-          <Text style={styles.vitalValue}>
+          </span>
+          <span className="vital-value">
             {value} {unit}
-          </Text>
-        </View>
-      </View>
+          </span>
+        </div>
+      </div>
     );
   };
 
@@ -222,144 +57,110 @@ const OPDPrescriptionPDF = ({ patient, vitals, prescription, labTests,selectedCo
   );
 
   return (
-    <Document>
-      <Page size="A4" style={styles.page}>
-        <HeaderTemplate hospital={hospital} />
+    <div ref={ref} className="prescription-container">
+      
 
-        <View style={styles.titleContainer}>
-          <View style={{ flex: 1 }} /> {/* Empty view for left spacing */}
-          <View style={styles.titleWrapper}>
-            <Text style={styles.title}>OPD Prescription</Text>
-          </View>
-          <View style={{ flex: 1, alignItems: 'flex-end' }}>
-            <Text style={styles.date}>{format(new Date(), "dd/MM/yyyy")}</Text>
-          </View>
-        </View>
+      <HospitalHeader hospitalInfo={hospital} />
 
-        {/* Patient Information */}
-        <View style={styles.section}>
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text>
-                <Text style={styles.label}>Name:</Text>
-                <Text style={styles.value}>{patient.name}</Text>
-              </Text>
-            </View>
-            <View style={styles.column}>
-              <Text>
-                <Text style={styles.label}>Age/Gender:</Text>
-                <Text style={styles.value}>{`${patient.age} / ${patient.gender}`}</Text>
-              </Text>
-            </View>
-          </View>
-          <View style={styles.row}>
-            <View style={styles.column}>
-              <Text>
-                <Text style={styles.label}>Address:</Text>
-                <Text style={styles.value}>{patient.address}</Text>
-              </Text>
-            </View>
-            <View style={styles.column}>
-              <Text>
-                <Text style={styles.label}>Contact:</Text>
-                <Text style={styles.value}>{patient.contactNumber}</Text>
-              </Text>
-            </View>
-          </View>
-        </View>
+      <div className="title-container">
+        <div></div>
+        <h1 className="title">OPD Prescription</h1>
+        <div className="date">{format(new Date(), "dd/MM/yyyy")}</div>
+      </div>
 
-        {/* Vitals */}
-        {presentVitals.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Vitals</Text>
-            <View style={styles.vitalsContainer}>
-              {presentVitals.map((item, index) => (
-                <VitalItem key={index} label={item.label} value={item.value} unit={item.unit} />
-              ))}
-            </View>
-          </View>
-        )}
+      <div className="patient-info">
+        <div className="info-row">
+          <span className="label">Name:</span>
+          <span className="value">{patient?.name || ''}</span>
+        </div>
+        <div className="info-row">
+          <span className="label">Age/Sex:</span>
+          <span className="value">{patient?.age || ''}/{patient?.gender || ''}</span>
+        </div>
+        <div className="info-row">
+          <span className="label">Patient ID:</span>
+          <span className="value">{patient?.patientId || ''}</span>
+        </div>
+        <div className="info-row">
+          <span className="label">Contact:</span>
+          <span className="value">{patient?.contact || ''}</span>
+        </div>
+      </div>
 
-       
-        {selectedComorbidities && selectedComorbidities.length > 0 && (
-          <View style={styles.section}>
-            <View style={[styles.row,{alignItems:"baseline"}]}>
-              <Text style={[styles.sectionTitle, { marginRight: 5 }]}>Comorbidities:</Text>
-              <Text style={styles.sectionContent}>
-                {selectedComorbidities.map(comorbidity => comorbidity.name).join(', ')}
-              </Text>
-            </View>
-          </View>
-        )}
-
-       
-        {prescription.diagnosis && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Diagnosis</Text>
-            <Text style={styles.sectionContent}>{prescription.diagnosis}</Text>
-          </View>
-        )}
-
-        {/* Treatment */}
-        {prescription.treatment && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Treatment</Text>
-            <Text style={styles.sectionContent}>{prescription.treatment}</Text>
-          </View>
-        )}
-
-        {/* Medications */}
-        {prescription.medications && prescription.medications.length > 0 && (
-          <>
-            {prescription.medications.filter(med => med.name).length > 0 && (
-              <View style={styles.medicationSection}>
-                <Text style={styles.medicationTitle}>Medications</Text>
-                <View style={styles.medicationList}>
-                  {prescription.medications
-                    .filter(med => med.name)
-                    .map((med, index) => (
-                      <View key={index} style={styles.medicationRow}>
-                        <Text style={styles.medicationNumber}>{index + 1}.</Text>
-                        <Text style={styles.medicationName}>{med.name}</Text>
-                        <Text style={styles.medicationDosage}>{med.frequency}</Text>
-                        <Text style={styles.medicationDuration}>
-                          {med.duration} {med.duration === '1' ? 'day' : 'days'}
-                        </Text>
-                      </View>
-                    ))}
-                </View>
-              </View>
-            )}
-          </>
-        )}
-
-        {/* Lab Tests */}
-        {labTests && labTests.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Recommended Lab Tests</Text>
-            {labTests.map((test, index) => (
-              <Text key={index} style={styles.sectionContent}>
-                • {test.name}
-              </Text>
+      {presentVitals.length > 0 && (
+        <div className="section">
+          <div className="section-title">Vitals</div>
+          <div className="vitals-container">
+            {presentVitals.map((item, index) => (
+              <VitalItem key={index} {...item} />
             ))}
-          </View>
-        )}
+          </div>
+        </div>
+      )}
 
-        {/* Additional Instructions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Additional Instructions</Text>
-          <Text style={styles.sectionContent}>
-            {prescription.additionalInstructions}
-          </Text>
-        </View>
+      {prescription?.chiefComplaints && (
+        <div className="section">
+          <div className="section-title">Chief Complaints</div>
+          <div className="section-content">{prescription.chiefComplaints}</div>
+        </div>
+      )}
 
-        {/* Doctor's Signature */}
-        <View style={{ marginTop: 20, alignItems: "flex-end" }}>
-          <Text style={{ fontSize: 10 }}>Doctor's Signature</Text>
-        </View>
-      </Page>
-    </Document>
+      {prescription?.diagnosis && (
+        <div className="section">
+          <div className="section-title">Diagnosis</div>
+          <div className="section-content">{prescription.diagnosis}</div>
+        </div>
+      )}
+
+      {selectedComorbidities?.length > 0 && (
+        <div className="section">
+          <div className="section-title">Comorbidities</div>
+          {selectedComorbidities.map((comorbidity, index) => (
+            <div key={index} className="section-content">{comorbidity}</div>
+          ))}
+        </div>
+      )}
+
+      {prescription?.medications?.length > 0 && (
+        <div className="section">
+          <div className="section-title">Medications</div>
+          <div className="medications-list">
+            {prescription.medications.map((medication, index) => (
+              <div key={index} className="medication-row">
+                <span>{index + 1}.</span>
+                <span>{medication.name}</span>
+                <span>{medication.frequency}</span>
+                <span>{medication.duration}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {prescription?.advice && (
+        <div className="section">
+          <div className="section-title">Advice</div>
+          <div className="section-content">{prescription.advice}</div>
+        </div>
+      )}
+
+      {labTests?.length > 0 && (
+        <div className="section">
+          <div className="section-title">Lab Tests</div>
+          <div className="section-content">{labTests.join(', ')}</div>
+        </div>
+      )}
+
+      {prescription?.followUp && (
+        <div className="section">
+          <div className="section-title">Follow Up</div>
+          <div className="section-content">{prescription.followUp}</div>
+        </div>
+      )}
+
+      <div className="doctor-signature">Doctor's Signature</div>
+    </div>
   );
-};
+});
 
 export default OPDPrescriptionPDF;

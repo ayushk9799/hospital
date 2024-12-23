@@ -13,7 +13,6 @@ export const fetchHospitalInfo = createLoadingAsyncThunk(
       throw new Error("Failed to fetch hospital data");
     }
     const hospitalData = await response.json();
-    console.log(hospitalData);
 
     // Handle logo1
     if (hospitalData.logo) {
@@ -62,7 +61,6 @@ export const updateHospitalInfo = createLoadingAsyncThunk(
       throw new Error("Failed to update hospital data");
     }
     const updatedData = await response.json();
-    console.log(updatedData);
     // Fetch the new image if URL exists
     if (updatedData.logo) {
       try {

@@ -214,6 +214,37 @@ export const fetchBillById = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new thunk after other thunks
+export const searchBillByInvoice = createLoadingAsyncThunk(
+  "billing/searchBillByInvoice",
+  async (invoiceNumber, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/billing/search-invoice`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({invoiceNumber:invoiceNumber}),
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const billingSlice = createSlice({
   name: "bills",
   initialState: {
@@ -314,6 +345,13 @@ const billingSlice = createSlice({
       })
       .addCase(fetchBillById.rejected, (state, action) => {
         state.currentBillStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(searchBillByInvoice.fulfilled, (state, action) => {
+        state.billsStatus = "succeeded";
+      })
+      .addCase(searchBillByInvoice.rejected, (state, action) => {
+        state.billsStatus = "failed";
         state.error = action.payload;
       });
   },

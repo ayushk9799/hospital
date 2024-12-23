@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { addLabReport } from "../redux/slices/patientSlice";
@@ -17,7 +17,7 @@ import {
 import { format } from "date-fns";
 import { labReportFields } from "../assets/Data";
 import { Backend_URL } from "../assets/Data";
-import { PDFViewer } from "@react-pdf/renderer";
+import { useReactToPrint } from "react-to-print";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 import SearchSuggestion from "../components/custom/registration/CustomSearchSuggestion";
 import { useSelector } from "react-redux";
@@ -26,6 +26,7 @@ import { useToast } from "../hooks/use-toast";
 const CreateLabReport = ({
   category,
   type,
+  completeType,
   patientData,
   onClose,
   onSave,
@@ -47,6 +48,226 @@ const CreateLabReport = ({
   const [generatedDate, setGeneratedDate] = useState(null);
   const [showPDFPreview, setShowPDFPreview] = useState(false);
   const [allReports, setAllReports] = useState([]);
+  const componentRef = useRef();
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+    pageStyle: `
+      @media print {
+        @page {
+          size: A4;
+          margin: 20mm;
+        }
+        
+        body * {
+          visibility: hidden;
+        }
+        
+        .page, .page * {
+          visibility: visible;
+        }
+        
+        .page {
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: 100%;
+          padding: 20mm;
+        }
+
+        .no-print {
+          display: none !important;
+        }
+
+        .page {
+  font-family: "Tinos, serif";
+  background-color: white;
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+.header {
+  margin-bottom: 5px;
+  border-bottom: 1px solid #000000;
+  padding-bottom: 2px;
+}
+
+.clinic-name {
+  font-size: 24pt;
+  text-align: center;
+  font-family: "Tinos, serif";
+  margin-bottom: 3mm;
+  color: #1a5f7a;
+  font-weight: bold;
+}
+
+.clinic-info {
+  font-size: 10pt;
+  text-align: center;
+  color: #333333;
+  margin-bottom: 2mm;
+}
+
+.doctor-info {
+  font-size: 12pt;
+  text-align: center;
+  margin-top: 3mm;
+  letter-spacing: 1pt;
+  color: #1a5f7a;
+}
+
+.report-container {
+  margin-top: 5px;
+  border-top: 2px solid #ecf0f1;
+  border-bottom: 2px solid #ecf0f1;
+}
+
+.report-row {
+  display: flex;
+  border-bottom: 1px solid #ecf0f1;
+  padding: 3px 0;
+  align-items: center;
+}
+
+.report-row.header {
+  background-color: #f8f9fa;
+}
+.header-name{
+    width:30%;
+    font-size: 20px;
+    font-weight: bold;
+    padding-right: 2mm;
+
+}
+.header-unit{
+    width:20%;
+    font-size: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+.header-value{
+    width:25%;
+    font-size: 20px;
+    font-weight: bold;
+     text-align: center;
+}
+.header-range{
+    width:25%;
+    font-size: 20px;
+    font-weight: bold;
+text-align: right;
+}
+
+.test-name {
+  width: 30%;
+  font-size: 10pt;
+  color: #2c3e50;
+  font-weight: bold;
+  padding-right: 2mm;
+}
+
+.test-value {
+  width: 25%;
+  font-size: 10pt;
+  text-align: center;
+}
+
+.test-unit {
+  width: 20%;
+  font-size: 10pt;
+  text-align: center;
+}
+
+.test-range {
+  width: 25%;
+  font-size: 10pt;
+  text-align: right;
+}
+
+.patient-details {
+  display: flex;
+  margin-top: 5px;
+  padding: 3px;
+  background-color: #f8f9fa;
+  border-radius: 2mm;
+}
+
+.patient-column {
+  flex: 1;
+  padding: 0 2mm;
+}
+
+.patient-info {
+  display: flex;
+  margin-bottom: 2mm;
+  align-items: center;
+}
+
+.patient-label {
+  font-size: 10pt;
+  font-weight: bold;
+  color: #34495e;
+  margin-right: 2mm;
+  min-width: 20mm;
+}
+
+.patient-value {
+  font-size: 10pt;
+  color: #2c3e50;
+}
+
+.report-title {
+  text-align: center;
+  margin: 10px 0;
+}
+
+.report-title h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+/* Print specific styles */
+@media print {
+  @page {
+    size: A4;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  .page, .page * {
+    visibility: visible;
+  }
+
+  .page {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding:20px;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* Ensure all styles are applied in print */
+  .page * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+} 
+      }
+    `,
+    onBeforeGetContent: () => {
+      return new Promise((resolve) => {
+        setTimeout(resolve, 250);
+      });
+    }
+  });
 
   useEffect(() => {
     if (labReportFields[category] && labReportFields[category][type]) {
@@ -114,7 +335,9 @@ const CreateLabReport = ({
   const handleOptionSelect = (fieldName, selectedOption) => {
     setFields((prevFields) =>
       prevFields.map((field) =>
-        field.name === fieldName ? { ...field, value: selectedOption.name } : field
+        field.name === fieldName
+          ? { ...field, value: selectedOption.name }
+          : field
       )
     );
   };
@@ -214,18 +437,41 @@ const CreateLabReport = ({
 
   if (showPDFPreview) {
     return (
-      <div className="container mx-auto p-4 max-w-6xl min-h-screen flex flex-col">
-        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 py-2">
-          <h1 className="text-3xl font-bold">PDF Preview</h1>
-          <Button onClick={() => setShowPDFPreview(false)}>Back to Form</Button>
+      <div className="fixed inset-0 bg-white z-50 overflow-auto">
+        <div className="sticky top-0 bg-white shadow-md p-4 mb-4 flex justify-between items-center no-print">
+          <h1 className="text-2xl font-bold">Lab Report Preview</h1>
+          <div className="flex gap-4">
+            <Button
+              onClick={handlePrint}
+              className="bg-primary text-white hover:bg-primary/90"
+            >
+              Print Report
+            </Button>
+            <Button onClick={() => setShowPDFPreview(false)} variant="outline">
+              Back to Form
+            </Button>
+          </div>
         </div>
-        <div className="flex-grow">
-          <PDFViewer
-            className="w-full h-full min-h-[calc(100vh-100px)]"
-            showToolbar={false}
-          >
-            {generatePDF()}
-          </PDFViewer>
+        <div className="max-w-[210mm] hidden mx-auto bg-white shadow-lg print:shadow-none  print:block print:mx-0">
+          <div ref={componentRef}>
+            <LabReportPDF
+              reportData={{
+                name: type,
+                completeType:completeType,
+                date: reportDate,
+                report: fields.reduce((acc, field) => {
+                  acc[field.label] = {
+                    value: field.value,
+                    unit: field.unit,
+                    normalRange: field.normalRange,
+                  };
+                  return acc;
+                }, {}),
+              }}
+              hospital={hospital}
+              patientData={patientData}
+            />
+          </div>
         </div>
       </div>
     );
@@ -236,31 +482,66 @@ const CreateLabReport = ({
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6 text-center">
+    <div className="container mx-auto  max-w-6xl">
+      <div className="hidden">
+        <div ref={componentRef}>
+          <LabReportPDF
+            reportData={{
+              name: type,
+              completeType:completeType,
+              date: reportDate,
+              report: fields.reduce((acc, field) => {
+                acc[field.label] = {
+                  value: field.value,
+                  unit: field.unit,
+                  normalRange: field.normalRange,
+                };
+                return acc;
+              }, {}),
+            }}
+            hospital={hospital}
+            patientData={patientData}
+          />
+        </div>
+      </div>
+      <h1 className="text-3xl font-bold mb-2 text-center">
         Create {type.replace(/-/g, " ")} Report
       </h1>
       <Card className="p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-between items-center mb-4">
-            {generatedDate && (
-              <div className="text-sm text-gray-500">
-                Generated on: {format(generatedDate, "PPP")}
-              </div>
-            )}
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline">{format(reportDate, "PPP")}</Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={reportDate}
-                  onSelect={handleDateChange}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <div className="flex items-center space-x-4">
+              {generatedDate && (
+                <div className="text-sm text-gray-500">
+                  Generated on: {format(generatedDate, "PPP")}
+                </div>
+              )}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline">{format(reportDate, "PPP")}</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={reportDate}
+                    onSelect={handleDateChange}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="flex space-x-4">
+              <Button type="submit" className="bg-primary text-white">
+                Save Lab Report
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePrint}
+              >
+                Print Report
+              </Button>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {fields.map((field) => (
@@ -285,11 +566,17 @@ const CreateLabReport = ({
                   />
                 ) : field.options ? (
                   <SearchSuggestion
-                    suggestions={field.options.map(option => ({ name: option }))}
+                    suggestions={field.options.map((option) => ({
+                      name: option,
+                    }))}
                     placeholder={`Select ${field.label}`}
                     value={field.value}
-                    setValue={(value) => handleInputChange({ target: { value } }, field.name)}
-                    onSuggestionSelect={(suggestion) => handleOptionSelect(field.name, suggestion)}
+                    setValue={(value) =>
+                      handleInputChange({ target: { value } }, field.name)
+                    }
+                    onSuggestionSelect={(suggestion) =>
+                      handleOptionSelect(field.name, suggestion)
+                    }
                   />
                 ) : (
                   <div className="flex items-center">
@@ -365,19 +652,6 @@ const CreateLabReport = ({
                 <PlusCircle className="h-4 w-4 mr-2" /> Add
               </Button>
             </div>
-          </div>
-
-          <div className="flex justify-center space-x-4">
-            <Button type="submit" className="w-full">
-              Save Lab Report
-            </Button>
-            <Button
-              type="button"
-              className="w-full"
-              onClick={() => setShowPDFPreview(true)}
-            >
-              Show Preview
-            </Button>
           </div>
         </form>
       </Card>

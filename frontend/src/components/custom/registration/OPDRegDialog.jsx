@@ -412,13 +412,11 @@ useEffect(()=>
         visit: {
           ...prevData.visit,
           totalFee: consultationService.rate.toString(),
-          amountPaid: consultationService.rate.toString(),
         },
       }));
     }
   }, [open, consultationService]);
 
-  // Add this new useEffect for cleanup
   useEffect(() => {
     return () => {
       document.body.style = "";

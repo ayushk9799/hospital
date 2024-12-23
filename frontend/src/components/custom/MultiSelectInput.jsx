@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { Input } from "../ui/input";
-import { ChevronsUpDown } from "lucide-react";
+import { ChartNoAxesColumnDecreasingIcon, ChevronsUpDown } from "lucide-react";
 import { useFloating, offset, flip, shift } from "@floating-ui/react";
 
 const MultiSelectInput = forwardRef(
@@ -12,6 +12,7 @@ const MultiSelectInput = forwardRef(
       selectedValues,
       setSelectedValues,
       onSuggestionSelect,
+      onError=false
     },
     ref
   ) => {
@@ -137,7 +138,7 @@ const MultiSelectInput = forwardRef(
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={placeholder || "Search or type"}
-            className="pr-8 hover:cursor-pointer font-semibold w-full"
+            className={`pr-8 hover:cursor-pointer font-semibold w-full ${onError?`border-red-500 focus-visible:ring-red-500`:""}`}
           />
           <ChevronsUpDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50" />
         </div>

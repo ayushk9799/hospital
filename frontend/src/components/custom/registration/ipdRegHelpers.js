@@ -1,6 +1,5 @@
 
 export const validateForm = (formData, setErrors) => {
-  console.log(formData)
   const newErrors = {};
   if (!formData.name.trim()) newErrors.name = "Full name is required";
   if (!formData.dateOfBirth && !formData.age)

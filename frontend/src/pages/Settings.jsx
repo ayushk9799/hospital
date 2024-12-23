@@ -153,17 +153,13 @@ export default function Settings() {
   const handleSaveHeaderTemplate = async () => {
     try {
       // Use the clean template string instead of toString()
-      console.log(headerTemplateString);
-      console.log(hospitalInfo);
+     
 
       // Update Redux state with clean template
       dispatch(updateTemplate({ headerTemplate: headerTemplateString }));
-      console.log("Template saved to Redux");
 
       alert("Header template saved successfully!");
     } catch (error) {
-      console.log("Error details:", error);
-      console.error("Error saving header template:", error);
       alert("Failed to save header template: " + error.message);
     }
   };

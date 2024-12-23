@@ -24,7 +24,6 @@ export const fetchPatients = createLoadingAsyncThunk(
       }
 
       const data = await response.json();
-      console.log(new Date(dateRange.startDate).toDateString() === new Date().toDateString())
       // Check if startDate is today
       const isToday = dateRange?.startDate ? 
         new Date(dateRange.startDate).toDateString() === new Date().toDateString() 

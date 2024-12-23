@@ -46,6 +46,7 @@ import OPDProcedure from './pages/OPDProcedure';
 import QuickMenu from './pages/QuickMenu';
 import PatientOverview from './pages/PatientOverview';
 import AdmittedPatients from './pages/AdmittedPatients';
+import AddIPDServices from "./pages/AddIPDServices";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -137,6 +138,7 @@ const AppContent = () => {
                 <Route path="/create-room" element={<CreateRoom />} />
                 <Route path="/patients/discharge/:patientId?" element={<DischargeSummary />} />
                 <Route path="/patients/admitted" element={<AdmittedPatients />} />
+                <Route path="/patients/add-services/:patientId" element={<AddIPDServices/>}/>
                 <Route path="/services" element={<Services />} />
                 <Route path="/billings/create-service-bill" element={<CreateServiceBill />} />
                 <Route path="/statistics" element={<Statistics />} />
@@ -146,6 +148,7 @@ const AppContent = () => {
                 <Route path="/settings/customization" element={<Customization />} />
                 <Route path="/search" element={<PatientSearch />} />
                 <Route path="/opd-procedure/:patientId" element={<OPDProcedure />} />
+
               </>
             )}
           </Routes>

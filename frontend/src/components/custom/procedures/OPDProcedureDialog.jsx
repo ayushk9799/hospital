@@ -47,33 +47,37 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
-  const proceduresList = [
-    { name: "UROFLOWMETRY", amount: "" },
-    { name: "UROFLOWMETRY+PVR", amount: "" },
-    { name: "FOLEYS", amount: "" },
-    {
-      name:"CYSTOSCOPY",
-      amount:"",
-    },
-    {
-      name:"CISC",
-      amount:"",
-    },
-    {
-      name:"DJ STENT REMOVE",
-      amount:"",
-    },
-    
-    // Add more procedures as needed
-  ];
+  // const proceduresList = [
+  //   { name: "UROFLOWMETRY", amount: "" },
+  //   { name: "UROFLOWMETRY+PVR", amount: "" },
+  //   { name: "FOLEYS", amount: "" },
+  //   {
+  //     name:"CYSTOSCOPY",
+  //     amount:"",
+  //   },
+  //   {
+  //     name:"CISC",
+  //     amount:"",
+  //   },
+  //   {
+  //     name:"DJ STENT REMOVE",
+  //     amount:"",
+  //   },
 
+  //   // Add more procedures as needed
+  // ];
+  const proceduresList = useSelector((state) => state.services.services);
   // Convert proceduresList to the format expected by SearchSuggestion
-  const proceduresSuggestions = useMemo(() => 
-    proceduresList.map(proc => ({
-      name: `${proc.name} - ₹${proc.amount}`,
-      ...proc
-    }))
-  , [proceduresList]);
+  const proceduresSuggestions = useMemo(
+    () =>
+      proceduresList
+        ?.filter((ser) => ser.category === "OPD Procedure")
+        ?.map((proc) => ({
+          name: `${proc.name} - ₹${proc.amount}`,
+          ...proc,
+        })),
+    [proceduresList]
+  );
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -88,7 +92,7 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
     setFormData({
       ...formData,
       procedureName: suggestion.name,
-      totalAmount: suggestion.amount,
+      totalAmount: suggestion.rate,
     });
   };
 
@@ -103,9 +107,14 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Required";
     if (!formData.age) newErrors.age = "Required";
+    if (!formData.gender) newErrors.gender="Required"
     if (!formData.contactNumber) newErrors.contactNumber = "Required";
     if (!formData.procedureName) newErrors.procedureName = "Required";
     if (!formData.totalAmount) newErrors.totalAmount = "Required";
+    if (!formData.amountPaid && !(formData.paymentMethod.length === 0))
+      newErrors.amountPaid = "Required";
+    if (formData.paymentMethod.length === 0)
+      newErrors.paymentMethod = "Required";
     // Add any other validations you need
 
     setErrors(newErrors);
@@ -124,7 +133,7 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
           toast({
             title: "Success",
             description: "OPD Procedure registered successfully",
-            variant:"success"
+            variant: "success",
           });
           setResponseData(res);
           setShowBill(true);
@@ -254,18 +263,15 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
                 suggestions={proceduresSuggestions}
                 placeholder="Select procedure"
                 value={formData.procedureName}
-                setValue={(value) => 
-                  setFormData(prev => ({
+                setValue={(value) =>
+                  setFormData((prev) => ({
                     ...prev,
-                    procedureName: value
+                    procedureName: value,
                   }))
                 }
                 onSuggestionSelect={handleProcedureSelect}
               />
             </div>
-           
-
-           
 
             <div className="grid grid-cols-2 gap-2">
               <div className="col-span-1">
@@ -297,7 +303,6 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
               </div>
             </div>
             <div>
-              {" "}
               <Textarea
                 id="address"
                 name="address"
@@ -333,7 +338,7 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
                 <Search className="h-4 w-4" />
               </button>
             </div>
-            
+
             <div className="space-y-2">
               <MemoizedInput
                 id="totalAmount"
@@ -348,7 +353,7 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
               <div
                 className={
                   formData.paymentMethod.length > 0
-                    ? "grid grid-cols-3 gap-2"
+                    ? `grid grid-cols-${formData.paymentMethod.length===1?"2":"3"} gap-2`
                     : "grid grid-cols-2 gap-2"
                 }
               >
@@ -362,27 +367,42 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
                     ]}
                     placeholder={
                       formData.paymentMethod.length > 0
-                        ? formData.paymentMethod.map((pm) => pm.method).join(",")
+                        ? formData.paymentMethod
+                            .map((pm) => pm.method)
+                            .join(",")
                         : "Payment Method"
                     }
                     selectedValues={formData.paymentMethod.map((pm) => ({
                       name: pm.method,
                     }))}
                     setSelectedValues={handlePaymentMethodChange}
+                    onError={errors.paymentMethod ? true : false}
                   />
                 </div>
-                {formData.paymentMethod.map((pm) => (
+                {formData.paymentMethod.length > 0 ? (
+                  formData.paymentMethod.map((pm) => (
+                    <MemoizedInput
+                      key={pm.method}
+                      id={`payment-${pm.method}`}
+                      label={`${pm.method} Paid`}
+                      value={pm.amount}
+                      onChange={(e) =>
+                        handleAmountPaidChange(pm.method, e.target.value)
+                      }
+                      className="bg-gray-50"
+                      error={errors.amountPaid}
+                    />
+                  ))
+                ) : (
                   <MemoizedInput
-                    key={pm.method}
-                    id={`payment-${pm.method}`}
-                    label={`${pm.method} Amount`}
-                    value={pm.amount}
-                    onChange={(e) =>
-                      handleAmountPaidChange(pm.method, e.target.value)
-                    }
-                    className="bg-gray-50"
+                    
+                    id={`paymentpaiddisabled`}
+                    label={`Amount Paid`}
+                    disabled
+                    className="bg-gray-50 disabled"
+                    error={errors.amountPaid}
                   />
-                ))}
+                )}
               </div>
             </div>
           </form>

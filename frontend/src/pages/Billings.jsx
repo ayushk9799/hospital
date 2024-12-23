@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchBills, deleteBill } from "../redux/slices/BillingSlice";
+import {
+  fetchBills,
+  deleteBill,
+  searchBillByInvoice,
+} from "../redux/slices/BillingSlice";
 import {
   format,
   isToday,
@@ -47,6 +51,7 @@ import {
   Calendar as CalendarIcon,
   X,
   ListFilter,
+  ChartNoAxesColumnDecreasingIcon,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DateRangePicker } from "../assets/Data";
@@ -89,6 +94,7 @@ const Billings = () => {
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const [searchResults, setSearchResults] = useState(null);
 
   useEffect(() => {
     if (billsStatus === "idle") {
@@ -162,58 +168,76 @@ const Billings = () => {
     return "Due";
   };
 
-  const filteredBills = bills.filter((bill) => {
-    const nameMatch =
-      bill.patientInfo.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      bill.patientInfo.phone.includes(searchTerm);
+  const filteredBills = useMemo(() => {
+   
+    const billsToFilter = searchResults || bills;
 
-    let dateMatch = true;
-    const billDate = new Date(bill.updatedAt);
-    const today = new Date();
+    return billsToFilter.filter((bill) => {
+      const nameMatch =
+        bill.patientInfo.name
+          .toLowerCase()
+          .includes(searchTerm?.toLowerCase()) ||
+        bill.patientInfo.phone.includes(searchTerm);
+      const invoiceMatch =
+        bill.invoiceNumber?.toLowerCase() === searchTerm?.toLowerCase();
+      let dateMatch = true;
+      const billDate = new Date(bill.updatedAt);
+      const today = new Date();
 
-    switch (dateFilter) {
-      case "Today":
-        dateMatch = isWithinInterval(billDate, {
-          start: startOfDay(today),
-          end: endOfDay(today),
-        });
-        break;
-      case "Yesterday":
-        dateMatch = isWithinInterval(billDate, {
-          start: startOfDay(subDays(today, 1)),
-          end: endOfDay(subDays(today, 1)),
-        });
-        break;
-      case "This Week":
-        dateMatch = isWithinInterval(billDate, {
-          start: startOfWeek(today),
-          end: endOfDay(today),
-        });
-        break;
-      case "Custom":
-        if (dateRange.from && dateRange.to) {
+      switch (dateFilter) {
+        case "Today":
           dateMatch = isWithinInterval(billDate, {
-            start: startOfDay(dateRange.from),
-            end: endOfDay(dateRange.to),
+            start: startOfDay(today),
+            end: endOfDay(today),
           });
-        }
-        break;
-    }
+          break;
+        case "Yesterday":
+          dateMatch = isWithinInterval(billDate, {
+            start: startOfDay(subDays(today, 1)),
+            end: endOfDay(subDays(today, 1)),
+          });
+          break;
+        case "This Week":
+          dateMatch = isWithinInterval(billDate, {
+            start: startOfWeek(today),
+            end: endOfDay(today),
+          });
+          break;
+        case "Custom":
+          if (dateRange.from && dateRange.to) {
+            dateMatch = isWithinInterval(billDate, {
+              start: startOfDay(dateRange.from),
+              end: endOfDay(dateRange.to),
+            });
+          }
+          break;
+      }
 
-    const status = getBillStatus(bill);
-    let statusMatch = true;
-    if (filterStatus !== "All") {
-      statusMatch = status === filterStatus;
-    }
+      const status = getBillStatus(bill);
+      let statusMatch = true;
+      if (filterStatus !== "All") {
+        statusMatch = status === filterStatus;
+      }
 
-    let patientTypeMatch = true;
-    if (patientTypeFilter !== "All") {
-      patientTypeMatch = bill.patientType === patientTypeFilter;
-    }
+      let patientTypeMatch = true;
+      if (patientTypeFilter !== "All") {
+        patientTypeMatch = bill.patientType === patientTypeFilter;
+      }
 
-    return nameMatch && dateMatch && statusMatch && patientTypeMatch;
-  });
-
+      return (
+        (nameMatch && dateMatch && statusMatch && patientTypeMatch) ||
+        invoiceMatch
+      );
+    });
+  }, [
+    bills,
+    searchResults,
+    searchTerm,
+    dateFilter,
+    dateRange,
+    filterStatus,
+    patientTypeFilter,
+  ]);
   const getBadgeVariant = (status) => {
     switch (status) {
       case "Due":
@@ -301,6 +325,42 @@ const Billings = () => {
     setOpenDropdownId(openDropdownId === id ? null : id);
   };
 
+  const handleSearch = async (searchValue) => {
+    setSearchTerm(searchValue);
+
+    if (!searchValue) {
+      setSearchResults(null);
+      return;
+    }
+
+    if (searchValue.split("/").filter(Boolean).length === 3) {
+      // First check in existing bills
+      const existingBill = bills.find(
+        (bill) =>
+          bill.invoiceNumber?.toLowerCase() === searchValue.toLowerCase()
+      );
+
+      if (existingBill) {
+        setSearchResults(existingBill);
+      } else {
+        // If not found in existing bills, make API call
+        try {
+          const result = await dispatch(
+            searchBillByInvoice(searchValue)
+          ).unwrap();
+          setSearchResults(result ? result : null);
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: "Bill not found with the given invoice number",
+            variant: "destructive",
+          });
+          setSearchResults(null);
+        }
+      }
+    }
+  };
+
   const BillCard = ({ bill }) => (
     <Card
       className="mb-4 hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
@@ -319,11 +379,10 @@ const Billings = () => {
                 {bill.patientInfo.name}
               </h3>
               <Badge variant="outline" className="ml-2 text-xs font-bold">
-              
-  {bill.patientType === "OPDProcedure" && bill.opdProcedure?.procedureName 
-    ? `${bill.patientType} (${bill.opdProcedure.procedureName})` 
-    : bill.patientType}
-
+                {bill.patientType === "OPDProcedure" &&
+                bill.opdProcedure?.procedureName
+                  ? `${bill.patientType} (${bill.opdProcedure.procedureName})`
+                  : bill.patientType}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground mb-2">
@@ -425,7 +484,7 @@ const Billings = () => {
                 <Input
                   placeholder="Search bills..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => handleSearch(e.target.value)}
                   className="pl-8 w-full"
                 />
               </div>
@@ -741,16 +800,24 @@ const Billings = () => {
                       <TableCell>{bill.invoiceNumber || "N/A"}</TableCell>
                       <TableCell>{bill.patientInfo.name}</TableCell>
                       <TableCell>
-                        {bill?.patient?.registrationNumber || bill?.patientInfo?.registrationNumber|| "N/A"}
+                        {bill?.patient?.registrationNumber ||
+                          bill?.patientInfo?.registrationNumber ||
+                          "N/A"}
                       </TableCell>
                       <TableCell>{bill.patientInfo.phone}</TableCell>
                       {!isMediumScreen && (
                         <>
-                        <TableCell className="font-bold">
-  {bill.patientType === "OPDProcedure" && bill.opdProcedure?.procedureName 
-    ? `${bill.patientType} (${bill.opdProcedure.procedureName})` 
-    : bill.patientType}
-</TableCell>
+                          <TableCell className="font-bold">
+                            {bill.patientType === "OPDProcedure" &&
+                            bill.opdProcedure?.procedureName ? (
+                              <>
+                                <div>{bill.patientType}</div>
+                                <div>{`(${bill.opdProcedure.procedureName})`}</div>
+                              </>
+                            ) : (
+                              bill.patientType
+                            )}
+                          </TableCell>
 
                           <TableCell>
                             {formatDateOrTime(bill.updatedAt)}

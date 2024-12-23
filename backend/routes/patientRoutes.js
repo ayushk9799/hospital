@@ -107,6 +107,7 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
           ...plainAdmission.patient,
         },
         admissionDate: admission.bookingDate,
+        operationName:admission.operationName,
         totalAmount,
         amountPaid,
         amountDue: totalAmount - amountPaid,

@@ -37,7 +37,6 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const [selectedServices, setSelectedServices] = useState([]);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const headerTemplateStrings = useSelector((state) => state.templates.headerTemplate);
-  console.log(headerTemplateStrings)
   const HeaderComponent = createDynamicComponentFromString(headerTemplateStrings||headerTemplateString);
   React.useEffect(() => {
     if (billData?.services) {

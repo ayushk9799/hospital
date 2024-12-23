@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { FileText, ArrowLeft } from "lucide-react";
+import { FileText, ArrowLeft, Plus } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchAdmittedPatients } from "../redux/slices/patientSlice";
@@ -28,16 +28,17 @@ export default function AdmittedPatients() {
   // const { admittedPatients, admittedPatientsStatus } = useSelector(
   //   (state) => state.patients
   // );
-const [admittedPatients,setAdmittedPatients] = useState([]);
+  const [admittedPatients, setAdmittedPatients] = useState([]);
 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showBilling, setShowBilling] = useState(false);
 
   useEffect(() => {
-    dispatch(fetchAdmittedPatients()).unwrap().then((res)=>
-    {
-      setAdmittedPatients(res);
-    });
+    dispatch(fetchAdmittedPatients())
+      .unwrap()
+      .then((res) => {
+        setAdmittedPatients(res);
+      });
   }, []);
 
   const handleDischarge = (patientId, patient) => {
@@ -61,6 +62,8 @@ const [admittedPatients,setAdmittedPatients] = useState([]);
         type: "IPD",
       },
       initialBillData: {
+        operationName: patient.operationName,
+
         services: [patient.bills.services[0]] || [],
       },
     });
@@ -74,7 +77,28 @@ const [admittedPatients,setAdmittedPatients] = useState([]);
     dispatch(fetchAdmittedPatients());
   };
 
- 
+  const handleAddServices = (patient) => {
+    navigate(`/patients/add-services/${patient._id}`, {
+      state: {
+        patientData: {
+          _id: patient._id,
+          name: patient.patient.name,
+          registrationNumber: patient.patient.registrationNumber,
+          ipdNumber: patient.ipdNumber,
+          age: patient.patient.age,
+          gender: patient.patient.gender,
+          contactNumber: patient.patient.contactNumber,
+          address: patient.patient.address,
+          bookingDate: patient.bookingDate,
+          type: "IPD",
+        },
+        initialBillData: {
+          operationName: patient.operationName,
+          services: [patient.bills.services[0]] || [],
+        },
+      },
+    });
+  };
 
   return (
     <div className=" pb-6">
@@ -94,7 +118,9 @@ const [admittedPatients,setAdmittedPatients] = useState([]);
                       <TableHead className="w-[140px]">UHID No.</TableHead>
                       <TableHead className="w-[120px]">IPD No.</TableHead>
                       <TableHead className="w-[200px]">Name</TableHead>
-                      <TableHead className="w-[120px]">Admission Date</TableHead>
+                      <TableHead className="w-[120px]">
+                        Admission Date
+                      </TableHead>
                       <TableHead className="text-right w-[120px]">
                         Amount (₹)
                       </TableHead>
@@ -106,6 +132,9 @@ const [admittedPatients,setAdmittedPatients] = useState([]);
                       </TableHead>
                       <TableHead className="text-center w-[100px]">
                         Bills
+                      </TableHead>
+                      <TableHead className="text-center w-[120px]">
+                        Service
                       </TableHead>
                       <TableHead className="text-center w-[120px]">
                         Actions
@@ -122,11 +151,14 @@ const [admittedPatients,setAdmittedPatients] = useState([]);
                           {patient.patient.registrationNumber}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {patient.ipdNumber || '-'}
+                          {patient.ipdNumber || "-"}
                         </TableCell>
                         <TableCell>{patient.patient.name}</TableCell>
                         <TableCell>
-                          {format(new Date(patient.admissionDate), "dd/MM/yyyy")}
+                          {format(
+                            new Date(patient.admissionDate),
+                            "dd/MM/yyyy"
+                          )}
                         </TableCell>
                         <TableCell className="text-right tabular-nums font-bold">
                           {patient.totalAmount.toFixed(2)}
@@ -149,8 +181,22 @@ const [admittedPatients,setAdmittedPatients] = useState([]);
                           </Button>
                         </TableCell>
                         <TableCell className="text-center">
+                          {" "}
                           <Button
-                            onClick={() => handleDischarge(patient._id, patient)}
+                            onClick={() => handleAddServices(patient)}
+                            variant="outline"
+                            size="sm"
+                            className="inline-flex items-center gap-2"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Add Services
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            onClick={() =>
+                              handleDischarge(patient._id, patient)
+                            }
                             variant="default"
                             size="sm"
                             className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -172,30 +218,49 @@ const [admittedPatients,setAdmittedPatients] = useState([]);
                       <div className="space-y-1.5">
                         {/* Header - Name and Registration */}
                         <div className="flex justify-between items-center">
-                          <h3 className="font-semibold text-base">{patient.patient.name}</h3>
+                          <h3 className="font-semibold text-base">
+                            {patient.patient.name}
+                          </h3>
                           <div className="text-xs text-muted-foreground space-y-0.5">
-                            <div>UHID No: {patient.patient.registrationNumber}</div>
-                            <div>IPD No: {patient.ipdNumber || '-'}</div>
+                            <div>
+                              UHID No: {patient.patient.registrationNumber}
+                            </div>
+                            <div>IPD No: {patient.ipdNumber || "-"}</div>
                           </div>
                         </div>
-                        
+
                         {/* Info Grid - 2 columns */}
                         <div className="grid grid-cols-2 text-xs gap-x-4">
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">Admission:</span>
-                            <span>{format(new Date(patient.admissionDate), "dd/MM/yyyy")}</span>
+                            <span className="text-muted-foreground">
+                              Admission:
+                            </span>
+                            <span>
+                              {format(
+                                new Date(patient.admissionDate),
+                                "dd/MM/yyyy"
+                              )}
+                            </span>
                           </div>
                           <div className="flex justify-between">
-                            <span className="text-muted-foreground">Total:</span>
-                            <span className="font-medium">₹{patient.totalAmount.toFixed(2)}</span>
+                            <span className="text-muted-foreground">
+                              Total:
+                            </span>
+                            <span className="font-medium">
+                              ₹{patient.totalAmount.toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Paid:</span>
-                            <span className="font-medium text-green-600">₹{patient.amountPaid.toFixed(2)}</span>
+                            <span className="font-medium text-green-600">
+                              ₹{patient.amountPaid.toFixed(2)}
+                            </span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-muted-foreground">Due:</span>
-                            <span className="font-medium text-red-600">₹{patient.amountDue.toFixed(2)}</span>
+                            <span className="font-medium text-red-600">
+                              ₹{patient.amountDue.toFixed(2)}
+                            </span>
                           </div>
                         </div>
 
@@ -210,9 +275,21 @@ const [admittedPatients,setAdmittedPatients] = useState([]);
                             <FileText className="h-3 w-3" />
                             Bills
                           </Button>
-                          
+
                           <Button
-                            onClick={() => handleDischarge(patient._id, patient)}
+                            onClick={() => handleAddServices(patient)}
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 h-8 text-xs inline-flex items-center justify-center gap-1"
+                          >
+                            <Plus className="h-3 w-3" />
+                            Add Services
+                          </Button>
+
+                          <Button
+                            onClick={() =>
+                              handleDischarge(patient._id, patient)
+                            }
                             variant="default"
                             size="sm"
                             className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"

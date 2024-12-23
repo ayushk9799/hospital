@@ -171,9 +171,9 @@ const Lab = () => {
     }
   };
 
-  const handleTestSelection = (category, type) => {
+  const handleTestSelection = (category, type,completeType) => {
     setSelectedTemplate(null);
-    setSelectedTest({ category, type });
+    setSelectedTest({ category, type ,completeType});
   };
 
   const handleTemplateSelection = (template) => {
@@ -381,7 +381,8 @@ const Lab = () => {
                                 type
                                   .toLowerCase()
                                   .replace(/[()]/g, "")
-                                  .replace(/\s+/g, "-")
+                                  .replace(/\s+/g, "-"),
+                                  type
                               )
                             }
                           >
@@ -412,6 +413,7 @@ const Lab = () => {
                 <CreateLabReport
                   category={selectedTest.category.replace(" ", "-")}
                   type={selectedTest.type}
+                  completeType={selectedTest.completeType}
                   patientData={patientData}
                   onClose={() => setSelectedTest(null)}
                   searchWhere={searchWhere}

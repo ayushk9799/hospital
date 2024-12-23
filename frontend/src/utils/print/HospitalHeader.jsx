@@ -8,7 +8,7 @@ const HospitalHeader = ({ hospitalInfo }) => {
       <div>
         <h1
           className="text-4xl tracking-wide text-center text-[#1a5f7a] uppercase"
-          style={stylesFont.fontFamilyName}
+          style={{fontFamily:"Tinos"}}
         >
           {hospitalInfo?.name}
         </h1>
