@@ -33,6 +33,7 @@ import {
   PopoverTrigger,
 } from "../components/ui/popover";
 import { format } from "date-fns";
+import TemplateLabReport from "./TemplateLabReport";
 import {
   fetchVisitDetails,
   fetchRegistrationDetails,
@@ -65,13 +66,6 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-
-
-const allLabTests = labCategories.flatMap((category) =>
-  category.types.map((type) => ({ name: type }))
-);
-
-
 
 const LabReportTable = ({ report }) => {
   return (
@@ -106,12 +100,31 @@ export default function DischargeSummary() {
   const [patient, setPatient] = useState(null);
   const ignoreList = location.state?.ignoreList || false;
   const dischargeData = location.state?.dischargeData || null;
-   const {diagnosisTemplate=[],comorbidities=[],medicinelist=[]}=useSelector((state)=>state.templates)
+  const {
+    diagnosisTemplate = [],
+    comorbidities = [],
+    medicinelist = [],
+  } = useSelector((state) => state.templates);
   // Get initial patient from Redux store
   const patientFromStore = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
   );
+  const labTestsTemplate = useSelector(
+    (state) => state.templates.labTestsTemplate
+  );
 
+  const allLabTests = [
+    ...labCategories.flatMap((category) =>
+      category.types.map((type) => ({ name: type }))
+    ),
+    ...(labTestsTemplate?.map((template) => ({
+      name: template.name,
+      isTemplate: true,
+    })) || []),
+  ];
+
+  console.log(labTestsTemplate);
+  console.log(allLabTests);
   useEffect(() => {
     const fetchPatient = async () => {
       if (!patientFromStore && !dischargeData) {
@@ -210,9 +223,9 @@ export default function DischargeSummary() {
     },
   });
 
-  const [isLabReportOpen, setIsLabReportOpen] = useState(false); // State to manage modal visibility
-  const [selectedInvestigation, setSelectedInvestigation] = useState(null); // State to track selected investigation
-  
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [isLabReportOpen, setIsLabReportOpen] = useState(false);
+  const [selectedInvestigation, setSelectedInvestigation] = useState(null);
 
   const [patientInfo, setPatientInfo] = useState({
     name: "",
@@ -344,6 +357,8 @@ export default function DischargeSummary() {
     (state) => state.discharge
   );
 
+  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -364,7 +379,7 @@ export default function DischargeSummary() {
           frequency: m.dosage,
         })),
       labReports: formData.investigations
-        .filter((inv) => inv.name.trim() !== "" && inv.report) // Only include if has name and report
+        .filter((inv) => inv.name.trim() !== "" && inv.report)
         .map((i) => ({
           name: i.name,
           report: i.report,
@@ -382,7 +397,9 @@ export default function DischargeSummary() {
         description: "Patient discharged successfully",
         variant: "success",
       });
-      navigate("/patients");
+
+      // Open print dialog instead of using window.confirm
+      setIsPrintDialogOpen(true);
     } catch (error) {
       toast({
         title: "Error",
@@ -447,18 +464,32 @@ export default function DischargeSummary() {
   };
 
   const handleOpenLabReport = (investigation) => {
+    // Check if this investigation matches any template
+    const matchingTemplate = labTestsTemplate?.find(
+      (template) =>
+        template.name.toLowerCase() === investigation.name.toLowerCase()
+    );
+
+    if (matchingTemplate) {
+      setSelectedTemplate(matchingTemplate);
+    } else {
+      setSelectedTemplate(null);
+    }
     setSelectedInvestigation(investigation);
+
     setIsLabReportOpen(true);
   };
-
+  console.log(selectedInvestigation);
+  console.log(selectedTemplate);
   const handleCloseLabReport = () => {
     setSelectedInvestigation(null);
+    setSelectedTemplate(null);
     setIsLabReportOpen(false);
   };
 
   const handleSaveLabReport = (reportData) => {
     const updatedInvestigations = formData.investigations.map((inv) =>
-      inv.name === selectedInvestigation.name
+      inv.name.toLowerCase() === selectedInvestigation.name.toLowerCase()
         ? {
             ...inv,
             name: reportData.name,
@@ -469,7 +500,11 @@ export default function DischargeSummary() {
     );
 
     // If the investigation doesn't exist, add it to the list
-    if (!updatedInvestigations.some((inv) => inv.name === reportData.name)) {
+    if (
+      !updatedInvestigations.some(
+        (inv) => inv.name.toLowerCase() === reportData.name.toLowerCase()
+      )
+    ) {
       updatedInvestigations.push({
         name: reportData.name,
         report: reportData.report,
@@ -487,6 +522,13 @@ export default function DischargeSummary() {
       name: reportData.name,
       report: reportData.report,
       date: reportData.date,
+    });
+
+    // Show success toast
+    toast({
+      title: "Success",
+      description: "Lab report saved successfully",
+      variant: "success",
     });
 
     handleCloseLabReport();
@@ -538,7 +580,7 @@ export default function DischargeSummary() {
   const getCategoryAndTypeForTest = (testName) => {
     for (const category of labCategories) {
       if (category.types.includes(testName)) {
-        const type = testName.toLowerCase().replace(/\s+/g, "-");
+        const type = testName;
         return { category: category.name.toLowerCase(), type };
       }
     }
@@ -761,6 +803,15 @@ export default function DischargeSummary() {
     `,
   });
 
+  // Add this function to handle print confirmation
+  const handlePrintConfirm = (shouldPrint) => {
+    setIsPrintDialogOpen(false);
+    if (shouldPrint) {
+      handlePrint();
+    }
+    navigate("/patients/admitted");
+  };
+
   return (
     <div className="container mx-auto py-4 px-2 sm:px-4 max-w-5xl">
       <Card className="w-full shadow-lg">
@@ -961,7 +1012,7 @@ export default function DischargeSummary() {
                   </div>
                   <div className="flex gap-2">
                     <MultiSelectInput
-                      suggestions={diagnosisTemplate?.map((name)=>({name}))}
+                      suggestions={diagnosisTemplate?.map((name) => ({ name }))}
                       selectedValues={formData.diagnosis
                         .split(", ")
                         .map((d) => ({ name: d }))}
@@ -993,7 +1044,7 @@ export default function DischargeSummary() {
                   </div>
                   <div className="flex gap-2">
                     <MultiSelectInput
-                      suggestions={comorbidities?.map((name)=>({name}))}
+                      suggestions={comorbidities?.map((name) => ({ name }))}
                       selectedValues={formData.comorbidities}
                       setSelectedValues={handleComorbiditiesChange}
                       placeholder="Select comorbidities"
@@ -1108,7 +1159,6 @@ export default function DischargeSummary() {
                     >
                       <div
                         onKeyDown={(e) => {
-                          // Prevent form submission on Enter key
                           if (e.key === "Enter") {
                             e.preventDefault();
                           }
@@ -1204,14 +1254,14 @@ export default function DischargeSummary() {
                   type="button"
                   onClick={handleSave}
                   variant="outline"
-                  disabled={savingStatus === "loading"}
+                  disabled={savingStatus === "loading" || !patientId}
                   className="w-full sm:w-auto"
                 >
                   {savingStatus === "loading" ? "Saving..." : "Save"}
                 </Button>
                 <Button
                   type="submit"
-                  disabled={dischargeStatus === "loading"}
+                  disabled={dischargeStatus === "loading" || !patientId}
                   className="w-full sm:w-auto"
                 >
                   {dischargeStatus === "loading"
@@ -1240,26 +1290,34 @@ export default function DischargeSummary() {
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            {selectedInvestigation.report ? (
-              <div>
-                <p className="mb-2">Date: {selectedInvestigation.date}</p>
-                <LabReportTable report={selectedInvestigation.report} />
-                <div className="mt-4 flex justify-end">
-                  <Button onClick={handleCloseLabReport}>Close</Button>
-                </div>
-              </div>
+            {selectedTemplate ? (
+              <TemplateLabReport
+                template={selectedTemplate}
+                patientData={patient}
+                onClose={(reportData) => {
+                  if (reportData) {
+                    handleSaveLabReport(reportData);
+                  } else {
+                    handleCloseLabReport();
+                  }
+                }}
+                searchWhere="ipd"
+              />
             ) : (
               (() => {
+                console.log(selectedInvestigation);
                 const { category, type } = getCategoryAndTypeForTest(
                   selectedInvestigation.name
                 );
                 return (
                   <CreateLabReport
                     category={category}
-                    type={type.replace(/[()]/g, "")}
+                    type={type}
                     patientData={patient}
+                    formData={formData}
                     onClose={handleCloseLabReport}
                     onSave={handleSaveLabReport}
+                    searchWhere="ipd"
                   />
                 );
               })()
@@ -1284,6 +1342,27 @@ export default function DischargeSummary() {
           hospital={hospital}
         />
       </div>
+
+      {/* Print Confirmation Dialog */}
+      {isPrintDialogOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-[90%] max-w-md">
+            <h2 className="text-lg font-semibold mb-4">Print Confirmation</h2>
+            <p className="mb-6">
+              Would you like to print the discharge summary?
+            </p>
+            <div className="flex justify-end gap-2">
+              <Button
+                variant="outline"
+                onClick={() => handlePrintConfirm(false)}
+              >
+                No
+              </Button>
+              <Button onClick={() => handlePrintConfirm(true)}>Yes</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

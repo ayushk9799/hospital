@@ -125,6 +125,89 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+router.post("/admittedpatientsSearch", verifyToken, async (req, res) => {
+  try {
+    const { searchQuery } = req.body;
+    const admittedPatients = await IPDAdmission.find({registrationNumber: searchQuery})
+      .populate({
+        path: "assignedRoom",
+        model: "Room",
+      })
+      .populate({
+        path: "patient",
+        model: "Patient",
+      })
+      .populate({
+        path: "bills.services",
+        populate: {
+          path: "payments",
+        },
+      })
+      .populate({
+        path: "bills.pharmacy",
+        populate: {
+          path: "payments",
+        },
+      });
+
+    // Calculate financial details for each patient
+    const patientsWithBillDetails = admittedPatients.map((admission) => {
+      let totalAmount = 0;
+      let amountPaid = 0;
+
+      // Calculate from service bills
+      if (admission.bills && admission.bills.services) {
+        admission.bills.services.forEach((bill) => {
+          totalAmount += bill.totalAmount || 0;
+          amountPaid += bill.payments.reduce(
+            (sum, payment) => sum + (payment.amount || 0),
+            0
+          );
+        });
+      }
+
+      // Calculate from pharmacy bills
+      if (admission.bills && admission.bills.pharmacy) {
+        admission.bills.pharmacy.forEach((bill) => {
+          totalAmount += bill.totalAmount || 0;
+          amountPaid += bill.payments.reduce(
+            (sum, payment) => sum + (payment.amount || 0),
+            0
+          );
+        });
+      }
+
+      // Convert mongoose document to plain object and spread its properties
+      const plainAdmission = admission.toObject();
+
+      return {
+        ...plainAdmission, // This will now properly spread all admission fields
+        _id: admission._id,
+        patient: {
+          name: admission.patientName,
+          registrationNumber: admission.registrationNumber,
+          ipdNumber: admission.ipdNumber,
+          ...plainAdmission.patient,
+        },
+        admissionDate: admission.bookingDate,
+        operationName:admission.operationName,
+        totalAmount,
+        amountPaid,
+        amountDue: totalAmount - amountPaid,
+        status: admission.status,
+        bills: {
+          services: admission.bills?.services || [],
+          pharmacy: admission.bills?.pharmacy || [],
+        },
+      };
+    });
+
+    res.json(patientsWithBillDetails);
+  } catch (error) {
+    console.log("Error in admitted-patients route:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // AFTER that, put your parameterized routes
 router.get("/:id", verifyToken, async (req, res) => {

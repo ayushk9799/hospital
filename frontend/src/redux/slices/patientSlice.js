@@ -366,7 +366,30 @@ export const fetchAdmittedPatients = createLoadingAsyncThunk(
     }
   }
 );
+export const fetchAdmittedPatientsSearch = createLoadingAsyncThunk(
+  "patients/fetchAdmittedPatientsSearch",
+  async (searchQuery, { rejectWithValue }) => {
+    try {
+      console.log(searchQuery);
+      const response = await fetch(`${Backend_URL}/api/patients/admittedpatientsSearch`, { 
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ searchQuery: searchQuery }),
+      });
 
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 // Add these new thunks after the other thunks
 export const fetchRegistrationAndIPDNumbers = createLoadingAsyncThunk(
   "patients/fetchRegistrationAndIPDNumbers",

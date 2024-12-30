@@ -71,6 +71,7 @@ const CreateServiceBill = ({
   const { toast } = useToast();
   const [billDataForPrint, setBillDataForPrint] = useState(null);
   const [newlyAddedServices, setNewlyAddedServices] = useState([]);
+  const [isViewFromUpdate, setIsViewFromUpdate] = useState(false);
 
   const [initialBillData, setInitialBillData] = useState(initialBillDatas);
 
@@ -142,7 +143,10 @@ const CreateServiceBill = ({
                   name: service.name,
                   category: service.category,
                   quantity: service.quantity,
-                  rate: service.category === 'Surgery' ? service.rate - billData.additionalDiscount : service.rate
+                  rate:
+                    service.category === "Surgery"
+                      ? service.rate - billData.additionalDiscount
+                      : service.rate,
                 })),
                 createdAt: billData.createdAt,
                 totalAmount: billData.totalAmount,
@@ -153,15 +157,19 @@ const CreateServiceBill = ({
                 invoiceNumber: billData.invoiceNumber,
               },
             ],
-            visit:billData?.visit,
-            operationName:billData.services.filter((ser)=>ser.category==="Surgery").map((ser)=>ser.name).join(",")
+            visit: billData?.visit,
+            operationName: billData.services
+              .filter((ser) => ser.category === "Surgery")
+              .map((ser) => ser.name)
+              .join(","),
           };
 
           const formattedServices = services.map((service, index) => {
-            const discountedRate = service.category === 'Surgery' 
-              ? service.rate - billData.additionalDiscount 
-              : service.rate;
-          
+            const discountedRate =
+              service.category === "Surgery"
+                ? service.rate - billData.additionalDiscount
+                : service.rate;
+
             return {
               id: index + 1,
               service: service.name,
@@ -248,44 +256,69 @@ const CreateServiceBill = ({
   const [breakTotalMode, setBreakTotalMode] = useState(true);
   const [targetTotal, setTargetTotal] = useState("");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isInitialSetupDone, setIsInitialSetupDone] = useState(false);
+  const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
+  const [pendingModeChange, setPendingModeChange] = useState(null);
 
   const calculateTotals = useMemo(() => {
+    // Get the original subtotal from billData
+    const originalSubtotal =
+      billData?.subtotal || billData?.services?.[0]?.subtotal || 0;
+    const originalServices = billData?.services?.[0]?.services || [];
+
+    // Calculate total of original services that are still in addedServices
+    const originalServicesTotal = originalServices.reduce(
+      (sum, service) => sum + service.rate * service.quantity,
+      0
+    );
+
+    // Calculate the base amount (portion of original subtotal that wasn't from services)
+    const baseAmount = Math.max(0, originalSubtotal - originalServicesTotal);
+
     // If in break total mode, use target total as the main total
     if (breakTotalMode && targetTotal) {
-      let discountValue = 0;
-      let v=parseFloat(billData?.subtotal || billData?.services?.[0]?.subtotal);
+      const currentServicesTotal = addedServices.reduce(
+        (sum, service) => sum + service.total,
+        0
+      );
 
+      // In break total mode, we use the target total directly
+      const targetTotalValue = parseFloat(targetTotal);
+
+      let discountValue = 0;
       if (additionalDiscount !== "") {
         if (additionalDiscountType === "amount") {
           discountValue = parseFloat(additionalDiscount);
         } else {
-          discountValue = (parseFloat(additionalDiscount) / 100) * v;
+          discountValue =
+            (parseFloat(additionalDiscount) / 100) * targetTotalValue;
         }
       }
-  
-      // Ensure discount doesn't exceed subtotal
-      discountValue = Math.min(discountValue, v);
-      const currentServicesSubtotal = newlyAddedServices.reduce(
-        (sum, service) => sum + service.total,
-        0
-      );
+
+      // Ensure discount doesn't exceed target total
+      discountValue = Math.min(discountValue, targetTotalValue);
+      console.log(discountValue);
+      console.log(targetTotalValue);
       return {
-        subtotal: v,
-        additionalDiscount: "0.00",
-        totalAmount: v-discountValue,
-        currentServicesSubtotal,
+        subtotal: originalSubtotal, // Adjust subtotal to match target total after discount
+        additionalDiscount: discountValue.toFixed(2),
+        totalAmount: originalSubtotal - discountValue,
+        currentServicesSubtotal: currentServicesTotal,
         totalAmountPaid:
           billData?.amountPaid || billData?.services?.[0]?.amountPaid || 0,
+        baseAmount,
       };
     }
 
     // Normal mode calculation
-    const subtotal =
-      newlyAddedServices.reduce((sum, service) => sum + service.total, 0) +
-      (billData?.subtotal || billData?.services?.[0]?.subtotal || 0);
+    const currentServicesTotal = addedServices.reduce(
+      (sum, service) => sum + service.total,
+      0
+    );
+
+    const subtotal = currentServicesTotal + baseAmount;
 
     let discountValue = 0;
-
     if (additionalDiscount !== "") {
       if (additionalDiscountType === "amount") {
         discountValue = parseFloat(additionalDiscount);
@@ -297,26 +330,24 @@ const CreateServiceBill = ({
     // Ensure discount doesn't exceed subtotal
     discountValue = Math.min(discountValue, subtotal);
 
-    const totalAmount = subtotal - discountValue;
-
     return {
       subtotal,
       additionalDiscount: discountValue.toFixed(2),
-      totalAmount,
-      currentServicesSubtotal: subtotal,
+      totalAmount: subtotal - discountValue,
+      currentServicesSubtotal: currentServicesTotal,
       totalAmountPaid:
-        billData?.amountPaid || billData?.services?.[0]?.amountPaid,
+        billData?.amountPaid || billData?.services?.[0]?.amountPaid || 0,
+      baseAmount,
     };
   }, [
     addedServices,
     additionalDiscount,
     additionalDiscountType,
-    newlyAddedServices,
     billData,
     breakTotalMode,
     targetTotal,
   ]);
-
+  console.log(calculateTotals);
   useEffect(() => {
     if (servicesStatus === "idle") dispatch(fetchServices());
   }, [dispatch, servicesStatus]);
@@ -381,7 +412,7 @@ const CreateServiceBill = ({
         description: "The bill has been successfully updated.",
       });
       dispatch(setCreateBillStatusIdle());
-
+      setIsViewFromUpdate(true);
       handlePrintBill();
     } else if (updateBillStatus === "failed") {
       toast({
@@ -411,23 +442,38 @@ const CreateServiceBill = ({
       setNewService((prev) => ({ ...prev, serviceName }));
     }
   }, [serviceName]);
-useEffect(()=>
-{
-      handleBreakTotalModeChange({target:{checked:true}})
-},[calculateTotals.totalAmount])
+
   const handleBreakTotalModeChange = (e) => {
     const isChecked = e.target.checked;
-    setBreakTotalMode(isChecked);
-
-    // Auto-fill target total with calculateTotals.totalAmount when enabling break mode
-    if (isChecked && calculateTotals.totalAmount) {
-      setTargetTotal(calculateTotals.totalAmount.toString());
+    if (newlyAddedServices.length > 0) {
+      setPendingModeChange(isChecked);
+      setIsWarningDialogOpen(true);
     } else {
-      // Reset only the target total when disabling, don't clear services
-      setTargetTotal("");
+      applyModeChange(isChecked);
     }
   };
 
+  const applyModeChange = (isChecked) => {
+    setBreakTotalMode(isChecked);
+    if (isChecked && calculateTotals.totalAmount) {
+      setTargetTotal(calculateTotals.totalAmount.toString());
+    } else {
+      setTargetTotal("");
+    }
+    // Clear only newly added services when mode changes
+    const existingServices = addedServices.filter(
+      (service) => service.isExisting
+    );
+    setAddedServices(existingServices);
+    setNewlyAddedServices([]);
+    setSelectedServices(existingServices.map((service) => service.id));
+  };
+
+  useEffect(() => {
+    if (calculateTotals.totalAmount) {
+      setTargetTotal(calculateTotals.totalAmount.toString());
+    }
+  }, [calculateTotals.totalAmount]);
   const handleAddService = (e) => {
     e.preventDefault();
 
@@ -436,10 +482,9 @@ useEffect(()=>
 
     if (breakTotalMode && targetTotal) {
       // Check if adding this service would exceed target total
-      const currentTotal = addedServices.filter((ser)=>ser.category!=="Surgery").reduce(
-        (sum, service) => sum + service.total,
-        0
-      );
+      const currentTotal = addedServices
+        .filter((ser) => ser.category !== "Surgery")
+        .reduce((sum, service) => sum + service.total, 0);
       if (currentTotal + totalValue > parseFloat(targetTotal)) {
         toast({
           title: "Exceeds Target Total",
@@ -451,12 +496,13 @@ useEffect(()=>
     }
 
     const newServiceWithoutDiscount = {
-      id: addedServices.length + 1,
+      id: Date.now(), // Use timestamp for unique ID
       service: newService.serviceName,
       category: newService.category || "Not specified",
       quantity: quantityValue,
       rate: totalValue / quantityValue,
       total: totalValue,
+      isExisting: false, // Add this flag
     };
 
     setAddedServices((prev) => [...prev, newServiceWithoutDiscount]);
@@ -474,12 +520,52 @@ useEffect(()=>
   };
 
   const handleRemoveService = (id) => {
+    const serviceToRemove = addedServices.find((service) => service.id === id);
+
     setAddedServices((prev) => prev.filter((service) => service.id !== id));
-    setNewlyAddedServices((prev) =>
-      prev.filter((service) => service.id !== id)
-    );
+
+    // If it's a newly added service, remove it from newlyAddedServices as well
+    if (!serviceToRemove.isExisting) {
+      setNewlyAddedServices((prev) =>
+        prev.filter((service) => service.id !== id)
+      );
+    }
 
     setSelectedServices((prev) => prev.filter((serviceId) => serviceId !== id));
+  };
+
+  const handleEditService = (id) => {
+    console.log(id);
+    const serviceToEdit = addedServices.find((service) => service.id === id);
+    if (serviceToEdit) {
+      // Only turn off break total mode if editing an existing service
+      if (serviceToEdit.isExisting) {
+        setBreakTotalMode(false);
+      }
+
+      setNewService({
+        serviceName: serviceToEdit.service,
+        quantity: serviceToEdit.quantity.toString(),
+        rate: serviceToEdit.rate.toString(),
+        total: serviceToEdit.total.toString(),
+        category: serviceToEdit.category,
+      });
+      setServiceName(serviceToEdit.service);
+
+      // Remove from addedServices
+      setAddedServices((prev) => prev.filter((service) => service.id !== id));
+
+      // If it's a newly added service, remove from newlyAddedServices as well
+      if (!serviceToEdit.isExisting) {
+        setNewlyAddedServices((prev) =>
+          prev.filter((service) => service.id !== id)
+        );
+      }
+
+      setSelectedServices((prev) =>
+        prev.filter((serviceId) => serviceId !== id)
+      );
+    }
   };
 
   const handleServiceSuggestionSelect = (suggestion) => {
@@ -513,14 +599,16 @@ useEffect(()=>
     }
 
     const billData = {
-      services: addedServices.filter((ser)=>ser.category!=="Surgery").map((service) => ({
-        name: service.service,
-        quantity: service.quantity,
-        rate: service.rate,
-        discount: service.discAmt,
-        category: service.category,
-        isExisting: service.isExisting || false,
-      })),
+      services: addedServices
+        .filter((ser) => ser.category !== "Surgery")
+        .map((service) => ({
+          name: service.service,
+          quantity: service.quantity,
+          rate: service.rate,
+          discount: service.discAmt,
+          category: service.category,
+          isExisting: service.isExisting || false,
+        })),
       patient: patientDetails._id,
       patientType: patientDetails.type,
       patientInfo: {
@@ -564,25 +652,11 @@ useEffect(()=>
     setSelectedServices([]);
   };
 
-  const handleEditService = (id) => {
-    const serviceToEdit = addedServices.find((service) => service.id === id);
-    if (serviceToEdit) {
-      setNewService({
-        serviceName: serviceToEdit.service,
-        quantity: serviceToEdit.quantity.toString(),
-        rate: serviceToEdit.rate.toString(),
-        total: serviceToEdit.total.toString(),
-        category: serviceToEdit.category,
-      });
-      setServiceName(serviceToEdit.service);
-      setAddedServices((prev) => prev.filter((service) => service.id !== id));
-    }
-  };
-
   const handlePrintBill = () => {
     // Filter services based on selection
-    const selectedServicesList = addedServices.filter((service) =>
-      selectedServices.includes(service.id) && service.category!=="Surgery"
+    const selectedServicesList = addedServices.filter(
+      (service) =>
+        selectedServices.includes(service.id) && service.category !== "Surgery"
     );
 
     // Calculate totals for selected services only
@@ -625,17 +699,14 @@ useEffect(()=>
           payments: firstBill.payments || [],
           invoiceNumber: firstBill.invoiceNumber || null,
         },
-       admissionRecord:billData?.visit,
-        payment: firstBill.payments||[]
+        admissionRecord: billData?.visit,
+        payment: firstBill.payments || [],
       };
       setBillDataForPrint(opdBillData);
-      if(patientDetails?.name)
-      {
+      if (patientDetails?.name) {
         setIsPrintModalOpen(true);
-
-      }
-      else{
-        setIsPrintModalOpen(false)
+      } else {
+        setIsPrintModalOpen(false);
       }
     } else {
       // Format for ViewBillDialog
@@ -661,16 +732,13 @@ useEffect(()=>
         additionalDiscount: discountAmount,
         amountPaid: calculateTotals.totalAmountPaid,
         payments: firstBill.payments || billData.payments || [],
-        operationName:billData?.operationName
+        operationName: billData?.operationName,
       };
       setBillDataForPrint(viewBillData);
-      if(patientDetails?.name)
-      {
+      if (patientDetails?.name) {
         setIsViewBillDialogOpen(true);
-
-      }
-      else{
-        setIsViewBillDialogOpen(false)
+      } else {
+        setIsViewBillDialogOpen(false);
       }
     }
   };
@@ -717,10 +785,9 @@ useEffect(()=>
 
   const remainingAmount = useMemo(() => {
     if (!breakTotalMode || !targetTotal) return 0;
-    const currentTotal = addedServices.filter((ser)=>ser.category!=="Surgery").reduce(
-      (sum, service) => sum + service.total,
-      0
-    );
+    const currentTotal = addedServices
+      .filter((ser) => ser.category !== "Surgery")
+      .reduce((sum, service) => sum + service.total, 0);
     return parseFloat(targetTotal) - currentTotal;
   }, [breakTotalMode, targetTotal, addedServices]);
 
@@ -786,7 +853,7 @@ useEffect(()=>
       //     invoiceNumber: updatedBill.invoiceNumber,
       //   },
       // ],
-      updatedBill
+      updatedBill,
     };
 
     setBillData(updatedBill);
@@ -799,7 +866,7 @@ useEffect(()=>
       payments: updatedBill.payments,
     };
     setBillDataForPrint(updatedBill);
-    setIsViewBillDialogOpen(true)
+    setIsViewBillDialogOpen(true);
   };
 
   // Modify the handleOpenPayment function
@@ -814,6 +881,14 @@ useEffect(()=>
     setBillDataForPrint(formattedBillData);
     setIsPaymentDialogOpen(true);
   };
+
+  useEffect(() => {
+    // Only run if initial setup hasn't been done and we have a valid total amount
+    if (!isInitialSetupDone && calculateTotals.totalAmount > 0) {
+      handleBreakTotalModeChange({ target: { checked: true } });
+      setIsInitialSetupDone(true); // Prevent this from running again
+    }
+  }, [calculateTotals.totalAmount, isInitialSetupDone]);
 
   return (
     <div className="w-full  max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
@@ -850,13 +925,14 @@ useEffect(()=>
                       IPD No: {patientDetails.ipdNumber}
                     </Badge>
                   )}
-                  {(billData?.operationName || initialBillData?.operationName) && (
+                  {(billData?.operationName ||
+                    initialBillData?.operationName) && (
                     <Badge variant="outline">
-                    Operation : {billData?.operationName || initialBillData?.operationName}
-                  </Badge>
-                  )
-                   
-                  }
+                      Operation :{" "}
+                      {billData?.operationName ||
+                        initialBillData?.operationName}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
@@ -898,7 +974,11 @@ useEffect(()=>
             <div className="col-span-full sm:col-span-1 md:col-span-2">
               <Label htmlFor="serviceName">Service Name</Label>
               <SearchSuggestion
-                suggestions={breakTotalMode?services.filter((ser)=>ser.category==="Sub Category"):services}
+                suggestions={
+                  breakTotalMode
+                    ? services.filter((ser) => ser.category === "Sub Category")
+                    : services
+                }
                 placeholder="Enter service name"
                 value={serviceName}
                 setValue={setServiceName}
@@ -985,39 +1065,40 @@ useEffect(()=>
           </form>
           <Separator className="my-2" />
           <div className="sm:hidden space-y-1">
-            {addedServices.filter((ser)=>ser.category!=="Surgery").map((service) => (
-              <Card key={service.id} className="mb-1">
-                <CardContent className="p-2">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold">{service.service}</span>
-                    <div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 mr-2"
-                        onClick={() => handleEditService(service.id)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleRemoveService(service.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+            {addedServices
+              .filter((ser) => ser.category !== "Surgery")
+              .map((service) => (
+                <Card key={service.id} className="mb-1">
+                  <CardContent className="p-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <span className="font-semibold">{service.service}</span>
+                      <div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0 mr-2"
+                          onClick={() => handleEditService(service.id)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 w-8 p-0"
+                          onClick={() => handleRemoveService(service.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                   
-                    <div>Quantity: {service.quantity}</div>
-                    <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
-                    <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>Quantity: {service.quantity}</div>
+                      <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
+                      <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
           </div>
           <div className="hidden sm:block">
             <ScrollArea className="h-[250px] w-full">
@@ -1042,46 +1123,48 @@ useEffect(()=>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {addedServices.filter((ser)=>ser.category!=="Surgery").map((service) => (
-                    <TableRow key={service.id}>
-                      <TableCell>
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4"
-                          checked={selectedServices.includes(service.id)}
-                          onChange={() => handleSelectService(service.id)}
-                        />
-                      </TableCell>
-                      <TableCell>{service.service}</TableCell>
-                      <TableCell>{service.quantity}</TableCell>
-                      <TableCell>
-                        {service.rate.toLocaleString("en-IN")}
-                      </TableCell>
-                      <TableCell>
-                        {service.total.toLocaleString("en-IN")}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 mr-2"
-                          onClick={() => handleEditService(service.id)}
-                        >
-                          <span className="sr-only">Edit</span>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleRemoveService(service.id)}
-                        >
-                          <span className="sr-only">Remove</span>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {addedServices
+                    .filter((ser) => ser.category !== "Surgery")
+                    .map((service) => (
+                      <TableRow key={service.id}>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={selectedServices.includes(service.id)}
+                            onChange={() => handleSelectService(service.id)}
+                          />
+                        </TableCell>
+                        <TableCell>{service.service}</TableCell>
+                        <TableCell>{service.quantity}</TableCell>
+                        <TableCell>
+                          {service.rate.toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell>
+                          {service.total.toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0 mr-2"
+                            onClick={() => handleEditService(service.id)}
+                          >
+                            <span className="sr-only">Edit</span>
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleRemoveService(service.id)}
+                          >
+                            <span className="sr-only">Remove</span>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
                 </TableBody>
               </Table>
             </ScrollArea>
@@ -1100,6 +1183,7 @@ useEffect(()=>
                 <Input
                   value={parseFloat(calculateTotals.subtotal || 0).toFixed(2)}
                   onChange={(e) => {
+                    console.log(e.target.value);
                     setBillData((prev) => ({
                       ...prev,
                       subtotal: e.target.value,
@@ -1215,30 +1299,31 @@ useEffect(()=>
 
       <OPDBillTokenModal
         isOpen={isPrintModalOpen}
-        setIsOpen={setIsPrintModalOpen}
+        setIsOpen={() => {
+          setIsPrintModalOpen(false);
+          navigate("/billings");
+        }}
         patientData={billDataForPrint}
         services={addedServices}
         selectedServices={selectedServices}
         onSelectService={handleSelectService}
         onSelectAll={handleSelectAll}
-        onClose={() => {
-          setIsPrintModalOpen(false);
-          navigate("/billings");
-        }}
       />
 
       <ViewBillDialog
         isOpen={isViewBillDialogOpen}
-        setIsOpen={setIsViewBillDialogOpen}
+        setIsOpen={() => {
+          setIsViewBillDialogOpen(false);
+          if (isViewFromUpdate) {
+            setIsViewFromUpdate(false);
+            navigate("/billings");
+          }
+        }}
         billData={billDataForPrint}
         services={addedServices}
         selectedServices={selectedServices}
         onSelectService={handleSelectService}
         onSelectAll={handleSelectAll}
-        onClose={() => {
-          setIsViewBillDialogOpen(false);
-          navigate("/billings");
-        }}
       />
 
       <PaymentDialog
@@ -1247,6 +1332,40 @@ useEffect(()=>
         billData={billDataForPrint}
         onPaymentSuccess={handlePaymentSuccess}
       />
+
+      <Dialog open={isWarningDialogOpen} onOpenChange={setIsWarningDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Warning</DialogTitle>
+            <DialogDescription>
+              Changing the break total mode will delete all newly added services
+              as they were calculated under different rules. Existing services
+              will be preserved.Update the bill to reflect any chnages. Do you
+              want to proceed?
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsWarningDialogOpen(false);
+                setPendingModeChange(null);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                applyModeChange(pendingModeChange);
+                setIsWarningDialogOpen(false);
+                setPendingModeChange(null);
+              }}
+            >
+              Proceed
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

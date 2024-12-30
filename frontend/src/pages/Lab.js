@@ -175,8 +175,9 @@ const Lab = () => {
     setSelectedTemplate(null);
     setSelectedTest({ category, type ,completeType});
   };
-
+console.log(selectedTest)
   const handleTemplateSelection = (template) => {
+    console.log(template);
     setSelectedTemplate(template);
     setSelectedTest(null); // Clear any selected individual test
   };
@@ -379,9 +380,7 @@ const Lab = () => {
                               handleTestSelection(
                                 category.name.toLowerCase(),
                                 type
-                                  .toLowerCase()
-                                  .replace(/[()]/g, "")
-                                  .replace(/\s+/g, "-"),
+                                  ,
                                   type
                               )
                             }

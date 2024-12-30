@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { FileText, ArrowLeft, Plus } from "lucide-react";
+import { FileText, ArrowLeft, Plus, Search } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { fetchAdmittedPatients } from "../redux/slices/patientSlice";
+import { useToast } from "../hooks/use-toast";
+
+import {
+  fetchAdmittedPatients,
+  fetchAdmittedPatientsSearch,
+} from "../redux/slices/patientSlice";
 import {
   Card,
   CardContent,
@@ -21,8 +26,10 @@ import {
 import { format } from "date-fns";
 import CreateServiceBill from "./CreateServiceBill";
 import { ScrollArea } from "../components/ui/scroll-area";
+import { Input } from "../components/ui/input";
 
 export default function AdmittedPatients() {
+  const { toast } = useToast();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   // const { admittedPatients, admittedPatientsStatus } = useSelector(
@@ -32,6 +39,7 @@ export default function AdmittedPatients() {
 
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showBilling, setShowBilling] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     dispatch(fetchAdmittedPatients())
@@ -99,15 +107,57 @@ export default function AdmittedPatients() {
       },
     });
   };
+  const handleSearch = () => {
+    if (searchQuery.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a registration number",
+        variant: "destructive",
+      });
+      return;
+    }
+    dispatch(fetchAdmittedPatientsSearch(searchQuery.trim()))
+      .unwrap()
+      .then((res) => {
+        setAdmittedPatients(res);
+      });
+  };
+  const handleInputChangeSearch = (event) => {
+    setSearchQuery(event.target.value);
+  };
 
   return (
     <div className=" pb-6">
       {!showBilling ? (
         <Card className="w-full">
           <CardHeader className="bg-primary text-primary-foreground">
-            <CardTitle className="text-xl font-bold">
-              Admitted Patients
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-xl font-bold">
+                Admitted Patients
+              </CardTitle>
+              <div className="flex gap-2 items-center">
+                <Button
+                  onClick={() => navigate("/patients/discharge")}
+                  variant="secondary"
+                  className="bg-white/90 text-black hover:bg-white/75"
+                >
+                  Create Discharge
+                </Button>
+                <div className="w-72 relative">
+                  <Input
+                    type="text"
+                    placeholder="Search by UHID..."
+                    value={searchQuery}
+                    onChange={handleInputChangeSearch}
+                    className="bg-white/90 border-0 pr-8 text-black"
+                  />
+                  <Search
+                    className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:cursor-pointer"
+                    onClick={handleSearch}
+                  />
+                </div>
+              </div>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[600px]">
@@ -201,7 +251,9 @@ export default function AdmittedPatients() {
                             size="sm"
                             className="bg-blue-600 hover:bg-blue-700 text-white"
                           >
-                            Discharge
+                            {patient.status === "Discharged"
+                              ? "View/Edit Discharge Summary"
+                              : "Discharge"}
                           </Button>
                         </TableCell>
                       </TableRow>

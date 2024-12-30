@@ -21,7 +21,7 @@ const styles = {
     fontSize: "14px",
     fontWeight: "bold",
     color: "#34495e",
-    width: "20%",
+    width:"20%"
   },
   sectionContent: {
     fontSize: "12px",
@@ -72,6 +72,7 @@ const styles = {
   investigationTitle: {
     fontSize: "9px",
     marginBottom: "2px",
+    fontWeight: "bold",
   },
   investigationRow: {
     display: "flex",
@@ -153,9 +154,10 @@ const InvestigationDisplay = ({ investigation }) => {
         flexDirection: hasFindings ? "row" : "column",
       }}
     >
-      <div style={{ width: "150px" }}>
+      <div >
         <div style={styles.investigationTitle}>
-          {name.toUpperCase()} ({format(new Date(date), "dd-MM-yyyy")})
+          {name.toUpperCase()}{" "}
+          ({format(new Date(date), "dd-MM-yyyy")})
         </div>
       </div>
 
@@ -166,8 +168,9 @@ const InvestigationDisplay = ({ investigation }) => {
               <div
                 style={{
                   ...styles.investigationRow,
-                  marginLeft: "5px",
+                  marginLeft: "50px",
                   fontSize: "12px",
+                  border: "1px solid red",
                 }}
               >
                 <div style={styles.investigationCell1}>
@@ -358,7 +361,7 @@ const DischargeSummaryPDF = forwardRef(
             <span style={styles.sectionContent}>
               {formData.vitals.admission.bloodPressure && (
                 <>
-                  Blood Pressure:{" "}
+                  BP:{" "}
                   <strong>{formData.vitals.admission.bloodPressure}</strong>{" "}
                   mmHg,{" "}
                 </>
@@ -377,7 +380,8 @@ const DischargeSummaryPDF = forwardRef(
               )}
               {formData.vitals.admission.oxygenSaturation && (
                 <>
-                  Oxygen Saturation:{" "}
+                    O<sub>2</sub> Saturation:{" "}
+
                   <strong>{formData.vitals.admission.oxygenSaturation}</strong>
                   %,{" "}
                 </>
@@ -386,7 +390,7 @@ const DischargeSummaryPDF = forwardRef(
                 <>
                   Respiratory Rate:{" "}
                   <strong>{formData.vitals.admission.respiratoryRate}</strong>{" "}
-                  /min
+                  breaths/min
                 </>
               )}
             </span>
@@ -399,17 +403,18 @@ const DischargeSummaryPDF = forwardRef(
         />
 
         {formData.investigations && formData.investigations.length > 0 && (
-          <div style={{ ...styles.section }}>
-            <div>
+          <div style={{marginBottom: "3px"}}>
+            <div >
               <span style={styles.sectionTitle}>Investigations</span>
             </div>
 
             <div
               style={{
                 ...styles.investigationsSection,
-                marginLeft: "10px",
-                marginTop: "15px",
+                marginLeft: "15px",
+                marginTop: "5px",
                 width: "100%",
+               
               }}
             >
               {formData.investigations.map((investigation, index) => (
@@ -430,7 +435,7 @@ const DischargeSummaryPDF = forwardRef(
             <span style={styles.sectionContent}>
               {formData.vitals.discharge.bloodPressure && (
                 <>
-                  Blood Pressure:{" "}
+                  BP:{" "}
                   <strong>{formData.vitals.discharge.bloodPressure}</strong>{" "}
                   mmHg,{" "}
                 </>
@@ -449,7 +454,8 @@ const DischargeSummaryPDF = forwardRef(
               )}
               {formData.vitals.discharge.oxygenSaturation && (
                 <>
-                  Oxygen Saturation:{" "}
+                    O<sub>2</sub> Saturation:{" "}
+
                   <strong>{formData.vitals.discharge.oxygenSaturation}</strong>
                   %,{" "}
                 </>
@@ -458,7 +464,7 @@ const DischargeSummaryPDF = forwardRef(
                 <>
                   Respiratory Rate:{" "}
                   <strong>{formData.vitals.discharge.respiratoryRate}</strong>{" "}
-                  /min
+                  breaths/min
                 </>
               )}
             </span>

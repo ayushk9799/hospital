@@ -51,7 +51,7 @@ export default function Settings() {
 
   const handleTestSelection = (category, test) => {
     const formattedCategory = formatKey(category);
-    const formattedTest = formatKey(test);
+    const formattedTest = (test);
 
     setSelectedTests((prev) => ({
       ...prev,
@@ -83,7 +83,7 @@ export default function Settings() {
 
   const handleFieldSelection = (category, test, field) => {
     const formattedCategory = formatKey(category);
-    const formattedTest = formatKey(test);
+    const formattedTest = (test);
 
     setSelectedFields((prev) => ({
       ...prev,
@@ -214,7 +214,7 @@ export default function Settings() {
                               id={`${category.name}-${test}`}
                               checked={
                                 selectedTests[formatKey(category.name)]?.[
-                                  formatKey(test)
+                                  test
                                 ] || false
                               }
                               onCheckedChange={() =>
@@ -229,14 +229,14 @@ export default function Settings() {
                             </label>
                           </div>
                           {selectedTests[formatKey(category.name)]?.[
-                            formatKey(test)
+                          test
                           ] &&
                             labReportFields[formatKey(category.name)]?.[
-                              formatKey(test)
+                              test
                             ] && (
                               <div className="ml-6 space-y-1">
                                 {labReportFields[formatKey(category.name)][
-                                  formatKey(test)
+                                  test
                                 ].map((field) => (
                                   <div
                                     key={field.name}
@@ -247,7 +247,7 @@ export default function Settings() {
                                       checked={
                                         selectedFields[
                                           formatKey(category.name)
-                                        ]?.[formatKey(test)]?.[field.name]
+                                        ]?.[test]?.[field.name]
                                           ?.isSelected || false
                                       }
                                       onCheckedChange={() =>

@@ -30,7 +30,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (template && template.fields ) {
+    if (template && template.fields) {
       const relevantReports = patientData?.labReports.filter(
         (report) => report.name.toLowerCase() === template.name.toLowerCase()
       );
@@ -73,7 +73,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
         label: field.label,
         unit: field.unit,
         normalRange: field.normalRange,
-        options:field.options,
+        options: field.options,
         value: report.report[name]?.value || "",
       }))
     );
@@ -86,7 +86,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
         label: field.label,
         unit: field.unit,
         normalRange: field.normalRange,
-        options:field.options,
+        options: field.options,
         value: "",
       }))
     );
@@ -104,7 +104,9 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const handleOptionSelect = (fieldName, selectedOption) => {
     setFields((prevFields) =>
       prevFields.map((field) =>
-        field.name === fieldName ? { ...field, value: selectedOption.name } : field
+        field.name === fieldName
+          ? { ...field, value: selectedOption.name }
+          : field
       )
     );
   };
@@ -126,19 +128,23 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
     };
 
     try {
-      const resultAction = await dispatch(addLabReport({
-        visitId: patientData._id,
-        labReport: labReportData,
-        searchWhere: searchWhere,
-      }));
+      const resultAction = await dispatch(
+        addLabReport({
+          visitId: patientData._id,
+          labReport: labReportData,
+          searchWhere: searchWhere,
+        })
+      );
 
       if (addLabReport.fulfilled.match(resultAction)) {
         toast({
           title: "Success",
           description: "Lab Report added successfully",
-          variant:"success"
+          variant: "success",
         });
-        onClose();
+        if (onClose) {
+          onClose(labReportData);
+        }
       } else {
         throw new Error("Failed to add lab report");
       }
@@ -166,7 +172,6 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
             };
             return acc;
           }, {}),
-
         }}
         hospital={hospital}
         patientData={patientData}
@@ -198,7 +203,6 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
       </div>
     );
   }
-  
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -248,11 +252,17 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
                   />
                 ) : field.options ? (
                   <SearchSuggestion
-                    suggestions={field.options.map(option => ({ name: option }))}
+                    suggestions={field.options.map((option) => ({
+                      name: option,
+                    }))}
                     placeholder={`Select ${field.label}`}
                     value={field.value}
-                    setValue={(value) => handleInputChange({ target: { value } }, field.name)}
-                    onSuggestionSelect={(suggestion) => handleOptionSelect(field.name, suggestion)}
+                    setValue={(value) =>
+                      handleInputChange({ target: { value } }, field.name)
+                    }
+                    onSuggestionSelect={(suggestion) =>
+                      handleOptionSelect(field.name, suggestion)
+                    }
                   />
                 ) : (
                   <div className="flex items-center">

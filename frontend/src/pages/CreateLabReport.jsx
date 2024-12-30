@@ -28,10 +28,13 @@ const CreateLabReport = ({
   type,
   completeType,
   patientData,
+  formData,
   onClose,
   onSave,
   searchWhere,
 }) => {
+  console.log(patientData);
+  console.log(category,type)
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { toast } = useToast();
@@ -271,8 +274,11 @@ text-align: right;
 
   useEffect(() => {
     if (labReportFields[category] && labReportFields[category][type]) {
-      const relevantReports =
-        patientData?.labReports?.filter((report) => report.name === type) || [];
+      // const relevantReports =
+      //   patientData?.labReports?.filter((report) => report.name === type) || [];
+      const relevantReports = formData 
+      ? formData.investigations?.filter((report) => report.name === type) || []
+      : patientData?.labReports?.filter((report) => report.name === type) || [];
       setAllReports(relevantReports);
 
       if (relevantReports.length > 0) {
@@ -291,6 +297,7 @@ text-align: right;
     );
 
     if (selectedReport) {
+      console.log(selectedReport)
       setReportDate(new Date(selectedReport.date));
       setGeneratedDate(new Date(selectedReport.date));
       loadReportData(selectedReport);
@@ -302,16 +309,17 @@ text-align: right;
   };
 
   const loadReportData = (report) => {
+    console.log(report)
     setFields(
       labReportFields[category][type].map((field) => ({
         ...field,
-        value: Number(report?.report?.[field.name]?.value) || "",
+        value: isNaN(report?.report?.[field.name]?.value)? report?.report?.[field.name]?.value || "" : Number(report?.report?.[field.name]?.value) || "",
         unit: field.unit || "",
         normalRange: field.normalRange || "",
       }))
     );
   };
-
+console.log(fields)
   const resetForm = () => {
     setFields(
       labReportFields[category][type].map((field) => ({

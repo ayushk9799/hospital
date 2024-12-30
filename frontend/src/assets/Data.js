@@ -7,11 +7,7 @@ import {
 } from "../components/ui/popover";
 import { Calendar } from "../components/ui/calendar";
 import { CalendarIcon } from "@radix-ui/react-icons";
-import {
-  format,
-  subMonths,
-  isBefore,
-} from "date-fns";
+import { format, subMonths, isBefore } from "date-fns";
 import { cn } from "../lib/utils";
 
 // backend url
@@ -20,14 +16,17 @@ export const Backend_URL = "https://thehospital.in";
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", { 
+  return date.toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 };
-export  const permissionGroups = {
-  "Patient Management": [{id:"create_patients",label:"Create Patients"},{ id: "delete_patients", label: "Delete Patients" }],
+export const permissionGroups = {
+  "Patient Management": [
+    { id: "create_patients", label: "Create Patients" },
+    { id: "delete_patients", label: "Delete Patients" },
+  ],
   "Inventory Management": [
     { id: "edit_inventory_price", label: "Edit Prices" },
   ],
@@ -38,17 +37,14 @@ export  const permissionGroups = {
     { id: "delete_bills", label: "Delete Bills" },
     { id: "view_reports", label: "View Reports" },
   ],
- 
+
   "Staff Management": [
     { id: "view_staff", label: "View Staff" },
     { id: "create_staff", label: "Create Staff" },
     { id: "edit_staff", label: "Edit Staff" },
     { id: "delete_staff", label: "Delete Staff" },
   ],
-  "Hospital Management": [
-   
-    { id: "edit_hospital", label: "Edit Hospital" },
-  ],
+  "Hospital Management": [{ id: "edit_hospital", label: "Edit Hospital" }],
 };
 
 export const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
@@ -168,7 +164,6 @@ export const calculatePercentageChange = (current, previous) => {
   return Number(change.toFixed(2)); // Round to 2 decimal places
 };
 
-
 export const convertTo12Hour = (time24) => {
   const [hours, minutes] = time24.split(":");
   let hour = parseInt(hours, 10);
@@ -189,6 +184,7 @@ export const labCategories = [
       "Reticulocyte Count",
       "Coagulation Profile",
       "Hemoglobin Electrophoresis",
+     
     ],
   },
   {
@@ -265,7 +261,7 @@ export const labCategories = [
     description: "Blood group, Rh factor, and related tests",
     types: [
       "ABO and Rh Typing",
-      "Australian Antigen (Hepatitis B Surface Antigen)",
+      "Australian Antigen",
       "Antibody Screening",
     ],
   },
@@ -275,7 +271,7 @@ export const labCategories = [
     types: [
       "CT Scan",
       "MRI",
-      "Ultrasonography",
+      "Ultrasonography Whole Abdomen",
       "X-Ray",
       "IVP (Intravenous Pyelogram)",
       "CT KUB",
@@ -288,7 +284,7 @@ export const labCategories = [
 ];
 export const labReportFields = {
   hematology: {
-    "complete-blood-count-cbc": [
+    "Complete Blood Count (CBC)": [
       {
         name: "wbc",
         label: "White Blood Cell Count (WBC)",
@@ -405,7 +401,7 @@ export const labReportFields = {
         normalRange: "0.02-0.1",
       },
     ],
-    "erythrocyte-sedimentation-rate": [
+    "Erythrocyte Sedimentation Rate": [
       {
         name: "esr",
         label: "ESR",
@@ -413,30 +409,51 @@ export const labReportFields = {
         normalRange: "0-22 (male), 0-29 (female)",
       },
     ],
-    "peripheral-blood-smear": [
+    "Peripheral Blood Smear": [
       {
         name: "rbc_morphology",
         label: "RBC Morphology",
         unit: "",
         normalRange: "Normal",
-        options: ["Normal", "Microcytic", "Macrocytic", "Hypochromic", "Target cells", "Sickle cells", "Other abnormalities"]
+        options: [
+          "Normal",
+          "Microcytic",
+          "Macrocytic",
+          "Hypochromic",
+          "Target cells",
+          "Sickle cells",
+          "Other abnormalities",
+        ],
       },
       {
         name: "wbc_morphology",
         label: "WBC Morphology",
         unit: "",
         normalRange: "Normal",
-        options: ["Normal", "Left shift", "Toxic granulation", "Hypersegmented neutrophils", "Atypical lymphocytes", "Blasts", "Other abnormalities"]
+        options: [
+          "Normal",
+          "Left shift",
+          "Toxic granulation",
+          "Hypersegmented neutrophils",
+          "Atypical lymphocytes",
+          "Blasts",
+          "Other abnormalities",
+        ],
       },
       {
         name: "platelet_morphology",
         label: "Platelet Morphology",
         unit: "",
         normalRange: "Normal",
-        options: ["Normal", "Large platelets", "Platelet clumps", "Other abnormalities"]
+        options: [
+          "Normal",
+          "Large platelets",
+          "Platelet clumps",
+          "Other abnormalities",
+        ],
       },
     ],
-    "reticulocyte-count": [
+    "Reticulocyte Count": [
       {
         name: "reticulocyte_count",
         label: "Reticulocyte Count",
@@ -444,7 +461,7 @@ export const labReportFields = {
         normalRange: "0.5-2.5",
       },
     ],
-    "coagulation-profile": [
+    "Coagulation Profile": [
       {
         name: "pt",
         label: "Prothrombin Time (PT)",
@@ -464,7 +481,7 @@ export const labReportFields = {
         normalRange: "30-40",
       },
     ],
-    "hemoglobin-electrophoresis": [
+    "Hemoglobin Electrophoresis": [
       { name: "hb_a", label: "Hemoglobin A", unit: "%", normalRange: "95-98" },
       {
         name: "hb_a2",
@@ -474,9 +491,10 @@ export const labReportFields = {
       },
       { name: "hb_f", label: "Hemoglobin F", unit: "%", normalRange: "<2" },
     ],
+   
   },
   biochemistry: {
-    "lipid-profile": [
+    "Lipid Profile": [
       {
         name: "total_cholesterol",
         label: "Total Cholesterol",
@@ -514,7 +532,7 @@ export const labReportFields = {
         normalRange: "<3.5",
       },
     ],
-    "liver-function-tests": [
+    "Liver Function Tests": [
       {
         name: "total_bilirubin",
         label: "Total Bilirubin",
@@ -560,11 +578,11 @@ export const labReportFields = {
         normalRange: "1.2-2.2",
       },
     ],
-    "kidney-function-tests": [
-      { name: "urea", label: "Urea", unit: "mg/dL", normalRange: "15-40" },
+    "Kidney Function Tests": [
+      { name: "urea", label: "Blood Urea", unit: "mg/dL", normalRange: "15-40" },
       {
         name: "creatinine",
-        label: "Creatinine",
+        label: "Serum Creatinine",
         unit: "mg/dL",
         normalRange: "0.6-1.2",
       },
@@ -593,7 +611,7 @@ export const labReportFields = {
         normalRange: "98-107",
       },
     ],
-    electrolytes: [
+    Electrolytes: [
       {
         name: "sodium",
         label: "Sodium",
@@ -619,7 +637,7 @@ export const labReportFields = {
         normalRange: "22-28",
       },
     ],
-    "calcium-profile": [
+    "Calcium Profile": [
       {
         name: "total_calcium",
         label: "Total Calcium",
@@ -633,7 +651,7 @@ export const labReportFields = {
         normalRange: "4.5-5.3",
       },
     ],
-    "iron-studies": [
+    "Iron Studies": [
       {
         name: "serum_iron",
         label: "Serum Iron",
@@ -655,12 +673,12 @@ export const labReportFields = {
     ],
   },
   endocrinology: {
-    "thyroid-function-tests": [
+    "Thyroid Function Tests": [
       { name: "t3", label: "T3", unit: "ng/dL", normalRange: "80-200" },
       { name: "t4", label: "T4", unit: "µg/dL", normalRange: "5.1-14.1" },
       { name: "tsh", label: "TSH", unit: "µIU/mL", normalRange: "0.4-4.0" },
     ],
-    "diabetes-tests": [
+    "Diabetes Tests": [
       {
         name: "fasting_glucose",
         label: "Fasting Glucose",
@@ -674,8 +692,14 @@ export const labReportFields = {
         normalRange: "<140",
       },
       { name: "hba1c", label: "HbA1c", unit: "%", normalRange: "<5.7" },
+      {
+        name: "sugar",
+        label: "Blood Sugar",
+        unit: "mg/dL",
+        normalRange: "100-125",
+      },
     ],
-    "reproductive-hormones": [
+    "Reproductive Hormones": [
       {
         name: "fsh",
         label: "Follicle Stimulating Hormone (FSH)",
@@ -701,7 +725,7 @@ export const labReportFields = {
         normalRange: "270-1070 (male), 15-70 (female)",
       },
     ],
-    cortisol: [
+    Cortisol: [
       {
         name: "morning_cortisol",
         label: "Morning Cortisol",
@@ -711,7 +735,7 @@ export const labReportFields = {
     ],
   },
   serology: {
-    "c-reactive-protein-crp": [
+    "C-Reactive Protein (CRP)": [
       {
         name: "crp",
         label: "C-Reactive Protein (CRP)",
@@ -719,67 +743,88 @@ export const labReportFields = {
         normalRange: "<3.0",
       },
     ],
-    "rheumatoid-factor-rf": [
+    "Rheumatoid Factor (RF)": [
       {
         name: "ra_factor",
         label: "Rheumatoid Factor (RF)",
         unit: "IU/mL",
         normalRange: "<14",
-        options: ["Negative", "Weakly Positive", "Positive", "Strongly Positive"]
+        options: [
+          "Negative",
+          "Weakly Positive",
+          "Positive",
+          "Strongly Positive",
+        ],
       },
     ],
-    "anti-streptolysin-o-aso": [
+    "Anti-Streptolysin O (ASO)": [
       {
         name: "aso",
         label: "Anti-Streptolysin O (ASO)",
         unit: "IU/mL",
         normalRange: "<200",
-        options: ["Negative", "Positive"]
+        options: ["Negative", "Positive"],
       },
     ],
-    "hepatitis-markers": [
+    "Hepatitis Markers": [
       {
         name: "hbsag",
         label: "Hepatitis B Surface Antigen (HBsAg)",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Positive"]
+        options: ["Negative", "Positive"],
       },
       {
         name: "anti_hcv",
         label: "Anti-HCV",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Positive"]
+        options: ["Negative", "Positive"],
       },
     ],
-    hiv: [
+    HIV: [
       {
         name: "hiv_1_2",
-        label: "HIV 1 & 2 Antibodies",
+        label: "Elisa for HIV 1 & 2",
         unit: "",
         normalRange: "Non-reactive",
-        options: ["Non-reactive", "Reactive"]
+        options: ["Non-reactive", "Reactive"],
+      },
+      {
+        name: "hiv_non_hcv",
+        label: "Elisa Non-HCV",
+        unit: "",
+        normalRange: "Non-reactive",
+        options: ["Non-reactive", "Reactive"],
       },
     ],
-    vdrl: [
+    VDRL: [
       {
         name: "vdrl",
         label: "VDRL",
         unit: "",
         normalRange: "Non-reactive",
-        options: ["Non-reactive", "Reactive"]
+        options: ["Non-reactive", "Reactive"],
       },
     ],
   },
   microbiology: {
-    "urine-culture": [
+    "Urine Culture": [
       {
         name: "organism",
         label: "Organism",
         unit: "",
         normalRange: "No growth",
-        options: ["No growth", "E. coli", "Klebsiella", "Proteus", "Enterococcus", "Pseudomonas", "Candida", "Other"]
+        options: [
+          "No growth",
+          "E. coli",
+          "Klebsiella",
+          "Proteus",
+          "Enterococcus",
+          "Pseudomonas",
+          "Candida",
+          "Other",
+        ],
       },
       {
         name: "colony_count",
@@ -788,22 +833,38 @@ export const labReportFields = {
         normalRange: "<10,000",
       },
     ],
-    "stool-culture": [
+    "Stool Culture": [
       {
         name: "organism",
         label: "Organism",
         unit: "",
         normalRange: "No pathogenic organism isolated",
-        options: ["No pathogenic organism isolated", "Salmonella", "Shigella", "Campylobacter", "E. coli O157:H7", "Other"]
+        options: [
+          "No pathogenic organism isolated",
+          "Salmonella",
+          "Shigella",
+          "Campylobacter",
+          "E. coli O157:H7",
+          "Other",
+        ],
       },
     ],
-    "blood-culture": [
+    "Blood Culture": [
       {
         name: "organism",
         label: "Organism",
         unit: "",
         normalRange: "No growth",
-        options: ["No growth", "Staphylococcus aureus", "Streptococcus pneumoniae", "E. coli", "Klebsiella", "Pseudomonas", "Candida", "Other"]
+        options: [
+          "No growth",
+          "Staphylococcus aureus",
+          "Streptococcus pneumoniae",
+          "E. coli",
+          "Klebsiella",
+          "Pseudomonas",
+          "Candida",
+          "Other",
+        ],
       },
       {
         name: "antibiotic_sensitivity",
@@ -812,13 +873,21 @@ export const labReportFields = {
         normalRange: "N/A",
       },
     ],
-    "sputum-culture": [
+    "Sputum Culture": [
       {
         name: "organism",
         label: "Organism",
         unit: "",
         normalRange: "Normal respiratory flora",
-        options: ["Normal respiratory flora", "Streptococcus pneumoniae", "Haemophilus influenzae", "Moraxella catarrhalis", "Pseudomonas aeruginosa", "Mycobacterium tuberculosis", "Other"]
+        options: [
+          "Normal respiratory flora",
+          "Streptococcus pneumoniae",
+          "Haemophilus influenzae",
+          "Moraxella catarrhalis",
+          "Pseudomonas aeruginosa",
+          "Mycobacterium tuberculosis",
+          "Other",
+        ],
       },
       {
         name: "antibiotic_sensitivity",
@@ -829,16 +898,16 @@ export const labReportFields = {
     ],
   },
   immunology: {
-    "antinuclear-antibodies-ana": [
+    "Antinuclear Antibodies (ANA)": [
       {
         name: "ana",
         label: "Antinuclear Antibodies (ANA)",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Positive"]
+        options: ["Negative", "Positive"],
       },
     ],
-    "anti-dsdna": [
+    "Anti-dsDNA": [
       {
         name: "anti_dsdna",
         label: "Anti-dsDNA",
@@ -846,7 +915,7 @@ export const labReportFields = {
         normalRange: "<30",
       },
     ],
-    "complement-levels": [
+    "Complement Levels": [
       {
         name: "c3",
         label: "Complement C3",
@@ -862,15 +931,15 @@ export const labReportFields = {
     ],
   },
   "tumor-markers": {
-    "prostate-specific-antigen-psa": [
+    "Prostate Specific Antigen (PSA)": [
       {
         name: "psa",
-        label: "Prostate Specific Antigen (PSA)",
+        label: "Sr Prostate Specific Antigen (PSA)",
         unit: "ng/mL",
         normalRange: "<4",
       },
     ],
-    "carcinoembryonic-antigen-cea": [
+    "Carcinoembryonic Antigen (CEA)": [
       {
         name: "cea",
         label: "Carcinoembryonic Antigen (CEA)",
@@ -878,7 +947,7 @@ export const labReportFields = {
         normalRange: "<3 (non-smokers), <5 (smokers)",
       },
     ],
-    "cancer-antigen-125-ca-125": [
+    "Cancer Antigen 125 (CA-125)": [
       {
         name: "ca_125",
         label: "Cancer Antigen 125 (CA-125)",
@@ -886,7 +955,7 @@ export const labReportFields = {
         normalRange: "<35",
       },
     ],
-    "alpha-fetoprotein-afp": [
+    "Alpha-Fetoprotein (AFP)": [
       {
         name: "afp",
         label: "Alpha-Fetoprotein (AFP)",
@@ -896,20 +965,20 @@ export const labReportFields = {
     ],
   },
   "urine-analysis": {
-    "routine-urine": [
+    "Routine Urine": [
       {
         name: "color",
         label: "Color",
         unit: "",
         normalRange: "Pale yellow to amber",
-        options: ["Pale yellow", "Yellow", "Amber", "Red", "Brown", "Other"]
+        options: ["Pale yellow", "Yellow", "Amber", "Red", "Brown", "Other"],
       },
       {
         name: "appearance",
         label: "Appearance",
         unit: "",
         normalRange: "Clear",
-        options: ["Clear", "Slightly cloudy", "Cloudy", "Turbid"]
+        options: ["Clear", "Slightly cloudy", "Cloudy", "Turbid"],
       },
       {
         name: "specific_gravity",
@@ -923,67 +992,75 @@ export const labReportFields = {
         label: "Protein",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Trace", "1+", "2+", "3+", "4+"]
+        options: ["Negative", "Trace", "1+", "2+", "3+", "4+"],
       },
       {
         name: "glucose",
         label: "Glucose",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Trace", "1+", "2+", "3+", "4+"]
+        options: ["Negative", "Trace", "1+", "2+", "3+", "4+"],
       },
       {
         name: "ketones",
         label: "Ketones",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Trace", "Small", "Moderate", "Large"]
+        options: ["Negative", "Trace", "Small", "Moderate", "Large"],
       },
       {
         name: "blood",
         label: "Blood",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Trace", "1+", "2+", "3+"]
+        options: ["Negative", "Trace", "1+", "2+", "3+"],
       },
       {
         name: "leukocyte_esterase",
         label: "Leukocyte Esterase",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Trace", "Small", "Moderate", "Large"]
+        options: ["Negative", "Trace", "Small", "Moderate", "Large"],
       },
       {
         name: "nitrite",
         label: "Nitrite",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Positive"]
+        options: ["Negative", "Positive"],
       },
     ],
   },
   "stool-analysis": {
-    "routine-stool": [
+    "Routine Stool": [
       {
         name: "color",
         label: "Color",
         unit: "",
         normalRange: "Brown",
-        options: ["Brown", "Yellow", "Green", "Black", "Red", "Clay-colored", "Other"]
+        options: [
+          "Brown",
+          "Yellow",
+          "Green",
+          "Black",
+          "Red",
+          "Clay-colored",
+          "Other",
+        ],
       },
       {
         name: "consistency",
         label: "Consistency",
         unit: "",
         normalRange: "Formed",
-        options: ["Formed", "Soft", "Loose", "Watery", "Mucoid"]
+        options: ["Formed", "Soft", "Loose", "Watery", "Mucoid"],
       },
       {
         name: "occult_blood",
         label: "Occult Blood",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Positive"]
+        options: ["Negative", "Positive"],
       },
       {
         name: "wbc",
@@ -1000,38 +1077,38 @@ export const labReportFields = {
     ],
   },
   "blood-typing": {
-    "abo-and-rh-typing": [
+    "ABO and Rh Typing": [
       {
         name: "blood_group",
         label: "Blood Group",
         unit: "",
         normalRange: "A, B, AB, or O",
-        options: ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"]
+        options: ["A", "B", "AB", "O"],
       },
       {
         name: "rh_factor",
         label: "Rh Factor",
         unit: "",
         normalRange: "Positive or Negative",
-        options: ["Positive", "Negative"]
+        options: ["Positive", "Negative"],
       },
     ],
-    "australian-antigen-hepatitis-b-surface-antigen": [
+    "Australian Antigen": [
       {
         name: "hbsag",
-        label: "Hepatitis B Surface Antigen (HBsAg)",
+        label: "Australian Antigen",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Positive"]
+        options: ["Negative", "Positive"],
       },
     ],
-    "antibody-screening": [
+    "Antibody Screening": [
       {
         name: "antibody_screen",
         label: "Antibody Screen",
         unit: "",
         normalRange: "Negative",
-        options: ["Negative", "Positive"]
+        options: ["Negative", "Positive"],
       },
       {
         name: "antibody_identification",
@@ -1042,7 +1119,7 @@ export const labReportFields = {
     ],
   },
   radiology: {
-    "ct-scan": [
+    "CT Scan": [
       { name: "study_area", label: "Study Area", unit: "", normalRange: "N/A" },
       {
         name: "contrast_used",
@@ -1053,7 +1130,7 @@ export const labReportFields = {
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    mri: [
+    MRI: [
       { name: "study_area", label: "Study Area", unit: "", normalRange: "N/A" },
       {
         name: "sequence_used",
@@ -1064,18 +1141,18 @@ export const labReportFields = {
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    ultrasonography: [
+    "Ultrasonography Whole Abdomen": [
       { name: "study_area", label: "Study Area", unit: "", normalRange: "N/A" },
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    "x-ray": [
+    "X-Ray": [
       { name: "study_area", label: "Study Area", unit: "", normalRange: "N/A" },
       { name: "view", label: "View", unit: "", normalRange: "N/A" },
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    "ivp-intravenous-pyelogram": [
+    "IVP (Intravenous Pyelogram)": [
       {
         name: "contrast_used",
         label: "Contrast Used",
@@ -1103,7 +1180,7 @@ export const labReportFields = {
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    "ct-kub": [
+    "CT KUB": [
       {
         name: "kidney_appearance",
         label: "Kidney Appearance",
@@ -1131,7 +1208,7 @@ export const labReportFields = {
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    "pet-scan": [
+    "PET Scan": [
       {
         name: "radiopharmaceutical",
         label: "Radiopharmaceutical Used",
@@ -1148,7 +1225,7 @@ export const labReportFields = {
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    mammography: [
+    Mammography: [
       {
         name: "breast_composition",
         label: "Breast Composition",
@@ -1176,7 +1253,7 @@ export const labReportFields = {
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    "bone-densitometry-dexa": [
+    "Bone Densitometry (DEXA)": [
       {
         name: "lumbar_spine_bmd",
         label: "Lumbar Spine BMD",
@@ -1204,7 +1281,7 @@ export const labReportFields = {
       { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
-    angiography: [
+    Angiography: [
       { name: "study_area", label: "Study Area", unit: "", normalRange: "N/A" },
       {
         name: "contrast_used",
@@ -1323,8 +1400,9 @@ export function numberToWords(number) {
   return words.trim();
 }
 
-export const s3Domain="https://thousandwayshospital.s3.ap-south-1.amazonaws.com"
-export const comorbidities=[
+export const s3Domain =
+  "https://thousandwayshospital.s3.ap-south-1.amazonaws.com";
+export const comorbidities = [
   "Hypertension",
   "Diabetes mellitus",
   "Obesity",
