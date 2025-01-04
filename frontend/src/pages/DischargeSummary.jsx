@@ -475,6 +475,7 @@ export default function DischargeSummary() {
     } else {
       setSelectedTemplate(null);
     }
+    console.log(investigation);
     setSelectedInvestigation(investigation);
 
     setIsLabReportOpen(true);

@@ -280,9 +280,11 @@ text-align: right;
       ? formData.investigations?.filter((report) => report.name === type) || []
       : patientData?.labReports?.filter((report) => report.name === type) || [];
       setAllReports(relevantReports);
-
+      const latestDate = relevantReports?.length > 0 
+      ? new Date(Math.max(...relevantReports.map(report => new Date(report.date))))
+      : new Date();
       if (relevantReports.length > 0) {
-        loadReportForDate(relevantReports, new Date());
+        loadReportForDate(relevantReports, latestDate);
       } else {
         setReportDate(new Date());
         setGeneratedDate(null);

@@ -170,7 +170,7 @@ const InvestigationDisplay = ({ investigation }) => {
                   ...styles.investigationRow,
                   marginLeft: "50px",
                   fontSize: "12px",
-                  border: "1px solid red",
+                 
                 }}
               >
                 <div style={styles.investigationCell1}>

@@ -20,6 +20,8 @@ import { addLabReport } from "../redux/slices/patientSlice";
 import { useToast } from "../hooks/use-toast";
 
 const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
+  console.log(patientData);
+  console.log(template);
   const [fields, setFields] = useState([]);
   const [reportDate, setReportDate] = useState(new Date());
   const [showPDFPreview, setShowPDFPreview] = useState(false);
@@ -34,10 +36,13 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
       const relevantReports = patientData?.labReports.filter(
         (report) => report.name.toLowerCase() === template.name.toLowerCase()
       );
+      const latestDate = relevantReports?.length > 0 
+      ? new Date(Math.max(...relevantReports.map(report => new Date(report.date))))
+      : new Date();
       setAllReports(relevantReports);
-
+      console.log(relevantReports);
       if (relevantReports?.length > 0) {
-        loadReportForDate(relevantReports, new Date());
+        loadReportForDate(relevantReports, latestDate);
       } else {
         setReportDate(new Date());
         setGeneratedDate(null);
@@ -51,6 +56,8 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   };
 
   const loadReportForDate = (reports, date) => {
+    console.log(new Date(reports[0].date).toDateString());
+    console.log(date.toDateString());
     const selectedReport = reports.find(
       (report) => new Date(report.date).toDateString() === date.toDateString()
     );
