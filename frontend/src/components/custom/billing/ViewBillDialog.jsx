@@ -141,7 +141,7 @@ React.useEffect(()=>
                 </DialogHeader>
               </div>
               <div className="grid gap-2 py-1">
-                <div className="flex flex-wrap gap-4">
+                <div className="flex flex-wrap gap-x-4 gap-y-2">
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Name:</Label>
                     <p>{billData.patientInfo?.name || "N/A"}</p>

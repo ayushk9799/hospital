@@ -33,8 +33,7 @@ const CreateLabReport = ({
   onSave,
   searchWhere,
 }) => {
-  console.log(patientData);
-  console.log(category,type)
+ 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { toast } = useToast();
@@ -269,20 +268,28 @@ text-align: right;
       return new Promise((resolve) => {
         setTimeout(resolve, 250);
       });
-    }
+    },
   });
-
   useEffect(() => {
     if (labReportFields[category] && labReportFields[category][type]) {
       // const relevantReports =
       //   patientData?.labReports?.filter((report) => report.name === type) || [];
-      const relevantReports = formData 
-      ? formData.investigations?.filter((report) => report.name === type) || []
-      : patientData?.labReports?.filter((report) => report.name === type) || [];
+      const relevantReports = formData
+        ? formData.investigations?.filter((report) => report.name === type) ||
+          []
+        : patientData?.labReports?.filter((report) => report.name === type) ||
+          [];
       setAllReports(relevantReports);
-      const latestDate = relevantReports?.length > 0 
-      ? new Date(Math.max(...relevantReports.map(report => new Date(report.date))))
-      : new Date();
+      let latestDate =
+        (relevantReports?.length > 0 && relevantReports.some((report) => report.date))
+          ? new Date(
+              Math.max(
+                ...relevantReports.map((report) => new Date(report.date))
+              )
+            )
+          : new Date();
+
+
       if (relevantReports.length > 0) {
         loadReportForDate(relevantReports, latestDate);
       } else {
@@ -297,9 +304,8 @@ text-align: right;
     const selectedReport = reports.find(
       (report) => new Date(report.date).toDateString() === date.toDateString()
     );
-
+   
     if (selectedReport) {
-      console.log(selectedReport)
       setReportDate(new Date(selectedReport.date));
       setGeneratedDate(new Date(selectedReport.date));
       loadReportData(selectedReport);
@@ -311,17 +317,18 @@ text-align: right;
   };
 
   const loadReportData = (report) => {
-    console.log(report)
     setFields(
       labReportFields[category][type].map((field) => ({
         ...field,
-        value: isNaN(report?.report?.[field.name]?.value)? report?.report?.[field.name]?.value || "" : Number(report?.report?.[field.name]?.value) || "",
+        label: report?.report?.[field.name]?.label || "",
+        value: isNaN(report?.report?.[field.name]?.value)
+          ? report?.report?.[field.name]?.value || ""
+          : Number(report?.report?.[field.name]?.value) || "",
         unit: field.unit || "",
         normalRange: field.normalRange || "",
       }))
     );
   };
-console.log(fields)
   const resetForm = () => {
     setFields(
       labReportFields[category][type].map((field) => ({
@@ -333,11 +340,11 @@ console.log(fields)
     );
   };
 
-  const handleInputChange = (e, fieldName) => {
-    const { value } = e.target;
+  const handleInputChange = (e, fieldName, property = "value") => {
+    const value = e.target.value;
     setFields((prevFields) =>
       prevFields.map((field) =>
-        field.name === fieldName ? { ...field, value } : field
+        field.name === fieldName ? { ...field, [property]: value } : field
       )
     );
   };
@@ -467,7 +474,7 @@ console.log(fields)
             <LabReportPDF
               reportData={{
                 name: type,
-                completeType:completeType,
+                completeType: completeType,
                 date: reportDate,
                 report: fields.reduce((acc, field) => {
                   acc[field.label] = {
@@ -498,7 +505,7 @@ console.log(fields)
           <LabReportPDF
             reportData={{
               name: type,
-              completeType:completeType,
+              completeType: completeType,
               date: reportDate,
               report: fields.reduce((acc, field) => {
                 acc[field.label] = {
@@ -517,7 +524,7 @@ console.log(fields)
       <h1 className="text-3xl font-bold mb-2 text-center">
         Create {type.replace(/-/g, " ")} Report
       </h1>
-      <Card className="p-6">
+      <Card className="p-2">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center space-x-4">
@@ -544,84 +551,127 @@ console.log(fields)
               <Button type="submit" className="bg-primary text-white">
                 Save Lab Report
               </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handlePrint}
-              >
+              <Button type="button" variant="outline" onClick={handlePrint}>
                 Print Report
               </Button>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {/* Table Header */}
+          {category !== "radiology" &&
+            fields.some(
+              (field) =>
+                field.name !== "findings" &&
+                field.name !== "impression" &&
+                (field.unit || field.normalRange)
+            ) && (
+              <div className="grid grid-cols-[4fr_2fr_1fr_3fr] gap-4 mb-2 font-bold bg-gray-100 p-2 rounded">
+                <div>Test Name</div>
+                <div>Value</div>
+                <div>Unit</div>
+                <div>Normal Range</div>
+              </div>
+            )}
+
+          {/* Table Body */}
+          <div className="space-y-2">
             {fields.map((field) => (
               <div
                 key={field.name}
                 className={
-                  field.name === "findings" || field.name === "impression"
-                    ? "col-span-2"
-                    : ""
+                  field.name === "findings" ||
+                  field.name === "impression" ||
+                  category === "radiology"
+                    ? "col-span-full"
+                    : "grid grid-cols-[4fr_2fr_1fr_3fr] gap-2 items-center border-b pb-2"
                 }
               >
-                <Label htmlFor={field.name} className="mb-1">
-                  {field.label}
-                </Label>
-                {field.name === "findings" || field.name === "impression" ? (
-                  <Textarea
-                    id={field.name}
-                    name={field.name}
-                    value={field.value}
-                    onChange={(e) => handleInputChange(e, field.name)}
-                    className="h-32 w-full"
-                  />
-                ) : field.options ? (
-                  <SearchSuggestion
-                    suggestions={field.options.map((option) => ({
-                      name: option,
-                    }))}
-                    placeholder={`Select ${field.label}`}
-                    value={field.value}
-                    setValue={(value) =>
-                      handleInputChange({ target: { value } }, field.name)
-                    }
-                    onSuggestionSelect={(suggestion) =>
-                      handleOptionSelect(field.name, suggestion)
-                    }
-                  />
-                ) : (
-                  <div className="flex items-center">
-                    <Input
-                      type={field.unit ? "number" : "text"}
+                {field.name === "findings" ||
+                field.name === "impression" ||
+                category === "radiology" ? (
+                  <div className="col-span-full space-y-1">
+                    <Label htmlFor={field.name} className="mb-1">
+                      {field.label}
+                    </Label>
+                    <Textarea
                       id={field.name}
                       name={field.name}
                       value={field.value}
                       onChange={(e) => handleInputChange(e, field.name)}
-                      className="mr-2"
-                      step={field.unit ? "0.01" : undefined}
+                      className="h-32 w-full"
                     />
-                    {field?.unit && (
-                      <span className="text-sm text-gray-500 w-16">
-                        {field?.unit}
-                      </span>
-                    )}
-                    {!labReportFields[category][type].some(
-                      (f) => f.name === field.name
-                    ) && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleRemoveField(field.name)}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
-                )}
-                {field.normalRange && (
-                  <span className="text-xs text-gray-500 mt-1">
-                    Normal Range: {field.normalRange}
-                  </span>
+                ) : (
+                  <>
+                    <div className="font-medium">
+                      <Input
+                        value={field.label}
+                        onChange={(e) =>
+                          handleInputChange(e, field.name, "label")
+                        }
+                        className="font-sm px-1"
+                      />
+                    </div>
+                    <div>
+                      {field.options ? (
+                        <SearchSuggestion
+                          suggestions={field.options.map((option) => ({
+                            name: option,
+                          }))}
+                          placeholder={`Select ${field.label}`}
+                          value={field.value}
+                          setValue={(value) =>
+                            handleInputChange({ target: { value } }, field.name)
+                          }
+                          onSuggestionSelect={(suggestion) =>
+                            handleOptionSelect(field.name, suggestion)
+                          }
+                        />
+                      ) : (
+                        <Input
+                          type={field.unit ? "number" : "text"}
+                          id={field.name}
+                          name={field.name}
+                          value={field.value}
+                          onChange={(e) => handleInputChange(e, field.name)}
+                          step={field.unit ? "0.01" : undefined}
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <Input
+                        value={field.unit}
+                        onChange={(e) =>
+                          handleInputChange(e, field.name, "unit")
+                        }
+                        placeholder="-"
+                        className="px-1"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <Input
+                        value={field.normalRange}
+                        onChange={(e) =>
+                          handleInputChange(e, field.name, "normalRange")
+                        }
+                        placeholder="-"
+                        className="flex-1"
+                      />
+                      {!labReportFields[category][type].some(
+                        (f) => f.name === field.name
+                      ) && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleRemoveField(field.name)}
+                          className="flex-shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </>
                 )}
               </div>
             ))}

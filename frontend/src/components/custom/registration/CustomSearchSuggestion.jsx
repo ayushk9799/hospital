@@ -19,7 +19,6 @@ export const SearchSuggestion = forwardRef(
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [selectedIndex, setSelectedIndex] = useState(-1);
     const suggestionListRef = useRef(null);
-    console.log(suggestions);
     useEffect(() => {
       const filtered = suggestions.filter((suggestion) =>
         suggestion?.name?.toLowerCase()?.includes((value || "")?.toLowerCase())

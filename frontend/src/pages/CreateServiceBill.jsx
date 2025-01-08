@@ -297,8 +297,7 @@ const CreateServiceBill = ({
 
       // Ensure discount doesn't exceed target total
       discountValue = Math.min(discountValue, targetTotalValue);
-      console.log(discountValue);
-      console.log(targetTotalValue);
+   
       return {
         subtotal: originalSubtotal, // Adjust subtotal to match target total after discount
         additionalDiscount: discountValue.toFixed(2),
@@ -347,7 +346,6 @@ const CreateServiceBill = ({
     breakTotalMode,
     targetTotal,
   ]);
-  console.log(calculateTotals);
   useEffect(() => {
     if (servicesStatus === "idle") dispatch(fetchServices());
   }, [dispatch, servicesStatus]);
@@ -535,7 +533,6 @@ const CreateServiceBill = ({
   };
 
   const handleEditService = (id) => {
-    console.log(id);
     const serviceToEdit = addedServices.find((service) => service.id === id);
     if (serviceToEdit) {
       // Only turn off break total mode if editing an existing service
@@ -717,6 +714,7 @@ const CreateServiceBill = ({
           name: patientDetails?.name,
           age: patientDetails?.age,
           gender: patientDetails?.gender,
+          address: patientDetails?.address,
           contactNumber: patientDetails?.contactNumber,
           registrationNumber: patientDetails?.registrationNumber,
           ipdNumber: patientDetails?.ipdNumber,
@@ -1183,7 +1181,6 @@ const CreateServiceBill = ({
                 <Input
                   value={parseFloat(calculateTotals.subtotal || 0).toFixed(2)}
                   onChange={(e) => {
-                    console.log(e.target.value);
                     setBillData((prev) => ({
                       ...prev,
                       subtotal: e.target.value,

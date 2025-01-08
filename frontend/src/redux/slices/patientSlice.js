@@ -370,7 +370,6 @@ export const fetchAdmittedPatientsSearch = createLoadingAsyncThunk(
   "patients/fetchAdmittedPatientsSearch",
   async (searchQuery, { rejectWithValue }) => {
     try {
-      console.log(searchQuery);
       const response = await fetch(`${Backend_URL}/api/patients/admittedpatientsSearch`, { 
         method: "POST",
         headers: { "Content-Type": "application/json" },

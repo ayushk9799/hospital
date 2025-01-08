@@ -117,16 +117,25 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                     <p>{patient?.name || "N/A"}</p>
                   </div>
                   <div className="flex items-center">
+                    <Label className="font-semibold mr-2">Age/Gender:</Label>
+                    <p>{patient?.age || "N/A"}/{patient?.gender || "N/A"}</p>
+                  </div>
+                  <div className="flex items-center">
                     <Label className="font-semibold mr-2">UHID No:</Label>
                     <p>{patient?.registrationNumber || "N/A"}</p>
+                  </div>
+                 
+                  <div className="flex items-center">
+                    <Label className="font-semibold mr-2">IPD No:</Label>
+                    <p>{completedBill?.admissionRecord?.ipdNumber || completedBill?.admission?.ipdNumber || "N/A"}</p>
                   </div>
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Contact:</Label>
                     <p>{patient?.phone || patient?.contactNumber || "N/A"}</p>
                   </div>
                   <div className="flex items-center">
-                    <Label className="font-semibold mr-2">IPD No:</Label>
-                    <p>{completedBill?.admissionRecord?.ipdNumber || completedBill?.admission?.ipdNumber || "N/A"}</p>
+                    <Label className="font-semibold mr-2">Address:</Label>
+                    <p>{patient?.address || "N/A"}</p>
                   </div>
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Invoice Number:</Label>
@@ -144,7 +153,7 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                 <div className="flex items-center">
                 <Label className="font-semibold mr-2">Operation:</Label>
 
-                  {completedBill.admissionRecord?.operationName}
+                  {completedBill.admissionRecord?.operationName || completedBill.admission?.operationName}
                 </div>
                 <div className="mx-auto w-full max-w-md">
                   <div className="border-2 p-6 rounded-lg shadow-sm">

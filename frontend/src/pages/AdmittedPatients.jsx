@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { FileText, ArrowLeft, Plus, Search } from "lucide-react";
+import {
+  FileText,
+  ArrowLeft,
+  Plus,
+  Search,
+  LogOut,
+  Pencil,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../hooks/use-toast";
@@ -127,35 +134,54 @@ export default function AdmittedPatients() {
   };
 
   return (
-    <div className=" pb-6">
+    <div className="">
       {!showBilling ? (
         <Card className="w-full">
           <CardHeader className="bg-primary text-primary-foreground">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-row justify-between items-center gap-2">
               <CardTitle className="text-xl font-bold">
                 Admitted Patients
               </CardTitle>
-              <div className="flex gap-2 items-center">
+              <div className="flex items-center gap-2">
+                <div className="relative">
+                  {/* Desktop Search */}
+                  <div className="hidden sm:block relative">
+                    <Input
+                      type="text"
+                      placeholder="Search by UHID..."
+                      value={searchQuery}
+                      onChange={handleInputChangeSearch}
+                      className="bg-white/90 border-0 pr-8 text-black w-72"
+                    />
+                    <Search
+                      className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:cursor-pointer"
+                      onClick={handleSearch}
+                    />
+                  </div>
+
+                  {/* Mobile Search */}
+                  <div className="sm:hidden flex items-center gap-2">
+                    <Input
+                      type="text"
+                      placeholder="Search by UHID..."
+                      value={searchQuery}
+                      onChange={handleInputChangeSearch}
+                      className="bg-white/90 border-0 pr-8 text-black w-[40px] focus:w-[200px] transition-all duration-300"
+                    />
+                    <Search
+                      className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:cursor-pointer"
+                      onClick={handleSearch}
+                    />
+                  </div>
+                </div>
                 <Button
                   onClick={() => navigate("/patients/discharge")}
                   variant="secondary"
                   className="bg-white/90 text-black hover:bg-white/75"
                 >
-                  Create Discharge
+                  <Pencil className="h-4 w-4 sm:hidden" />
+                  <span className="hidden sm:block">Create Discharge</span>
                 </Button>
-                <div className="w-72 relative">
-                  <Input
-                    type="text"
-                    placeholder="Search by UHID..."
-                    value={searchQuery}
-                    onChange={handleInputChangeSearch}
-                    className="bg-white/90 border-0 pr-8 text-black"
-                  />
-                  <Search
-                    className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:cursor-pointer"
-                    onClick={handleSearch}
-                  />
-                </div>
               </div>
             </div>
           </CardHeader>
@@ -213,10 +239,10 @@ export default function AdmittedPatients() {
                         <TableCell className="text-right tabular-nums font-bold">
                           {patient.totalAmount.toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums font-bold">
+                        <TableCell className="text-right tabular-nums font-bold text-green-600">
                           {patient.amountPaid.toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-right tabular-nums font-bold">
+                        <TableCell className="text-right tabular-nums font-bold text-red-600">
                           {patient.amountDue.toFixed(2)}
                         </TableCell>
                         <TableCell className="text-center">

@@ -824,13 +824,13 @@ const Billings = () => {
                           </TableCell>
                         </>
                       )}
-                      <TableCell>
+                      <TableCell className="font-bold">
                         ₹{bill.totalAmount.toLocaleString("en-IN")}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-green-600 font-bold">
                         ₹{bill.amountPaid.toLocaleString("en-IN")}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-red-600 font-bold">
                         ₹
                         {(bill.totalAmount - bill.amountPaid).toLocaleString(
                           "en-IN"

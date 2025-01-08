@@ -123,8 +123,7 @@ export default function DischargeSummary() {
     })) || []),
   ];
 
-  console.log(labTestsTemplate);
-  console.log(allLabTests);
+ 
   useEffect(() => {
     const fetchPatient = async () => {
       if (!patientFromStore && !dischargeData) {
@@ -475,13 +474,11 @@ export default function DischargeSummary() {
     } else {
       setSelectedTemplate(null);
     }
-    console.log(investigation);
     setSelectedInvestigation(investigation);
 
     setIsLabReportOpen(true);
   };
-  console.log(selectedInvestigation);
-  console.log(selectedTemplate);
+
   const handleCloseLabReport = () => {
     setSelectedInvestigation(null);
     setSelectedTemplate(null);
@@ -1306,7 +1303,6 @@ export default function DischargeSummary() {
               />
             ) : (
               (() => {
-                console.log(selectedInvestigation);
                 const { category, type } = getCategoryAndTypeForTest(
                   selectedInvestigation.name
                 );

@@ -281,6 +281,28 @@ export const labCategories = [
       "Angiography",
     ],
   },
+  {
+    name: "Histopathology",
+    description: "Microscopic examination of tissue samples",
+    types: [
+      "FNAC (Fine Needle Aspiration Cytology)",
+      "Skin Biopsy",
+      "Liver Biopsy",
+      "Prostate Biopsy",
+      "Breast Biopsy",
+      "Kidney Biopsy",
+      "Bone Marrow Biopsy",
+      "Lymph Node Biopsy",
+      "Endometrial Biopsy",
+      "Muscle Biopsy",
+      "Nerve Biopsy",
+      "Frozen Section",
+      "Pap Smear",
+      "Immunohistochemistry",
+      "Surgical Pathology",
+      "Cytology"
+    ],
+  },
 ];
 export const labReportFields = {
   hematology: {
@@ -480,6 +502,48 @@ export const labReportFields = {
         unit: "seconds",
         normalRange: "30-40",
       },
+      {
+        name: "fibrinogen",
+        label: "Fibrinogen",
+        unit: "mg/dL",
+        normalRange: "200-400",
+      },
+      {
+        name: "d_dimer",
+        label: "D-dimer",
+        unit: "ng/mL",
+        normalRange: "<500",
+      },
+      {
+        name: "protein_c",
+        label: "Protein C Activity",
+        unit: "%",
+        normalRange: "70-140",
+      },
+      {
+        name: "protein_s",
+        label: "Protein S Activity",
+        unit: "%",
+        normalRange: "65-140",
+      },
+      {
+        name: "antithrombin_iii",
+        label: "Antithrombin III",
+        unit: "%",
+        normalRange: "80-120",
+      },
+      {
+        name:"bt",
+        label:"Bleeding Time",
+        unit:"seconds",
+        normalRange:"2-7",
+      },
+      {
+        name:"ct",
+        label:"Clotting Time",
+        unit:"seconds",
+        normalRange:"4-10",
+      }
     ],
     "Hemoglobin Electrophoresis": [
       { name: "hb_a", label: "Hemoglobin A", unit: "%", normalRange: "95-98" },
@@ -578,39 +642,105 @@ export const labReportFields = {
         normalRange: "1.2-2.2",
       },
     ],
-    "Kidney Function Tests": [
-      { name: "urea", label: "Blood Urea", unit: "mg/dL", normalRange: "15-40" },
-      {
-        name: "creatinine",
-        label: "Serum Creatinine",
-        unit: "mg/dL",
-        normalRange: "0.6-1.2",
-      },
-      {
-        name: "uric_acid",
-        label: "Uric Acid",
-        unit: "mg/dL",
-        normalRange: "3.4-7.0",
-      },
-      {
-        name: "sodium",
-        label: "Sodium",
-        unit: "mEq/L",
-        normalRange: "136-145",
-      },
-      {
-        name: "potassium",
-        label: "Potassium",
-        unit: "mEq/L",
-        normalRange: "3.5-5.1",
-      },
-      {
-        name: "chloride",
-        label: "Chloride",
-        unit: "mEq/L",
-        normalRange: "98-107",
-      },
-    ],
+  "Kidney Function Tests": [
+  {
+    "name": "urea",
+    "label": "Blood Urea",
+    "unit": "mg/dL",
+    "normalRange": "13-43"
+  },
+  {
+    "name": "urea_nitrogen",
+    "label": "Urea Nitrogen (Blood)",
+    "unit": "mg/dL",
+    "normalRange": "6-20"
+  },
+  {
+    "name": "bun_creatinine_ratio",
+    "label": "BUN/Creatinine Ratio",
+    "unit": "",
+    "normalRange": "6-22"
+  },
+  {
+    "name": "creatinine",
+    "label": "Serum Creatinine",
+    "unit": "mg/dL",
+    "normalRange": "0.55-1.02"
+  },
+  {
+    "name": "gfr",
+    "label": "Estimated Glomerular Filtration Rate (eGFR)",
+    "unit": "mL/min/1.73m²",
+    "normalRange": ">90"
+  },
+  {
+    "name": "gfr_category",
+    "label": "GFR Category",
+    "unit": "",
+    "normalRange": "G1-G2: Normal to mild decrease; G3a-G5 for progressive stages"
+  },
+  {
+    "name": "uric_acid",
+    "label": "Uric Acid",
+    "unit": "mg/dL",
+    "normalRange": "2.60-6.00"
+  },
+  {
+    "name": "total_protein",
+    "label": "Total Protein",
+    "unit": "g/dL",
+    "normalRange": "5.70-8.20"
+  },
+  {
+    "name": "albumin",
+    "label": "Albumin",
+    "unit": "g/dL",
+    "normalRange": "3.20-4.80"
+  },
+  {
+    "name": "a_g_ratio",
+    "label": "Albumin/Globulin Ratio (A:G Ratio)",
+    "unit": "",
+    "normalRange": "0.90-2.00"
+  },
+  {
+    "name": "globulin",
+    "label": "Globulin (Calculated)",
+    "unit": "g/dL",
+    "normalRange": ""
+  },
+  {
+    "name": "calcium",
+    "label": "Calcium (Total)",
+    "unit": "mg/dL",
+    "normalRange": "8.70-10.40"
+  },
+  {
+    "name": "phosphorus",
+    "label": "Phosphorus",
+    "unit": "mg/dL",
+    "normalRange": "2.40-5.10"
+  },
+  {
+    "name": "sodium",
+    "label": "Sodium",
+    "unit": "mEq/L",
+    "normalRange": "136-145"
+  },
+  {
+    "name": "potassium",
+    "label": "Potassium",
+    "unit": "mEq/L",
+    "normalRange": "3.50-5.10"
+  },
+  {
+    "name": "chloride",
+    "label": "Chloride",
+    "unit": "mEq/L",
+    "normalRange": "98-107"
+  }
+]
+,
     Electrolytes: [
       {
         name: "sodium",
@@ -636,6 +766,8 @@ export const labReportFields = {
         unit: "mEq/L",
         normalRange: "22-28",
       },
+      {name:"calcium_electrolyte",label:"Calcium",unit:"mg/dL",normalRange:"8.5-10.5"},
+      {name:"magnesium",label:"Magnesium",unit:"mg/dL",normalRange:"1.8-2.3"},
     ],
     "Calcium Profile": [
       {
@@ -1142,10 +1274,91 @@ export const labReportFields = {
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
     "Ultrasonography Whole Abdomen": [
-      { name: "study_area", label: "Study Area", unit: "", normalRange: "N/A" },
-      { name: "findings", label: "Findings", unit: "", normalRange: "N/A" },
-      { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
-    ],
+  {
+    name: "liver",
+    label: "Liver",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "gallbladder",
+    label: "Gallbladder",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "cbd",
+    label: "Common Bile Duct (CBD)",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "pancreas",
+    label: "Pancreas",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "spleen",
+    label: "Spleen",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "kidneys",
+    label: "Kidneys",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "urinary_bladder",
+    label: "Urinary Bladder",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "retroperitoneum",
+    label: "Retroperitoneum",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "stomach_bowel",
+    label: "Stomach and Bowel Loops",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "pelvis",
+    label: "Pelvis",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name:"prostate",
+    label:"Prostate",
+    unit:"",
+    normalRange:""
+  },
+  {
+    name: "ascites_peritoneum",
+    label: "Ascites and Peritoneum",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "abdominal_wall",
+    label: "Abdominal Wall",
+    unit: "",
+    normalRange: ""
+  },
+  {
+    name: "impression",
+    label: "Impression",
+    unit: "",
+    normalRange: ""
+  }
+],
     "X-Ray": [
       { name: "study_area", label: "Study Area", unit: "", normalRange: "N/A" },
       { name: "view", label: "View", unit: "", normalRange: "N/A" },
@@ -1305,6 +1518,444 @@ export const labReportFields = {
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
   },
+  // ... existing code ...
+
+  // ... other existing fields ...
+  
+  histopathology: {
+    "FNAC (Fine Needle Aspiration Cytology)": [
+      {
+        name: "specimen_type",
+        label: "Specimen Type",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "adequacy",
+        label: "Specimen Adequacy",
+        unit: "",
+        normalRange: "N/A",
+        options: ["Adequate", "Suboptimal", "Inadequate"]
+      },
+      {
+        name: "cellularity",
+        label: "Cellularity",
+        unit: "",
+        normalRange: "N/A",
+        options: ["Scant", "Moderate", "Abundant"]
+      },
+      {
+        name: "cytological_findings",
+        label: "Cytological Findings",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "diagnosis",
+        label: "Diagnosis",
+        unit: "",
+        normalRange: "N/A"
+      }
+    ],
+    "Skin Biopsy": [
+      {
+        name: "specimen_site",
+        label: "Biopsy Site",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "specimen_size",
+        label: "Specimen Size",
+        unit: "cm",
+        normalRange: "N/A"
+      },
+      {
+        name: "epidermis_description",
+        label: "Epidermis Description",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "dermis_description",
+        label: "Dermis Description",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "microscopic_findings",
+        label: "Microscopic Findings",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "diagnosis",
+        label: "Diagnosis",
+        unit: "",
+        normalRange: "N/A"
+      }
+    ],
+    "Liver Biopsy": [
+      {
+        name: "specimen_adequacy",
+        label: "Specimen Adequacy",
+        unit: "",
+        normalRange: "N/A",
+        options: ["Adequate", "Suboptimal", "Inadequate"]
+      },
+      {
+        name: "portal_tracts",
+        label: "Number of Portal Tracts",
+        unit: "",
+        normalRange: "≥10"
+      },
+      {
+        name: "fibrosis_stage",
+        label: "Fibrosis Stage",
+        unit: "",
+        normalRange: "0",
+        options: ["0", "1", "2", "3", "4"]
+      },
+      {
+        name: "inflammation_grade",
+        label: "Inflammation Grade",
+        unit: "",
+        normalRange: "0",
+        options: ["0", "1", "2", "3"]
+      },
+      {
+        name: "steatosis",
+        label: "Steatosis",
+        unit: "%",
+        normalRange: "<5%"
+      },
+      {
+        name: "diagnosis",
+        label: "Diagnosis",
+        unit: "",
+        normalRange: "N/A"
+      }
+    ],
+    "Prostate Biopsy": [
+      {
+        name: "number_of_cores",
+        label: "Number of Cores",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "core_lengths",
+        label: "Core Lengths",
+        unit: "mm",
+        normalRange: "N/A"
+      },
+      {
+        name: "gleason_score",
+        label: "Gleason Score",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "percentage_involvement",
+        label: "Percentage of Core Involvement",
+        unit: "%",
+        normalRange: "N/A"
+      },
+      {
+        name: "perineural_invasion",
+        label: "Perineural Invasion",
+        unit: "",
+        normalRange: "Absent",
+        options: ["Present", "Absent"]
+      },
+      {
+        name: "diagnosis",
+        label: "Diagnosis",
+        unit: "",
+        normalRange: "N/A"
+      }
+    ],
+    "Breast Biopsy": [
+      {
+        name: "specimen_type",
+        label: "Specimen Type",
+        unit: "",
+        normalRange: "N/A",
+        options: ["Core Biopsy", "Excisional Biopsy", "Other"]
+      },
+      {
+        name: "tumor_size",
+        label: "Tumor Size",
+        unit: "cm",
+        normalRange: "N/A"
+      },
+      {
+        name: "histological_type",
+        label: "Histological Type",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "tumor_grade",
+        label: "Tumor Grade",
+        unit: "",
+        normalRange: "N/A",
+        options: ["Grade 1", "Grade 2", "Grade 3"]
+      },
+      {
+        name: "lymphovascular_invasion",
+        label: "Lymphovascular Invasion",
+        unit: "",
+        normalRange: "Absent",
+        options: ["Present", "Absent"]
+      },
+      {
+        name: "hormone_receptor_status",
+        label: "Hormone Receptor Status",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "her2_status",
+        label: "HER2 Status",
+        unit: "",
+        normalRange: "N/A",
+        options: ["Positive", "Negative", "Equivocal"]
+      }
+    ],
+    "Kidney Biopsy": [
+      {
+        name: "specimen_adequacy",
+        label: "Specimen Adequacy",
+        unit: "",
+        normalRange: "N/A",
+        options: ["Adequate", "Suboptimal", "Inadequate"]
+      },
+      {
+        name: "number_of_glomeruli",
+        label: "Number of Glomeruli",
+        unit: "",
+        normalRange: "≥10"
+      },
+      {
+        name: "light_microscopy",
+        label: "Light Microscopy Findings",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "immunofluorescence",
+        label: "Immunofluorescence Findings",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "electron_microscopy",
+        label: "Electron Microscopy Findings",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "diagnosis",
+        label: "Diagnosis",
+        unit: "",
+        normalRange: "N/A"
+      }
+    ],
+    "Bone Marrow Biopsy": [
+      {
+        name: "specimen_adequacy",
+        label: "Specimen Adequacy",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "cellularity",
+        label: "Cellularity",
+        unit: "%",
+        normalRange: "40-60%"
+      },
+      {
+        name: "myeloid_series",
+        label: "Myeloid Series",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "erythroid_series",
+        label: "Erythroid Series",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "megakaryocytes",
+        label: "Megakaryocytes",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "iron_stores",
+        label: "Iron Stores",
+        unit: "",
+        normalRange: "Present",
+        options: ["Absent", "Present", "Increased"]
+      },
+      {
+        name: "diagnosis",
+        label: "Diagnosis",
+        unit: "",
+        normalRange: "N/A"
+      }
+    ],
+    "Lymph Node Biopsy": [
+      {
+        name: "specimen_size",
+        label: "Specimen Size",
+        unit: "cm",
+        normalRange: "N/A"
+      },
+      {
+        name: "architecture",
+        label: "Architecture",
+        unit: "",
+        normalRange: "Preserved",
+        options: ["Preserved", "Partially Effaced", "Completely Effaced"]
+      },
+      {
+        name: "cellular_composition",
+        label: "Cellular Composition",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "special_stains",
+        label: "Special Stains",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "immunophenotype",
+        label: "Immunophenotype",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "diagnosis",
+        label: "Diagnosis",
+        unit: "",
+        normalRange: "N/A"
+      }
+    ],
+    "Frozen Section": [
+      {
+        name: "specimen_type",
+        label: "Specimen Type",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "frozen_section_diagnosis",
+        label: "Frozen Section Diagnosis",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "margin_status",
+        label: "Margin Status",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Positive", "Negative", "Close"]
+      },
+      {
+        name: "correlation_with_final",
+        label: "Correlation with Final Diagnosis",
+        unit: "",
+        normalRange: "Concordant",
+        options: ["Concordant", "Discordant"]
+      }
+    ],
+    "Pap Smear": [
+      {
+        name: "specimen_adequacy",
+        label: "Specimen Adequacy",
+        unit: "",
+        normalRange: "Satisfactory",
+        options: ["Satisfactory", "Unsatisfactory"]
+      },
+      {
+        name: "epithelial_cell_abnormality",
+        label: "Epithelial Cell Abnormality",
+        unit: "",
+        normalRange: "Negative",
+        options: [
+          "Negative",
+          "ASC-US",
+          "ASC-H",
+          "LSIL",
+          "HSIL",
+          "Squamous Cell Carcinoma"
+        ]
+      },
+      {
+        name: "organisms",
+        label: "Organisms",
+        unit: "",
+        normalRange: "None"
+      },
+      {
+        name: "other_findings",
+        label: "Other Non-neoplastic Findings",
+        unit: "",
+        normalRange: "None"
+      },
+      {
+        name: "recommendation",
+        label: "Recommendation",
+        unit: "",
+        normalRange: "Routine screening"
+      }
+    ],
+    "Immunohistochemistry": [
+      {
+        name: "specimen_type",
+        label: "Specimen Type",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "markers_tested",
+        label: "Markers Tested",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "staining_pattern",
+        label: "Staining Pattern",
+        unit: "",
+        normalRange: "N/A"
+      },
+      {
+        name: "intensity",
+        label: "Staining Intensity",
+        unit: "",
+        normalRange: "N/A",
+        options: ["Negative", "Weak", "Moderate", "Strong"]
+      },
+      {
+        name: "percentage_positive",
+        label: "Percentage of Positive Cells",
+        unit: "%",
+        normalRange: "N/A"
+      },
+      {
+        name: "interpretation",
+        label: "Interpretation",
+        unit: "",
+        normalRange: "N/A"
+      }
+    ]
+  }
+
 };
 
 const ones = [

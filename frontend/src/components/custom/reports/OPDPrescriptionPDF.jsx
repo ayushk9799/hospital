@@ -116,7 +116,7 @@ const OPDPrescriptionPDF = React.forwardRef((props, ref) => {
         <div className="section">
           <div className="section-title">Comorbidities</div>
           {selectedComorbidities.map((comorbidity, index) => (
-            <div key={index} className="section-content">{comorbidity}</div>
+            <div key={index} className="section-content">{comorbidity.name}</div>
           ))}
         </div>
       )}

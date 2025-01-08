@@ -311,7 +311,6 @@ export default function OPDModule({ patient }) {
   const handleComorbiditiesChange = (newComorbidities) => {
     setSelectedComorbidities(newComorbidities);
   };
-
   const handleRemoveComorbidity = (name) => {
     setSelectedComorbidities(
       selectedComorbidities.filter((c) => c.name !== name)
@@ -645,15 +644,15 @@ export default function OPDModule({ patient }) {
                     />
                   </div>
                   <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                    {selectedComorbidities.length > 0 ? (
+                    {selectedComorbidities?.length > 0 ? (
                       <div className="flex flex-wrap gap-1">
-                        {selectedComorbidities.map((comorbidity, index) => (
+                        {selectedComorbidities?.map((comorbidity, index) => (
                           <Badge
                             key={index}
                             variant="primary"
                             className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
                           >
-                            {comorbidity.name}
+                           ayush
                             <X
                               className="ml-1 h-3 w-3 cursor-pointer"
                               onClick={() =>

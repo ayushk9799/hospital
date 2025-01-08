@@ -121,7 +121,6 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
 
     res.json(patientsWithBillDetails);
   } catch (error) {
-    console.error("Error in admitted-patients route:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -204,7 +203,6 @@ router.post("/admittedpatientsSearch", verifyToken, async (req, res) => {
 
     res.json(patientsWithBillDetails);
   } catch (error) {
-    console.log("Error in admitted-patients route:", error);
     res.status(500).json({ error: error.message });
   }
 });
@@ -992,13 +990,13 @@ router.post(
         createdBy: user._id,
       });
 
-      let payment;
+      let payments=[];
       if (
         visit.paymentMethod &&
         visit.paymentMethod !== "Due" &&
         amountPaid > 0
       ) {
-        paymentInfo.paymentMethod.map(async (pm) => {
+        visit.paymentMethod.map(async (pm) => {
           let payment = new Payment({
             amount: pm.amount,
             paymentMethod: pm.method,
@@ -1006,6 +1004,7 @@ router.post(
             type: "Income",
             createdBy: user._id,
           });
+          payments.push(payment);
           await payment.save({ session });
           bill.payments.push(payment._id);
         });
@@ -1027,7 +1026,7 @@ router.post(
         patient,
         visit: newVisit,
         bill,
-        payment,
+        payment:payments,
       });
     } catch (error) {
       await session.abortTransaction();
@@ -1419,6 +1418,7 @@ router.post(
         timeSlot: admission.timeSlot || null,
         vitals: admission.vitals || null,
         comorbidities: admission.comorbidities || [],
+        operationName:admission.operationName||null,
       });
 
       let bill;

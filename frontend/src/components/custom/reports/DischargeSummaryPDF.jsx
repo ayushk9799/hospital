@@ -249,7 +249,6 @@ const DischargeSummaryPDF = forwardRef(
       ?.filter((c) => c.name)
       .map((c) => c.name)
       .join(", ");
-
     const renderComorbidities = () => {
       return (
         <div style={styles.section}>
@@ -308,13 +307,13 @@ const DischargeSummaryPDF = forwardRef(
               <span style={styles.infoItem}>
                 <span style={styles.label}>Admit Date: </span>
                 <span style={styles.value}>
-                  {formData.admissionDate || "--"}
+                  {formData.admissionDate ? format(new Date(formData.admissionDate), "dd-MM-yyyy") : "--"}
                 </span>
               </span>
               <span style={styles.infoItem}>
                 <span style={styles.label}>Discharge Date: </span>
                 <span style={styles.value}>
-                  {formData.dateDischarged || "--"}
+                  {formData.dateDischarged ? format(new Date(formData.dateDischarged), "dd-MM-yyyy") : "--"}
                 </span>
               </span>
             </div>
@@ -353,9 +352,9 @@ const DischargeSummaryPDF = forwardRef(
           )}
         />
 
-        {formData.comorbidityHandling === "separate" && renderComorbidities()}
+        {(formData.comorbidityHandling === "separate" && hasComorbidities) && renderComorbidities()}
 
-        {formData.vitals.admission && (
+        {(formData.vitals.admission && !Object.values(formData.vitals.admission).every((value) => value===""||value===null||value===undefined)) && (
           <div style={styles.section}>
             <span style={styles.sectionTitle}>Admission Vitals</span>
             <span style={styles.sectionContent}>
@@ -429,7 +428,7 @@ const DischargeSummaryPDF = forwardRef(
 
         <ConditionalSection title="Treatment" content={formData.treatment} />
 
-        {formData.vitals.discharge && (
+        {(formData.vitals.discharge && !Object.values(formData.vitals.discharge).every((value) => value===""||value===null||value===undefined)) && (
           <div style={styles.section}>
             <span style={styles.sectionTitle}>Discharge Vitals</span>
             <span style={styles.sectionContent}>
