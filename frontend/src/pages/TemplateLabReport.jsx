@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { Card } from "../components/ui/card";
+import { useReactToPrint } from "react-to-print";
 import { Calendar } from "../components/ui/calendar";
 import {
   Popover,
@@ -20,24 +21,29 @@ import { addLabReport } from "../redux/slices/patientSlice";
 import { useToast } from "../hooks/use-toast";
 
 const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
-
   const [fields, setFields] = useState([]);
   const [reportDate, setReportDate] = useState(new Date());
-  const [showPDFPreview, setShowPDFPreview] = useState(false);
   const [allReports, setAllReports] = useState([]);
   const [generatedDate, setGeneratedDate] = useState(null);
+  const [isPrinting, setIsPrinting] = useState(false);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
   const dispatch = useDispatch();
   const { toast } = useToast();
+  const componentRef = useRef(null);
 
   useEffect(() => {
     if (template && template.fields) {
       const relevantReports = patientData?.labReports.filter(
         (report) => report.name.toLowerCase() === template.name.toLowerCase()
       );
-      const latestDate = relevantReports?.length > 0 
-      ? new Date(Math.max(...relevantReports.map(report => new Date(report.date))))
-      : new Date();
+      const latestDate =
+        relevantReports?.length > 0
+          ? new Date(
+              Math.max(
+                ...relevantReports.map((report) => new Date(report.date))
+              )
+            )
+          : new Date();
       setAllReports(relevantReports);
       if (relevantReports?.length > 0) {
         loadReportForDate(relevantReports, latestDate);
@@ -47,14 +53,13 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
         initializeEmptyFields();
       }
     }
-  }, [template, patientData]);
+  }, []);
 
   const handleDateChange = (date) => {
     loadReportForDate(allReports, date);
   };
 
   const loadReportForDate = (reports, date) => {
-   
     const selectedReport = reports.find(
       (report) => new Date(report.date).toDateString() === date.toDateString()
     );
@@ -115,6 +120,232 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
     );
   };
 
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+    onBeforeGetContent: () => {
+      console.log(componentRef.current)
+
+      setIsPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setIsPrinting(false);
+          resolve();
+        }, 250);
+      });
+    },
+    pageStyle: `
+    @media print {
+      @page {
+        size: A4;
+        margin: 20mm;
+      }
+      
+      body * {
+        visibility: hidden;
+      }
+      
+      .page, .page * {
+        visibility: visible;
+      }
+      
+      .page {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        padding: 20mm;
+      }
+
+      .no-print {
+        display: none !important;
+      }
+
+      .page {
+font-family: "Tinos, serif";
+background-color: white;
+width: 210mm;
+min-height: 297mm;
+margin: 0 auto;
+box-sizing: border-box;
+}
+
+.header {
+margin-bottom: 5px;
+border-bottom: 1px solid #000000;
+padding-bottom: 2px;
+}
+
+.clinic-name {
+font-size: 24pt;
+text-align: center;
+font-family: "Tinos, serif";
+margin-bottom: 3mm;
+color: #1a5f7a;
+font-weight: bold;
+}
+
+.clinic-info {
+font-size: 10pt;
+text-align: center;
+color: #333333;
+margin-bottom: 2mm;
+}
+
+.doctor-info {
+font-size: 12pt;
+text-align: center;
+margin-top: 3mm;
+letter-spacing: 1pt;
+color: #1a5f7a;
+}
+
+.report-container {
+margin-top: 5px;
+border-top: 2px solid #ecf0f1;
+border-bottom: 2px solid #ecf0f1;
+}
+
+.report-row {
+display: flex;
+border-bottom: 1px solid #ecf0f1;
+padding: 3px 0;
+align-items: center;
+}
+
+.report-row.header {
+background-color: #f8f9fa;
+}
+.header-name{
+  width:30%;
+  font-size: 20px;
+  font-weight: bold;
+  padding-right: 2mm;
+
+}
+.header-unit{
+  width:20%;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+}
+.header-value{
+  width:25%;
+  font-size: 20px;
+  font-weight: bold;
+   text-align: center;
+}
+.header-range{
+  width:25%;
+  font-size: 20px;
+  font-weight: bold;
+text-align: right;
+}
+
+.test-name {
+width: 30%;
+font-size: 10pt;
+color: #2c3e50;
+font-weight: bold;
+padding-right: 2mm;
+}
+
+.test-value {
+width: 25%;
+font-size: 10pt;
+text-align: center;
+}
+
+.test-unit {
+width: 20%;
+font-size: 10pt;
+text-align: center;
+}
+
+.test-range {
+width: 25%;
+font-size: 10pt;
+text-align: right;
+}
+
+.patient-details {
+display: flex;
+margin-top: 5px;
+padding: 3px;
+background-color: #f8f9fa;
+border-radius: 2mm;
+}
+
+.patient-column {
+flex: 1;
+padding: 0 2mm;
+}
+
+.patient-info {
+display: flex;
+margin-bottom: 2mm;
+align-items: center;
+}
+
+.patient-label {
+font-size: 10pt;
+font-weight: bold;
+color: #34495e;
+margin-right: 2mm;
+min-width: 20mm;
+}
+
+.patient-value {
+font-size: 10pt;
+color: #2c3e50;
+}
+
+.report-title {
+text-align: center;
+margin: 10px 0;
+}
+
+.report-title h2 {
+margin: 0;
+font-size: 1.5rem;
+font-weight: bold;
+}
+
+/* Print specific styles */
+@media print {
+@page {
+  size: A4;
+}
+
+body * {
+  visibility: hidden;
+}
+
+.page, .page * {
+  visibility: visible;
+}
+
+.page {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  padding:20px;
+}
+
+.no-print {
+  display: none !important;
+}
+
+/* Ensure all styles are applied in print */
+.page * {
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+} 
+    }
+  `,
+  });
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     const labReportData = {
@@ -161,52 +392,6 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
       });
     }
   };
-
-  const generatePDF = () => {
-    return (
-      <LabReportPDF
-        reportData={{
-          name: template.name,
-          date: reportDate,
-          report: fields.reduce((acc, field) => {
-            acc[field.label] = {
-              value: field.value,
-              unit: field.unit,
-              normalRange: field.normalRange,
-            };
-            return acc;
-          }, {}),
-        }}
-        hospital={hospital}
-        patientData={patientData}
-      />
-    );
-  };
-
-  useEffect(() => {
-    if (showPDFPreview) {
-      window.scrollTo(0, 0);
-    }
-  }, [showPDFPreview]);
-
-  if (showPDFPreview) {
-    return (
-      <div className="container mx-auto p-4 max-w-6xl min-h-screen flex flex-col">
-        <div className="flex justify-between items-center mb-4 sticky top-0 bg-white z-10 py-2">
-          <h1 className="text-3xl font-bold">PDF Preview</h1>
-          <Button onClick={() => setShowPDFPreview(false)}>Back to Form</Button>
-        </div>
-        <div className="flex-grow">
-          <PDFViewer
-            className="w-full h-full min-h-[calc(100vh-100px)]"
-            showToolbar={false}
-          >
-            {generatePDF()}
-          </PDFViewer>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -299,16 +484,33 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
             <Button type="submit" className="w-full">
               Save Lab Report
             </Button>
-            <Button
-              type="button"
-              className="w-full"
-              onClick={() => setShowPDFPreview(true)}
-            >
-              Show Preview
+            <Button type="button" className="w-full" onClick={handlePrint}>
+              Print Report
             </Button>
           </div>
         </form>
       </Card>
+
+      <div style={{ display: "none" }}>
+        <div ref={componentRef}>
+          <LabReportPDF
+            reportData={{
+              name: template.name,
+              date: reportDate,
+              report: fields.reduce((acc, field) => {
+                acc[field.label] = {
+                  value: field.value,
+                  unit: field.unit,
+                  normalRange: field.normalRange,
+                };
+                return acc;
+              }, {}),
+            }}
+            hospital={hospital}
+            patientData={patientData}
+          />
+        </div>
+      </div>
     </div>
   );
 };

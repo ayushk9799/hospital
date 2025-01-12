@@ -86,6 +86,8 @@ const initialState = {
   labTestsTemplate: [],
   headerTemplate: {},
   diagnosisTemplate: [],
+  dischargeSummaryTemplate: "",
+  opdPrescriptionTemplate: "",
   status: "idle",
   error: null,
   serviceBillCollections: [],
@@ -105,8 +107,10 @@ const templatesSlice = createSlice({
         state.labTestsTemplate = action.payload.labTestsTemplate;
         state.headerTemplate = action.payload.headerTemplate;
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
-        state.comorbidities=action.payload.comorbidities;
-        state.medicinelist=action.payload.medicinelist;
+        state.dischargeSummaryTemplate = action.payload.dischargeSummaryTemplate;
+        state.opdPrescriptionTemplate = action.payload.opdPrescriptionTemplate;
+        state.comorbidities = action.payload.comorbidities;
+        state.medicinelist = action.payload.medicinelist;
         state.serviceBillCollections = action.payload.service_collections;
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
@@ -123,6 +127,12 @@ const templatesSlice = createSlice({
         }
         if (action.payload.headerTemplate) {
           state.headerTemplate = action.payload.headerTemplate;
+        }
+        if (action.payload.dischargeSummaryTemplate) {
+          state.dischargeSummaryTemplate = action.payload.dischargeSummaryTemplate;
+        }
+        if (action.payload.opdPrescriptionTemplate) {
+          state.opdPrescriptionTemplate = action.payload.opdPrescriptionTemplate;
         }
       })
       .addCase(updateServiceBillCollections.fulfilled, (state, action) => {

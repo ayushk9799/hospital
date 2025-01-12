@@ -27,7 +27,7 @@ import { AlertCircle } from "lucide-react";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Checkbox } from "../../ui/checkbox";
-import {headerTemplateString} from "../../../utils/print/HospitalHeader";
+import {headerTemplateString} from "../../../templates/headertemplate";
 import { X } from "lucide-react";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {

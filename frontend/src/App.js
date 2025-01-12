@@ -55,6 +55,10 @@ import PatientOverview from "./pages/PatientOverview";
 import AdmittedPatients from "./pages/AdmittedPatients";
 import AddIPDServices from "./pages/AddIPDServices";
 import CreateTestTemplate from "./pages/CreateTestTemplate";
+import PrintingTemplates from "./pages/PrintingTemplates";
+import DischargeTemplatePreview from "./pages/DischargeTemplatePreview";
+import HeaderTemplatePreview from "./pages/HeaderTemplatePreview";
+import OPDTemplatePreview from "./pages/OPDTemplatePreview";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -208,6 +212,22 @@ const AppContent = () => {
                 <Route
                   path="/settings/create-test-template"
                   element={<CreateTestTemplate />}
+                />
+                <Route
+                  path="/settings/printing-templates"
+                  element={<PrintingTemplates />}
+                />
+                <Route
+                  path="/settings/printing-templates/discharge-preview"
+                  element={<DischargeTemplatePreview />}
+                />
+                <Route
+                  path="/settings/printing-templates/header-preview"
+                  element={<HeaderTemplatePreview />}
+                />
+                <Route
+                  path="/settings/printing-templates/opd-preview"
+                  element={<OPDTemplatePreview />}
                 />
               </>
             )}

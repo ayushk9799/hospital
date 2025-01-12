@@ -117,7 +117,9 @@ router.post("/template/create", identifyHospital, async (req, res) => {
         headerTemplate: {},
         diagnosisTemplate: [],
         comorbidities:[],
-        medicinelist:[]
+        medicinelist:[],
+        dischargeSummaryTemplate: "",
+        opdPrescriptionTemplate: "",
       });
     }
 
@@ -138,6 +140,15 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     {
       template.medicinelist=req.body.medicinelist;
     }
+    if(req.body.dischargeSummaryTemplate)
+    {
+      template.dischargeSummaryTemplate=req.body.dischargeSummaryTemplate;
+    }
+    if(req.body.opdPrescriptionTemplate)
+    {
+      template.opdPrescriptionTemplate=req.body.opdPrescriptionTemplate;
+    }
+        
 
     await template.save({ session });
 

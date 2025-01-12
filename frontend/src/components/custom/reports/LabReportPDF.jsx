@@ -5,7 +5,7 @@ import HospitalHeader from "../../../utils/print/HospitalHeader";
 const LabReportPDF = React.forwardRef(
   ({ reportData, patientData, hospital }, ref) => {
     const reportEntries = Object.entries(reportData.report);
-
+    
     return (
       <div ref={ref} className="page">
         <HospitalHeader hospitalInfo={hospital} />

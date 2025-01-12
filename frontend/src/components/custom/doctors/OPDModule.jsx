@@ -14,13 +14,14 @@ import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 import { useToast } from "../../../hooks/use-toast";
 import { PDFViewer } from "@react-pdf/renderer";
 import OPDPrescriptionPDF from "../reports/OPDPrescriptionPDF";
+import OPDPrescriptionTemplate from "../../../templates/opdPrescription";
 import { comorbidities } from "../../../assets/Data";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
 import MultiSelectInput from "../MultiSelectInput";
 import { Separator } from "../../ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
-import { useReactToPrint } from 'react-to-print';
+import { useReactToPrint } from "react-to-print";
 
 // Flatten the lab categories
 const allLabTests = labCategories.flatMap((category) =>
@@ -51,8 +52,13 @@ export default function OPDModule({ patient }) {
 
   // const [comorbidities, setComorbidities] = useState([]);
   const [selectedComorbidities, setSelectedComorbidities] = useState([]);
-  const { diagnosisTemplate=[],comorbidities=[],medicinelist=[], status } = useSelector((state) => state.templates);
-  const [isPrinting,setIsPrinting]=useState(false)
+  const {
+    diagnosisTemplate = [],
+    comorbidities = [],
+    medicinelist = [],
+    status,
+  } = useSelector((state) => state.templates);
+  const [isPrinting, setIsPrinting] = useState(false);
   useEffect(() => {
     if (status === "idle") {
       dispatch(fetchTemplates());
@@ -60,7 +66,6 @@ export default function OPDModule({ patient }) {
   }, [status, dispatch]);
   const [selectedDiagnoses, setSelectedDiagnoses] = useState([]);
 
- 
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const prescriptionUpdateStatus = useSelector(
     (state) => state.patients.prescriptionUpdateStatus
@@ -68,10 +73,11 @@ export default function OPDModule({ patient }) {
   const { toast } = useToast();
 
   const prescriptionRef = useRef();
-  
+
   const handlePrint = useReactToPrint({
     content: () => prescriptionRef.current,
     onBeforeGetContent: () => {
+      console.log(prescriptionRef.current);
       setIsPrinting(true);
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -80,112 +86,35 @@ export default function OPDModule({ patient }) {
         }, 500);
       });
     },
-    pageStyle:`
+    pageStyle: `
     @media print {
      @page {
           size: A4;
           margin: 20mm;
         }
-       body * {
-    visibility: hidden;
-  }
-  .prescription-container, 
-  .prescription-container * {
-    visibility: visible;
-  }
-  .prescription-container {
-    position: absolute;
-    padding:20px;
-    width: 100%;
-  }
-      .title-container {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-      .title {
-        font-size: 15px;
-        color: #1a5f7a;
-        font-weight: bold;
-        text-align: center;
-        flex: 1;
-      }
-      .date {
-        font-size: 10px;
-        color: #2c3e50;
-      }
-      .section {
-        margin-bottom: 10px;
-      }
-      .patient-info {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-        margin-bottom: 10px;
-      }
-      .info-row {
-        display: flex;
-        gap: 5px;
-      }
-      .label {
-        font-weight: bold;
-        font-size: 11px;
-      }
-      .value {
-        font-size: 10px;
-      }
-      .section-title {
-        font-size: 12px;
-        font-weight: bold;
-        color: #34495e;
-        margin-bottom: 5px;
-      }
-      .section-content {
-        font-size: 10px;
-      }
-      .vitals-container {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 5px;
-      }
-      .vital-item {
-        font-size: 8px;
-      }
-      .vital-inner {
-        display: flex;
-        justify-content: space-between;
-        align-items: baseline;
-      }
-      .vital-label {
-        font-weight: bold;
-        color: #34495e;
-      }
-      .vital-value {
-        color: #2c3e50;
-      }
-      .medications-list {
-        width: 100%;
-      }
-      .medication-row {
-        display: grid;
-        grid-template-columns: 5% 35% 30% 30%;
-        margin-bottom: 3px;
-        font-size: 10px;
-      }
-      .doctor-signature {
-        margin-top: 20px;
-        text-align: right;
-        font-size: 10px;
-      }
-    }`
+        body {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+        .print-only {
+          display: block !important;
+        }
+        .no-print {
+          display: none !important;   
+        }
+        .print-content {
+          position: relative;
+          min-height: 100vh;
+          padding: 25px;
+        }
+      }`,
   });
 
   const handlePreviewClick = async () => {
     try {
       await handlePrint();
     } catch (error) {
-      console.error('Print failed:', error);
+      console.error("Print failed:", error);
       toast({
         title: "Print Error",
         description: "Failed to generate prescription preview",
@@ -543,7 +472,7 @@ export default function OPDModule({ patient }) {
                     <div className="flex gap-2">
                       <MultiSelectInput
                         suggestions={diagnosisTemplate.map((item) => ({
-                          name: item
+                          name: item,
                         }))}
                         selectedValues={selectedDiagnoses}
                         setSelectedValues={handleDiagnosisChange}
@@ -652,7 +581,7 @@ export default function OPDModule({ patient }) {
                             variant="primary"
                             className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
                           >
-                           ayush
+                            ayush
                             <X
                               className="ml-1 h-3 w-3 cursor-pointer"
                               onClick={() =>
@@ -878,7 +807,7 @@ export default function OPDModule({ patient }) {
                   <div className="flex gap-2">
                     <MultiSelectInput
                       suggestions={diagnosisTemplate.map((item) => ({
-                        name: item
+                        name: item,
                       }))}
                       selectedValues={selectedDiagnoses}
                       setSelectedValues={handleDiagnosisChange}
@@ -1069,14 +998,14 @@ export default function OPDModule({ patient }) {
         </div>
       </ScrollArea>
       <div>
-        <OPDPrescriptionPDF
-          ref={prescriptionRef}
+        <OPDPrescriptionTemplate
           patient={patient.patient}
           vitals={vitals}
           prescription={prescription}
           labTests={labTests}
           selectedComorbidities={selectedComorbidities}
           hospital={hospital}
+          ref={prescriptionRef}
         />
       </div>
     </div>

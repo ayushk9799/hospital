@@ -5,15 +5,12 @@ import { updateTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import HospitalHeader, {
-  headerTemplateString,
 } from "../utils/print/HospitalHeader";
+import { headerTemplateString } from "../templates/headertemplate";
 
 export default function Settings() {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { hospitalInfo } = useSelector((state) => state.hospital);
-  const HeaderComponent =
-    createDynamicComponentFromString(headerTemplateString);
+ 
 
   const handleAddStaff = () => {
     navigate("/addstaff");
@@ -35,14 +32,11 @@ export default function Settings() {
     navigate("/settings/create-test-template");
   };
 
-  const handleSaveHeaderTemplate = async () => {
-    try {
-      dispatch(updateTemplate({ headerTemplate: headerTemplateString }));
-      alert("Header template saved successfully!");
-    } catch (error) {
-      alert("Failed to save header template: " + error.message);
-    }
+  const handlePrintingTemplates = () => {
+    navigate("/settings/printing-templates");
   };
+
+ 
 
   return (
     <div className="p-4 sm:p-6">
@@ -63,9 +57,12 @@ export default function Settings() {
         <Button onClick={handleCreateTestTemplate} className="w-full sm:w-auto">
           Create Test Template
         </Button>
+        <Button onClick={handlePrintingTemplates} className="w-full sm:w-auto">
+          Printing Templates
+        </Button>
       </div>
 
-      <div className="mb-6 mt-6">
+      {/* <div className="mb-6 mt-6">
         <h2 className="text-2xl font-bold mb-4">Header Template Settings</h2>
 
         <div className="mb-4">
@@ -87,7 +84,7 @@ export default function Settings() {
             Save As Default Header Template
           </Button>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }

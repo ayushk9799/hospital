@@ -7,7 +7,10 @@ import {
   DialogTitle,
 } from "../../ui/dialog";
 import { Button } from "../../ui/button";
+import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { Label } from "../../ui/label";
+import {headerTemplateString} from "../../../templates/headertemplate";
+import { useSelector } from "react-redux";
 import {
   Table,
   TableBody,
@@ -94,7 +97,10 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
   };
   const bill = completedBill?.bill || billData;
   const patient = completedBill?.patient || billData?.patientInfo;
-
+   const headerTemplateStrings = useSelector(
+    (state) => state.templates.headerTemplate
+  );
+  const HospitalHeader = createDynamicComponentFromString(headerTemplateStrings||headerTemplateString);
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-visible rounded-lg">
