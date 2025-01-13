@@ -493,7 +493,7 @@ React.useEffect(()=>
                               )}
                               <TableCell className="text-xs font-medium">
                                 ₹
-                                {payment.amount.toLocaleString("en-IN", {
+                                {payment?.amount?.toLocaleString("en-IN", {
                                   minimumFractionDigits: 2,
                                   maximumFractionDigits: 2,
                                 })}

@@ -1,8 +1,8 @@
-
 export const dischargeSummaryTemplateStringDefault = `
 (formData, patient, hospital, ref) => {
   const hasComorbidities = formData.comorbidities && formData.comorbidities.some((c) => c.name);
-  const hasMedicineAdvice = formData.medicineAdvice && formData.medicineAdvice.some((m) => m.name || m.dosage || m.duration);
+  const hasMedicineAdvice = formData.medicineAdvice && formData.medicineAdvice.some((m) => m.name);
+  const hasInvestigations = formData.investigations && formData.investigations.some((i) => i.name || i.category);
   const comorbiditiesString = formData.comorbidities?.filter((c) => c.name).map((c) => c.name).join(", ");
 
   const appendComorbidities = (content, type) => {
@@ -13,6 +13,23 @@ export const dischargeSummaryTemplateStringDefault = `
       return \`\${content}\${content ? ", " : ""} \${comorbiditiesString}\`;
     }
     return content;
+  };
+
+  const formatLabel = (label) => {
+    if (!label) return "";
+    const regex = /^\([^)]+\)|^(?:\\S+\\s?){1,3}/;
+    const match = label.match(regex);
+    return match ? match[0].trim() : label;
+  };
+
+  const formatDate = (date) => {
+    if (!date) return "--";
+    return new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: '2-digit', year: 'numeric' }).split('/').join('-');
+  };
+
+  const hasValue = (obj) => {
+    if (!obj) return false;
+    return Object.values(obj).some(value => value !== "" && value !== null && value !== undefined);
   };
 
   return React.createElement("div", { ref: ref, style: styles.page, className: "print-content" },
@@ -53,6 +70,22 @@ export const dischargeSummaryTemplateStringDefault = `
             React.createElement("span", { style: styles.label }, "Discharge Date: "),
             React.createElement("span", { style: styles.value }, formatDate(formData.dateDischarged))
           )
+        ),
+        React.createElement("div", { style: styles.row },
+          React.createElement("span", { style: styles.infoItem },
+            React.createElement("span", { style: styles.label }, "Room: "),
+            React.createElement("span", { style: styles.value }, patient?.roomNumber || "--")
+          ),
+          React.createElement("span", { style: styles.infoItem },
+            React.createElement("span", { style: styles.label }, "Contact: "),
+            React.createElement("span", { style: styles.value }, patient?.contactNumber || "--")
+          ),
+          React.createElement("span", { style: styles.infoItem },
+            React.createElement("span", { style: styles.label }, "Address: "),
+            React.createElement("span", { style: { ...styles.value, whiteSpace: "nowrap", textOverflow: "ellipsis", overflow: "hidden" } },
+              patient?.address || "--"
+            )
+          )
         )
       )
     ),
@@ -80,17 +113,144 @@ export const dischargeSummaryTemplateStringDefault = `
       React.createElement("span", { style: styles.sectionContent }, comorbiditiesString)
     ),
 
+    // Condition on Admission Section
+    formData.conditionOnAdmission && React.createElement("div", { style: styles.section },
+      React.createElement("span", { style: styles.sectionTitle }, "Condition on Admission:"),
+      React.createElement("span", { style: styles.sectionContent }, formData.conditionOnAdmission)
+    ),
+
     // Admission Vitals Section
-    hasValue(formData.vitals?.admission) && React.createElement("div", { style: styles.section },
+    (formData.vitals?.admission && hasValue(formData.vitals.admission)) && 
+    React.createElement("div", { style: styles.section },
       React.createElement("span", { style: styles.sectionTitle }, "Admission Vitals:"),
       React.createElement("span", { style: styles.sectionContent },
-        [
-          formData.vitals.admission.bloodPressure && \`BP: \${formData.vitals.admission.bloodPressure} mmHg\`,
-          formData.vitals.admission.heartRate && \`Heart Rate: \${formData.vitals.admission.heartRate} bpm\`,
-          formData.vitals.admission.temperature && \`Temperature: \${formData.vitals.admission.temperature}°C\`,
-          formData.vitals.admission.oxygenSaturation && \`O2 Saturation: \${formData.vitals.admission.oxygenSaturation}%\`,
-          formData.vitals.admission.respiratoryRate && \`Respiratory Rate: \${formData.vitals.admission.respiratoryRate} breaths/min\`
-        ].filter(Boolean).join(", ")
+        React.createElement("span", null,
+          formData.vitals.admission.bloodPressure && React.createElement("span", null,
+            "BP: ", React.createElement("strong", null, formData.vitals.admission.bloodPressure), " mmHg, "
+          ),
+          formData.vitals.admission.heartRate && React.createElement("span", null,
+            "Heart Rate: ", React.createElement("strong", null, formData.vitals.admission.heartRate), " bpm, "
+          ),
+          formData.vitals.admission.temperature && React.createElement("span", null,
+            "Temperature: ", React.createElement("strong", null, formData.vitals.admission.temperature), "°C, "
+          ),
+          formData.vitals.admission.oxygenSaturation && React.createElement("span", null,
+            "O", React.createElement("sub", null, "2"), " Saturation: ",
+            React.createElement("strong", null, formData.vitals.admission.oxygenSaturation), "%, "
+          ),
+          formData.vitals.admission.respiratoryRate && React.createElement("span", null,
+            "Respiratory Rate: ", React.createElement("strong", null, formData.vitals.admission.respiratoryRate), " breaths/min"
+          )
+        )
+      )
+    ),
+
+    // Investigations Section
+    hasInvestigations && React.createElement("div", { style: { marginBottom: "3px" } },
+      React.createElement("div", null,
+        React.createElement("span", { style: styles.sectionTitle }, "Investigations")
+      ),
+      React.createElement("div", { 
+        style: { 
+          marginLeft: "15px", 
+          marginTop: "5px", 
+          width: "100%" 
+        } 
+      },
+        formData.investigations.map((investigation, index) => {
+          const hasFindings = investigation.report?.findings && 
+            Object.values(investigation.report.findings).some(value => value);
+          const reportEntries = Object.entries(investigation.report || {})
+            .filter(([_, testData]) => testData.value);
+          const halfLength = Math.ceil(reportEntries.length / 2);
+
+          return React.createElement("div", {
+            key: index,
+            style: {
+              marginLeft: "5px",
+              marginBottom: "5px",
+              display: "flex",
+              flexDirection: hasFindings ? "row" : "column"
+            }
+          },
+            React.createElement("div", null,
+              React.createElement("div", { 
+                style: { 
+                  fontSize: "9px", 
+                  marginBottom: "2px", 
+                  fontWeight: "bold" 
+                } 
+              },
+                \`\${investigation.name.toUpperCase()} (\${formatDate(investigation.date)})\`
+              )
+            ),
+            hasFindings ? 
+              React.createElement("div", { style: { display: "flex", flexDirection: "row" } },
+                React.createElement("div", null,
+                  investigation.report.findings && React.createElement("div", {
+                    style: {
+                      marginLeft: "50px",
+                      fontSize: "12px"
+                    }
+                  },
+                    React.createElement("div", { style: { width: "100%", fontSize: "12px",border:"1px solid red" } },
+                      React.createElement("span", null, investigation.report.findings.value)
+                    )
+                  )
+                )
+              ) :
+              React.createElement("div", { style: { display: "flex", flexDirection: "row" } },
+                React.createElement("div", { style: { width: "50%" } },
+                  reportEntries.slice(0, halfLength).map(([testName, testData]) =>
+                    testData.value && React.createElement("div", {
+                      key: testName,
+                      style: { 
+                        display: "flex", 
+                        flexDirection: "row", 
+                        fontSize: "9px", 
+                        marginBottom: "1px",
+                        marginLeft: "5px" 
+                      }
+                    },
+                      React.createElement("div", { style: { width: "60%", fontSize: "12px" } },
+                        React.createElement("span", null, formatLabel(testData.label) || testName)
+                      ),
+                      React.createElement("div", { style: { width: "20%", fontSize: "12px" } },
+                        React.createElement("span", null, testData.value)
+                      ),
+                      testData.unit && React.createElement("div", { style: { width: "20%", fontSize: "12px" } },
+                        React.createElement("span", null, testData.unit)
+                      )
+                    )
+                  )
+                ),
+                React.createElement("div", { style: { width: "50%" } },
+                  reportEntries.slice(halfLength).map(([testName, testData]) =>
+                    testData.value && React.createElement("div", {
+                      key: testName,
+                      style: { 
+                        display: "flex", 
+                        flexDirection: "row", 
+                        fontSize: "9px", 
+                        marginBottom: "1px",
+                        marginLeft: "5px" 
+                      }
+                    },
+                      React.createElement("div", { style: { width: "60%", fontSize: "12px" } },
+                        React.createElement("span", null, formatLabel(testData.label) || testName)
+                      ),
+                      React.createElement("div", { style: { width: "20%", fontSize: "12px" } },
+                        React.createElement("span", null, testData.value)
+                      ),
+                      testData.unit && React.createElement("div", { style: { width: "20%", fontSize: "12px" } },
+                        React.createElement("span", null, testData.unit)
+                      )
+                    )
+                  )
+                )
+              )
+          );
+        })
       )
     ),
 
@@ -98,6 +258,38 @@ export const dischargeSummaryTemplateStringDefault = `
     formData.treatment && React.createElement("div", { style: styles.section },
       React.createElement("span", { style: styles.sectionTitle }, "Treatment:"),
       React.createElement("span", { style: styles.sectionContent }, formData.treatment)
+    ),
+
+    // Discharge Vitals Section
+    (formData.vitals?.discharge && hasValue(formData.vitals.discharge)) && 
+    React.createElement("div", { style: styles.section },
+      React.createElement("span", { style: styles.sectionTitle }, "Discharge Vitals:"),
+      React.createElement("span", { style: styles.sectionContent },
+        React.createElement("span", null,
+          formData.vitals.discharge.bloodPressure && React.createElement("span", null,
+            "BP: ", React.createElement("strong", null, formData.vitals.discharge.bloodPressure), " mmHg, "
+          ),
+          formData.vitals.discharge.heartRate && React.createElement("span", null,
+            "Heart Rate: ", React.createElement("strong", null, formData.vitals.discharge.heartRate), " bpm, "
+          ),
+          formData.vitals.discharge.temperature && React.createElement("span", null,
+            "Temperature: ", React.createElement("strong", null, formData.vitals.discharge.temperature), "°C, "
+          ),
+          formData.vitals.discharge.oxygenSaturation && React.createElement("span", null,
+            "O", React.createElement("sub", null, "2"), " Saturation: ",
+            React.createElement("strong", null, formData.vitals.discharge.oxygenSaturation), "%, "
+          ),
+          formData.vitals.discharge.respiratoryRate && React.createElement("span", null,
+            "Respiratory Rate: ", React.createElement("strong", null, formData.vitals.discharge.respiratoryRate), " breaths/min"
+          )
+        )
+      )
+    ),
+
+    // Condition on Discharge Section
+    formData.conditionOnDischarge && React.createElement("div", { style: styles.section },
+      React.createElement("span", { style: styles.sectionTitle }, "Condition on Discharge:"),
+      React.createElement("span", { style: styles.sectionContent }, formData.conditionOnDischarge)
     ),
 
     // Medicine/Advice Section
@@ -125,6 +317,12 @@ export const dischargeSummaryTemplateStringDefault = `
           )
         )
       )
+    ),
+
+    // Additional Notes Section
+    formData.notes && React.createElement("div", { style: styles.section },
+      React.createElement("span", { style: styles.sectionTitle }, "Additional Notes:"),
+      React.createElement("span", { style: styles.sectionContent }, formData.notes)
     ),
 
     // Doctor's Signature

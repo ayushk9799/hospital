@@ -141,7 +141,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
               Total:{" "}
               <span className="text-primary">
                 ₹
-                {totalAmount.toLocaleString("en-IN", {
+                {totalAmount?.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -151,7 +151,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
               Due:{" "}
               <span className="text-red-600">
                 ₹
-                {dueAmount.toLocaleString("en-IN", {
+                {dueAmount?.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -161,7 +161,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
               Total Amount:{" "}
               <span className="text-primary">
                 ₹
-                {totalAmount.toLocaleString("en-IN", {
+                {totalAmount?.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -171,7 +171,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
               Due Amount:{" "}
               <span className="text-red-600">
                 ₹
-                {dueAmount.toLocaleString("en-IN", {
+                {dueAmount?.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
@@ -263,7 +263,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                       )}
                       <TableCell className="text-xs font-medium">
                         ₹
-                        {payment.amount.toLocaleString("en-IN", {
+                        {payment?.amount?.toLocaleString("en-IN", {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}

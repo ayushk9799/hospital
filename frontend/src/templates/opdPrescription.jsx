@@ -12,7 +12,7 @@ import {opdPrescriptionTemplateString} from "../templatesExperiments/opdPrescrip
     if (value === undefined || value === null || value === '') {
       return null;
     }
-    return React.createElement("div", { style: { fontSize: "8px" } },
+    return React.createElement("div", { style: { fontSize: "12px" } },
       React.createElement("div", null,
         React.createElement("span", { style: { fontWeight: "bold" } },
           label === "O2" ? React.createElement(React.Fragment, null, "O", React.createElement("sub", null, "2"), "%") : capitalizeAll(label),
@@ -48,30 +48,30 @@ import {opdPrescriptionTemplateString} from "../templatesExperiments/opdPrescrip
     React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" } },
       React.createElement("div"),
       React.createElement("h1", { style: { fontSize: "15px", color: "#1a5f7a", fontWeight: "bold", textAlign: "center", flex: 1 } }, "OPD Prescription"),
-      React.createElement("div", { style: { fontSize: "10px", color: "#2c3e50" } }, format(new Date(), "dd/MM/yyyy"))
+      React.createElement("div", { style: { fontSize: "14px", color: "#2c3e50" } }, format(new Date(), "dd/MM/yyyy"))
     ),
 
     React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "10px" } },
       React.createElement("div", { style: { display: "flex", gap: "5px" } },
-        React.createElement("span", { style: { fontWeight: "bold", fontSize: "11px" } }, "Name:"),
-        React.createElement("span", { style: { fontSize: "10px" } }, patient?.name || '')
+        React.createElement("span", { style: { fontWeight: "bold", fontSize: "14px" } }, "Name:"),
+        React.createElement("span", { style: { fontSize: "14px" } }, patient?.name || '')
       ),
       React.createElement("div", { style: { display: "flex", gap: "5px" } },
-        React.createElement("span", { style: { fontWeight: "bold", fontSize: "11px" } }, "Age/Sex:"),
-        React.createElement("span", { style: { fontSize: "10px" } }, \`\${patient?.age || ''}/ \${patient?.gender || ''}\`)
+        React.createElement("span", { style: { fontWeight: "bold", fontSize: "14px" } }, "Age/Sex:"),
+        React.createElement("span", { style: { fontSize: "14px" } }, \`\${patient?.age || ''}/ \${patient?.gender || ''}\`)
       ),
       React.createElement("div", { style: { display: "flex", gap: "5px" } },
-        React.createElement("span", { style: { fontWeight: "bold", fontSize: "11px" } }, "Patient ID:"),
-        React.createElement("span", { style: { fontSize: "10px" } }, patient?.patientId || '')
+        React.createElement("span", { style: { fontWeight: "bold", fontSize: "14px" } }, "UHID No:"),
+        React.createElement("span", { style: { fontSize: "14px" } }, patient?.registrationNumber || '')
       ),
       React.createElement("div", { style: { display: "flex", gap: "5px" } },
-        React.createElement("span", { style: { fontWeight: "bold", fontSize: "11px" } }, "Contact:"),
-        React.createElement("span", { style: { fontSize: "10px" } }, patient?.contact || '')
+        React.createElement("span", { style: { fontWeight: "bold", fontSize: "14px" } }, "Contact:"),
+        React.createElement("span", { style: { fontSize: "14px" } }, patient?.contactNumber || '')
       )
     ),
 
     presentVitals.length > 0 && React.createElement("div", { style: { marginBottom: "10px" } },
-      React.createElement("div", { style: { fontSize: "12px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Vitals"),
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Vitals"),
       React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "5px" } },
         presentVitals.map((item, index) => 
           React.createElement(VitalItem, { key: index, ...item })
@@ -80,52 +80,65 @@ import {opdPrescriptionTemplateString} from "../templatesExperiments/opdPrescrip
     ),
 
     prescription?.chiefComplaints && React.createElement("div", { style: { marginBottom: "10px" } },
-      React.createElement("div", { style: { fontSize: "12px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Chief Complaints"),
-      React.createElement("div", { style: { fontSize: "10px" } }, prescription.chiefComplaints)
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Chief Complaints"),
+      React.createElement("div", { style: { fontSize: "14px" } }, prescription.chiefComplaints)
     ),
 
     prescription?.diagnosis && React.createElement("div", { style: { marginBottom: "10px" } },
-      React.createElement("div", { style: { fontSize: "12px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Diagnosis"),
-      React.createElement("div", { style: { fontSize: "10px" } }, prescription.diagnosis)
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Diagnosis"),
+      React.createElement("div", { style: { fontSize: "14px" } }, prescription.diagnosis)
     ),
 
     selectedComorbidities?.length > 0 && React.createElement("div", { style: { marginBottom: "10px" } },
-      React.createElement("div", { style: { fontSize: "12px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Comorbidities"),
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Comorbidities"),
       selectedComorbidities.map((comorbidity, index) =>
-        React.createElement("div", { key: index, style: { fontSize: "10px" } }, comorbidity.name)
+        React.createElement("div", { key: index, style: { fontSize: "14px" } }, comorbidity.name)
       )
     ),
+    labTests?.length > 0 && React.createElement("div", { style: { marginBottom: "10px" } },
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Lab Tests"),
+      React.createElement("div", { style: { fontSize: "14px" } }, labTests.join(', '))
+    ),
+ prescription?.treatment && React.createElement("div", { style: { marginBottom: "10px" } },
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Treatment"),
+      React.createElement("div", { style: { fontSize: "14px" } }, prescription.treatment)
+    ),
 
-    prescription?.medications?.length > 0 && React.createElement("div", { style: { marginBottom: "10px" } },
-      React.createElement("div", { style: { fontSize: "12px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Medications"),
-      React.createElement("div", { style: { width: "100%" } },
-        prescription.medications.map((medication, index) =>
-          React.createElement("div", { key: index, style: { display: "grid", gridTemplateColumns: "5% 35% 30% 30%", marginBottom: "3px", fontSize: "10px" } },
+prescription?.medications?.length > 0 &&
+  React.createElement("div", { style: { marginBottom: "14px" } },
+    prescription.medications.some(medication => medication.name) && (
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Medications")
+    ),
+    React.createElement("div", { style: { width: "100%" } },
+      prescription.medications
+        .filter(medication => medication.name) // Only include medications with a name
+        .map((medication, index) =>
+          React.createElement("div", { key: index, style: { display: "grid", gridTemplateColumns: "5% 35% 30% 30%", marginBottom: "3px", fontSize: "14px" } },
             React.createElement("span", null, \`\${index + 1}.\`),
             React.createElement("span", null, medication.name),
             React.createElement("span", null, medication.frequency),
-            React.createElement("span", null, medication.duration)
+            React.createElement("span", null, \`\${medication.duration} days\`)
           )
         )
-      )
+    )
+  ),
+prescription?.additionalInstructions && React.createElement("div", { style: { marginBottom: "10px" } },
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Notes"),
+      React.createElement("div", { style: { fontSize: "14px" } }, prescription.additionalInstructions)
     ),
-
     prescription?.advice && React.createElement("div", { style: { marginBottom: "10px" } },
-      React.createElement("div", { style: { fontSize: "12px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Advice"),
-      React.createElement("div", { style: { fontSize: "10px" } }, prescription.advice)
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Advice"),
+      React.createElement("div", { style: { fontSize: "14px" } }, prescription.advice)
     ),
 
-    labTests?.length > 0 && React.createElement("div", { style: { marginBottom: "10px" } },
-      React.createElement("div", { style: { fontSize: "12px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Lab Tests"),
-      React.createElement("div", { style: { fontSize: "10px" } }, labTests.join(', '))
-    ),
+   
 
     prescription?.followUp && React.createElement("div", { style: { marginBottom: "10px" } },
-      React.createElement("div", { style: { fontSize: "12px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Follow Up"),
-      React.createElement("div", { style: { fontSize: "10px" } }, prescription.followUp)
+      React.createElement("div", { style: { fontSize: "14px", fontWeight: "bold", color: "#34495e", marginBottom: "5px" } }, "Follow Up"),
+      React.createElement("div", { style: { fontSize: "14px" } }, prescription.followUp)
     ),
 
-    React.createElement("div", { style: { marginTop: "20px", textAlign: "right", fontSize: "10px" } }, "Doctor's Signature")
+    React.createElement("div", { style: { marginTop: "20px", textAlign: "right", fontSize: "14px" } }, "Doctor's Signature")
   );
 }`
 
@@ -145,7 +158,6 @@ const OPDPrescriptionTemplate = forwardRef((props, ref) => {
   const opdPrescriptionTemplateDatabase = useSelector(
     (state) => state.templates.opdPrescriptionTemplate
   );
-  console.log(opdPrescriptionTemplateDatabase);
   const HospitalHeader = createDynamicComponentFromString(headerTemplateString);
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(

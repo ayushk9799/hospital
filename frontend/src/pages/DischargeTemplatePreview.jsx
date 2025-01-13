@@ -2,7 +2,9 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
 import { useDispatch } from "react-redux";
-// import { updateTemplate } from "../redux/slices/templatesSlice";
+import { dischargeSummaryTemplateString } from "../templatesExperiments/dischargeSummaryExperimental";
+import { dischargeSummaryTemplateStringDefault } from "../templates/dischargesummary";
+ import { updateTemplate } from "../redux/slices/templatesSlice";
 // import { dischargeSummaryTemplateString } from "../components/custom/reports/DischargeSummaryPDF";
 import DischargeSummaryPDF from "../components/custom/reports/DischargeSummaryPDF";
 
@@ -12,9 +14,9 @@ export default function DischargeTemplatePreview() {
   const formData = {};
   const dispatch = useDispatch();
 //needs to be enabled whn editing the template and when the dichargesummarytemplateString is use dfomr the gitignored thing
-//   const handleSaveTemplate = () => {
-//     dispatch(updateTemplate({ dischargeSummaryTemplate: dischargeSummaryTemplateString }));
-//   };
+  // const handleSaveTemplate = () => {
+  //   dispatch(updateTemplate({ dischargeSummaryTemplate: dischargeSummaryTemplateStringDefault }));
+  // };
 
 
   return (
@@ -23,7 +25,7 @@ export default function DischargeTemplatePreview() {
         <h1 className="text-xl sm:text-2xl font-bold">
           Discharge Template Preview
         </h1>
-        {/* <Button  disabled>Save Template</Button> */}
+        {/* <Button  onClick={handleSaveTemplate}>Save Template</Button> */}
       </div>
 
       <div className="flex justify-center bg-gray-100 p-4 min-h-[calc(100vh-200px)] overflow-auto">

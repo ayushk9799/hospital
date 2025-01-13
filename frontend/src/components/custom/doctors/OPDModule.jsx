@@ -248,10 +248,12 @@ export default function OPDModule({ patient }) {
 
   const handleLabTestsChange = (newLabTests) => {
     setSelectedLabTests(newLabTests);
+    setLabTests(newLabTests);
   };
 
   const handleRemoveLabTest = (name) => {
     setSelectedLabTests(selectedLabTests.filter((test) => test.name !== name));
+    setLabTests(labTests.filter((test) => test.name !== name));
   };
 
   const handleDiagnosisChange = (newDiagnoses) => {
@@ -997,12 +999,12 @@ export default function OPDModule({ patient }) {
           </div>
         </div>
       </ScrollArea>
-      <div>
+      <div style={{ display: "none" }}>
         <OPDPrescriptionTemplate
           patient={patient.patient}
           vitals={vitals}
           prescription={prescription}
-          labTests={labTests}
+          labTests={labTests.map((test) => test.name)}
           selectedComorbidities={selectedComorbidities}
           hospital={hospital}
           ref={prescriptionRef}
