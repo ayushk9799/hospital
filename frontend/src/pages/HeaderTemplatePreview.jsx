@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import { headerTemplateString } from "../templates/headertemplate";
-import {headerTemplateString as headerTemplateStringExperimental} from "../templatesExperiments/HospitalHeaderTemplate";
+import {headerTemplateString2 as headerTemplateStringExperimental} from "../templatesExperiments/HospitalHeaderTemplate";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 
 export default function HeaderTemplatePreview() {
@@ -13,9 +13,8 @@ export default function HeaderTemplatePreview() {
   const headerTemplates = useSelector(
     (state) => state.templates.headerTemplate
   );
-  console.log(headerTemplates)
   const HospitalHeader = createDynamicComponentFromString(
-   headerTemplates||  headerTemplateString 
+    headerTemplates
   );
   return (
     <div className="p-4 sm:p-6">
@@ -24,7 +23,7 @@ export default function HeaderTemplatePreview() {
           Hospital Header Preview
         </h1>
         {/* <Button onClick={()=>{
-          dispatch(updateTemplate({headerTemplate:headerTemplates}));
+          dispatch(updateTemplate({headerTemplate:headerTemplateStringExperimental}));
         }}>Save Template</Button> */}
       </div>
 
@@ -34,7 +33,7 @@ export default function HeaderTemplatePreview() {
           style={{
             width: "210mm",
             height: "297mm",
-            padding: "10mm",
+            padding: "8mm",
             margin: "0 auto",
           }}
         >

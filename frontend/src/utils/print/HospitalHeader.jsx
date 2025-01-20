@@ -1,5 +1,7 @@
 import { stylesFont } from "../../components/custom/reports/LabReportPDF";
 import { useSelector } from "react-redux";
+import { headerTemplateString } from "../../templates/headertemplate";
+import {headerTemplateString2 as headerTemplateStringExperimental} from "../../templatesExperiments/HospitalHeaderTemplate";
 import React from 'react';
 
 const HospitalHeader = ({ hospitalInfo }) => {

@@ -84,7 +84,7 @@ export const updateServiceBillCollections = createAsyncThunk(
 
 const initialState = {
   labTestsTemplate: [],
-  headerTemplate: {},
+  headerTemplate: "",
   diagnosisTemplate: [],
   dischargeSummaryTemplate: "",
   opdPrescriptionTemplate: "",

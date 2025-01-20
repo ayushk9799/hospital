@@ -123,7 +123,6 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
-      console.log(componentRef.current)
 
       setIsPrinting(true);
       return new Promise((resolve) => {

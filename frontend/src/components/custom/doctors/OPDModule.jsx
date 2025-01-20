@@ -77,7 +77,6 @@ export default function OPDModule({ patient }) {
   const handlePrint = useReactToPrint({
     content: () => prescriptionRef.current,
     onBeforeGetContent: () => {
-      console.log(prescriptionRef.current);
       setIsPrinting(true);
       return new Promise((resolve) => {
         setTimeout(() => {

@@ -2,6 +2,7 @@ import React, { forwardRef } from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
+import {headerTemplateString as headerTemplate} from "../templates/headertemplate";
 import {opdPrescriptionTemplateString} from "../templatesExperiments/opdPrescription"
  export const opdPrescriptionTemplateStringDefault = `( patient, vitals, prescription, labTests, selectedComorbidities, hospital, ref) => {
   const capitalizeAll = (str) => {
@@ -151,21 +152,20 @@ const OPDPrescriptionTemplate = forwardRef((props, ref) => {
     selectedComorbidities,
     hospital,
   } = props;
-  console.log(props);
   const headerTemplateString = useSelector(
     (state) => state.templates.headerTemplate
   );
   const opdPrescriptionTemplateDatabase = useSelector(
     (state) => state.templates.opdPrescriptionTemplate
   );
-  const HospitalHeader = createDynamicComponentFromString(headerTemplateString);
+  const HospitalHeader = createDynamicComponentFromString(headerTemplateString||headerTemplate);
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(
     "React",
     "HospitalHeader",
     "format",
 
-    `return (${opdPrescriptionTemplateDatabase});`
+    `return (${opdPrescriptionTemplateDatabase||opdPrescriptionTemplateStringDefault});`
   );
 
  
