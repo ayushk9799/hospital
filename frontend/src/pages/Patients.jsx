@@ -196,10 +196,10 @@ export default function Patients() {
 
     return (
       <Table>
-        <TableHeader >
+        <TableHeader>
           <TableRow>
             {type === "OPD" && <TableHead>Sl. No</TableHead>}
-            <TableHead >Name</TableHead>
+            <TableHead>Name</TableHead>
             <TableHead>UHID No</TableHead>
             {type === "IPD" && (
               <>
@@ -219,7 +219,7 @@ export default function Patients() {
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody >
+        <TableBody>
           {patients.map((patient) => (
             <TableRow key={patient._id}>
               {type === "OPD" && <TableCell>{patient.bookingNumber}</TableCell>}
@@ -257,9 +257,7 @@ export default function Patients() {
                     </Badge>
                   </TableCell>
                   <TableCell className="font-bold">
-                    {patient.operationName
-                      ?patient.operationName
-                      : "--"}
+                    {patient.operationName ? patient.operationName : "--"}
                   </TableCell>
                 </>
               )}
@@ -493,9 +491,19 @@ export default function Patients() {
           className="w-full"
           onValueChange={setActiveTab}
         >
-          <TabsList >
-            <TabsTrigger className="data-[state=active]:bg-blue-400 data-[state=active]:text-white" value="OPD">OPD</TabsTrigger>
-            <TabsTrigger className="data-[state=active]:bg-blue-400 data-[state=active]:text-white" value="IPD">IPD</TabsTrigger>
+          <TabsList>
+            <TabsTrigger
+              className="data-[state=active]:bg-blue-400 data-[state=active]:text-white"
+              value="OPD"
+            >
+              OPD
+            </TabsTrigger>
+            <TabsTrigger
+              className="data-[state=active]:bg-blue-400 data-[state=active]:text-white"
+              value="IPD"
+            >
+              IPD
+            </TabsTrigger>
           </TabsList>
           <div className="flex flex-col space-y-4 mb-4 mt-4">
             <div className="flex flex-col md:flex-row md:justify-between md:items-center">

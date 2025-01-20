@@ -2,9 +2,9 @@ import React, { forwardRef } from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
-import {headerTemplateString as headerTemplate} from "../templates/headertemplate";
-import {opdPrescriptionTemplateString} from "../templatesExperiments/opdPrescription"
- export const opdPrescriptionTemplateStringDefault = `( patient, vitals, prescription, labTests, selectedComorbidities, hospital, ref) => {
+import { headerTemplateString as headerTemplate } from "../templates/headertemplate";
+import { opdPrescriptionTemplateString } from "../templatesExperiments/opdPrescription";
+export const opdPrescriptionTemplateStringDefault = `( patient, vitals, prescription, labTests, selectedComorbidities, hospital, ref) => {
   const capitalizeAll = (str) => {
     return str?.toUpperCase() || '';
   };
@@ -141,7 +141,7 @@ prescription?.additionalInstructions && React.createElement("div", { style: { ma
 
     React.createElement("div", { style: { marginTop: "20px", textAlign: "right", fontSize: "14px" } }, "Doctor's Signature")
   );
-}`
+}`;
 
 const OPDPrescriptionTemplate = forwardRef((props, ref) => {
   const {
@@ -158,17 +158,19 @@ const OPDPrescriptionTemplate = forwardRef((props, ref) => {
   const opdPrescriptionTemplateDatabase = useSelector(
     (state) => state.templates.opdPrescriptionTemplate
   );
-  const HospitalHeader = createDynamicComponentFromString(headerTemplateString||headerTemplate);
+  const HospitalHeader = createDynamicComponentFromString(
+    headerTemplateString || headerTemplate
+  );
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(
     "React",
     "HospitalHeader",
     "format",
 
-    `return (${opdPrescriptionTemplateDatabase||opdPrescriptionTemplateStringDefault});`
+    `return (${
+      opdPrescriptionTemplateDatabase || opdPrescriptionTemplateStringDefault
+    });`
   );
-
- 
 
   try {
     // Get the component function

@@ -1,31 +1,33 @@
-import React, { useRef } from 'react';
-import { Button } from '../../ui/button';
-import { Printer } from 'lucide-react';
-import { format } from 'date-fns';
-import { useReactToPrint } from 'react-to-print';
+import React, { useRef } from "react";
+import { useSelector } from "react-redux";
+import { useReactToPrint } from "react-to-print";
+import OPDRxTemplate from "../../../templates/opdRx";
+import { Button } from "../../ui/button";
+import { Printer } from "lucide-react";
 
 const OPDPrescriptionPrint = ({ patient }) => {
+  const { hospitalInfo } = useSelector((state) => state.hospital);
   const componentRef = useRef();
-  const formattedDate = format(new Date(patient.bookingDate), 'dd/MM/yyyy');
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     pageStyle: `
+      @page {
+        size: A4;
+        margin: 0;
+      }
       @media print {
-        @page {
-          size: A4;
-          margin: 0;
-        }
         body {
-          print-color-adjust: exact;
-          -webkit-print-color-adjust: exact;
+          margin: 0;
+          padding: 0;
         }
         .print-content {
+          width: 210mm;
+          min-height: 297mm;
           position: relative;
-          min-height: 100vh;
-        }
-        .no-print {
-          display: none !important;
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
         }
       }
     `,
@@ -33,72 +35,22 @@ const OPDPrescriptionPrint = ({ patient }) => {
 
   return (
     <>
-      <Button variant="ghost" className="flex items-center w-full justify-start" onClick={handlePrint}>
+      <Button
+        variant="ghost"
+        className="flex items-center w-full justify-start"
+        onClick={handlePrint}
+      >
         <Printer className="h-4 w-4 mr-2" />
         Print OPD (Rx)
       </Button>
-      
-      <div style={{ display: 'none' }}>
+
+      <div style={{ display: "none" }}>
         <div ref={componentRef} className="print-content">
-          <div style={{
-            width: '210mm',
-            height: '297mm',
-            position: 'relative',
-            backgroundColor: 'white',
-          }}>
-           
-
-            <div 
-              style={{
-                position: 'absolute',
-                left: '25mm',
-                top: '54mm',
-                fontSize: '16px',
-                fontFamily: 'Arial, sans-serif',
-              }}
-            >
-              {patient.patient.name}
-            </div>
-
-            <div 
-              style={{
-                position: 'absolute',
-                left: '160mm',
-                top: '54mm',
-                fontSize: '16px',
-                fontFamily: 'Arial, sans-serif'
-              }}
-            >
-              {formattedDate}
-            </div>
-            <div 
-              style={{
-                position: 'absolute',
-                left: '160mm',
-                top: '64mm',
-                fontSize: '16px',
-                fontFamily: 'Arial, sans-serif'
-              }}
-            >
-              {patient.patient.address}
-            </div>
-
-            <div 
-              style={{
-                position: 'absolute',
-                left: '30mm',
-                top: '64mm',
-                fontSize: '16px',
-                fontFamily: 'Arial, sans-serif'
-              }}
-            >
-              {patient.patient.age} / {patient.patient.gender}
-            </div>
-          </div>
+          <OPDRxTemplate patient={patient} hospital={hospitalInfo} />
         </div>
       </div>
     </>
   );
 };
 
-export default OPDPrescriptionPrint; 
+export default OPDPrescriptionPrint;

@@ -103,7 +103,7 @@ ipdAdmissionSchema.statics.getCurrentIPDNumber = async function (session) {
       session 
     }
   );
-  return `IPD/${yearSuffix}/${doc.sequence.toString()}`;
+  return `IPD/${yearSuffix}/${(doc.sequence+1).toString()}`;
 }
 ipdAdmissionSchema.pre("save", async function (next) {
    

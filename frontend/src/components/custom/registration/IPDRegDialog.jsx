@@ -134,15 +134,16 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   const [formData, setFormData] = useState(initialFormData);
   useEffect(()=>{
+    console.log(departments)
 setFormData((prev)=>({
   ...prev,
   admission:{
     ...prev.admission,
-    department:departments.length===1?departments[0]._id:"",
+    department:departments.length===1?departments[0].name:"",
     assignedDoctor:doctors.length===1?doctors[0]._id:"",
   }
 }))
-  },[departments,doctors])
+  },[departments,doctors,open])
   const [errors, setErrors] = useState({});
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [isSelectServicesDialogOpen, setIsSelectServicesDialogOpen] =
@@ -264,22 +265,17 @@ setFormData((prev)=>({
       dispatch(fetchRegistrationAndIPDNumbers())
         .unwrap()
         .then((numbers) => {
-          const indireg = numbers.registrationNumber.split("/");
-          const indipd = numbers.ipdNumber.split("/");
-          const nextRegNumber =
-            indireg[0] + "/" + indireg[1] + "/" + (parseInt(indireg[2]) + 1);
-          const nextIpdNumber =
-            indipd[0] + "/" + indipd[1] + "/" + (parseInt(indipd[2]) + 1);
+          
           setGeneratedNumbers({
-            registrationNumber: nextRegNumber,
-            ipdNumber: nextIpdNumber,
+            registrationNumber: numbers.registrationNumber,
+            ipdNumber: numbers.ipdNumber,
           });
           setFormData((prev) => ({
             ...prev,
-            registrationNumber: nextRegNumber,
+            registrationNumber: numbers.registrationNumber,
             admission: {
               ...prev.admission,
-              ipdNumber: nextIpdNumber,
+              ipdNumber: numbers.ipdNumber,
             },
           }));
         })
@@ -344,10 +340,10 @@ setFormData((prev)=>({
     e.preventDefault();
 
     // Add validation for registration and IPD numbers
-    if (formData.registrationNumber === generatedNumbers.registrationNumber) {
+    if (formData.registrationNumber === generatedNumbers?.registrationNumber) {
       formData.upgradegenReg = true;
     }
-    if (formData.admission.ipdNumber === generatedNumbers.ipdNumber) {
+    if (formData.admission.ipdNumber === generatedNumbers?.ipdNumber) {
       formData.upgradegenIpd = true;
     }
     if (validateForm(formData, setErrors)) {
@@ -854,7 +850,7 @@ setFormData((prev)=>({
                             </SelectTrigger>
                             <SelectContent>
                               {departments.map((dept) => (
-                                <SelectItem key={dept._id} value={dept._id}>
+                                <SelectItem key={dept._id} value={dept.name}>
                                   {dept.name}
                                 </SelectItem>
                               ))}
@@ -908,7 +904,7 @@ setFormData((prev)=>({
                           </SelectTrigger>
                           <SelectContent>
                             {departments.map((dept) => (
-                              <SelectItem key={dept._id} value={dept._id}>
+                              <SelectItem key={dept._id} value={dept.name}>
                                 {dept.name}
                               </SelectItem>
                             ))}

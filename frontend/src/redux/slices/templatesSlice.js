@@ -88,6 +88,7 @@ const initialState = {
   diagnosisTemplate: [],
   dischargeSummaryTemplate: "",
   opdPrescriptionTemplate: "",
+  opdRxTemplate: "",
   status: "idle",
   error: null,
   serviceBillCollections: [],
@@ -107,8 +108,10 @@ const templatesSlice = createSlice({
         state.labTestsTemplate = action.payload.labTestsTemplate;
         state.headerTemplate = action.payload.headerTemplate;
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
-        state.dischargeSummaryTemplate = action.payload.dischargeSummaryTemplate;
+        state.dischargeSummaryTemplate =
+          action.payload.dischargeSummaryTemplate;
         state.opdPrescriptionTemplate = action.payload.opdPrescriptionTemplate;
+        state.opdRxTemplate = action.payload.opdRxTemplate;
         state.comorbidities = action.payload.comorbidities;
         state.medicinelist = action.payload.medicinelist;
         state.serviceBillCollections = action.payload.service_collections;
@@ -129,10 +132,15 @@ const templatesSlice = createSlice({
           state.headerTemplate = action.payload.headerTemplate;
         }
         if (action.payload.dischargeSummaryTemplate) {
-          state.dischargeSummaryTemplate = action.payload.dischargeSummaryTemplate;
+          state.dischargeSummaryTemplate =
+            action.payload.dischargeSummaryTemplate;
         }
         if (action.payload.opdPrescriptionTemplate) {
-          state.opdPrescriptionTemplate = action.payload.opdPrescriptionTemplate;
+          state.opdPrescriptionTemplate =
+            action.payload.opdPrescriptionTemplate;
+        }
+        if (action.payload.opdRxTemplate) {
+          state.opdRxTemplate = action.payload.opdRxTemplate;
         }
       })
       .addCase(updateServiceBillCollections.fulfilled, (state, action) => {

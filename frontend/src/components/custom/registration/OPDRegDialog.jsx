@@ -275,7 +275,7 @@ useEffect(()=>
       e.preventDefault();
    
       // Add validation for registration number
-      if(formData.registrationNumber===generatedRegNumber.registrationNumber){
+      if(formData.registrationNumber===generatedRegNumber?.registrationNumber){
         formData.upgradegenReg=true;
       }
 
@@ -426,7 +426,7 @@ useEffect(()=>
   // Add this useEffect to handle auto-selection
   useEffect(() => {
     if (departments.length === 1) {
-      handleSelectChange("visit.department", departments[0]._id);
+      handleSelectChange("visit.department", departments[0].name);
     }
     if (doctors.length === 1) {
       handleSelectChange("visit.doctor", doctors[0]._id);
@@ -444,13 +444,12 @@ useEffect(()=>
       dispatch(fetchRegistrationAndIPDNumbers())
         .unwrap()
         .then((numbers) => {
-          const nums=numbers.registrationNumber.split("/");
-          const nextRegNumber = nums[0] + "/" + nums[1] + "/" + (parseInt(nums[2]) + 1);
-          setGeneratedRegNumber({registrationNumber:nextRegNumber});
+         
+          setGeneratedRegNumber({registrationNumber:numbers.registrationNumber});
 
           setFormData((prev) => ({
             ...prev,
-            registrationNumber: nextRegNumber,
+            registrationNumber: numbers.registrationNumber,
           }));
         })
         .catch((error) => {
@@ -534,7 +533,7 @@ useEffect(()=>
                           {departments.map((department) => (
                             <SelectItem
                               key={department._id}
-                              value={department._id}
+                              value={department.name}
                             >
                               {department.name}
                             </SelectItem>

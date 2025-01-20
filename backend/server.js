@@ -22,6 +22,7 @@ import eventRoutes from "./routes/eventRoutes.js";
 import billingRoutes from "./routes/BillingRoutes.js";
 import dashboardRoute from "./routes/dashboardRoute.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
+import registrationRoutes from "./routes/registrationRoutes.js";
 dotenv.config({ path: "./config/config.env" });
 
 const app = express();
@@ -42,7 +43,7 @@ app.options("*", cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {})
-  .catch((err) => {})
+  .catch((err) => {});
 
 // Apply tenant plugin to all schemas
 
@@ -64,6 +65,7 @@ app.use("/api/billing", billingRoutes);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/opd-procedures", opdProcedureRoutes);
+app.use("/api/registration", registrationRoutes);
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {

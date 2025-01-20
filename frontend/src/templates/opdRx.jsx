@@ -1,0 +1,91 @@
+import React, { forwardRef } from "react";
+import { format, addDays } from "date-fns";
+import { useSelector } from "react-redux";
+import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
+import { headerTemplateString as headerTemplate } from "../templates/headertemplate";
+import { opdRxTemplateStringExperimental } from "../templatesExperiments/opdRxExperimental";
+
+export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
+  return React.createElement("div", { className: "print-content" },
+      
+      React.createElement("div", { 
+        style: {
+          position: 'absolute',
+          left: '25mm',
+          top: '54mm',
+          fontSize: '16px',
+          fontFamily: 'Arial, sans-serif',
+        }
+      }, patient?.patient?.name || ''),
+
+      React.createElement("div", { 
+        style: {
+          position: 'absolute',
+          left: '160mm',
+          top: '54mm',
+          fontSize: '16px',
+          fontFamily: 'Arial, sans-serif'
+        }
+      }, format(new Date(patient?.bookingDate).toLocaleString(), 'dd/MM/yyyy')),
+
+      React.createElement("div", { 
+        style: {
+          position: 'absolute',
+          left: '30mm',
+          top: '64mm',
+          fontSize: '16px',
+          fontFamily: 'Arial, sans-serif'
+        }
+      }, \`\${patient?.patient?.age || ''} / \${patient?.patient?.gender || ''}\`),
+
+      React.createElement("div", { 
+        style: {
+          position: 'absolute',
+          left: '160mm',
+          top: '64mm',
+          fontSize: '16px',
+          fontFamily: 'Arial, sans-serif'
+        }
+      }, patient?.patient?.address || '')
+
+      
+    
+  );
+}`;
+
+const OPDRxTemplate = forwardRef((props, ref) => {
+  const { patient, hospital } = props;
+console.log(patient)
+  const headerTemplateString = useSelector(
+    (state) => state.templates.headerTemplate
+  );
+  const opdRxTemplateDatabase = useSelector(
+    (state) => state.templates.opdRxTemplate
+  );
+  const HospitalHeader = createDynamicComponentFromString(
+    headerTemplateString || headerTemplate
+  );
+
+  const templateFunction = new Function(
+    "React",
+    "HospitalHeader",
+    "format",
+    "addDays",
+    `return (${opdRxTemplateDatabase || opdRxTemplateStringDefault});`
+  );
+
+  try {
+    const ComponentFunction = templateFunction(
+      React,
+      HospitalHeader,
+      format,
+      addDays
+    );
+    return ComponentFunction(patient, hospital, ref);
+  } catch (error) {
+    console.error("Error rendering OPD Rx:", error);
+    return React.createElement("div", null, "Error rendering OPD Rx template");
+  }
+});
+
+export default OPDRxTemplate;

@@ -12,8 +12,9 @@ const templateSchema = new mongoose.Schema({
   diagnosisTemplate: [String],
   dischargeSummaryTemplate: String,
   opdPrescriptionTemplate: String,
-  comorbidities:[String],
-  medicinelist:[String],
+  opdRxTemplate: String,
+  comorbidities: [String],
+  medicinelist: [String],
   service_collections: [
     { ref: "Service", type: mongoose.Schema.Types.ObjectId },
   ],

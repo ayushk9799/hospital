@@ -42,6 +42,18 @@ export default function PrintingTemplates() {
             Preview and customize OPD prescription template
           </span>
         </Button>
+
+        <Button
+          onClick={() =>
+            navigate("/settings/printing-templates/opd-rx-preview")
+          }
+          className="w-full p-6 h-auto flex flex-col items-center gap-2"
+        >
+          <span className="text-lg">OPD Rx Template</span>
+          <span className="text-sm text-gray-500">
+            Preview and customize OPD Rx template
+          </span>
+        </Button>
       </div>
     </div>
   );

@@ -59,6 +59,8 @@ import PrintingTemplates from "./pages/PrintingTemplates";
 import DischargeTemplatePreview from "./pages/DischargeTemplatePreview";
 import HeaderTemplatePreview from "./pages/HeaderTemplatePreview";
 import OPDTemplatePreview from "./pages/OPDTemplatePreview";
+import OPDRxTemplatePreview from "./pages/OPDRxTemplatePreview";
+import PrefixSettings from "./pages/PrefixSettings";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -228,6 +230,14 @@ const AppContent = () => {
                 <Route
                   path="/settings/printing-templates/opd-preview"
                   element={<OPDTemplatePreview />}
+                />
+                <Route
+                  path="/settings/printing-templates/opd-rx-preview"
+                  element={<OPDRxTemplatePreview />}
+                />
+                <Route
+                  path="/settings/prefix-settings"
+                  element={<PrefixSettings />}
                 />
               </>
             )}

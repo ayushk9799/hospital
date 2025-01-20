@@ -4,13 +4,11 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
-import HospitalHeader, {
-} from "../utils/print/HospitalHeader";
+import HospitalHeader from "../utils/print/HospitalHeader";
 import { headerTemplateString } from "../templates/headertemplate";
 
 export default function Settings() {
   const navigate = useNavigate();
- 
 
   const handleAddStaff = () => {
     navigate("/addstaff");
@@ -36,7 +34,9 @@ export default function Settings() {
     navigate("/settings/printing-templates");
   };
 
- 
+  const handlePrefixSettings = () => {
+    navigate("/settings/prefix-settings");
+  };
 
   return (
     <div className="p-4 sm:p-6">
@@ -59,6 +59,9 @@ export default function Settings() {
         </Button>
         <Button onClick={handlePrintingTemplates} className="w-full sm:w-auto">
           Printing Templates
+        </Button>
+        <Button onClick={handlePrefixSettings} className="w-full sm:w-auto">
+          Prefix Settings
         </Button>
       </div>
 
