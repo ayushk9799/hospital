@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplate } from "../templates/headertemplate";
-import { opdPrescriptionTemplateString } from "../templatesExperiments/opdPrescription";
+// import { opdPrescriptionTemplateString } from "../templatesExperiments/opdPrescription";
 export const opdPrescriptionTemplateStringDefault = `( patient, vitals, prescription, labTests, selectedComorbidities, hospital, ref) => {
   const capitalizeAll = (str) => {
     return str?.toUpperCase() || '';

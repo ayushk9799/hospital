@@ -31,6 +31,7 @@ import {
 import { Separator } from "../../ui/separator";
 import { AlertCircle, CreditCard } from "lucide-react";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
+import PaymentReceipt from "../print/PaymentReceipt";
 
 const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
   const dispatch = useDispatch();
@@ -245,6 +246,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                     )}
                     <TableHead>Amount</TableHead>
                     <TableHead>Method</TableHead>
+                    <TableHead>Receipt</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -270,6 +272,9 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                       </TableCell>
                       <TableCell className="text-xs">
                         {payment.paymentMethod}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <PaymentReceipt payment={payment} billData={billData} />
                       </TableCell>
                     </TableRow>
                   ))}

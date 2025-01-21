@@ -65,6 +65,8 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "../components/ui/badge";
 import OPDPrescriptionPrint from "../components/custom/print/OPDPrescriptionPrint";
+import ConsentFormPrint from "../components/custom/print/ConsentFormPrint";
+
 
 export default function Patients() {
   const dispatch = useDispatch();
@@ -299,6 +301,11 @@ export default function Patients() {
                     {patient.type === "OPD" && (
                       <DropdownMenuItem asChild>
                         <OPDPrescriptionPrint patient={patient} />
+                      </DropdownMenuItem>
+                    )}
+                    {patient.type === "IPD" && (
+                      <DropdownMenuItem asChild>
+                        <ConsentFormPrint patient={patient} />
                       </DropdownMenuItem>
                     )}
                     {patient.type === "IPD" && (

@@ -6,7 +6,7 @@ import OPDPrescriptionTemplate, {
   opdPrescriptionTemplateStringDefault,
   
 } from "../templates/opdPrescription";
-import { opdPrescriptionTemplateString } from "../templatesExperiments/opdPrescription";
+// import { opdPrescriptionTemplateString } from "../templatesExperiments/opdPrescription";
 export default function OPDTemplatePreview() {
   const dispatch = useDispatch();
   const { hospitalInfo } = useSelector((state) => state.hospital);

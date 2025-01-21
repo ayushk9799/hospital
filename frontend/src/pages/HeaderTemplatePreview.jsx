@@ -1,10 +1,10 @@
-import React from "react";
+// import React from "react";
 import { Button } from "../components/ui/button";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import { headerTemplateString } from "../templates/headertemplate";
-import {headerTemplateString2 as headerTemplateStringExperimental} from "../templatesExperiments/HospitalHeaderTemplate";
+// import {headerTemplateString2 as headerTemplateStringExperimental} from "../templatesExperiments/HospitalHeaderTemplate";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 
 export default function HeaderTemplatePreview() {

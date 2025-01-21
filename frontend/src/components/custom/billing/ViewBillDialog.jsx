@@ -29,6 +29,7 @@ import { ScrollArea } from "../../ui/scroll-area";
 import { Checkbox } from "../../ui/checkbox";
 import {headerTemplateString} from "../../../templates/headertemplate";
 import { X } from "lucide-react";
+import PaymentReceipt from "../print/PaymentReceipt";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const componentRef = useRef();
@@ -129,7 +130,7 @@ React.useEffect(()=>
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-visible rounded-lg">
-        <ScrollArea className="max-h-[80vh] ">
+        <ScrollArea className="max-h-[80vh] pr-3 ">
           <div ref={componentRef} className={isPrinting ? "print-content" : ""}>
             <div className="hidden print:block mb-2">
               <HeaderComponent hospitalInfo={hospitalInfo} />
@@ -470,6 +471,7 @@ React.useEffect(()=>
                             )}
                             <TableHead>Amount</TableHead>
                             <TableHead>Method</TableHead>
+                            <TableHead className="no-print">Receipt</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -500,6 +502,9 @@ React.useEffect(()=>
                               </TableCell>
                               <TableCell className="text-xs">
                                 {payment.paymentMethod}
+                              </TableCell>
+                              <TableCell className="text-xs no-print">
+                                <PaymentReceipt payment={payment} billData={billData} />
                               </TableCell>
                             </TableRow>
                           ))}
