@@ -71,7 +71,7 @@ console.log(patient)
     "HospitalHeader",
     "format",
     "addDays",
-    `return (${opdRxTemplateDatabase || opdRxTemplateStringDefault});`
+    `return (${ opdRxTemplateDatabase||opdRxTemplateStringDefault});`
   );
 
   try {

@@ -33,11 +33,11 @@ export default function OPDRxTemplatePreview() {
     },
   };
 
-  const handleSaveTemplate = () => {
-    dispatch(
-      updateTemplate({ opdRxTemplate: opdRxTemplateStringDefault })
-    );
-  };
+  // const handleSaveTemplate = () => {
+  //   dispatch(
+  //     updateTemplate({ opdRxTemplate: opdRxTemplateStringExperimental })
+  //   );
+  // };
 
   return (
     <div className="p-4 sm:p-6">

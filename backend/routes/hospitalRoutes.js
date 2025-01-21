@@ -114,9 +114,10 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     if (!template) {
       template = new Template({
         labTestsTemplate: [],
-        headerTemplate: {},
+        headerTemplate: "",
         diagnosisTemplate: [],
         comorbidities:[],
+        opdRxTemplate:"",
         medicinelist:[],
         dischargeSummaryTemplate: "",
         opdPrescriptionTemplate: "",
@@ -131,6 +132,9 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     }
     if (req.body.diagnosisTemplate) {
       template.diagnosisTemplate = req.body.diagnosisTemplate;
+    }
+    if(req.body.opdRxTemplate){
+      template.opdRxTemplate=req.body.opdRxTemplate;
     }
     if(req.body.comorbidities)
     {
