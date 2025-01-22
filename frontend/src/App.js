@@ -61,6 +61,9 @@ import HeaderTemplatePreview from "./pages/HeaderTemplatePreview";
 import OPDTemplatePreview from "./pages/OPDTemplatePreview";
 import OPDRxTemplatePreview from "./pages/OPDRxTemplatePreview";
 import PrefixSettings from "./pages/PrefixSettings";
+import BabyRegistration from "./pages/BabyRegistration";
+import ViewBabies from "./pages/ViewBabies";
+import BabyDetails from "./pages/BabyDetails";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -239,6 +242,15 @@ const AppContent = () => {
                   path="/settings/prefix-settings"
                   element={<PrefixSettings />}
                 />
+                <Route
+                  path="/patients/baby-registration/:patientId"
+                  element={<BabyRegistration />}
+                />
+                <Route
+                  path="/patients/:ipdAdmissionId/babies"
+                  element={<ViewBabies />}
+                />
+                <Route path="/babies/:babyId" element={<BabyDetails />} />
               </>
             )}
           </Routes>

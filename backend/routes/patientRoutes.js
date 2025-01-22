@@ -107,7 +107,7 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
           ...plainAdmission.patient,
         },
         admissionDate: admission.bookingDate,
-        operationName:admission.operationName,
+        operationName: admission.operationName,
         totalAmount,
         amountPaid,
         amountDue: totalAmount - amountPaid,
@@ -127,7 +127,9 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
 router.post("/admittedpatientsSearch", verifyToken, async (req, res) => {
   try {
     const { searchQuery } = req.body;
-    const admittedPatients = await IPDAdmission.find({registrationNumber: searchQuery})
+    const admittedPatients = await IPDAdmission.find({
+      registrationNumber: searchQuery,
+    })
       .populate({
         path: "assignedRoom",
         model: "Room",
@@ -189,7 +191,7 @@ router.post("/admittedpatientsSearch", verifyToken, async (req, res) => {
           ...plainAdmission.patient,
         },
         admissionDate: admission.bookingDate,
-        operationName:admission.operationName,
+        operationName: admission.operationName,
         totalAmount,
         amountPaid,
         amountDue: totalAmount - amountPaid,
@@ -333,7 +335,7 @@ router.post(
           amountPaid: amountPaid,
           patientType: "OPD",
           createdBy: user._id,
-          visit:admissionRecord._id
+          visit: admissionRecord._id,
         });
 
         if (
@@ -449,7 +451,7 @@ router.post(
               registrationNumber: patient.registrationNumber,
               ipdNumber: admission.ipdNumber,
             },
-            admission:admissionRecord._id,
+            admission: admissionRecord._id,
             totalAmount: Number(paymentInfo.totalAmount),
             subtotal: services.reduce((sum, service) => sum + service.rate, 0)
               ? services.reduce((sum, service) => sum + service.rate, 0) +
@@ -568,13 +570,13 @@ router.post("/details", verifyToken, async (req, res) => {
       if (startDate && !endDate) {
         // If only startDate is provided, make it equal to that date
         let nextDay = new Date(startDate);
-  nextDay.setDate(nextDay.getDate() + 1);
-  
-  // If only startDate is provided, search from start of startDate to start of next day
-  dateFilter.bookingDate = {
-    $gte: new Date(startDate),
-    $lt: nextDay
-  };
+        nextDay.setDate(nextDay.getDate() + 1);
+
+        // If only startDate is provided, search from start of startDate to start of next day
+        dateFilter.bookingDate = {
+          $gte: new Date(startDate),
+          $lt: nextDay,
+        };
       } else if (startDate && endDate) {
         // If both dates are provided, use gte and lt
         dateFilter.bookingDate = {
@@ -608,6 +610,8 @@ router.post("/details", verifyToken, async (req, res) => {
       bookingDate: visit.bookingDate,
       doctor: visit.doctor,
       department: visit.department,
+      guardianName: visit.guardianName,
+      relation: visit.relation,
       reasonForVisit: visit.reasonForVisit,
       status: visit.status,
       comorbidities: visit.comorbidities,
@@ -633,6 +637,8 @@ router.post("/details", verifyToken, async (req, res) => {
       department: admission.department,
       doctor: admission.assignedDoctor,
       assignedRoom: admission.assignedRoom,
+      guardianName: admission.guardianName,
+      relation: admission.relation,
       assignedBed: admission.assignedBed,
       dateDischarged: admission.dateDischarged,
       clinicalSummary: admission.clinicalSummary,
@@ -650,7 +656,7 @@ router.post("/details", verifyToken, async (req, res) => {
       timeSlot: admission.timeSlot,
       vitals: admission.vitals,
       type: "IPD",
-      operationName:admission.operationName,
+      operationName: admission.operationName,
       createdAt: admission.createdAt,
       bills: admission.bills,
     }));
@@ -673,22 +679,28 @@ router.post("/details", verifyToken, async (req, res) => {
   }
 });
 
-router.delete("/admissions", checkPermission("delete_patients"), async (req, res) => {
-  try {
-    const result = await Visit.deleteMany();
+router.delete(
+  "/admissions",
+  checkPermission("delete_patients"),
+  async (req, res) => {
+    try {
+      const result = await Visit.deleteMany();
 
-    if (result.deletedCount === 0) {
-      return res.status(404).json({ message: "No matching admissions found" });
+      if (result.deletedCount === 0) {
+        return res
+          .status(404)
+          .json({ message: "No matching admissions found" });
+      }
+
+      res.json({
+        message: `${result.deletedCount} admission(s) deleted successfully`,
+        deletedCount: result.deletedCount,
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
-
-    res.json({
-      message: `${result.deletedCount} admission(s) deleted successfully`,
-      deletedCount: result.deletedCount,
-    });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
   }
-});
+);
 router.get("/admittedpatients", verifyToken, async (req, res) => {
   try {
     const admittedPatients = await IPDAdmission.find({ status: "Admitted" })
@@ -788,27 +800,23 @@ router.get("/:id", verifyToken, async (req, res) => {
   }
 });
 
-router.put(
-  "/:id",
-  verifyToken,
-  async (req, res) => {
-    try {
-      // could be changed according to frontend
-      const patient = await Patient.findByIdAndUpdate(req.params.id, req.body, {
-        new: true,
-        runValidators: true,
-      });
+router.put("/:id", verifyToken, async (req, res) => {
+  try {
+    // could be changed according to frontend
+    const patient = await Patient.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+      runValidators: true,
+    });
 
-      if (!patient) {
-        return res.status(404).json({ message: "Patient not found" });
-      }
-
-      res.json(patient);
-    } catch (error) {
-      res.status(400).json({ message: error.message });
+    if (!patient) {
+      return res.status(404).json({ message: "Patient not found" });
     }
+
+    res.json(patient);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
   }
-);
+});
 
 router.delete(
   "/:id",
@@ -828,103 +836,99 @@ router.delete(
 );
 
 // Move patient from OPD to IPD
-router.post(
-  "/:id/admit",
-  verifyToken,
-  async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+router.post("/:id/admit", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    try {
-      const { id } = req.params;
-      const {
-        dateAdmitted,
-        reasonForAdmission,
-        assignedDoctor,
-        assignedRoom,
-        assignedBed,
-      } = req.body;
+  try {
+    const { id } = req.params;
+    const {
+      dateAdmitted,
+      reasonForAdmission,
+      assignedDoctor,
+      assignedRoom,
+      assignedBed,
+    } = req.body;
 
-      // Validate required fields
-      if (!dateAdmitted || !assignedRoom || !assignedBed) {
-        throw new Error(
-          "Date admitted, assigned room, and assigned bed are required"
-        );
-      }
-
-      const patient = await Patient.findById(id).session(session);
-      if (!patient) {
-        throw new Error("Patient not found");
-      }
-
-      if (patient.patientType === "IPD") {
-        throw new Error("Patient is already admitted");
-      }
-
-      // Find the room and update the specific bed
-      const updatedRoom = await Room.findOneAndUpdate(
-        {
-          _id: assignedRoom,
-          beds: {
-            $elemMatch: {
-              _id: assignedBed,
-              status: "Available",
-            },
-          },
-        },
-        {
-          $inc: { currentOccupancy: 1 },
-          $set: {
-            "beds.$.status": "Occupied",
-            "beds.$.currentPatient": patient._id,
-          },
-        },
-        { new: true, session, runValidators: true }
+    // Validate required fields
+    if (!dateAdmitted || !assignedRoom || !assignedBed) {
+      throw new Error(
+        "Date admitted, assigned room, and assigned bed are required"
       );
-
-      if (!updatedRoom) {
-        throw new Error("Room or bed not available");
-      }
-
-      // Update room status if necessary
-      if (updatedRoom.currentOccupancy === updatedRoom.capacity) {
-        updatedRoom.status = "Occupied";
-      } else if (updatedRoom.currentOccupancy > 0) {
-        updatedRoom.status = "Partially Available";
-      }
-      await updatedRoom.save({ session });
-
-      // Create new IPD admission
-      const newAdmission = new IPDAdmission({
-        patient: patient._id,
-        admissionDate: dateAdmitted,
-        patientName: patient.name,
-        contactNumber: patient.contactNumber,
-        registrationNumber: patient.registrationNumber || null,
-        reasonForAdmission: reasonForAdmission || "Not specified",
-        assignedDoctor: assignedDoctor || null,
-        assignedRoom: updatedRoom._id,
-        assignedBed: assignedBed,
-      });
-
-      await newAdmission.save({ session });
-
-      // Update patient details
-      patient.patientType = "IPD";
-      patient.admissionDetails.push(newAdmission._id);
-      await patient.save({ session });
-
-      await session.commitTransaction();
-      session.endSession();
-
-      res.json({ patient, admission: newAdmission, room: updatedRoom });
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      res.status(400).json({ error: error.message });
     }
+
+    const patient = await Patient.findById(id).session(session);
+    if (!patient) {
+      throw new Error("Patient not found");
+    }
+
+    if (patient.patientType === "IPD") {
+      throw new Error("Patient is already admitted");
+    }
+
+    // Find the room and update the specific bed
+    const updatedRoom = await Room.findOneAndUpdate(
+      {
+        _id: assignedRoom,
+        beds: {
+          $elemMatch: {
+            _id: assignedBed,
+            status: "Available",
+          },
+        },
+      },
+      {
+        $inc: { currentOccupancy: 1 },
+        $set: {
+          "beds.$.status": "Occupied",
+          "beds.$.currentPatient": patient._id,
+        },
+      },
+      { new: true, session, runValidators: true }
+    );
+
+    if (!updatedRoom) {
+      throw new Error("Room or bed not available");
+    }
+
+    // Update room status if necessary
+    if (updatedRoom.currentOccupancy === updatedRoom.capacity) {
+      updatedRoom.status = "Occupied";
+    } else if (updatedRoom.currentOccupancy > 0) {
+      updatedRoom.status = "Partially Available";
+    }
+    await updatedRoom.save({ session });
+
+    // Create new IPD admission
+    const newAdmission = new IPDAdmission({
+      patient: patient._id,
+      admissionDate: dateAdmitted,
+      patientName: patient.name,
+      contactNumber: patient.contactNumber,
+      registrationNumber: patient.registrationNumber || null,
+      reasonForAdmission: reasonForAdmission || "Not specified",
+      assignedDoctor: assignedDoctor || null,
+      assignedRoom: updatedRoom._id,
+      assignedBed: assignedBed,
+    });
+
+    await newAdmission.save({ session });
+
+    // Update patient details
+    patient.patientType = "IPD";
+    patient.admissionDetails.push(newAdmission._id);
+    await patient.save({ session });
+
+    await session.commitTransaction();
+    session.endSession();
+
+    res.json({ patient, admission: newAdmission, room: updatedRoom });
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).json({ error: error.message });
   }
-);
+});
 
 // Add medical history to a patient (All authenticated staff)
 
@@ -992,7 +996,7 @@ router.post(
         createdBy: user._id,
       });
 
-      let payments=[];
+      let payments = [];
       if (
         visit.paymentMethod &&
         visit.paymentMethod !== "Due" &&
@@ -1028,7 +1032,7 @@ router.post(
         patient,
         visit: newVisit,
         bill,
-        payment:payments,
+        payment: payments,
       });
     } catch (error) {
       await session.abortTransaction();
@@ -1237,133 +1241,123 @@ router.post("/addLabReport", async (req, res) => {
 });
 
 // Add this route after the existing routes
-router.post(
-  "/discharge/:id",
-  verifyToken,
-  async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+router.post("/discharge/:id", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    try {
-      const { id } = req.params;
-      const {
-        dateDischarged,
-        conditionOnAdmission,
-        conditionOnDischarge,
-        comorbidities,
-        clinicalSummary,
-        diagnosis,
-        treatment,
-        medicineAdvice,
-        labReports,
-        vitals,
-        notes,
-      } = req.body;
+  try {
+    const { id } = req.params;
+    const {
+      dateDischarged,
+      conditionOnAdmission,
+      conditionOnDischarge,
+      comorbidities,
+      clinicalSummary,
+      diagnosis,
+      treatment,
+      medicineAdvice,
+      labReports,
+      vitals,
+      notes,
+    } = req.body;
 
-      const admission = await IPDAdmission.findById(id).session(session);
-      if (!admission) {
-        throw new Error("Admission not found");
-      }
+    const admission = await IPDAdmission.findById(id).session(session);
+    if (!admission) {
+      throw new Error("Admission not found");
+    }
 
-      // Update admission details
-      admission.dateDischarged = dateDischarged;
-      admission.conditionOnAdmission = conditionOnAdmission;
-      admission.conditionOnDischarge = conditionOnDischarge;
-      admission.comorbidities = comorbidities;
-      admission.clinicalSummary = clinicalSummary;
-      admission.diagnosis = diagnosis;
-      admission.treatment = treatment;
-      admission.medicineAdvice = medicineAdvice;
-      admission.labReports = labReports;
-      admission.vitals = vitals;
-      admission.notes = notes;
-      admission.status = "Discharged";
+    // Update admission details
+    admission.dateDischarged = dateDischarged;
+    admission.conditionOnAdmission = conditionOnAdmission;
+    admission.conditionOnDischarge = conditionOnDischarge;
+    admission.comorbidities = comorbidities;
+    admission.clinicalSummary = clinicalSummary;
+    admission.diagnosis = diagnosis;
+    admission.treatment = treatment;
+    admission.medicineAdvice = medicineAdvice;
+    admission.labReports = labReports;
+    admission.vitals = vitals;
+    admission.notes = notes;
+    admission.status = "Discharged";
 
-      await admission.save({ session });
+    await admission.save({ session });
 
-      // Update room and bed status
-      if (admission.assignedRoom && admission.assignedBed) {
-        const room = await Room.findById(admission.assignedRoom).session(
-          session
+    // Update room and bed status
+    if (admission.assignedRoom && admission.assignedBed) {
+      const room = await Room.findById(admission.assignedRoom).session(session);
+      if (room) {
+        const bedIndex = room.beds.findIndex(
+          (bed) => bed._id.toString() === admission.assignedBed.toString()
         );
-        if (room) {
-          const bedIndex = room.beds.findIndex(
-            (bed) => bed._id.toString() === admission.assignedBed.toString()
-          );
-          if (bedIndex !== -1) {
-            room.beds[bedIndex].status = "Available";
-            room.beds[bedIndex].currentPatient = null;
-            room.currentOccupancy -= 1;
-            await room.save({ session });
-          }
+        if (bedIndex !== -1) {
+          room.beds[bedIndex].status = "Available";
+          room.beds[bedIndex].currentPatient = null;
+          room.currentOccupancy -= 1;
+          await room.save({ session });
         }
       }
-
-      // Update patient status
-
-      await session.commitTransaction();
-      res.json({ message: "Patient discharged successfully", admission });
-    } catch (error) {
-      await session.abortTransaction();
-      res.status(400).json({ error: error.message });
-    } finally {
-      session.endSession();
     }
+
+    // Update patient status
+
+    await session.commitTransaction();
+    res.json({ message: "Patient discharged successfully", admission });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ error: error.message });
+  } finally {
+    session.endSession();
   }
-);
-router.post(
-  "/SaveButNotDischarge/:id",
-  verifyToken,
-  async (req, res) => {
-    const session = await mongoose.startSession();
-    session.startTransaction();
+});
+router.post("/SaveButNotDischarge/:id", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
 
-    try {
-      const { id } = req.params;
-      const {
-        dateDischarged,
-        conditionOnAdmission,
-        conditionOnDischarge,
-        comorbidities,
-        clinicalSummary,
-        diagnosis,
-        treatment,
-        medicineAdvice,
-        labReports,
-        vitals,
-        notes,
-      } = req.body;
+  try {
+    const { id } = req.params;
+    const {
+      dateDischarged,
+      conditionOnAdmission,
+      conditionOnDischarge,
+      comorbidities,
+      clinicalSummary,
+      diagnosis,
+      treatment,
+      medicineAdvice,
+      labReports,
+      vitals,
+      notes,
+    } = req.body;
 
-      const admission = await IPDAdmission.findById(id).session(session);
-      if (!admission) {
-        throw new Error("Admission not found");
-      }
-
-      // Update admission details
-      admission.dateDischarged = dateDischarged;
-      admission.conditionOnAdmission = conditionOnAdmission;
-      admission.conditionOnDischarge = conditionOnDischarge;
-      admission.comorbidities = comorbidities;
-      admission.clinicalSummary = clinicalSummary;
-      admission.diagnosis = diagnosis;
-      admission.treatment = treatment;
-      admission.medicineAdvice = medicineAdvice;
-      admission.labReports = labReports;
-      admission.vitals = vitals;
-      admission.notes = notes;
-
-      await admission.save({ session });
-
-      await session.commitTransaction();
-      res.json({ message: "Patient discharged successfully", admission });
-    } catch (error) {
-      await session.abortTransaction();
-      res.status(400).json({ error: error.message });
-    } finally {
-      session.endSession();
+    const admission = await IPDAdmission.findById(id).session(session);
+    if (!admission) {
+      throw new Error("Admission not found");
     }
+
+    // Update admission details
+    admission.dateDischarged = dateDischarged;
+    admission.conditionOnAdmission = conditionOnAdmission;
+    admission.conditionOnDischarge = conditionOnDischarge;
+    admission.comorbidities = comorbidities;
+    admission.clinicalSummary = clinicalSummary;
+    admission.diagnosis = diagnosis;
+    admission.treatment = treatment;
+    admission.medicineAdvice = medicineAdvice;
+    admission.labReports = labReports;
+    admission.vitals = vitals;
+    admission.notes = notes;
+
+    await admission.save({ session });
+
+    await session.commitTransaction();
+    res.json({ message: "Patient discharged successfully", admission });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ error: error.message });
+  } finally {
+    session.endSession();
   }
-);
+});
 
 // Add this route after the existing routes
 router.post(
@@ -1420,7 +1414,7 @@ router.post(
         timeSlot: admission.timeSlot || null,
         vitals: admission.vitals || null,
         comorbidities: admission.comorbidities || [],
-        operationName:admission.operationName||null,
+        operationName: admission.operationName || null,
       });
 
       let bill;

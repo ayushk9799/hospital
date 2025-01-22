@@ -38,12 +38,7 @@ export const FloatingLabelSelect = ({
           className={`peer px-3 py-2 w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
             error && !value && !isFocused ? "border-red-500" : "border-gray-300"
           }`}
-        >
-          <SelectValue placeholder=" " />
-        </SelectTrigger>
-        <SelectContent>{children}</SelectContent>
-      </Select>
-      <label
+        ><label
         htmlFor={id}
         className={`absolute text-xs duration-300 transform -translate-y-1/2 left-3
           peer-placeholder-shown:text-sm peer-placeholder-shown:top-1/2
@@ -57,6 +52,12 @@ export const FloatingLabelSelect = ({
           <span className="text-red-500 ml-1">*Required</span>
         )}
       </label>
+          <SelectValue placeholder=" " />
+        </SelectTrigger>
+        <SelectContent>{children}</SelectContent>
+        
+      </Select>
+      
     </div>
   );
 };

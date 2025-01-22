@@ -13,6 +13,8 @@ import templatesReducer from "./slices/templatesSlice";
 import dashboardReducer from "./slices/dashboardSlice";
 import dischargeReducer from "./slices/dischargeSlice";
 import expenseReducer from "./slices/expenseSlice";
+import babyReducer from "./slices/babySlice";
+
 export const store = configureStore({
   reducer: {
     patients: patientReducer,
@@ -29,5 +31,6 @@ export const store = configureStore({
     dashboard: dashboardReducer,
     discharge: dischargeReducer,
     expenses: expenseReducer,
+    babies: babyReducer,
   },
 });

@@ -23,6 +23,7 @@ import billingRoutes from "./routes/BillingRoutes.js";
 import dashboardRoute from "./routes/dashboardRoute.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import registrationRoutes from "./routes/registrationRoutes.js";
+import babyRoutes from "./routes/babyRoutes.js";
 dotenv.config({ path: "./config/config.env" });
 
 const app = express();
@@ -66,6 +67,7 @@ app.use("/api/dashboard", dashboardRoute);
 app.use("/api/expenses", expenseRoutes);
 app.use("/api/opd-procedures", opdProcedureRoutes);
 app.use("/api/registration", registrationRoutes);
+app.use("/api/babies", babyRoutes);
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {

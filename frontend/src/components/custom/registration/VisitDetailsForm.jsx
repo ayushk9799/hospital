@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { useMediaQuery } from "../../../hooks/use-media-query";
+import { FloatingLabelSelect } from "./PatientInfoForm";
 
 const hours = Array.from({ length: 12 }, (_, i) =>
   String(i + 1).padStart(2, "0")
@@ -96,9 +97,30 @@ export default function VisitDetailsForm({
         placeholder="Address: 123 Main St, Anytown USA"
         value={formData.address}
         onChange={handleInputChange}
-        className="h-[90px]"
+        className="min-h-9 h-9 no-scrollbar"
       />
-
+      <div className="grid grid-cols-[1fr_2fr] gap-2">
+      <FloatingLabelSelect
+      id="visit.relation"
+      label="Relation"
+      value={formData.visit.relation}
+      onValueChange={(value) => handleSelectChange("visit.relation", value)}
+      >
+         {["Father","Husband","Mother","Wife","Guardian"].map((relation) => (
+          <SelectItem key={relation} value={relation}>
+            {relation}
+          </SelectItem>
+        ))}
+        </FloatingLabelSelect>
+      <MemoizedInput
+      id="visit.guardianName"
+      value={formData.visit.guardianName}
+      onChange={handleInputChange}
+      label={`${formData.visit.relation?formData.visit.relation+"'s Name":"Guradian's Name"}`}
+      />
+     
+      </div>
+      
       {!isMobile && (
         <div className="relative ">
           <Input

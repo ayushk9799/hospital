@@ -6,6 +6,7 @@ import {
   Search,
   LogOut,
   Pencil,
+  Baby,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -269,18 +270,60 @@ export default function AdmittedPatients() {
                           </Button>
                         </TableCell>
                         <TableCell className="text-center">
-                          <Button
-                            onClick={() =>
-                              handleDischarge(patient._id, patient)
-                            }
-                            variant="default"
-                            size="sm"
-                            className="bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            {patient.status === "Discharged"
-                              ? "View/Edit Discharge Summary"
-                              : "Discharge"}
-                          </Button>
+                          <div className="flex gap-2 justify-center">
+                            <Button
+                              onClick={() =>
+                                handleDischarge(patient._id, patient)
+                              }
+                              variant="default"
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              {patient.status === "Discharged"
+                                ? "View/Edit Discharge Summary"
+                                : "Discharge"}
+                            </Button>
+                            {patient.department
+                              ?.toLowerCase()
+                              .includes("obstetric") &&
+                              patient?.patient?.gender?.toLowerCase() ===
+                                "female" && (
+                                <>
+                                  <Button
+                                    onClick={() =>
+                                      navigate(
+                                        `/patients/baby-registration/${patient._id}`,
+                                        {
+                                          state: {
+                                            motherData: patient.patient,
+                                            admissionData: patient,
+                                          },
+                                        }
+                                      )
+                                    }
+                                    variant="default"
+                                    size="sm"
+                                    className="bg-pink-600 hover:bg-pink-700 text-white inline-flex items-center gap-1"
+                                  >
+                                    <Baby className="h-4 w-4" />
+                                    Register Birth
+                                  </Button>
+                                  <Button
+                                    onClick={() =>
+                                      navigate(
+                                        `/patients/${patient._id}/babies`
+                                      )
+                                    }
+                                    variant="outline"
+                                    size="sm"
+                                    className="border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center gap-1"
+                                  >
+                                    <Baby className="h-4 w-4 text-pink-500" />
+                                    View Babies
+                                  </Button>
+                                </>
+                              )}
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -374,6 +417,42 @@ export default function AdmittedPatients() {
                           >
                             Discharge
                           </Button>
+                          {patient.department
+                            ?.toLowerCase()
+                            .includes("obstetric") && (
+                            <>
+                              <Button
+                                onClick={() =>
+                                  navigate(
+                                    `/patients/baby-registration/${patient._id}`,
+                                    {
+                                      state: {
+                                        motherData: patient.patient,
+                                        admissionData: patient,
+                                      },
+                                    }
+                                  )
+                                }
+                                variant="default"
+                                size="sm"
+                                className="flex-1 h-8 text-xs bg-pink-600 hover:bg-pink-700 text-white inline-flex items-center justify-center gap-1"
+                              >
+                                <Baby className="h-3 w-3" />
+                                Birth
+                              </Button>
+                              <Button
+                                onClick={() =>
+                                  navigate(`/patients/${patient._id}/babies`)
+                                }
+                                variant="outline"
+                                size="sm"
+                                className="flex-1 h-8 text-xs border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center justify-center gap-1"
+                              >
+                                <Baby className="h-3 w-3 text-pink-500" />
+                                Babies
+                              </Button>
+                            </>
+                          )}
                         </div>
                       </div>
                     </CardContent>

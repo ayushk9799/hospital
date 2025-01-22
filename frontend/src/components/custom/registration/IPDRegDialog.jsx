@@ -10,6 +10,7 @@ import {
 } from "../../ui/dialog";
 import { useSelector, useDispatch } from "react-redux";
 import { Input } from "../../ui/input";
+import { FloatingLabelSelect } from "./PatientInfoForm";
 import {
   Select,
   SelectTrigger,
@@ -134,7 +135,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   const [formData, setFormData] = useState(initialFormData);
   useEffect(()=>{
-    console.log(departments)
 setFormData((prev)=>({
   ...prev,
   admission:{
@@ -659,8 +659,9 @@ setFormData((prev)=>({
                         </div>
                       </div>
                     ) : (
-                      <>
-                        <div className="relative">
+                      <><div className="grid grid-cols-2 gap-1">
+                         
+                     <div className="relative">
                           <MemoizedInput
                             id="registrationNumber"
                             label="UHID Number"
@@ -676,6 +677,22 @@ setFormData((prev)=>({
                             <Search className="h-5 w-5" />
                           </button>
                         </div>
+                        <MemoizedInput
+                      id="ipdNumber"
+                      label="IPD Number"
+                      value={formData.admission.ipdNumber}
+                      onChange={(e) =>
+                        handleInputChange({
+                          target: {
+                            id: "admission.ipdNumber",
+                            value: e.target.value,
+                          },
+                        })
+                      }
+                      error={errors.ipdNumber}
+                    />
+                      </div>
+                       
                         <div className="flex items-end gap-4">
                           <div className="w-30 relative">
                             <MemoizedInput
@@ -729,20 +746,38 @@ setFormData((prev)=>({
                   </div>
 
                   <div className="space-y-4">
-                    <MemoizedInput
-                      id="ipdNumber"
-                      label="IPD Number"
-                      value={formData.admission.ipdNumber}
-                      onChange={(e) =>
-                        handleInputChange({
-                          target: {
-                            id: "admission.ipdNumber",
-                            value: e.target.value,
-                          },
-                        })
-                      }
-                      error={errors.ipdNumber}
-                    />
+                  <div className="grid grid-cols-[1fr_2fr] gap-2">
+                  <Select
+                            id="admisison.relation"
+                            value={formData.admission.relation}
+                            onValueChange={(value) =>
+                              handleInputChange({
+                                target: { id: "admission.relation", value },
+                              })
+                            }
+                          >
+                            <SelectTrigger
+                              className={errors.gender ? "border-red-500" : ""}
+                            >
+                              <SelectValue placeholder="Relation" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Father">Father</SelectItem>
+                              <SelectItem value="Husband">Husband</SelectItem>
+                              <SelectItem value="Mother">Mother</SelectItem>
+                              <SelectItem value="Wife">Wife</SelectItem>
+                              <SelectItem value="Guardian">Guardian</SelectItem>
+                            </SelectContent>
+                          </Select>
+      <MemoizedInput
+      id="admission.guardianName"
+      value={formData.admission.guardianName}
+      onChange={handleInputChange}
+      label={`${formData.admission.relation?formData.admission.relation+"'s Name":"Guradian's Name"}`}
+      />
+     
+      </div>
+                   
                     <div>
                       <MemoizedInput
                         id="contactNumber"

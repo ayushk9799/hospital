@@ -19,7 +19,6 @@ const ConsentFormPrint = ({ patient }) => {
   const HospitalHeader = createDynamicComponentFromString(
     headerTemplateStrings || headerTemplateString
   );
-
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     pageStyle: `
@@ -68,7 +67,7 @@ const ConsentFormPrint = ({ patient }) => {
             </div>
             <div className="grid grid-cols-3">
               <span>Guardian Name:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.guardianName || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.guardianName || 'N/A'}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>UHID Number:</span>
@@ -112,9 +111,9 @@ const ConsentFormPrint = ({ patient }) => {
           <Separator className="my-2 bg-black" />
           <div className="underline font-semibold mx-4 underline-offset-2">Person to notify in case of Emergency</div>
           <div className="flex justify-between mb-4 mx-4">
-            <div>Name: {patient?.patient?.guardianName || 'N/A'}</div> 
-            <div>Mobile No: {patient?.patient?.contactNumber || 'N/A'}</div>
-            <div>Relation with Patient : {patient?.patient?.relation || 'N/A'}</div>
+            <div className="capitalize">Name: {patient?.guardianName || 'N/A'}</div> 
+            <div >Mobile No: {patient?.patient?.contactNumber || 'N/A'}</div>
+            <div className="capitalize">Relation with Patient : {patient?.relation || 'N/A'}</div>
           </div>
           <div className="space-y-4 text-justify px-4">
             <p className="text-lg font-semibold mb-2">सामान्य सहमति</p>
@@ -144,7 +143,7 @@ const ConsentFormPrint = ({ patient }) => {
             </div>
             <div className="text-center">
                 <p className="border-t-[1px] border-black">Signature of Guardian</p>
-                <p className="text-xs uppercase">({patient?.patient?.guardianName || 'N/A'})</p>
+                <p className="text-xs uppercase">({patient?.guardianName || 'N/A'})</p>
             </div>
           </div>
         </div>

@@ -123,7 +123,6 @@ export default function DischargeSummary() {
     })) || []),
   ];
 
- 
   useEffect(() => {
     const fetchPatient = async () => {
       if (!patientFromStore && !dischargeData) {
