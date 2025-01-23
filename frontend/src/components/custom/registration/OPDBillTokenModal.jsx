@@ -21,6 +21,7 @@ import {
 import { PrinterIcon } from "lucide-react";
 import SimplePrintHeader from "../../../utils/print/SimplePrintHeader";
 import { useSelector } from "react-redux";
+import PaymentReceipt from "../print/PaymentReceipt";
 
 const OPDBillTokenModal = ({
   isOpen,
@@ -406,9 +407,12 @@ const OPDBillTokenModal = ({
           >
             Close
           </Button>
+          <div className="">
+            <PaymentReceipt payment={payment?.[0]} billData={{...patientData.bill, patient : patientData.patient}} styleData={true} /> 
+          </div>
           <Button className="w-full sm:w-auto" onClick={handlePrint}>
             <PrinterIcon className="mr-2 h-4 w-4" />
-            Print Bill
+            Print Token
           </Button>
         </DialogFooter>
       </DialogContent>

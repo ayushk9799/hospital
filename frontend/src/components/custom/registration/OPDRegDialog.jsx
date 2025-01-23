@@ -460,6 +460,7 @@ useEffect(()=>
     }
   }, [open, dispatch, patientData, searchedPatient]);
 
+
   return (
     <>
       <Dialog
@@ -676,6 +677,7 @@ useEffect(()=>
                   variant="outline"
                   onClick={handleReset}
                   className="flex-1 sm:flex-none text-xs sm:text-sm px-2 sm:px-4"
+                  tabIndex={-1}
                 >
                   Reset
                 </Button>
@@ -684,6 +686,7 @@ useEffect(()=>
                   variant="outline"
                   onClick={handleDialogClose}
                   className="flex-1 sm:flex-none text-xs sm:text-sm px-2 sm:px-4"
+                  tabIndex={-1}
                 >
                   Cancel
                 </Button>
