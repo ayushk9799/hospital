@@ -126,11 +126,7 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
     "formatDate",
     "hasValue",
     `return (${
-      // If formConfig exists in formData, use the config-based template
-      formConfig
-        ? configBasedDischargeSummaryTemplate
-        : // Otherwise fallback to database template or default template
-          dischargeSummaryTemplateStringdatabase ||
+      dischargeSummaryTemplateStringdatabase ||
           dischargeSummaryTemplateStringDefault
     });`
   );

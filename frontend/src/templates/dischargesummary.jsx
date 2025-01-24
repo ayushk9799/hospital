@@ -1,5 +1,5 @@
 export const dischargeSummaryTemplateStringDefault = `
-(formData, patient, hospital, ref) => {
+(formData, patient, hospital,formConfig, ref) => {
   const hasComorbidities = formData.comorbidities && formData.comorbidities.some((c) => c.name);
   const hasMedicineAdvice = formData.medicineAdvice && formData.medicineAdvice.some((m) => m.name);
   const hasInvestigations = formData.investigations && formData.investigations.some((i) => i.name || i.category);
