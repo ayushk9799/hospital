@@ -121,6 +121,7 @@ router.post("/template/create", identifyHospital, async (req, res) => {
         medicinelist:[],
         dischargeSummaryTemplate: "",
         opdPrescriptionTemplate: "",
+        dischargeFormTemplates:{}
       });
     }
 
@@ -151,6 +152,10 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     if(req.body.opdPrescriptionTemplate)
     {
       template.opdPrescriptionTemplate=req.body.opdPrescriptionTemplate;
+    }
+    if(req.body.dischargeFormTemplates)
+    {
+      template.dischargeFormTemplates=req.body.dischargeFormTemplates;
     }
         
 

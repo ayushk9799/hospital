@@ -92,6 +92,7 @@ const initialState = {
   status: "idle",
   error: null,
   serviceBillCollections: [],
+  dischargeFormTemplates: null,
 };
 
 const templatesSlice = createSlice({
@@ -115,6 +116,7 @@ const templatesSlice = createSlice({
         state.comorbidities = action.payload.comorbidities;
         state.medicinelist = action.payload.medicinelist;
         state.serviceBillCollections = action.payload.service_collections;
+        state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
         state.status = "failed";
@@ -141,6 +143,9 @@ const templatesSlice = createSlice({
         }
         if (action.payload.opdRxTemplate) {
           state.opdRxTemplate = action.payload.opdRxTemplate;
+        }
+        if (action.payload.dischargeFormTemplates) {
+          state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
         }
       })
       .addCase(updateServiceBillCollections.fulfilled, (state, action) => {

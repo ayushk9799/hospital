@@ -66,6 +66,14 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
+import { toast } from "../hooks/use-toast";
+import { updateTemplate } from "../redux/slices/templatesSlice";
+import {
+  getFormConfig,
+  mergeFormConfig,
+  DEFAULT_FORM_CONFIG,
+} from "../config/dischargeSummaryConfig";
+import FormCustomizer from "../components/custom/FormCustomizer";
 
 const LabReportTable = ({ report }) => {
   return (
@@ -92,6 +100,480 @@ const LabReportTable = ({ report }) => {
   );
 };
 
+// Add form configuration
+// const DEFAULT_FORM_CONFIG = {
+//   sections: [
+//     {
+//       id: "patientInfo",
+//       title: "Patient Information",
+//       className: "bg-secondary/10 rounded-lg p-3 mb-4",
+//       fields: [
+//         { id: "name", label: "Name", type: "text", width: "full" },
+//         { id: "age", label: "Age", type: "text", width: "half" },
+//         { id: "gender", label: "Gender", type: "text", width: "half" },
+//         {
+//           id: "registrationNumber",
+//           label: "UHID No",
+//           type: "text",
+//           width: "full",
+//           searchable: true,
+//         },
+//         { id: "ipdNumber", label: "IPD No", type: "text", width: "full" },
+//         { id: "contactNumber", label: "Contact", type: "text", width: "full" },
+//         { id: "address", label: "Address", type: "text", width: "full" },
+//         { id: "roomNumber", label: "Room", type: "text", width: "full" },
+//         {
+//           id: "admissionDate",
+//           label: "Admit Date",
+//           type: "date",
+//           width: "full",
+//         },
+//         {
+//           id: "dateDischarged",
+//           label: "Discharge Date",
+//           type: "date",
+//           width: "full",
+//         },
+//       ],
+//     },
+//     {
+//       id: "babyDetails",
+//       title: "Baby Details",
+//       className: "bg-secondary/10 rounded-lg p-3 mb-4",
+//       fields: [
+//         {
+//           id: "hasBabyDetails",
+//           label: "Add Baby Details",
+//           type: "checkbox",
+//           width: "full",
+//         },
+//         {
+//           id: "babies",
+//           label: "Baby Information",
+//           type: "babyTable",
+//           width: "full",
+//           dependsOn: "hasBabyDetails",
+//         },
+//       ],
+//     },
+//     {
+//       id: "clinicalInfo",
+//       fields: [
+//         {
+//           id: "diagnosis",
+//           label: "Diagnosis",
+//           type: "multiselect",
+//           component: "MultiSelectInput",
+//           suggestions: "diagnosisTemplate",
+//           width: "full",
+//         },
+//         {
+//           id: "clinicalSummary",
+//           label: "Clinical Summary",
+//           type: "textarea",
+//           width: "full",
+//         },
+//         {
+//           id: "comorbidities",
+//           label: "Comorbidities",
+//           type: "multiselect",
+//           component: "MultiSelectInput",
+//           suggestions: "comorbidities",
+//           width: "full",
+//           extraComponent: "ComorbidityHandling",
+//         },
+//         {
+//           id: "admissionVitals",
+//           label: "Admission Vitals",
+//           type: "vitals",
+//           prefix: "admission",
+//           width: "full",
+//         },
+//         {
+//           id: "conditionOnAdmission",
+//           label: "Condition on Admission",
+//           type: "textarea",
+//           width: "full",
+//         },
+//         {
+//           id: "investigations",
+//           label: "Investigations",
+//           type: "investigations",
+//           width: "full",
+//         },
+//         {
+//           id: "treatment",
+//           label: "Treatment",
+//           type: "textarea",
+//           width: "full",
+//         },
+//         {
+//           id: "dischargeVitals",
+//           label: "Discharge Vitals",
+//           type: "vitals",
+//           prefix: "discharge",
+//           width: "full",
+//         },
+//         {
+//           id: "conditionOnDischarge",
+//           label: "Condition on Discharge",
+//           type: "textarea",
+//           width: "full",
+//         },
+//         {
+//           id: "medicineAdvice",
+//           label: "Medicine/Advice",
+//           type: "medicineAdvice",
+//           width: "full",
+//         },
+//       ],
+//     },
+//   ],
+// };
+
+// Add form field renderer components
+const FormField = ({
+  field,
+  value,
+  onChange,
+  suggestions,
+  extraProps = {},
+}) => {
+  const handleDiagnosisChange = (newDiagnoses) => {
+    const diagnosisString = newDiagnoses.map((d) => d.name).join(", ");
+    onChange({
+      target: {
+        name: field.id,
+        value: diagnosisString,
+      },
+    });
+  };
+
+  switch (field.type) {
+    case "text":
+      return (
+        <div
+          className={`flex items-center ${
+            field.width === "half" ? "sm:col-span-1" : "sm:col-span-2"
+          }`}
+        >
+          <Label htmlFor={field.id} className="w-24 font-bold">
+            {field.label}:
+          </Label>
+          <Input
+            id={field.id}
+            name={field.id}
+            value={value}
+            onChange={onChange}
+            className="h-8"
+            {...extraProps}
+          />
+        </div>
+      );
+    case "date":
+      return (
+        <div className="flex items-center">
+          <Label htmlFor={field.id} className="w-24 font-bold">
+            {field.label}:
+          </Label>
+          <Input
+            id={field.id}
+            name={field.id}
+            type="date"
+            value={value}
+            onChange={onChange}
+            className="h-8"
+            {...extraProps}
+          />
+        </div>
+      );
+    case "textarea":
+      return (
+        <div>
+          <Label htmlFor={field.id}>{field.label}</Label>
+          <Textarea
+            id={field.id}
+            name={field.id}
+            value={value}
+            onChange={onChange}
+            className="mt-1 min-h-[6rem] leading-tight"
+            {...extraProps}
+          />
+        </div>
+      );
+    case "multiselect":
+      // Convert value to array of objects if it's a string
+      const selectedValues =
+        typeof value === "string"
+          ? value
+              .split(",")
+              .map((v) => ({ name: v.trim() }))
+              .filter((v) => v.name)
+          : Array.isArray(value)
+          ? value.map((v) => (typeof v === "string" ? { name: v } : v))
+          : [];
+
+      // Convert suggestions to proper format if needed
+      const formattedSuggestions = Array.isArray(suggestions)
+        ? suggestions.map((s) => (typeof s === "string" ? { name: s } : s))
+        : [];
+
+      return (
+        <div>
+          <Label htmlFor={field.id}>{field.label}</Label>
+          <div className="mt-1 space-y-2">
+            <div className="flex flex-wrap gap-1">
+              {selectedValues.map((val, index) => (
+                <Badge
+                  key={index}
+                  variant="primary"
+                  className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 text-sm rounded"
+                >
+                  {val.name}
+                  <X
+                    className="ml-1 h-3 w-3 cursor-pointer"
+                    onClick={() => {
+                      const newValues = selectedValues.filter(
+                        (_, i) => i !== index
+                      );
+                      if (field.id === "diagnosis") {
+                        handleDiagnosisChange(newValues);
+                      } else {
+                        onChange({
+                          target: {
+                            name: field.id,
+                            value: newValues.map((v) => v.name).join(", "),
+                          },
+                        });
+                      }
+                    }}
+                  />
+                </Badge>
+              ))}
+            </div>
+            <MultiSelectInput
+              suggestions={formattedSuggestions}
+              selectedValues={selectedValues}
+              setSelectedValues={(newValues) => {
+                if (field.id === "diagnosis") {
+                  handleDiagnosisChange(newValues);
+                } else {
+                  onChange({
+                    target: {
+                      name: field.id,
+                      value: newValues.map((v) => v.name).join(", "),
+                    },
+                  });
+                }
+              }}
+              placeholder={`Select ${field.label.toLowerCase()}`}
+              {...extraProps}
+            />
+            {field.extraComponent === "ComorbidityHandling" && (
+              <Select
+                onValueChange={(value) => {
+                  if (extraProps.onComorbidityHandlingChange) {
+                    extraProps.onComorbidityHandlingChange(value);
+                  }
+                }}
+                defaultValue={extraProps.comorbidityHandling || "separate"}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder="Handle" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="separate">Separate</SelectItem>
+                  <SelectItem value="clinical_summary">
+                    Clinical Summary
+                  </SelectItem>
+                  <SelectItem value="diagnosis">Diagnosis</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        </div>
+      );
+    case "checkbox":
+      return (
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id={field.id}
+            checked={value}
+            onChange={(e) =>
+              onChange({ target: { name: field.id, value: e.target.checked } })
+            }
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          <Label htmlFor={field.id}>{field.label}</Label>
+        </div>
+      );
+    case "babyTable":
+      if (!extraProps.showBabyDetails) return null;
+      return (
+        <div>
+          <Label htmlFor={field.id}>{field.label}</Label>
+          <BabyTable
+            value={value || []}
+            onChange={(newValue) =>
+              onChange({ target: { name: field.id, value: newValue } })
+            }
+          />
+        </div>
+      );
+    default:
+      return null;
+  }
+};
+
+// Add new component for baby table
+const BabyTable = ({ value = [], onChange }) => {
+  const addBaby = () => {
+    onChange([
+      ...value,
+      { number: "", sex: "", weight: "", date: "", time: "", apgar: "" },
+    ]);
+  };
+
+  const removeBaby = (index) => {
+    const newBabies = value.filter((_, i) => i !== index);
+    // Renumber remaining babies
+    const renumberedBabies = newBabies.map((baby, i) => ({
+      ...baby,
+      number: i + 1,
+    }));
+    onChange(renumberedBabies);
+  };
+
+  const updateBaby = (index, field, newValue) => {
+    const newBabies = value.map((baby, i) => {
+      if (i === index) {
+        return { ...baby, [field]: newValue };
+      }
+      return baby;
+    });
+    onChange(newBabies);
+  };
+
+  // Function to format time input
+  const handleTimeChange = (index, value) => {
+    let [hours, minutes] = value.split(":");
+    hours = parseInt(hours);
+
+    if (hours === 0) hours = 12;
+    if (hours > 12) hours = hours - 12;
+
+    const ampm = hours >= 12 ? "PM" : "AM";
+    const formattedTime = `${hours}:${minutes} ${ampm}`;
+
+    updateBaby(index, "time", formattedTime);
+  };
+
+  return (
+    <div className="space-y-4">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Baby No.</TableHead>
+            <TableHead>Sex</TableHead>
+            <TableHead>Weight (g)</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Time</TableHead>
+            <TableHead>APGAR Score</TableHead>
+            <TableHead>Action</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {value.map((baby, index) => (
+            <TableRow key={index}>
+              <TableCell>
+                <Input
+                  type="text"
+                  value={baby.number}
+                  onChange={(e) => updateBaby(index, "number", e.target.value)}
+                />
+              </TableCell>
+              <TableCell>
+                <Select
+                  value={baby.sex}
+                  onValueChange={(newValue) =>
+                    updateBaby(index, "sex", newValue)
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sex" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={baby.weight}
+                  onChange={(e) => updateBaby(index, "weight", e.target.value)}
+                />
+              </TableCell>
+              <TableCell>
+                <Input
+                  type="date"
+                  value={baby.date}
+                  onChange={(e) => updateBaby(index, "date", e.target.value)}
+                />
+              </TableCell>
+              <TableCell className="flex gap-2 items-center">
+                <Input
+                  type="time"
+                  value={baby.time?.split(" ")[0] || ""}
+                  onChange={(e) => handleTimeChange(index, e.target.value)}
+                  className="w-24"
+                />
+                <Select
+                  value={baby.time?.split(" ")[1] || "AM"}
+                  onValueChange={(value) => {
+                    const time = baby.time?.split(" ")[0] || "";
+                    updateBaby(index, "time", `${time} ${value}`);
+                  }}
+                >
+                  <SelectTrigger className="w-20">
+                    <SelectValue placeholder="AM/PM" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="AM">AM</SelectItem>
+                    <SelectItem value="PM">PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </TableCell>
+              <TableCell>
+                <Input
+                  type="text"
+                  value={baby.apgar}
+                  onChange={(e) => updateBaby(index, "apgar", e.target.value)}
+                />
+              </TableCell>
+              <TableCell>
+                <Button
+                  variant="destructive"
+                  size="icon"
+                  onClick={() => removeBaby(index)}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      <Button type="button" variant="outline" onClick={addBaby}>
+        <PlusCircle className="h-4 w-4 mr-2" /> Add Baby
+      </Button>
+    </div>
+  );
+};
+
 export default function DischargeSummary() {
   const { patientId } = useParams();
   const dispatch = useDispatch();
@@ -100,6 +582,18 @@ export default function DischargeSummary() {
   const [patient, setPatient] = useState(null);
   const ignoreList = location.state?.ignoreList || false;
   const dischargeData = location.state?.dischargeData || null;
+  const savedConfig = useSelector(
+    (state) => state.templates.dischargeFormTemplates
+  );
+  const [formConfig, setFormConfig] = useState(() => {
+    const baseConfig = getFormConfig();
+    // Get config from Redux store
+    if (savedConfig) {
+      return savedConfig;
+    }
+    return baseConfig;
+  });
+
   const {
     diagnosisTemplate = [],
     comorbidities = [],
@@ -123,72 +617,7 @@ export default function DischargeSummary() {
     })) || []),
   ];
 
-  useEffect(() => {
-    const fetchPatient = async () => {
-      if (!patientFromStore && !dischargeData) {
-        try {
-          if (patientId) {
-            const result = await dispatch(
-              fetchVisitDetails({ id: patientId, type: "IPD" })
-            ).unwrap();
-
-            setPatient(result);
-          } else if (location.state?.patient) {
-            const result = await dispatch(
-              fetchVisitDetails({
-                id: location.state?.patient?.admissionDetails.at(-1)._id,
-                type: "IPD",
-              })
-            ).unwrap();
-            setPatient(result);
-          } else {
-            setPatientInfo({
-              name: "",
-              age: "",
-              gender: "",
-              contactNumber: "",
-              address: "",
-              roomNumber: "",
-              registrationNumber: "",
-            });
-          }
-        } catch (error) {
-          console.error("Error fetching patient details:", error);
-        }
-      } else {
-        if (!ignoreList && !dischargeData) {
-          setPatient(patientFromStore);
-        } else {
-          if (dischargeData) {
-            setPatient(dischargeData);
-          } else {
-            const result = await dispatch(
-              fetchVisitDetails({ id: patientId, type: "IPD" })
-            ).unwrap();
-            setPatient(result);
-          }
-        }
-      }
-    };
-
-    fetchPatient();
-  }, [dispatch, patientFromStore, location.state?.dischargeData]);
-
-  const medicines = useSelector((state) => state.pharmacy.items);
-  const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
-  const hospital = useSelector((state) => state.hospital.hospitalInfo);
-  const templateStatus = useSelector((state) => state.templates.status);
-  useEffect(() => {
-    if (itemsStatus === "idle") {
-      dispatch(fetchItems());
-    }
-  }, [dispatch, itemsStatus]);
-  useEffect(() => {
-    if (templateStatus === "idle") {
-      dispatch(fetchTemplates());
-    }
-  }, [dispatch, templateStatus]);
-  const [formData, setFormData] = useState({
+  const initialFormData = {
     admissionDate: "",
     dateDischarged: "",
     diagnosis: "",
@@ -196,13 +625,6 @@ export default function DischargeSummary() {
     treatment: "",
     conditionOnAdmission: "",
     conditionOnDischarge: "",
-    investigations: [{ name: "", category: "" }],
-    medicineAdvice: [{ name: "", dosage: "0-0-0", duration: "" }],
-    notes: "",
-    comorbidities: [{ name: "" }],
-    comorbidityHandling: "separate",
-    selectedTest: "",
-    selectedCategory: "",
     vitals: {
       admission: {
         bloodPressure: "",
@@ -219,7 +641,180 @@ export default function DischargeSummary() {
         respiratoryRate: "",
       },
     },
-  });
+    investigations: [{ name: "", category: "" }],
+    medicineAdvice: [{ name: "", dosage: "0-0-0", duration: "" }],
+    notes: "",
+    comorbidities: [{ name: "" }],
+    hasBabyDetails: false,
+    babies: [],
+  };
+
+  // Initialize form data state with initial values
+  const [formData, setFormData] = useState(initialFormData);
+
+  // Helper function to get all field IDs from form config
+  const getAllFieldIds = (config) => {
+    const fieldIds = new Set();
+    config.sections.forEach((section) => {
+      section.fields.forEach((field) => {
+        fieldIds.add(field.id);
+      });
+    });
+    return fieldIds;
+  };
+
+  // Helper function to merge data with form fields
+  const mergeDataWithFormFields = (data, config) => {
+    console.log(data);
+    const fieldIds = getAllFieldIds(config);
+    const mergedData = { ...initialFormData };
+
+    // First, handle standard fields
+    const standardFields = [
+      "admissionDate",
+      "dateDischarged",
+      "diagnosis",
+      "clinicalSummary",
+      "treatment",
+      "conditionOnAdmission",
+      "conditionOnDischarge",
+      "notes",
+      "comorbidities",
+    ];
+
+    standardFields.forEach((field) => {
+      if (data?.[field] !== undefined) {
+        mergedData[field] = data[field];
+      }
+    });
+
+    // Handle special array fields
+    if (data?.medicineAdvice?.length > 0) {
+      mergedData.medicineAdvice = data.medicineAdvice.map((m) => ({
+        name: m.name || "",
+        dosage: m.dosage || "0-0-0",
+        duration: m.duration || "",
+      }));
+    }
+
+    if (data?.investigations?.length > 0) {
+      mergedData.investigations = data.investigations.map((i) => ({
+        name: i.name || "",
+        category: i.category || "",
+        report: i.report || null,
+        date: i.date || null,
+      }));
+    }
+
+    if (data?.comorbidities?.length > 0) {
+      mergedData.comorbidities = data.comorbidities.map((c) =>
+        typeof c === "string" ? { name: c } : c
+      );
+    }
+
+    // Handle vitals
+    if (data?.vitals) {
+      mergedData.vitals = {
+        admission: {
+          ...initialFormData.vitals.admission,
+          ...(data.vitals.admission || {}),
+        },
+        discharge: {
+          ...initialFormData.vitals.discharge,
+          ...(data.vitals.discharge || {}),
+        },
+      };
+    }
+
+    // Handle custom fields from form config
+    fieldIds.forEach((fieldId) => {
+      if (data?.[fieldId] !== undefined && !standardFields.includes(fieldId)) {
+        mergedData[fieldId] = data?.[fieldId];
+      }
+    });
+
+    return mergedData;
+  };
+
+  useEffect(() => {
+    const fetchPatient = async () => {
+      if (!patientFromStore && !dischargeData) {
+        try {
+          if (patientId) {
+            const result = await dispatch(
+              fetchVisitDetails({ id: patientId, type: "IPD" })
+            ).unwrap();
+            setPatient(result);
+
+            if (result.dischargeData && result.formConfig) {
+              const mergedData = mergeDataWithFormFields(
+                result.dischargeData,
+                result.formConfig
+              );
+              setFormData(mergedData);
+              setFormConfig(result.formConfig);
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching patient details:", error);
+        }
+      } else if (dischargeData) {
+        console.log(dischargeData);
+        setPatient(dischargeData);
+
+        if (dischargeData.formConfig || formConfig) {
+          const mergedData = mergeDataWithFormFields(
+            dischargeData.dischargeData,
+            dischargeData.formConfig || formConfig
+          );
+
+          console.log(mergedData);
+          setFormData(mergedData);
+        }
+
+        setPatientInfo({
+          name: dischargeData.patientName || dischargeData.patient?.name || "",
+          age: dischargeData.patient?.age || "",
+          gender: dischargeData.patient?.gender || "",
+          contactNumber:
+            dischargeData.contactNumber ||
+            dischargeData.patient?.contactNumber ||
+            "",
+          address: dischargeData.patient?.address || "",
+          roomNumber: dischargeData.assignedRoom?.roomNumber || "",
+          registrationNumber: dischargeData.registrationNumber || "",
+          ipdNumber: dischargeData.ipdNumber || "",
+        });
+      } else if (!ignoreList) {
+        setPatient(patientFromStore);
+      }
+    };
+
+    fetchPatient();
+  }, [
+    dispatch,
+    patientId,
+    patientFromStore,
+    location.state?.patient,
+    dischargeData,
+    ignoreList,
+    formConfig,
+  ]);
+
+  const medicines = useSelector((state) => state.pharmacy.items);
+  const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
+  const templateStatus = useSelector((state) => state.templates.status);
+  useEffect(() => {
+    if (itemsStatus === "idle") {
+      dispatch(fetchItems());
+    }
+  }, [dispatch, itemsStatus]);
+  useEffect(() => {
+    if (templateStatus === "idle") {
+      dispatch(fetchTemplates());
+    }
+  }, [dispatch, templateStatus]);
 
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isLabReportOpen, setIsLabReportOpen] = useState(false);
@@ -269,7 +864,7 @@ export default function DischargeSummary() {
         investigations:
           patient.labReports?.length > 0
             ? patient.labReports
-            : [{ name: "", category: "" }], // Default empty investigation
+            : [{ name: "", category: "" }],
         medicineAdvice: patient.medicineAdvice || [
           { name: "", dosage: "0-0-0", duration: "" },
         ],
@@ -280,13 +875,16 @@ export default function DischargeSummary() {
       }));
 
       setPatientInfo({
-        name: patient.patient.name || "",
-        age: patient.patient.age || "",
-        gender: patient.patient.gender || "",
-        contactNumber: patient.patient.contactNumber || "",
-        address: patient.patient.address || "",
-        roomNumber: patient.assignedRoom?.roomNumber || "",
-        registrationNumber: patient.registrationNumber || "",
+        name: patient.patient?.name || patient.name || "",
+        age: patient.patient?.age || patient.age || "",
+        gender: patient.patient?.gender || patient.gender || "",
+        contactNumber:
+          patient.patient?.contactNumber || patient.contactNumber || "",
+        address: patient.patient?.address || patient.address || "",
+        roomNumber:
+          patient.assignedRoom?.roomNumber || patient.roomNumber || "",
+        registrationNumber:
+          patient.registrationNumber || patient.registrationNumber || "",
         ipdNumber: patient.ipdNumber || "",
       });
     }
@@ -301,11 +899,8 @@ export default function DischargeSummary() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    if (name === "diagnosis") {
-      setCustomDiagnosis(value);
-    } else {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleDateChange = (field, date) => {
@@ -360,43 +955,36 @@ export default function DischargeSummary() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const dischargeData = {
-      patientId: patientId,
-      dateDischarged: formData.dateDischarged,
-      conditionOnAdmission: formData.conditionOnAdmission,
-      conditionOnDischarge: formData.conditionOnDischarge,
+    const dischargePayload = {
+      patientId: patientId || patient._id,
+      ...formData,
+      formConfig,
       comorbidities: formData.comorbidities.map((c) => c.name),
-      clinicalSummary: formData.clinicalSummary,
-      diagnosis: formData.diagnosis,
-      treatment: formData.treatment,
       medicineAdvice: formData.medicineAdvice
         .filter((m) => m.name.trim() !== "")
         .map((m) => ({
           name: m.name,
           duration: m.duration,
-          frequency: m.dosage,
+          dosage: m.dosage,
         })),
-      labReports: formData.investigations
-        .filter((inv) => inv.name.trim() !== "" && inv.report)
+      investigations: formData.investigations
+        .filter((inv) => inv.name.trim() !== "")
         .map((i) => ({
           name: i.name,
+          category: i.category,
           report: i.report,
           date: i.date || new Date().toISOString(),
         })),
-      vitals: formData.vitals,
-      notes: formData.notes,
-      status: "Discharged",
     };
 
     try {
-      await dispatch(dischargePatient(dischargeData)).unwrap();
+      await dispatch(dischargePatient(dischargePayload)).unwrap();
       toast({
         title: "Success",
         description: "Patient discharged successfully",
         variant: "success",
       });
 
-      // Open print dialog instead of using window.confirm
       setIsPrintDialogOpen(true);
     } catch (error) {
       toast({
@@ -410,35 +998,30 @@ export default function DischargeSummary() {
   const handleSave = async (e) => {
     e.preventDefault();
 
-    const dischargeData = {
+    const savePayload = {
       patientId: patientId || patient._id,
-      dateDischarged: formData.dateDischarged,
-      conditionOnAdmission: formData.conditionOnAdmission,
-      conditionOnDischarge: formData.conditionOnDischarge,
+      ...formData,
+      formConfig,
       comorbidities: formData.comorbidities.map((c) => c.name),
-      clinicalSummary: formData.clinicalSummary,
-      diagnosis: formData.diagnosis,
-      treatment: formData.treatment,
       medicineAdvice: formData.medicineAdvice
         .filter((m) => m.name.trim() !== "")
         .map((m) => ({
           name: m.name,
           duration: m.duration,
-          frequency: m.dosage,
+          dosage: m.dosage,
         })),
-      labReports: formData.investigations
-        .filter((inv) => inv.name.trim() !== "" && inv.report) // Only include if has name and report
+      investigations: formData.investigations
+        .filter((inv) => inv.name.trim() !== "")
         .map((i) => ({
           name: i.name,
+          category: i.category,
           report: i.report,
           date: i.date || new Date().toISOString(),
         })),
-      vitals: formData.vitals,
-      notes: formData.notes,
     };
 
     try {
-      await dispatch(saveDischargeData(dischargeData)).unwrap();
+      await dispatch(saveDischargeData(savePayload)).unwrap();
       toast({
         title: "Success",
         description: "Discharge data saved successfully",
@@ -531,33 +1114,30 @@ export default function DischargeSummary() {
     handleCloseLabReport();
   };
 
-  const handleMedicineAdviceChange = (index, field, value) => {
+  const handleMedicineAdviceChange = (index, field, value, id) => {
     setFormData((prev) => ({
       ...prev,
-      medicineAdvice: prev.medicineAdvice.map((item, i) =>
+      [id]: prev[id].map((item, i) =>
         i === index ? { ...item, [field]: value } : item
       ),
     }));
   };
 
-  const handleMedicineAdviceSuggestionSelect = (index, suggestion) => {
-    handleMedicineAdviceChange(index, "name", suggestion.name);
+  const handleMedicineAdviceSuggestionSelect = (index, suggestion, id) => {
+    handleMedicineAdviceChange(index, "name", suggestion.name, id);
   };
 
-  const addMedicineAdvice = () => {
+  const addMedicineAdvice = (id) => {
     setFormData((prev) => ({
       ...prev,
-      medicineAdvice: [
-        ...prev.medicineAdvice,
-        { name: "", dosage: "0-0-0", duration: "" },
-      ],
+      [id]: [...(prev[id] || []), { name: "", dosage: "0-0-0", duration: "" }],
     }));
   };
 
-  const removeMedicineAdvice = (index) => {
+  const removeMedicineAdvice = (index, id) => {
     setFormData((prev) => ({
       ...prev,
-      medicineAdvice: prev.medicineAdvice.filter((_, i) => i !== index),
+      [id]: prev[id].filter((_, i) => i !== index),
     }));
   };
 
@@ -809,467 +1389,405 @@ export default function DischargeSummary() {
     navigate("/patients/admitted");
   };
 
-  return (
-    <div className="container mx-auto py-4 px-2 sm:px-4 max-w-5xl">
-      <Card className="w-full shadow-lg">
-        <CardHeader className="bg-primary text-primary-foreground py-2">
-          <div className="flex items-center gap-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleBack}
-              className="h-8 w-8 text-primary-foreground hover:text-primary hover:bg-primary-foreground"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <CardTitle className="text-xl">Discharge Summary</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent className="p-4">
-          <div className="bg-secondary/10 rounded-lg p-3 mb-4">
-            <h2 className="text-lg font-semibold mb-2 text-primary">
-              Patient Information
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-              <div className="flex items-center">
-                <Label htmlFor="name" className="w-24 font-bold">
-                  Name:
-                </Label>
-                <Input
-                  id="name"
-                  name="name"
-                  value={patientInfo.name}
-                  onChange={handlePatientInfoChange}
-                  className="h-8"
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center flex-1">
-                  <Label htmlFor="age" className="w-12 font-bold">
-                    Age:
-                  </Label>
-                  <Input
-                    id="age"
-                    name="age"
-                    value={patientInfo.age}
-                    onChange={handlePatientInfoChange}
-                    className="h-8"
-                  />
-                </div>
-                <div className="flex items-center flex-1">
-                  <Label htmlFor="gender" className="w-16 font-bold">
-                    Gender:
-                  </Label>
-                  <Input
-                    id="gender"
-                    name="gender"
-                    value={patientInfo.gender}
-                    onChange={handlePatientInfoChange}
-                    className="h-8"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Label htmlFor="registrationNumber" className="w-24 font-bold">
-                  UHID No:
-                </Label>
-                <div className="relative flex-1">
-                  <Input
-                    id="registrationNumber"
-                    name="registrationNumber"
-                    value={patientInfo.registrationNumber}
-                    onChange={handlePatientInfoChange}
-                    className="h-8 pr-8"
-                  />
-                  {(!patient || !patientInfo.name) && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={handleRegistrationSearch}
-                      className="h-8 w-8 absolute right-0 top-0"
-                    >
-                      <Search className="h-4 w-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-              <div className="flex items-center">
-                <Label htmlFor="ipdNumber" className="w-24 font-bold">
-                  IPD No:
-                </Label>
-                <div className="relative flex-1">
-                  <Input
-                    id="ipdNumber"
-                    name="ipdNumber"
-                    value={patientInfo.ipdNumber}
-                    onChange={handlePatientInfoChange}
-                    className="h-8 pr-8"
-                  />
-                  {(!patient || !patientInfo.name) && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 absolute right-0 top-0"
-                    ></Button>
-                  )}
-                </div>
-              </div>
+  // Get user role from Redux store or props
 
-              <div className="flex items-center">
-                <Label htmlFor="contactNumber" className="w-24 font-bold">
-                  Contact:
-                </Label>
-                <Input
-                  id="contactNumber"
-                  name="contactNumber"
-                  value={patientInfo.contactNumber}
-                  onChange={handlePatientInfoChange}
-                  className="h-8"
-                />
-              </div>
-              <div className="flex items-center">
-                <Label htmlFor="address" className="w-24 font-bold">
-                  Address:
-                </Label>
-                <Input
-                  id="address"
-                  name="address"
-                  value={patientInfo.address}
-                  onChange={handlePatientInfoChange}
-                  className="h-8"
-                />
-              </div>
-              <div className="flex items-center">
-                <Label htmlFor="roomNumber" className="w-24 font-bold">
-                  Room:
-                </Label>
-                <Input
-                  id="roomNumber"
-                  name="roomNumber"
-                  value={patientInfo.roomNumber}
-                  onChange={handlePatientInfoChange}
-                  className="h-8"
-                />
-              </div>
-              <div className="flex items-center">
-                <Label htmlFor="admissionDate" className="w-24 font-bold">
-                  Admit Date:
-                </Label>
-                <Input
-                  id="admissionDate"
-                  name="admissionDate"
-                  type="date"
-                  value={formData.admissionDate}
-                  onChange={handleInputChange}
-                  className="h-8"
-                />
-              </div>
-              <div className="flex items-center">
-                <Label htmlFor="dateDischarged" className="w-24 font-bold">
-                  Discharge Date:
-                </Label>
-                <Input
-                  id="dateDischarged"
-                  name="dateDischarged"
-                  type="date"
-                  value={formData.dateDischarged}
-                  onChange={handleInputChange}
-                  className="h-8"
-                />
-              </div>
-            </div>
-          </div>
+  // Initialize form configuration based on user role and any saved custom config
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <Label htmlFor="diagnosis">Diagnosis</Label>
-                <div className="mt-1 space-y-2">
-                  <div className="flex flex-wrap gap-1">
-                    {formData.diagnosis &&
-                      formData.diagnosis
-                        .split(",")
-                        .map((diagnosis) => diagnosis.trim())
-                        .filter((diagnosis) => diagnosis)
-                        .map((diagnosis, index) => (
-                          <Badge
-                            key={index}
-                            variant="primary"
-                            className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
-                          >
-                            {diagnosis}
-                            <X
-                              className="ml-1 h-3 w-3 cursor-pointer"
-                              onClick={() => handleRemoveDiagnosis(diagnosis)}
-                            />
-                          </Badge>
-                        ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <MultiSelectInput
-                      suggestions={diagnosisTemplate?.map((name) => ({ name }))}
-                      selectedValues={formData.diagnosis
-                        .split(", ")
-                        .map((d) => ({ name: d }))}
-                      setSelectedValues={handleDiagnosisChange}
-                      placeholder="Select diagnosis"
-                    />
-                  </div>
+  const [showCustomizer, setShowCustomizer] = useState(false);
+  const [customConfig, setCustomConfig] = useState(null);
+
+  const handleCustomizeForm = () => {
+    setShowCustomizer(true);
+  };
+
+  const handleSaveCustomConfig = async (newConfig) => {
+    try {
+      await dispatch(
+        updateTemplate({ dischargeFormTemplates: newConfig })
+      ).unwrap();
+      setFormConfig(newConfig);
+      setShowCustomizer(false);
+      toast({
+        title: "Success",
+        description: "Form template saved successfully",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save form template",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancelCustomize = () => {
+    setShowCustomizer(false);
+  };
+
+  // Render form sections based on configuration
+  const renderFormSection = (section) => {
+    return (
+      <div key={section.id} className={section.className}>
+        {section.title && (
+          <h2 className="text-lg font-semibold mb-2 text-primary">
+            {section.title}
+          </h2>
+        )}
+        <div className="gap-2 text-sm">
+          {section.fields.map((field) => {
+            // Handle special components separately
+            if (field.type === "vitals") {
+              return (
+                <div key={field.id}>
+                  <Label htmlFor={field.id}>{field.label}</Label>
+                  {renderVitalsInputs(field.prefix)}
                 </div>
-              </div>
-              <div>{renderTextArea("clinicalSummary", "Clinical Summary")}</div>
+              );
+            }
 
-              <div>
-                <Label htmlFor="comorbidities">Comorbidities</Label>
-                <div className="mt-1 space-y-2">
-                  <div className="flex flex-wrap gap-1">
-                    {formData.comorbidities.map((val, index) => (
-                      <Badge
+            if (field.type === "investigations") {
+              return (
+                <div key={field.id}>
+                  <Label htmlFor={field.id}>{field.label}</Label>
+                  <div className="space-y-2 mt-2">
+                    {formData.investigations.map((investigation, index) => (
+                      <div
                         key={index}
-                        variant="primary"
-                        className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 text-xs rounded"
+                        className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
                       >
-                        {val.name}
-                        <X
-                          className="ml-1 h-3 w-3 cursor-pointer"
-                          onClick={() => handleRemoveSelected(val.name)}
-                        />
-                      </Badge>
+                        <div className="sm:col-span-3">
+                          <SearchSuggestion
+                            suggestions={allLabTests}
+                            placeholder="Select investigation"
+                            value={investigation.name}
+                            setValue={(value) =>
+                              handleInvestigationChange(index, { name: value })
+                            }
+                            onSuggestionSelect={(suggestion) =>
+                              handleInvestigationChange(index, suggestion)
+                            }
+                          />
+                        </div>
+                        <div className="flex space-x-2">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenLabReport(investigation)}
+                            aria-label="Open Lab Report"
+                            disabled={!investigation.name}
+                          >
+                            <ChevronRight className="h-5 w-5" />
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={() => handleRemoveInvestigation(index)}
+                            disabled={formData.investigations.length === 1}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
                     ))}
-                  </div>
-                  <div className="flex gap-2">
-                    <MultiSelectInput
-                      suggestions={comorbidities?.map((name) => ({ name }))}
-                      selectedValues={formData.comorbidities}
-                      setSelectedValues={handleComorbiditiesChange}
-                      placeholder="Select comorbidities"
-                    />
-                    <Select
-                      onValueChange={handleComorbidityHandlingChange}
-                      defaultValue={formData.comorbidityHandling}
+                    <Button
+                      onClick={handleAddInvestigation}
+                      variant="outline"
+                      className="mt-2 font-semibold"
+                      type="button"
                     >
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Handle" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="separate">Separate</SelectItem>
-                        <SelectItem value="clinical_summary">
-                          Clinical Summary
-                        </SelectItem>
-                        <SelectItem value="diagnosis">Diagnosis</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      <PlusCircle className="h-4 w-4 mr-2" /> Add Investigation
+                    </Button>
                   </div>
                 </div>
-              </div>
+              );
+            }
 
-              <div>
-                <Label htmlFor="admissionVitals">Admission Vitals</Label>
-                {renderVitalsInputs("admission")}
-              </div>
-
-              <div>
-                {renderTextArea(
-                  "conditionOnAdmission",
-                  "Condition on Admission"
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="investigations">Investigations</Label>
-                <div className="space-y-2 mt-2">
-                  {formData.investigations.map((investigation, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
-                    >
-                      <div className="sm:col-span-3">
-                        <SearchSuggestion
-                          suggestions={allLabTests}
-                          placeholder="Select investigation"
-                          value={investigation.name}
-                          setValue={(value) =>
-                            handleInvestigationChange(index, { name: value })
-                          }
-                          onSuggestionSelect={(suggestion) =>
-                            handleInvestigationChange(index, suggestion)
-                          }
-                        />
-                      </div>
-                      <div className="flex space-x-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpenLabReport(investigation)}
-                          aria-label="Open Lab Report"
-                          disabled={!investigation.name}
+            if (field.type === "medicineAdvice") {
+              return (
+                <div key={field.id}>
+                  <Label htmlFor={field.id}>{field.label}</Label>
+                  <div className="space-y-2 mt-2">
+                    {formData[field.id]?.map((item, index) => (
+                      <div
+                        key={index}
+                        className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                      >
+                        <div
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                            }
+                          }}
                         >
-                          <ChevronRight className="h-5 w-5" />
-                        </Button>
+                          <SearchSuggestion
+                            suggestions={medicinelist?.map((item) => ({
+                              name: item,
+                            }))}
+                            placeholder="Select medicine/advice"
+                            value={item.name}
+                            setValue={(value) =>
+                              handleMedicineAdviceChange(
+                                index,
+                                "name",
+                                value,
+                                field.id
+                              )
+                            }
+                            onSuggestionSelect={(suggestion) =>
+                              handleMedicineAdviceSuggestionSelect(
+                                index,
+                                suggestion,
+                                field.id
+                              )
+                            }
+                          />
+                        </div>
+                        <Input
+                          type="text"
+                          placeholder="Dosage"
+                          value={item.dosage}
+                          onChange={(e) =>
+                            handleMedicineAdviceChange(
+                              index,
+                              "dosage",
+                              e.target.value,
+                              field.id
+                            )
+                          }
+                          className="font-medium"
+                          onKeyDown={(e) => {
+                            // Prevent form submission on Enter key
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                            }
+                          }}
+                        />
+                        <Input
+                          type="text"
+                          placeholder="Duration"
+                          value={item.duration}
+                          onChange={(e) =>
+                            handleMedicineAdviceChange(
+                              index,
+                              "duration",
+                              e.target.value,
+                              field.id
+                            )
+                          }
+                          className="font-medium"
+                          onKeyDown={(e) => {
+                            // Prevent form submission on Enter key
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                            }
+                          }}
+                        />
                         <Button
-                          type="button"
+                          type="button" // Add type="button" to prevent form submission
                           variant="destructive"
                           size="icon"
-                          onClick={() => handleRemoveInvestigation(index)}
-                          disabled={formData.investigations.length === 1}
+                          onClick={() => removeMedicineAdvice(index)}
+                          disabled={formData.medicineAdvice.length === 1}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </div>
-                  ))}
-                  <Button
-                    onClick={handleAddInvestigation}
-                    variant="outline"
-                    className="mt-2 font-semibold"
-                    type="button"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" /> Add Investigation
-                  </Button>
-                </div>
-              </div>
-
-              <div>{renderTextArea("treatment", "Treatment")}</div>
-
-              <div>
-                <Label htmlFor="dischargeVitals">Discharge Vitals</Label>
-                {renderVitalsInputs("discharge")}
-              </div>
-
-              <div>
-                {renderTextArea(
-                  "conditionOnDischarge",
-                  "Condition on Discharge"
-                )}
-              </div>
-
-              <div>
-                <Label htmlFor="medicineAdvice">Medicine/Advice</Label>
-                <div className="space-y-2 mt-2">
-                  {formData.medicineAdvice.map((item, index) => (
-                    <div
-                      key={index}
-                      className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                    ))}
+                    <Button
+                      type="button" // Add type="button" to prevent form submission
+                      onClick={() => addMedicineAdvice(field.id)}
+                      variant="outline"
+                      className="mt-2 font-semibold"
                     >
-                      <div
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                          }
-                        }}
-                      >
-                        <SearchSuggestion
-                          suggestions={medicinelist?.map((item) => ({
-                            name: item,
-                          }))}
-                          placeholder="Select medicine/advice"
-                          value={item.name}
-                          setValue={(value) =>
-                            handleMedicineAdviceChange(index, "name", value)
-                          }
-                          onSuggestionSelect={(suggestion) =>
-                            handleMedicineAdviceSuggestionSelect(
-                              index,
-                              suggestion
-                            )
-                          }
-                        />
-                      </div>
-                      <Input
-                        type="text"
-                        placeholder="Dosage"
-                        value={item.dosage}
-                        onChange={(e) =>
-                          handleMedicineAdviceChange(
-                            index,
-                            "dosage",
-                            e.target.value
-                          )
-                        }
-                        className="font-medium"
-                        onKeyDown={(e) => {
-                          // Prevent form submission on Enter key
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                          }
-                        }}
-                      />
-                      <Input
-                        type="text"
-                        placeholder="Duration"
-                        value={item.duration}
-                        onChange={(e) =>
-                          handleMedicineAdviceChange(
-                            index,
-                            "duration",
-                            e.target.value
-                          )
-                        }
-                        className="font-medium"
-                        onKeyDown={(e) => {
-                          // Prevent form submission on Enter key
-                          if (e.key === "Enter") {
-                            e.preventDefault();
-                          }
-                        }}
-                      />
-                      <Button
-                        type="button" // Add type="button" to prevent form submission
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => removeMedicineAdvice(index)}
-                        disabled={formData.medicineAdvice.length === 1}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  <Button
-                    type="button" // Add type="button" to prevent form submission
-                    onClick={addMedicineAdvice}
-                    variant="outline"
-                    className="mt-2 font-semibold"
-                  >
-                    <PlusCircle className="h-4 w-4 mr-2" /> Add Medicine/Advice
-                  </Button>
+                      <PlusCircle className="h-4 w-4 mr-2" /> Add
+                      Medicine/Advice
+                    </Button>
+                  </div>
                 </div>
-              </div>
+              );
+            }
 
-              <div className="flex flex-col sm:flex-row justify-end mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handlePrint}
-                  className="w-full sm:w-auto"
-                >
-                  Print
-                </Button>
-                <Button
-                  type="button"
-                  onClick={handleSave}
-                  variant="outline"
-                  disabled={savingStatus === "loading" || !patientId}
-                  className="w-full sm:w-auto"
-                >
-                  {savingStatus === "loading" ? "Saving..." : "Save"}
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={dischargeStatus === "loading" || !patientId}
-                  className="w-full sm:w-auto"
-                >
-                  {dischargeStatus === "loading"
-                    ? "Discharging..."
-                    : "Discharge"}
-                </Button>
-              </div>
+            // For standard form fields
+            let value;
+            let onChange;
+
+            // Check if this is a patientInfo field
+            if (section.id === "patientInfo") {
+              // Special handling for admission and discharge dates
+              if (
+                field.id === "admissionDate" ||
+                field.id === "dateDischarged"
+              ) {
+                value = formData[field.id] || "";
+                onChange = handleInputChange;
+              } else {
+                value = patientInfo[field.id] || "";
+                onChange = handlePatientInfoChange;
+              }
+            } else {
+              value = field.id.includes(".")
+                ? field.id.split(".").reduce((obj, key) => obj[key], formData)
+                : formData[field.id];
+
+              onChange = (e) => {
+                if (field.type === "multiselect") {
+                  const newValue = Array.isArray(e)
+                    ? e.map((v) => v.name).join(", ")
+                    : e.target.value;
+                  handleInputChange({
+                    target: {
+                      name: field.id,
+                      value: newValue,
+                    },
+                  });
+                } else {
+                  handleInputChange(e);
+                }
+              };
+            }
+
+            // Get suggestions based on the field configuration
+            let suggestions = [];
+            if (field.suggestions) {
+              switch (field.suggestions) {
+                case "diagnosisTemplate":
+                  suggestions = diagnosisTemplate;
+                  break;
+                case "comorbidities":
+                  suggestions = comorbidities;
+                  break;
+                case "medicinelist":
+                  suggestions = medicinelist;
+                  break;
+                default:
+                  try {
+                    suggestions = eval(field.suggestions) || [];
+                  } catch (e) {
+                    console.error("Error evaluating suggestions:", e);
+                  }
+              }
+            }
+
+            // Add extra props for baby table
+            const extraProps = {
+              ...field.extraProps,
+              onComorbidityHandlingChange: handleComorbidityHandlingChange,
+              comorbidityHandling: formData.comorbidityHandling,
+              showBabyDetails: field.dependsOn
+                ? formData[field.dependsOn]
+                : true,
+            };
+
+            return (
+              <FormField
+                key={field.id}
+                field={field}
+                value={value}
+                onChange={onChange}
+                suggestions={suggestions}
+                extraProps={extraProps}
+              />
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // Add a new useEffect to handle form config changes
+  useEffect(() => {
+    if (savedConfig) {
+      // Update form fields based on saved configuration
+      const patientInfoSection = savedConfig.sections.find(
+        (section) => section.id === "patientInfo"
+      );
+      if (patientInfoSection) {
+        const updatedPatientInfo = {};
+        patientInfoSection.fields.forEach((field) => {
+          updatedPatientInfo[field.id] = patientInfo[field.id] || "";
+        });
+        setPatientInfo((prevInfo) => ({
+          ...prevInfo,
+          ...updatedPatientInfo,
+        }));
+      }
+    }
+  }, [savedConfig]);
+  console.log(formConfig);
+
+  return (
+    <div className="container mx-auto py-4 px-2 sm:px-4 max-w-5xl">
+      <Card className="w-full shadow-lg">
+        <CardHeader className="bg-primary text-primary-foreground py-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleBack}
+                className="h-8 w-8 text-primary-foreground hover:text-primary hover:bg-primary-foreground"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <CardTitle className="text-xl">Discharge Summary</CardTitle>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={handleCustomizeForm}
+              className="text-primary-foreground hover:text-primary hover:bg-primary-foreground"
+            >
+              Customize Form
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent className="p-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {formConfig.sections.map(renderFormSection)}
+
+            <div className="flex flex-col sm:flex-row justify-end mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handlePrint}
+                className="w-full sm:w-auto"
+              >
+                Print
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSave}
+                variant="outline"
+                disabled={savingStatus === "loading" || !patientId}
+                className="w-full sm:w-auto"
+              >
+                {savingStatus === "loading" ? "Saving..." : "Save"}
+              </Button>
+              <Button
+                type="submit"
+                disabled={dischargeStatus === "loading" || !patientId}
+                className="w-full sm:w-auto"
+              >
+                {dischargeStatus === "loading" ? "Discharging..." : "Discharge"}
+              </Button>
             </div>
           </form>
         </CardContent>
       </Card>
+
+      {/* Form Customizer Modal */}
+      {showCustomizer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <FormCustomizer
+            config={DEFAULT_FORM_CONFIG}
+            enabledFields={formConfig}
+            onSave={handleSaveCustomConfig}
+            onCancel={handleCancelCustomize}
+          />
+        </div>
+      )}
 
       {/* Lab Report Modal */}
       {isLabReportOpen && selectedInvestigation && (
@@ -1313,6 +1831,7 @@ export default function DischargeSummary() {
                     formData={formData}
                     onClose={handleCloseLabReport}
                     onSave={handleSaveLabReport}
+                    onFindingsDisplay={true}
                     searchWhere="ipd"
                   />
                 );
@@ -1321,7 +1840,7 @@ export default function DischargeSummary() {
           </div>
         </div>
       )}
-      <div style={{ display: "none" }}>
+      <div style={{ display: "none" }} className="print-content">
         <DischargeSummaryPDF
           ref={componentRef}
           formData={{
@@ -1334,6 +1853,7 @@ export default function DischargeSummary() {
                 date: inv.date || new Date().toISOString(),
               })),
           }}
+          formConfig={formConfig}
           patient={patientInfo}
           hospital={hospital}
         />

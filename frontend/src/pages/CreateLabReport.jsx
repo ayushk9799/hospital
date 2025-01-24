@@ -29,11 +29,11 @@ const CreateLabReport = ({
   completeType,
   patientData,
   formData,
+  onFindingsDisplay,
   onClose,
   onSave,
   searchWhere,
 }) => {
- 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { toast } = useToast();
@@ -281,14 +281,14 @@ text-align: right;
           [];
       setAllReports(relevantReports);
       let latestDate =
-        (relevantReports?.length > 0 && relevantReports.some((report) => report.date))
+        relevantReports?.length > 0 &&
+        relevantReports.some((report) => report.date)
           ? new Date(
               Math.max(
                 ...relevantReports.map((report) => new Date(report.date))
               )
             )
           : new Date();
-
 
       if (relevantReports.length > 0) {
         loadReportForDate(relevantReports, latestDate);
@@ -304,7 +304,7 @@ text-align: right;
     const selectedReport = reports.find(
       (report) => new Date(report.date).toDateString() === date.toDateString()
     );
-   
+
     if (selectedReport) {
       setReportDate(new Date(selectedReport.date));
       setGeneratedDate(new Date(selectedReport.date));
@@ -558,7 +558,9 @@ text-align: right;
           </div>
 
           {/* Table Header */}
-          {category !== "radiology" &&
+          {(!onFindingsDisplay ||
+            !fields.some((field) => field.name === "findings")) &&
+            category !== "radiology" &&
             fields.some(
               (field) =>
                 field.name !== "findings" &&
@@ -575,106 +577,115 @@ text-align: right;
 
           {/* Table Body */}
           <div className="space-y-2">
-            {fields.map((field) => (
-              <div
-                key={field.name}
-                className={
-                  field.name === "findings" ||
+            {fields
+              .filter((field) => {
+                if (!onFindingsDisplay) return true;
+                const hasFindings = fields.some((f) => f.name === "findings");
+                return hasFindings ? field.name === "findings" : true;
+              })
+              .map((field) => (
+                <div
+                  key={field.name}
+                  className={
+                    field.name === "findings" ||
+                    field.name === "impression" ||
+                    category === "radiology"
+                      ? "col-span-full"
+                      : "grid grid-cols-[4fr_2fr_1fr_3fr] gap-2 items-center border-b pb-2"
+                  }
+                >
+                  {field.name === "findings" ||
                   field.name === "impression" ||
-                  category === "radiology"
-                    ? "col-span-full"
-                    : "grid grid-cols-[4fr_2fr_1fr_3fr] gap-2 items-center border-b pb-2"
-                }
-              >
-                {field.name === "findings" ||
-                field.name === "impression" ||
-                category === "radiology" ? (
-                  <div className="col-span-full space-y-1">
-                    <Label htmlFor={field.name} className="mb-1">
-                      {field.label}
-                    </Label>
-                    <Textarea
-                      id={field.name}
-                      name={field.name}
-                      value={field.value}
-                      onChange={(e) => handleInputChange(e, field.name)}
-                      className="h-32 w-full"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <div className="font-medium">
-                      <Input
-                        value={field.label}
-                        onChange={(e) =>
-                          handleInputChange(e, field.name, "label")
-                        }
-                        className="font-sm px-1"
+                  category === "radiology" ? (
+                    <div className="col-span-full space-y-1">
+                      <Label htmlFor={field.name} className="mb-1">
+                        {field.label}
+                      </Label>
+                      <Textarea
+                        id={field.name}
+                        name={field.name}
+                        value={field.value}
+                        onChange={(e) => handleInputChange(e, field.name)}
+                        className="h-32 w-full"
                       />
                     </div>
-                    <div>
-                      {field.options ? (
-                        <SearchSuggestion
-                          suggestions={field.options.map((option) => ({
-                            name: option,
-                          }))}
-                          placeholder={`Select ${field.label}`}
-                          value={field.value}
-                          setValue={(value) =>
-                            handleInputChange({ target: { value } }, field.name)
-                          }
-                          onSuggestionSelect={(suggestion) =>
-                            handleOptionSelect(field.name, suggestion)
-                          }
-                        />
-                      ) : (
+                  ) : (
+                    <>
+                      <div className="font-medium">
                         <Input
-                          type={field.unit ? "number" : "text"}
-                          id={field.name}
-                          name={field.name}
-                          value={field.value}
-                          onChange={(e) => handleInputChange(e, field.name)}
-                          step={field.unit ? "0.01" : undefined}
+                          value={field.label}
+                          onChange={(e) =>
+                            handleInputChange(e, field.name, "label")
+                          }
+                          className="font-sm px-1"
                         />
-                      )}
-                    </div>
-                    <div>
-                      <Input
-                        value={field.unit}
-                        onChange={(e) =>
-                          handleInputChange(e, field.name, "unit")
-                        }
-                        placeholder="-"
-                        className="px-1"
-                      />
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <Input
-                        value={field.normalRange}
-                        onChange={(e) =>
-                          handleInputChange(e, field.name, "normalRange")
-                        }
-                        placeholder="-"
-                        className="flex-1"
-                      />
-                      {!labReportFields[category][type].some(
-                        (f) => f.name === field.name
-                      ) && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleRemoveField(field.name)}
-                          className="flex-shrink-0"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+                      </div>
+                      <div>
+                        {field.options ? (
+                          <SearchSuggestion
+                            suggestions={field.options.map((option) => ({
+                              name: option,
+                            }))}
+                            placeholder={`Select ${field.label}`}
+                            value={field.value}
+                            setValue={(value) =>
+                              handleInputChange(
+                                { target: { value } },
+                                field.name
+                              )
+                            }
+                            onSuggestionSelect={(suggestion) =>
+                              handleOptionSelect(field.name, suggestion)
+                            }
+                          />
+                        ) : (
+                          <Input
+                            type={field.unit ? "number" : "text"}
+                            id={field.name}
+                            name={field.name}
+                            value={field.value}
+                            onChange={(e) => handleInputChange(e, field.name)}
+                            step={field.unit ? "0.01" : undefined}
+                          />
+                        )}
+                      </div>
+                      <div>
+                        <Input
+                          value={field.unit}
+                          onChange={(e) =>
+                            handleInputChange(e, field.name, "unit")
+                          }
+                          placeholder="-"
+                          className="px-1"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <Input
+                          value={field.normalRange}
+                          onChange={(e) =>
+                            handleInputChange(e, field.name, "normalRange")
+                          }
+                          placeholder="-"
+                          className="flex-1"
+                        />
+                        {!labReportFields[category][type].some(
+                          (f) => f.name === field.name
+                        ) && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleRemoveField(field.name)}
+                            className="flex-shrink-0"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </>
+                  )}
+                </div>
+              ))}
           </div>
 
           <div className="border-t pt-4">

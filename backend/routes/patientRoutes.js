@@ -1247,38 +1247,38 @@ router.post("/discharge/:id", verifyToken, async (req, res) => {
 
   try {
     const { id } = req.params;
-    const {
-      dateDischarged,
-      conditionOnAdmission,
-      conditionOnDischarge,
-      comorbidities,
-      clinicalSummary,
-      diagnosis,
-      treatment,
-      medicineAdvice,
-      labReports,
-      vitals,
-      notes,
-    } = req.body;
+    const { formConfig, ...dischargeData } = req.body;
 
     const admission = await IPDAdmission.findById(id).session(session);
     if (!admission) {
       throw new Error("Admission not found");
     }
 
-    // Update admission details
-    admission.dateDischarged = dateDischarged;
-    admission.conditionOnAdmission = conditionOnAdmission;
-    admission.conditionOnDischarge = conditionOnDischarge;
-    admission.comorbidities = comorbidities;
-    admission.clinicalSummary = clinicalSummary;
-    admission.diagnosis = diagnosis;
-    admission.treatment = treatment;
-    admission.medicineAdvice = medicineAdvice;
-    admission.labReports = labReports;
-    admission.vitals = vitals;
-    admission.notes = notes;
+    // Store the complete form data
+    admission.dischargeData = dischargeData;
+    admission.formConfig = formConfig;
     admission.status = "Discharged";
+
+    // Update standard fields if they exist in the discharge data
+    const standardFields = [
+      "dateDischarged",
+      "conditionOnAdmission",
+      "conditionOnDischarge",
+      "comorbidities",
+      "clinicalSummary",
+      "diagnosis",
+      "treatment",
+      "medicineAdvice",
+      "labReports",
+      "vitals",
+      "notes",
+    ];
+
+    standardFields.forEach((field) => {
+      if (dischargeData[field] !== undefined) {
+        admission[field] = dischargeData[field];
+      }
+    });
 
     await admission.save({ session });
 
@@ -1298,8 +1298,6 @@ router.post("/discharge/:id", verifyToken, async (req, res) => {
       }
     }
 
-    // Update patient status
-
     await session.commitTransaction();
     res.json({ message: "Patient discharged successfully", admission });
   } catch (error) {
@@ -1309,48 +1307,49 @@ router.post("/discharge/:id", verifyToken, async (req, res) => {
     session.endSession();
   }
 });
+
 router.post("/SaveButNotDischarge/:id", verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const { id } = req.params;
-    const {
-      dateDischarged,
-      conditionOnAdmission,
-      conditionOnDischarge,
-      comorbidities,
-      clinicalSummary,
-      diagnosis,
-      treatment,
-      medicineAdvice,
-      labReports,
-      vitals,
-      notes,
-    } = req.body;
+    const { formConfig, ...dischargeData } = req.body;
 
     const admission = await IPDAdmission.findById(id).session(session);
     if (!admission) {
       throw new Error("Admission not found");
     }
 
-    // Update admission details
-    admission.dateDischarged = dateDischarged;
-    admission.conditionOnAdmission = conditionOnAdmission;
-    admission.conditionOnDischarge = conditionOnDischarge;
-    admission.comorbidities = comorbidities;
-    admission.clinicalSummary = clinicalSummary;
-    admission.diagnosis = diagnosis;
-    admission.treatment = treatment;
-    admission.medicineAdvice = medicineAdvice;
-    admission.labReports = labReports;
-    admission.vitals = vitals;
-    admission.notes = notes;
+    // Store the complete form data
+    admission.dischargeData = dischargeData;
+    admission.formConfig = formConfig;
+
+    // Update standard fields if they exist in the discharge data
+    const standardFields = [
+      "dateDischarged",
+      "conditionOnAdmission",
+      "conditionOnDischarge",
+      "comorbidities",
+      "clinicalSummary",
+      "diagnosis",
+      "treatment",
+      "medicineAdvice",
+      "labReports",
+      "vitals",
+      "notes",
+    ];
+
+    standardFields.forEach((field) => {
+      if (dischargeData[field] !== undefined) {
+        admission[field] = dischargeData[field];
+      }
+    });
 
     await admission.save({ session });
 
     await session.commitTransaction();
-    res.json({ message: "Patient discharged successfully", admission });
+    res.json({ message: "Discharge data saved successfully", admission });
   } catch (error) {
     await session.abortTransaction();
     res.status(400).json({ error: error.message });

@@ -134,6 +134,7 @@ export default function BabyRegistration() {
         createBaby({
           ...formData,
           mother: motherData._id,
+          isNew:true,
           ipdAdmission: patientId,
           admissionDate: formData.admissionDate,
           timeOfAdmission: formData.timeOfAdmission,
@@ -481,7 +482,7 @@ export default function BabyRegistration() {
         hospitalInfo={hospitalInfo}
         motherData={motherData}
         babyData={formData}
-        certificateNumber={String(registeredBaby?._id).slice(-4)}
+        certificateNumber={registeredBaby?.birthCounter}
       />
     </>
   );

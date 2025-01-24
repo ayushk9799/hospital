@@ -78,6 +78,8 @@ const ipdAdmissionSchema = new mongoose.Schema(
       pharmacy: [{ type: mongoose.Schema.Types.ObjectId, ref: "PharmacyBill" }],
       services: [{ type: mongoose.Schema.Types.ObjectId, ref: "ServicesBill" }],
     },
+    dischargeData: { type: mongoose.Schema.Types.Mixed },
+    formConfig: { type: mongoose.Schema.Types.Mixed },
   },
   { timestamps: true }
 );

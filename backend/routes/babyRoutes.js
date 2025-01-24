@@ -7,10 +7,22 @@ const router = express.Router();
 router.post("/", verifyToken, async (req, res) => {
   try {
     const babyData = req.body;
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     const baby = new Baby(babyData);
-    await baby.save();
+
+   const number= await Baby.updateBirthCounter(session,babyData.dateOfBirth);
+   console.log(number)
+    baby.birthCounter = number;
+    
+    await baby.save({ session });
+    await session.commitTransaction();
+    session.endSession();
     res.status(201).json(baby);
   } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
     res.status(400).json({ message: error.message });
   }
 });

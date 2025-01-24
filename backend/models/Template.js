@@ -18,6 +18,10 @@ const templateSchema = new mongoose.Schema({
   service_collections: [
     { ref: "Service", type: mongoose.Schema.Types.ObjectId },
   ],
+  dischargeFormTemplates: {
+    type: mongoose.Schema.Types.Mixed,
+    default: null,
+  },
 });
 
 templateSchema.plugin(hospitalPlugin);

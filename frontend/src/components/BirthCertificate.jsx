@@ -147,7 +147,7 @@ export default function BirthCertificate({
         {/* Certificate Number */}
         <div className="text-right">
           <p className="text-base font-bold underline">
-            NO:{format(new Date(), "yyyy")}-{format(new Date(), "MM")}/
+           Birth No:
             {certificateNumber}
           </p>
         </div>

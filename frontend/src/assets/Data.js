@@ -11,7 +11,7 @@ import { format, subMonths, isBefore } from "date-fns";
 import { cn } from "../lib/utils";
 
 // backend url
-export const Backend_URL = "https://thehospital.in";
+export const Backend_URL = "http://localhost:3000";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -1351,6 +1351,12 @@ export const labReportFields = {
     label: "Abdominal Wall",
     unit: "",
     normalRange: ""
+  },
+  {
+    name:"findings",
+    label:"Findings",
+    unit:"",
+    normalRange:""
   },
   {
     name: "impression",

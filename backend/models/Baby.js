@@ -1,11 +1,26 @@
 import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
+
+// Birth Counter Schema - Combined yearly and monthly counters
+const BirthCounterSchema = new mongoose.Schema({
+  year: { type: Number, required: true },
+  yearlyCount: { type: Number, default: 0 },
+  monthlyCount: { type: Number, default: 0 },
+  month: { type: String, required: true }, // 1-12 for Jan-Dec
+});
+
+BirthCounterSchema.plugin(hospitalPlugin);
+export const BirthCounter = mongoose.model("BirthCounter", BirthCounterSchema);
+
 const babySchema = new mongoose.Schema(
   {
     mother: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Patient",
       required: true,
+    },
+    birthCounter: {
+      type: String,
     },
     ipdAdmission: {
       type: mongoose.Schema.Types.ObjectId,
@@ -58,5 +73,38 @@ const babySchema = new mongoose.Schema(
     timestamps: true,
   }
 );
+
+// Add static methods for birth counting
+babySchema.statics.getBirthStats = async function (year, month) {
+  if (month) {
+    // Get specific month stats
+    const stats = await BirthCounter.findOne({ year, month });
+    return stats || { year, month, yearlyCount: 0, monthlyCount: 0 };
+  } else {
+    // Get all months for the year
+    const stats = await BirthCounter.find({ year });
+    return stats;
+  }
+};
+
+// Pre-save middleware to update counters
+babySchema.statics.updateBirthCounter = async function (session, dateOfBirth) {
+  const year = dateOfBirth?.split("-")?.[0];
+  const month = dateOfBirth?.split("-")?.[1]; // JavaScript months are 0-11
+
+  // Update both yearly and monthly counts in single document
+  const counterDoc = await BirthCounter.findOneAndUpdate(
+    { year, month },
+    {
+      $inc: {
+        yearlyCount: 1,
+        monthlyCount: 1,
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true, session }
+  );
+  return `${counterDoc.year}-${counterDoc.month}/${counterDoc.yearlyCount}-${counterDoc.monthlyCount}`;
+};
+
 babySchema.plugin(hospitalPlugin);
 export const Baby = mongoose.model("Baby", babySchema);

@@ -1,5 +1,5 @@
-import { Backend_URL } from "../../assets/Data";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { Backend_URL } from "../../assets/Data";
 
 // Async thunk for discharging a patient
 export const dischargePatient = createAsyncThunk(
@@ -7,7 +7,9 @@ export const dischargePatient = createAsyncThunk(
   async (dischargeData, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `${Backend_URL}/api/patients/discharge/${dischargeData.patientId}`,
+        `${Backend_URL}/api/patients/discharge/${
+          dischargeData.patientId || dischargeData._id
+        }`,
         {
           method: "POST",
           headers: {
@@ -37,7 +39,9 @@ export const saveDischargeData = createAsyncThunk(
   async (dischargeData, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `${Backend_URL}/api/patients/SaveButNotDischarge/${dischargeData.patientId}`,
+        `${Backend_URL}/api/patients/SaveButNotDischarge/${
+          dischargeData.patientId || dischargeData._id
+        }`,
         {
           method: "POST",
           headers: {
@@ -64,11 +68,19 @@ const dischargeSlice = createSlice({
   name: "discharge",
   initialState: {
     status: "idle",
-    error: null,
     savingStatus: "idle",
+    error: null,
     dischargeData: null,
+    formConfig: null,
   },
-  reducers: {},
+  reducers: {
+    setDischargeData: (state, action) => {
+      state.dischargeData = action.payload;
+    },
+    setFormConfig: (state, action) => {
+      state.formConfig = action.payload;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(dischargePatient.pending, (state) => {
@@ -76,25 +88,27 @@ const dischargeSlice = createSlice({
       })
       .addCase(dischargePatient.fulfilled, (state, action) => {
         state.status = "succeeded";
-
-        state.dischargeData = action.payload;
+        state.dischargeData = action.payload.admission.dischargeData;
+        state.formConfig = action.payload.admission.formConfig;
       })
       .addCase(dischargePatient.rejected, (state, action) => {
         state.status = "failed";
-        state.error = action.payload;
+        state.error = action.error.message;
       })
       .addCase(saveDischargeData.pending, (state) => {
         state.savingStatus = "loading";
       })
       .addCase(saveDischargeData.fulfilled, (state, action) => {
         state.savingStatus = "succeeded";
-        state.dischargeData = action.payload;
+        state.dischargeData = action.payload.admission.dischargeData;
+        state.formConfig = action.payload.admission.formConfig;
       })
       .addCase(saveDischargeData.rejected, (state, action) => {
         state.savingStatus = "failed";
-        state.error = action.payload;
+        state.error = action.error.message;
       });
   },
 });
 
+export const { setDischargeData, setFormConfig } = dischargeSlice.actions;
 export default dischargeSlice.reducer;
