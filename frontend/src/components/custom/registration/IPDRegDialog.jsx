@@ -645,6 +645,7 @@ setFormData((prev)=>({
                           <MemoizedInput
                             id="registrationNumber"
                             label="UHID Number"
+                            tabIndex={-1}
                             value={formData.registrationNumber}
                             onChange={handleInputChange}
                             className="pr-10"
@@ -665,6 +666,7 @@ setFormData((prev)=>({
                           <MemoizedInput
                             id="registrationNumber"
                             label="UHID Number"
+                            tabIndex={-1}
                             value={formData.registrationNumber}
                             onChange={handleInputChange}
                             className="pr-10"
@@ -679,6 +681,7 @@ setFormData((prev)=>({
                         </div>
                         <MemoizedInput
                       id="ipdNumber"
+                      tabIndex={-1}
                       label="IPD Number"
                       value={formData.admission.ipdNumber}
                       onChange={(e) =>
@@ -707,6 +710,7 @@ setFormData((prev)=>({
                           <div className="flex-grow relative">
                             <MemoizedInput
                               id="dateOfBirth"
+                              tabIndex={-1}
                               label="Date of Birth"
                               type="date"
                               value={formData.dateOfBirth}
@@ -1023,6 +1027,7 @@ setFormData((prev)=>({
                         <MemoizedInput
                           id="paymentInfo.totalAmount"
                           label="Amount"
+                          tabIndex={-1}
                           value={formData.paymentInfo.totalAmount.toLocaleString(
                             "en-IN"
                           )}
@@ -1061,6 +1066,7 @@ setFormData((prev)=>({
                         <MemoizedInput
                           id="paymentInfo.balanceDue"
                           label="Balance Due"
+                          tabIndex={-1}
                           value={(
                             formData.paymentInfo.totalAmount -
                             (formData.paymentInfo.amountPaid || 0)

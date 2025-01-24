@@ -39,6 +39,8 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const headerTemplateStrings = useSelector((state) => state.templates.headerTemplate);
   const HeaderComponent = createDynamicComponentFromString(headerTemplateStrings||headerTemplateString);
+  const [printPaymentHistory, setPrintPaymentHistory] = useState(true);
+
   React.useEffect(() => {
     if (billData?.services) {
       setSelectedServices(billData.services.map((_, index) => index));
@@ -457,66 +459,80 @@ React.useEffect(()=>
                   </div>
                 )}
                 <div className="mt-1">
-                  <h3 className="text-lg font-semibold mb-1">
-                    Payment History
-                  </h3>
-                  {billData?.payments && billData?.payments?.length > 0 ? (
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[80px]">Date</TableHead>
-                            {!isMobile && (
-                              <TableHead className="w-[80px]">Time</TableHead>
-                            )}
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Method</TableHead>
-                            <TableHead className="no-print">Receipt</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {billData.payments.map((payment, index) => (
-                            <TableRow key={index}>
-                              <TableCell className="text-xs">
-                                {new Date(
-                                  payment.createdAt
-                                ).toLocaleDateString("en-IN")}
-                              </TableCell>
+                  
+                  
+                  <div className={`${!printPaymentHistory ? 'no-print' : ''}`}>
+                    <div className="flex gap-2 items-center">
+                      <div className="flex items-center gap-2 mb-2 no-print">
+                        <Checkbox
+                          id="printPaymentHistory"
+                          checked={printPaymentHistory}
+                          onCheckedChange={setPrintPaymentHistory}
+                        />
+                      </div>
+                      <h3 className="text-lg font-semibold mb-1">
+                        Payment History
+                      </h3>
+                    </div>
+                    
+                    {billData?.payments && billData?.payments?.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="w-[80px]">Date</TableHead>
                               {!isMobile && (
+                                <TableHead className="w-[80px]">Time</TableHead>
+                              )}
+                              <TableHead>Amount</TableHead>
+                              <TableHead>Method</TableHead>
+                              <TableHead className="no-print">Receipt</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {billData.payments.map((payment, index) => (
+                              <TableRow key={index}>
                                 <TableCell className="text-xs">
                                   {new Date(
                                     payment.createdAt
-                                  ).toLocaleTimeString("en-IN", {
-                                    hour: "numeric",
-                                    minute: "numeric",
-                                    hour12: true,
+                                  ).toLocaleDateString("en-IN")}
+                                </TableCell>
+                                {!isMobile && (
+                                  <TableCell className="text-xs">
+                                    {new Date(
+                                      payment.createdAt
+                                    ).toLocaleTimeString("en-IN", {
+                                      hour: "numeric",
+                                      minute: "numeric",
+                                      hour12: true,
+                                    })}
+                                  </TableCell>
+                                )}
+                                <TableCell className="text-xs font-medium">
+                                  ₹
+                                  {payment?.amount?.toLocaleString("en-IN", {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
                                   })}
                                 </TableCell>
-                              )}
-                              <TableCell className="text-xs font-medium">
-                                ₹
-                                {payment?.amount?.toLocaleString("en-IN", {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                })}
-                              </TableCell>
-                              <TableCell className="text-xs">
-                                {payment.paymentMethod}
-                              </TableCell>
-                              <TableCell className="text-xs no-print">
-                                <PaymentReceipt payment={payment} billData={billData} />
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  ) : (
-                    <div className="flex items-center justify-center space-x-2 text-gray-500 py-4">
-                      <AlertCircle size={18} />
-                      <span>No payment history found</span>
-                    </div>
-                  )}
+                                <TableCell className="text-xs">
+                                  {payment.paymentMethod}
+                                </TableCell>
+                                <TableCell className="text-xs no-print">
+                                  <PaymentReceipt payment={payment} billData={billData} />
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-center space-x-2 text-gray-500 py-4">
+                        <AlertCircle size={18} />
+                        <span>No payment history found</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

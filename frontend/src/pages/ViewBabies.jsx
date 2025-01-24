@@ -175,7 +175,7 @@ export default function ViewBabies() {
           hospitalInfo={hospitalInfo}
           motherData={selectedBaby.mother}
           babyData={selectedBaby}
-          certificateNumber={String(selectedBaby._id).slice(-4)}
+          certificateNumber={selectedBaby.birthCounter}
         />
       )}
     </div>

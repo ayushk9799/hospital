@@ -128,6 +128,7 @@ export default function VisitDetailsForm({
             id="visit.bookingDate"
             value={formData.visit.bookingDate}
             onChange={handleInputChange}
+            tabIndex={-1}
             className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
               errors["visit.bookingDate"] ? "border-red-500" : "border-gray-300"
             }`}

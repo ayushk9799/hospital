@@ -8,7 +8,7 @@ import { headerTemplateString } from "../../../templates/headertemplate";
 import { format } from "date-fns";
 import { numberToWords } from "../../../assets/Data";
 
-const PaymentReceipt = ({ payment, billData }) => {
+const PaymentReceipt = ({ payment, billData, styleData }) => {
     
   const { hospitalInfo } = useSelector((state) => state.hospital);
   const headerTemplateStrings = useSelector(
@@ -52,8 +52,8 @@ const PaymentReceipt = ({ payment, billData }) => {
 
   return (
     <>
-      <Button variant="ghost" size="icon" onClick={handlePrint} className="h-6 w-6">
-        <Printer className="h-4 w-4" />
+      <Button variant={styleData ? 'outline' : 'ghost'}  size="icon" onClick={handlePrint} className={`flex justify-center items-center${styleData ? "px-4 w-full" : "h-6 w-6"}`}>
+        <Printer className="h-4 w-4 mr-2" /> {styleData ? "Print Receipt" : ""}
       </Button>
 
       <div style={{ display: "none" }}>
@@ -66,15 +66,15 @@ const PaymentReceipt = ({ payment, billData }) => {
                 <div className="grid grid-cols-2 py-2 px-4 border-black border-b-[1px]">
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Patient Name:</p>
-                        <p className="col-span-2 capitalize">{billData?.patient?.name || 'N/A'}</p>
+                        <p className="col-span-2 capitalize">{billData?.patient?.name || ''}</p>
                     </div>
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">UHID No:</p>
-                        <p className="col-span-2 capitalize">{billData?.patient?.registrationNumber || 'N/A'}</p>
+                        <p className="col-span-2 capitalize">{billData?.patient?.registrationNumber || ''}</p>
                     </div>
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Age/Gender:</p>
-                        <p className="col-span-2 capitalize">{billData?.patient?.age ? `${billData?.patient?.age} Years` : 'N/A'} / {billData?.patient?.gender || 'N/A'}</p>
+                        <p className="col-span-2 capitalize">{billData?.patient?.age ? `${billData?.patient?.age} Years` : ''} / {billData?.patient?.gender || ''}</p>
                     </div>
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Receipt Date</p>
@@ -84,11 +84,11 @@ const PaymentReceipt = ({ payment, billData }) => {
                     </div>
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Invoice No:</p>
-                        <p className="col-span-2 capitalize">{billData?.invoiceNumber || 'N/A'}</p>
+                        <p className="col-span-2 capitalize">{billData?.invoiceNumber || ''}</p>
                     </div>
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">OPD/IPD No:</p>
-                        <p className="col-span-2 capitalize">{billData?.patientInfo?.ipdNumber || 'N/A'}</p>
+                        <p className="col-span-2 capitalize">{billData?.patientInfo?.ipdNumber || ''}</p>
                     </div>
                 </div>
                 <div className="grid grid-cols-12 pb-2 px-4 font-semibold border-black border-b-[1px] ">

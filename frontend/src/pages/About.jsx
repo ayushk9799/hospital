@@ -34,7 +34,7 @@ export default function AboutPage() {
     if (action === 'scrollToFeatures') {
       setTimeout(() => {
         navigate('/', { state: { scrollToFeatures: true } });
-      }, 300); // 300ms delay, adjust if needed
+      }, 300); 
     }
   };
 

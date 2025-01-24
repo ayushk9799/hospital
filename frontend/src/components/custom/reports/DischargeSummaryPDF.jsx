@@ -117,8 +117,7 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
   const dischargeSummaryTemplateStringdatabase = useSelector(
     (state) => state.templates.dischargeSummaryTemplate
   );
-  console.log(formData);
-  console.log(formConfig);
+ 
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(
     "React",

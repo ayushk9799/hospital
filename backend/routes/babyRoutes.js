@@ -13,7 +13,6 @@ router.post("/", verifyToken, async (req, res) => {
     const baby = new Baby(babyData);
 
    const number= await Baby.updateBirthCounter(session,babyData.dateOfBirth);
-   console.log(number)
     baby.birthCounter = number;
     
     await baby.save({ session });

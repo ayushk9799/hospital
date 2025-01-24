@@ -665,7 +665,6 @@ export default function DischargeSummary() {
 
   // Helper function to merge data with form fields
   const mergeDataWithFormFields = (data, config) => {
-    console.log(data);
     const fieldIds = getAllFieldIds(config);
     const mergedData = { ...initialFormData };
 
@@ -759,7 +758,6 @@ export default function DischargeSummary() {
           console.error("Error fetching patient details:", error);
         }
       } else if (dischargeData) {
-        console.log(dischargeData);
         setPatient(dischargeData);
 
         if (dischargeData.formConfig || formConfig) {
@@ -768,7 +766,6 @@ export default function DischargeSummary() {
             dischargeData.formConfig || formConfig
           );
 
-          console.log(mergedData);
           setFormData(mergedData);
         }
 
@@ -1716,7 +1713,6 @@ export default function DischargeSummary() {
       }
     }
   }, [savedConfig]);
-  console.log(formConfig);
 
   return (
     <div className="container mx-auto py-4 px-2 sm:px-4 max-w-5xl">

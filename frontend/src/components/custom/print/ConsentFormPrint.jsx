@@ -105,7 +105,7 @@ const ConsentFormPrint = ({ patient }) => {
             </div>
             <div className="grid grid-cols-3">
               <span>Consultant:</span>
-              <span className="font-semibold capitalize col-span-2">DR. {patient?.doctor?.name || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.doctor?.name || 'N/A'}</span>
             </div>
           </div>
           <Separator className="my-2 bg-black" />

@@ -67,7 +67,7 @@ export default function PatientInfoForm({
   handleInputChange,
   handleSelectChange,
   errors,
-  setSearchedPatient
+  setSearchedPatient,
 }) {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const dispatch = useDispatch();
@@ -160,6 +160,7 @@ export default function PatientInfoForm({
               id="dateOfBirth"
               label="Date of Birth"
               type="date"
+              tabIndex={-1}
               value={formData.dateOfBirth}
               onChange={handleDobChange}
             />
@@ -171,6 +172,7 @@ export default function PatientInfoForm({
         <MemoizedInput
           id="registrationNumber"
           label="UHID Number"
+          tabIndex={-1}
           value={formData.registrationNumber}
           onChange={handleInputChange}
           error={errors.registrationNumber}
