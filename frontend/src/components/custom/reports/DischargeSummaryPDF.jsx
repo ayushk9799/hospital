@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { dischargeSummaryTemplateStringDefault } from "../../../templates/dischargesummary";
-import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
+// import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
 import { headerTemplateString } from "../../../templates/headertemplate";
 
 // Keep the styles object as is

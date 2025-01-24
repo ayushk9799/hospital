@@ -590,14 +590,14 @@ router.post("/details", verifyToken, async (req, res) => {
     const visits = await Visit.find(dateFilter)
       .populate(
         "patient",
-        "name dateOfBirth gender contactNumber email address bloodType age"
+        "name dateOfBirth gender contactNumber email address bloodType age lastVisit lastVisitType"
       )
       .populate("doctor", "name");
 
     const ipdAdmissions = await IPDAdmission.find(dateFilter)
       .populate(
         "patient",
-        "name dateOfBirth gender contactNumber email address bloodType age"
+        "name dateOfBirth gender contactNumber email address bloodType age lastVisit lastVisitType"
       )
       .populate("assignedDoctor", "name")
       .populate("assignedRoom", "roomNumber type");

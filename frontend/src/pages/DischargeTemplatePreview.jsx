@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
 import { useDispatch } from "react-redux";
-import { configBasedDischargeSummaryTemplate } from "../templatesExperiments/dischargeSummaryExperimental";
+// import { configBasedDischargeSummaryTemplate } from "../templatesExperiments/dischargeSummaryExperimental";
 // import { dischargeSummaryTemplateString } from "../templatesExperiments/dischargeSummaryExperimental";
 import { dischargeSummaryTemplateStringDefault } from "../templates/dischargesummary";
  import { updateTemplate } from "../redux/slices/templatesSlice";

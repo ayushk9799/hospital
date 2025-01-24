@@ -37,6 +37,7 @@ import MemoizedInput from "./MemoizedInput";
 import { fetchServices } from "../../../redux/slices/serviceSlice";
 import OPDBillTokenModal from "./OPDBillTokenModal";
 import MultiSelectInput from "../MultiSelectInput";
+import { format, formatDistanceToNow, differenceInDays } from "date-fns";
 
 const paymentMethods = [
   { name: "Cash" },
@@ -288,6 +289,8 @@ useEffect(()=>
             ? new Date(formData.dateOfBirth).toISOString()
             : null,
           age: Number(formData.age, 10),
+          lastVisit : formData.visit.bookingDate,
+          lastVisitType : formData.patientType,
           visit: {
             ...formData.visit,
             bookingDate: formData.visit.bookingDate,
@@ -385,6 +388,9 @@ useEffect(()=>
         gender: sourceData.gender,
         contactNumber: sourceData.contactNumber,
         registrationNumber: sourceData.registrationNumber,
+        address : sourceData.address,
+        guardianName : sourceData.guardianName,
+        relation : sourceData.relation
         // Add any other fields you want to prefill
       }));
     }
@@ -433,7 +439,7 @@ useEffect(()=>
     if (doctors.length === 1) {
       handleSelectChange("visit.doctor", doctors[0]._id);
     }
-  }, [departments, doctors, handleSelectChange]);
+  }, [departments, doctors, handleSelectChange, open]);
 
   useEffect(() => {
     if (!open) {
@@ -475,8 +481,20 @@ useEffect(()=>
             <DialogTitle className="mb-2 md:mb-0">
               Patient Registration
             </DialogTitle>
-            <DialogDescription className="hidden md:block">
-              Register new patient
+            <DialogDescription className="hidden md:flex justify-between">
+              <p>Register new patient</p>
+              {searchedPatient && searchedPatient.lastVisit && (
+                <p className="text-black font-semibold">
+                  Last Visit: {format(new Date(searchedPatient.lastVisit), "dd MMM yyyy")} [
+                  <span className={`capitalize ${
+                    differenceInDays(new Date(), new Date(searchedPatient.lastVisit)) > 14 
+                    ? 'text-red-500' 
+                    : 'text-green-500'
+                  }`}>
+                    {differenceInDays(new Date(), new Date(searchedPatient.lastVisit))} days ago
+                  </span>]
+                </p>
+              )}
             </DialogDescription>
           </DialogHeader>
           <form
@@ -557,7 +575,7 @@ useEffect(()=>
                           <SelectValue
                             placeholder={
                               doctors.length === 1
-                                ? `Dr. ${doctors[0].name}`
+                                ? `${doctors[0].name}`
                                 : "Assigned Doctor"
                             }
                           />
@@ -565,7 +583,7 @@ useEffect(()=>
                         <SelectContent>
                           {doctors.map((doctor) => (
                             <SelectItem key={doctor._id} value={doctor._id}>
-                              Dr. {doctor.name}
+                              {doctor.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
