@@ -15,7 +15,7 @@ const PaymentReceipt = ({ payment, billData, styleData }) => {
     (state) => state.templates.headerTemplate
   );
   const componentRef = useRef();
-
+console.log(billData)
   const HospitalHeader = createDynamicComponentFromString(
     headerTemplateStrings || headerTemplateString
   );
@@ -79,7 +79,7 @@ const PaymentReceipt = ({ payment, billData, styleData }) => {
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Receipt Date</p>
                         <p className="col-span-2 capitalize">
-                            {format(new Date(billData?.createdAt), "dd-MM-yyyy hh:mm a")}
+                            {format(billData?.createdAt ? new Date(billData?.createdAt) : new Date(), "dd-MM-yyyy hh:mm a")}
                         </p>
                     </div>
                     <div className="grid grid-cols-3">

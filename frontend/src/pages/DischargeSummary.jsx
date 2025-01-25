@@ -1397,9 +1397,12 @@ export default function DischargeSummary() {
 
   const handleSaveCustomConfig = async (newConfig) => {
     try {
+      console.log(newConfig)
+      console.log(savedConfig)
       await dispatch(
         updateTemplate({ dischargeFormTemplates: newConfig })
       ).unwrap();
+      
       setFormConfig(newConfig);
       setShowCustomizer(false);
       toast({
@@ -1408,6 +1411,7 @@ export default function DischargeSummary() {
         variant: "success",
       });
     } catch (error) {
+      console.log(error)
       toast({
         title: "Error",
         description: "Failed to save form template",
