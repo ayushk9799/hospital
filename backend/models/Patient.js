@@ -24,6 +24,8 @@ const patientSchema = new mongoose.Schema(
       { type: mongoose.Schema.Types.ObjectId, ref: "ipdAdmission" },
     ],
     visits: [{ type: mongoose.Schema.Types.ObjectId, ref: "visit" }],
+    lastVisit: { type: Date, default: Date.now },
+    lastVisitType : {type : String, enum : ['OPD', 'IPD']}
   },
   { timestamps: true }
 );

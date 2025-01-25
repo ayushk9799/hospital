@@ -24,6 +24,7 @@ import { format } from "date-fns";
 import { numberToWords } from "../../../assets/Data";
 import HospitalHeader from "../../../utils/print/HospitalHeader";
 import { ScrollArea } from "../../ui/scroll-area";
+import PaymentReceipt from "../print/PaymentReceipt";
 
 const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completedBill }) => {
   const componentRef = useRef();
@@ -234,6 +235,7 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                             <TableHead className="w-[80px]">Time</TableHead>
                             <TableHead>Amount</TableHead>
                             <TableHead>Method</TableHead>
+                            <TableHead className="no-print">Receipt</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -250,6 +252,9 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                               </TableCell>
                               <TableCell className="text-xs">
                                 {payment.paymentMethod || "N/A"}
+                              </TableCell>
+                              <TableCell className="no-print">
+                                <PaymentReceipt payment={completedBill?.payment?.[0]}  billData={{...completedBill?.bill, patient : completedBill?.patient}} />
                               </TableCell>
                             </TableRow>
                           ))}

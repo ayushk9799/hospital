@@ -212,8 +212,7 @@ export default function Patients() {
                 <TableHead>Operation</TableHead>
               </>
             )}
-            {type === "OPD" && <TableHead>Date</TableHead>}
-            {type === "OPD" && <TableHead>Time Slot</TableHead>}
+            {type === "OPD" && <TableHead>Date & Time</TableHead>}
             <TableHead>Mobile</TableHead>
             <TableHead>Address</TableHead>
             <TableHead>Gender</TableHead>
@@ -265,12 +264,9 @@ export default function Patients() {
               )}
               {type === "OPD" && (
                 <TableCell>
-                  {format(new Date(patient.bookingDate), "dd-MM-yyyy")}
-                </TableCell>
-              )}
-              {type === "OPD" && (
-                <TableCell>
-                  {patient.timeSlot?.start} - {patient.timeSlot?.end}
+                  {dateFilter === "Today" 
+                    ? format(new Date(patient.createdAt), "hh:mm a")
+                    : format(new Date(patient.bookingDate), "dd-MM-yyyy")}
                 </TableCell>
               )}
               <TableCell>{patient.patient.contactNumber}</TableCell>
@@ -421,7 +417,9 @@ export default function Patients() {
               <div className="flex items-center">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground mr-2" />
                 <span className="text-sm">
-                  {format(new Date(patient.bookingDate), "dd MMM yyyy")}
+                  {dateFilter === "Today"
+                    ? format(new Date(patient.createdAt), "hh:mm a")
+                    : format(new Date(patient.bookingDate), "dd MMM yyyy")}
                 </span>
               </div>
               <div className="flex items-center">
