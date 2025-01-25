@@ -32,6 +32,25 @@ export const DEFAULT_FORM_CONFIG = {
           type: "date",
           width: "full",
         },
+        {
+          id: "timeDischarged",
+          label: "Discharge Time",
+          type: "time",
+          width: "full",
+        },
+        {
+          id:"admittedTime",
+          label:"Admitted Time",
+          type:"time",
+          width:"full"
+        },
+        {
+          id:"husbandName",
+          label:"Husband Name",
+          type:"text",
+          width:"full"
+        }
+
       ],
     },
     {

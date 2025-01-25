@@ -464,11 +464,11 @@ const BabyTable = ({ value = [], onChange }) => {
     if (hours > 12) hours = hours - 12;
 
     const ampm = hours >= 12 ? "PM" : "AM";
-    const formattedTime = `${hours}:${minutes} ${ampm}`;
+    const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
 
     updateBaby(index, "time", formattedTime);
   };
-
+console.log(value)
   return (
     <div className="space-y-4">
       <Table>
@@ -587,7 +587,6 @@ export default function DischargeSummary() {
   );
   const [formConfig, setFormConfig] = useState(() => {
     const baseConfig = getFormConfig();
-    // Get config from Redux store
     if (savedConfig) {
       return savedConfig;
     }
@@ -893,7 +892,6 @@ export default function DischargeSummary() {
     const { name, value } = e.target;
     setPatientInfo((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
@@ -1616,7 +1614,7 @@ export default function DischargeSummary() {
               // Special handling for admission and discharge dates
               if (
                 field.id === "admissionDate" ||
-                field.id === "dateDischarged"
+                field.id === "dateDischarged" 
               ) {
                 value = formData[field.id] || "";
                 onChange = handleInputChange;

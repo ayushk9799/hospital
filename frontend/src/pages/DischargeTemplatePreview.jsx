@@ -14,9 +14,9 @@ export default function DischargeTemplatePreview() {
   const patient = {};
   const formData = {};
   const dispatch = useDispatch();
-//needs to be enabled whn editing the template and when the dichargesummarytemplateString is use dfomr the gitignored thing
+// needs to be enabled whn editing the template and when the dichargesummarytemplateString is use dfomr the gitignored thing
   // const handleSaveTemplate = () => {
-  //   dispatch(updateTemplate({ dischargeSummaryTemplate: dischargeSummaryTemplateStringDefault }));
+  //   dispatch(updateTemplate({ dischargeSummaryTemplate: configBasedDischargeSummaryTemplate }));
   // };
 
 

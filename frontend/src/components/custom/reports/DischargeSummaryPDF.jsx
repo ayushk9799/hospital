@@ -126,7 +126,7 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
     "formatDate",
     "hasValue",
     `return (${
-      dischargeSummaryTemplateStringdatabase ||
+          dischargeSummaryTemplateStringdatabase ||
           dischargeSummaryTemplateStringDefault
     });`
   );

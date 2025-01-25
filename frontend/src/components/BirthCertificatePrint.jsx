@@ -130,7 +130,7 @@ const BirthCertificatePrint = ({
               {/* Certificate Number */}
               <div className="text-right text-xl">
                 <p className="text-base font-bold underline">
-                  NO:{format(new Date(), "yyyy")}-{format(new Date(), "MM")}/
+                  BIRTH NO:
                   {certificateNumber}
                 </p>
               </div>
@@ -245,7 +245,7 @@ const BirthCertificatePrint = ({
               {/* Certificate Number */}
               <div className="text-right text-xl">
                 <p className="text-base font-bold underline">
-                  NO:{format(new Date(), "yyyy")}-{format(new Date(), "MM")}/
+                  BIRTH NO: 
                   {certificateNumber}
                 </p>
               </div>
