@@ -26,7 +26,7 @@ export default function BabyDetails() {
   const navigate = useNavigate();
   const { babyId } = useParams();
   const baby = useSelector((state) =>
-    state.babies.babies.find((b) => b._id === babyId)
+    state.babies.currentPatientBabies.find((b) => b._id === babyId)
   );
 
   if (!baby) {
@@ -49,7 +49,7 @@ export default function BabyDetails() {
   }
 
   return (
-    <div className="h-[calc(100vh-2rem)] p-4 bg-gradient-to-b from-pink-50 to-blue-50">
+    <div className="h-[calc(100vh-4rem)] p-4 bg-gradient-to-b from-pink-50 to-blue-50">
       <div className="h-full flex flex-col gap-4">
         <Button
           variant="ghost"
@@ -84,7 +84,7 @@ export default function BabyDetails() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-gray-500">Name</p>
-                      <p className="font-medium">{baby.mother.name}</p>
+                      <p className="font-medium uppercase">{baby.mother.name}</p>
                     </div>
                     <div>
                       <p className="text-gray-500">UHID</p>
@@ -103,7 +103,7 @@ export default function BabyDetails() {
                     <User className="h-5 w-5 text-blue-500" />
                     <h3 className="font-semibold text-lg">Baby Information</h3>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <p className="text-gray-500">Gender</p>
                       <p className="font-medium">{baby.gender}</p>
@@ -136,33 +136,56 @@ export default function BabyDetails() {
                 </CardContent>
               </Card>
 
-              {/* APGAR Scores */}
-              <Card className="border-2 border-yellow-100">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Star className="h-5 w-5 text-yellow-500" />
-                    <h3 className="font-semibold text-lg">APGAR Scores</h3>
-                  </div>
-                  <div className="grid grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-gray-500">1 Minute</p>
-                      <p className="font-medium">{baby.apgarScore.oneMinute}</p>
+              {/* APGAR Scores and Handover Information in same line */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* APGAR Scores */}
+                <Card className="border-2 border-yellow-100">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Star className="h-5 w-5 text-yellow-500" />
+                      <h3 className="font-semibold text-lg">APGAR Scores</h3>
                     </div>
-                    <div>
-                      <p className="text-gray-500">5 Minutes</p>
-                      <p className="font-medium">
-                        {baby.apgarScore.fiveMinutes}
-                      </p>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-gray-500">1 Minute</p>
+                        <p className="font-medium">{baby.apgarScore.oneMinute}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">5 Minutes</p>
+                        <p className="font-medium">
+                          {baby.apgarScore.fiveMinutes}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">10 Minutes</p>
+                        <p className="font-medium">
+                          {baby.apgarScore.tenMinutes}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-gray-500">10 Minutes</p>
-                      <p className="font-medium">
-                        {baby.apgarScore.tenMinutes}
-                      </p>
+                  </CardContent>
+                </Card>
+
+                {/* Baby Handover Information */}
+                <Card className="border-2 border-green-100">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-4">
+                      <User className="h-5 w-5 text-green-500" />
+                      <h3 className="font-semibold text-lg">Handover Information</h3>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-gray-500">Handed Over To</p>
+                        <p className="font-medium">{baby.babyHandOverName || '-'}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Relation</p>
+                        <p className="font-medium">{baby.babyHandOverRelation || '-'}</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             </CardContent>
           </ScrollArea>
         </Card>

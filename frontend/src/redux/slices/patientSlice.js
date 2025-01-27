@@ -63,6 +63,31 @@ export const registerPatient = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+export const editPatient = createLoadingAsyncThunk(
+  "patients/editPatient",
+  async ({patientData, patientID}, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/${patientID}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(patientData),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 export const revisitPatient = createLoadingAsyncThunk(
   "patients/revesitPatient",
   async (data, { rejectWithValue }) => {
@@ -438,6 +463,7 @@ const initialState = {
   registrationNumber: null,
   ipdNumber: null,
   numbersStatus: "idle",
+  editPatientStatus : 'idle'
 };
 
 const patientSlice = createSlice({
@@ -676,7 +702,39 @@ const patientSlice = createSlice({
       .addCase(fetchRegistrationAndIPDNumbers.rejected, (state, action) => {
         state.numbersStatus = "failed";
         state.error = action.payload;
-      });
+      }).addCase(editPatient.pending, (state) => {
+        state.editPatientStatus = 'loading'
+      }).addCase(editPatient.fulfilled, (state, action) => {
+        state.editPatientStatus = 'succeeded';
+        const updatedPatient = action.payload;
+        
+        // Update in patientlist
+        const index = state.patientlist.findIndex(
+          (item) => item.registrationNumber === updatedPatient.registrationNumber
+        );
+        if (index !== -1) {
+          state.patientlist[index] = {
+            ...state.patientlist[index],
+            patient: {
+              ...state.patientlist[index].patient,
+              ...updatedPatient
+            }
+          };
+        }
+
+        // Update selectedPatient if it matches
+        if (state.selectedPatient?.registrationNumber === updatedPatient.registrationNumber) {
+          state.selectedPatient = {
+            ...state.selectedPatient,
+            patient: {
+              ...state.selectedPatient.patient,
+              ...updatedPatient
+            }
+          };
+        }
+      }).addCase(editPatient.rejected, (state) => {
+        state.editPatientStatus = 'failed'
+      })
   },
 });
 

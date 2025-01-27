@@ -1,4 +1,4 @@
-import React, { useState ,useEffect} from "react";
+import React, { useState ,useEffect, useMemo} from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { useDispatch } from "react-redux";
 import { fetchPatients } from "../redux/slices/patientSlice";
@@ -19,12 +19,14 @@ import {
   Receipt,
   CreditCard,
   BarChart,
+  Baby
 } from "lucide-react";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
 import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
 import OPDProcedureDialog from "../components/custom/procedures/OPDProcedureDialog";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import {fetchDepartments} from '../redux/slices/departmentSlice'
 
 const QuickMenu = () => {
   const [isOPDDialogOpen, setIsOPDDialogOpen] = useState(false);
@@ -34,6 +36,20 @@ const QuickMenu = () => {
   const todaysPatient = useSelector(
     (state) => state.patients.todaysPatientList
   );
+  const {departments, status} = useSelector(state=>state.departments);
+
+  const hasObstetrics = useMemo(() => {
+    return departments?.some(dept => 
+      dept.name.toLowerCase().includes('obstetrics')
+    );
+  }, [departments]);
+
+  useEffect(() => {
+    if(status === 'idle') {
+      dispatch(fetchDepartments());
+    }
+  }, [departments]);
+
   useEffect(() => {
     dispatch(fetchPatients({ startDate: new Date().toLocaleDateString('en-In').split('/').reverse().join('-') }));
   }, []);
@@ -154,6 +170,17 @@ const QuickMenu = () => {
       color: "bg-gray-200 text-gray-800 hover:bg-gray-300",
     },
   ];
+
+  // Add the Baby menu item conditionally based on hasObstetrics
+  if (hasObstetrics) {
+    quickActions.push({
+      title: "Baby Record",
+      description: "View and Manage all babies",
+      icon: Baby,
+      action: () => navigate("/patients/babies"),
+      color: "bg-pink-300 text-gray-800 hover:bg-pink-400",
+    });
+  }
 
   return (
     <div className="p-4 space-y-6">

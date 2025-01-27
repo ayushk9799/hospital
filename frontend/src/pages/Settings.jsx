@@ -38,6 +38,10 @@ export default function Settings() {
     navigate("/settings/prefix-settings");
   };
 
+  const handleDepartmentSettings = () => {
+    navigate("/settings/department");
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <h1 className="text-xl sm:text-2xl font-bold mb-4">Settings</h1>
@@ -62,6 +66,9 @@ export default function Settings() {
         </Button>
         <Button onClick={handlePrefixSettings} className="w-full sm:w-auto">
           Prefix Settings
+        </Button>
+        <Button onClick={handleDepartmentSettings} className="w-full sm:w-auto">
+          Manage Department
         </Button>
       </div>
 

@@ -66,6 +66,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "../components/ui/badge";
 import OPDPrescriptionPrint from "../components/custom/print/OPDPrescriptionPrint";
 import ConsentFormPrint from "../components/custom/print/ConsentFormPrint";
+import EditPatientDialog from "../components/custom/patients/EditPatientDialog";
 
 
 export default function Patients() {
@@ -79,6 +80,8 @@ export default function Patients() {
   const [activeTab, setActiveTab] = useState("OPD");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
@@ -162,6 +165,11 @@ export default function Patients() {
 
   const handleDischarge = (patient) => {
     navigate(`/patients/discharge/${patient._id}`, { state: { patient } });
+  };
+
+  const handleEditPatient = (patient) => {
+    setSelectedPatient(patient);
+    setIsEditDialogOpen(true);
   };
 
   const PatientTable = ({ patients, type }) => {
@@ -289,10 +297,14 @@ export default function Patients() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
+                    
                     <DropdownMenuItem
                       onClick={() => handleExistingBills(patient)}
                     >
                       Bills
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleEditPatient(patient)}>
+                      Edit Patient
                     </DropdownMenuItem>
                     {patient.type === "OPD" && (
                       <DropdownMenuItem asChild>
@@ -388,11 +400,9 @@ export default function Patients() {
                     >
                       Bills
                     </DropdownMenuItem>
-                    {patient.type === "OPD" && (
-                      <DropdownMenuItem asChild>
-                        <OPDPrescriptionPrint patient={patient} />
-                      </DropdownMenuItem>
-                    )}
+                    <DropdownMenuItem onClick={() => handleEditPatient(patient)}>
+                      Edit Patient
+                    </DropdownMenuItem>
                     {patient.type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
@@ -490,6 +500,11 @@ export default function Patients() {
         <IPDRegDialog
           open={isIPDDialogOpen}
           onOpenChange={setIsIPDDialogOpen}
+        />
+        <EditPatientDialog 
+          open={isEditDialogOpen} 
+          setOpen={setIsEditDialogOpen}
+          patientData={{...selectedPatient?.patient, registrationNumber : selectedPatient?.registrationNumber, type : selectedPatient?.type, visitID : selectedPatient?._id}}
         />
         <Tabs
           defaultValue="OPD"
