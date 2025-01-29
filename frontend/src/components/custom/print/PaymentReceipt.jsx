@@ -15,7 +15,6 @@ const PaymentReceipt = ({ payment, billData, styleData }) => {
     (state) => state.templates.headerTemplate
   );
   const componentRef = useRef();
-console.log(billData)
   const HospitalHeader = createDynamicComponentFromString(
     headerTemplateStrings || headerTemplateString
   );

@@ -380,6 +380,11 @@ useEffect(()=>
   useEffect(() => {
     if (patientData || searchedPatient) {
       const sourceData = searchedPatient || patientData;
+      // console.log(sourceData);
+
+      const tempGuardianName = sourceData?.visits[0]?.guardianName || sourceData?.admissionDetails[0]?.guardianName || "";
+      const tempRelation = sourceData?.visits[0]?.relation || sourceData?.admissionDetails[0]?.relation || "";
+      
       setFormData((prev) => ({
         ...prev,
         _id: sourceData._id,
@@ -389,8 +394,7 @@ useEffect(()=>
         contactNumber: sourceData.contactNumber,
         registrationNumber: sourceData.registrationNumber,
         address : sourceData.address,
-        guardianName : sourceData.guardianName,
-        relation : sourceData.relation
+        visit : {...formData.visit, guardianName : tempGuardianName, relation : tempRelation}
         // Add any other fields you want to prefill
       }));
     }

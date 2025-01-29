@@ -47,9 +47,6 @@ export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
           fontFamily: 'Arial, sans-serif'
         }
       }, patient?.patient?.address || '')
-
-      
-    
   );
 }`;
 

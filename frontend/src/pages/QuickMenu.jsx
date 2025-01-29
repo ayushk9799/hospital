@@ -39,6 +39,7 @@ const QuickMenu = () => {
   const {departments, status} = useSelector(state=>state.departments);
 
   const hasObstetrics = useMemo(() => {
+    if(departments.length === 0) return false;
     return departments?.some(dept => 
       dept.name.toLowerCase().includes('obstetrics')
     );

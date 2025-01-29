@@ -287,8 +287,8 @@ router.get("/search", async (req, res) => {
         { registrationNumber: { $regex: `^${q}$`, $options: 'i' } },
       ],
     })
-      .populate("visits", "bookingDate")
-      .populate("admissionDetails", "bookingDate")
+      .populate("visits", "bookingDate guardianName relation")
+      .populate("admissionDetails", "bookingDate guardianName relation")
       .limit(10);
 
     res.status(200).json(patients);
@@ -297,5 +297,49 @@ router.get("/search", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+router.get("/patient-data-next-visit/:UHID", async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  try {
+    const {UHID} = req.params;
+    const patient = await Patient.findOne({registrationNumber : UHID})
+      .populate('visits', "bookingDate guardianName relation bills createdAt")
+      .populate('admissionDetails', "bookingDate guardianName relation bills createdAt")
+      .session(session);
+      
+    if(!patient) {
+      throw Error('Patient not found');
+    }
+
+    // Combine both visits and admissions and sort by date
+    const allVisits = [
+      ...(patient.visits || []).map(visit => ({
+        ...visit.toObject(),
+        type: 'OPD',
+        date: visit.bookingDate
+      })),
+      ...(patient.admissionDetails || []).map(admission => ({
+        ...admission.toObject(),
+        type: 'IPD',
+        date: admission.bookingDate
+      }))
+    ].sort((a, b) => b.date - a.date);
+
+    // Get the most recent visit
+    const lastVisit = allVisits[0] || null;
+
+    await session.commitTransaction();
+    session.endSession();
+    
+    res.status(200).json({ lastVisit });
+    
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 export default router;

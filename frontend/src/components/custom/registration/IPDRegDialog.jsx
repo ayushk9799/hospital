@@ -118,6 +118,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         provider: "",
         policyNumber: "",
       },
+      guardianName:"",
+      relation:""
     },
   };
   
@@ -224,6 +226,9 @@ setFormData((prev)=>({
   useEffect(() => {
     if (patientData || searchedPatient) {
       const sourceData = searchedPatient || patientData;
+      const tempGuardianName = sourceData?.visits[0]?.guardianName || sourceData?.admissionDetails[0]?.guardianName || "";
+      const tempRelation = sourceData?.visits[0]?.relation || sourceData?.admissionDetails[0]?.relation || "";
+
       setFormData((prev) => ({
         ...prev,
         _id: sourceData._id,
@@ -239,6 +244,8 @@ setFormData((prev)=>({
         // Keep existing admission and payment info
         admission: {
           ...prev.admission,
+          guardianName : tempGuardianName,
+          relation : tempRelation
         },
         paymentInfo: {
           ...prev.paymentInfo,
