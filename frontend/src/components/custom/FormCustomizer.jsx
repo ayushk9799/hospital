@@ -358,8 +358,8 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
   };
 
   const handleSave = () => {
-    console.log(customConfig)
     const finalConfig = {
+      ...customConfig,
       sections: customConfig.sections.map((section) => ({
         ...section,
         fields: section.fields.filter((field) => !field.hidden),

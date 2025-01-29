@@ -836,7 +836,6 @@ const CreateServiceBill = ({
   );
 
   const handlePaymentSuccess = (updatedBill) => {
-    console.log(updatedBill)
     // Update the billData state with the new data
     const formattedBillData = {
       // services: [
@@ -856,7 +855,7 @@ const CreateServiceBill = ({
     };
 
     setBillData(updatedBill);
-
+console.log(updatedBill)
     // Update billDataForPrint if needed
     const formattedBillDataForPrint = {
       _id: updatedBill._id,
@@ -870,7 +869,6 @@ const CreateServiceBill = ({
 
   // Modify the handleOpenPayment function
   const handleOpenPayment = () => {
-    console.log(billData)
     const formattedBillData = {
       _id: billData?.services?.[0]?._id || billId,
       totalAmount: calculateTotals.totalAmount,
@@ -1330,7 +1328,7 @@ const CreateServiceBill = ({
         isOpen={isPaymentDialogOpen}
         setIsOpen={setIsPaymentDialogOpen}
         billData={billDataForPrint}
-        onPaymentSuccess={() => handlePaymentSuccess()}
+        onPaymentSuccess={(updatedBill) => handlePaymentSuccess(updatedBill)}
       />
 
       <Dialog open={isWarningDialogOpen} onOpenChange={setIsWarningDialogOpen}>
