@@ -100,138 +100,6 @@ const LabReportTable = ({ report }) => {
   );
 };
 
-// Add form configuration
-// const DEFAULT_FORM_CONFIG = {
-//   sections: [
-//     {
-//       id: "patientInfo",
-//       title: "Patient Information",
-//       className: "bg-secondary/10 rounded-lg p-3 mb-4",
-//       fields: [
-//         { id: "name", label: "Name", type: "text", width: "full" },
-//         { id: "age", label: "Age", type: "text", width: "half" },
-//         { id: "gender", label: "Gender", type: "text", width: "half" },
-//         {
-//           id: "registrationNumber",
-//           label: "UHID No",
-//           type: "text",
-//           width: "full",
-//           searchable: true,
-//         },
-//         { id: "ipdNumber", label: "IPD No", type: "text", width: "full" },
-//         { id: "contactNumber", label: "Contact", type: "text", width: "full" },
-//         { id: "address", label: "Address", type: "text", width: "full" },
-//         { id: "roomNumber", label: "Room", type: "text", width: "full" },
-//         {
-//           id: "admissionDate",
-//           label: "Admit Date",
-//           type: "date",
-//           width: "full",
-//         },
-//         {
-//           id: "dateDischarged",
-//           label: "Discharge Date",
-//           type: "date",
-//           width: "full",
-//         },
-//       ],
-//     },
-//     {
-//       id: "babyDetails",
-//       title: "Baby Details",
-//       className: "bg-secondary/10 rounded-lg p-3 mb-4",
-//       fields: [
-//         {
-//           id: "hasBabyDetails",
-//           label: "Add Baby Details",
-//           type: "checkbox",
-//           width: "full",
-//         },
-//         {
-//           id: "babies",
-//           label: "Baby Information",
-//           type: "babyTable",
-//           width: "full",
-//           dependsOn: "hasBabyDetails",
-//         },
-//       ],
-//     },
-//     {
-//       id: "clinicalInfo",
-//       fields: [
-//         {
-//           id: "diagnosis",
-//           label: "Diagnosis",
-//           type: "multiselect",
-//           component: "MultiSelectInput",
-//           suggestions: "diagnosisTemplate",
-//           width: "full",
-//         },
-//         {
-//           id: "clinicalSummary",
-//           label: "Clinical Summary",
-//           type: "textarea",
-//           width: "full",
-//         },
-//         {
-//           id: "comorbidities",
-//           label: "Comorbidities",
-//           type: "multiselect",
-//           component: "MultiSelectInput",
-//           suggestions: "comorbidities",
-//           width: "full",
-//           extraComponent: "ComorbidityHandling",
-//         },
-//         {
-//           id: "admissionVitals",
-//           label: "Admission Vitals",
-//           type: "vitals",
-//           prefix: "admission",
-//           width: "full",
-//         },
-//         {
-//           id: "conditionOnAdmission",
-//           label: "Condition on Admission",
-//           type: "textarea",
-//           width: "full",
-//         },
-//         {
-//           id: "investigations",
-//           label: "Investigations",
-//           type: "investigations",
-//           width: "full",
-//         },
-//         {
-//           id: "treatment",
-//           label: "Treatment",
-//           type: "textarea",
-//           width: "full",
-//         },
-//         {
-//           id: "dischargeVitals",
-//           label: "Discharge Vitals",
-//           type: "vitals",
-//           prefix: "discharge",
-//           width: "full",
-//         },
-//         {
-//           id: "conditionOnDischarge",
-//           label: "Condition on Discharge",
-//           type: "textarea",
-//           width: "full",
-//         },
-//         {
-//           id: "medicineAdvice",
-//           label: "Medicine/Advice",
-//           type: "medicineAdvice",
-//           width: "full",
-//         },
-//       ],
-//     },
-//   ],
-// };
-
-// Add form field renderer components
 const FormField = ({
   field,
   value,
@@ -464,11 +332,13 @@ const BabyTable = ({ value = [], onChange }) => {
     if (hours > 12) hours = hours - 12;
 
     const ampm = hours >= 12 ? "PM" : "AM";
-    const formattedTime = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')} ${ampm}`;
+    const formattedTime = `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")} ${ampm}`;
 
     updateBaby(index, "time", formattedTime);
   };
-console.log(value)
+  console.log(value);
   return (
     <div className="space-y-4">
       <Table>
@@ -641,7 +511,7 @@ export default function DischargeSummary() {
       },
     },
     investigations: [{ name: "", category: "" }],
-    medicineAdvice: [{ name: "", dosage: "0-0-0", duration: "" }],
+    medicineAdvice: [{ name: "", dosage: "", duration: "" }],
     notes: "",
     comorbidities: [{ name: "" }],
     hasBabyDetails: false,
@@ -690,7 +560,7 @@ export default function DischargeSummary() {
     if (data?.medicineAdvice?.length > 0) {
       mergedData.medicineAdvice = data.medicineAdvice.map((m) => ({
         name: m.name || "",
-        dosage: m.dosage || "0-0-0",
+        dosage: m.dosage || "",
         duration: m.duration || "",
       }));
     }
@@ -862,7 +732,7 @@ export default function DischargeSummary() {
             ? patient.labReports
             : [{ name: "", category: "" }],
         medicineAdvice: patient.medicineAdvice || [
-          { name: "", dosage: "0-0-0", duration: "" },
+          { name: "", dosage: "", duration: "" },
         ],
         notes: patient.notes || "",
         comorbidities: patient.comorbidities?.map((comorbidity) => ({
@@ -1125,14 +995,15 @@ export default function DischargeSummary() {
   const addMedicineAdvice = (id) => {
     setFormData((prev) => ({
       ...prev,
-      [id]: [...(prev[id] || []), { name: "", dosage: "0-0-0", duration: "" }],
+      [id]: [...(prev[id] || []), { name: "", dosage: "", duration: "" }],
     }));
   };
 
   const removeMedicineAdvice = (index, id) => {
+    console.log(id);
     setFormData((prev) => ({
       ...prev,
-      [id]: prev[id].filter((_, i) => i !== index),
+      [id]: prev[id]?.filter((_, i) => i !== index),
     }));
   };
 
@@ -1397,12 +1268,12 @@ export default function DischargeSummary() {
 
   const handleSaveCustomConfig = async (newConfig) => {
     try {
-      console.log(newConfig)
-      console.log(savedConfig)
+      console.log(newConfig);
+      console.log(savedConfig);
       await dispatch(
         updateTemplate({ dischargeFormTemplates: newConfig })
       ).unwrap();
-      
+
       setFormConfig(newConfig);
       setShowCustomizer(false);
       toast({
@@ -1411,7 +1282,7 @@ export default function DischargeSummary() {
         variant: "success",
       });
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast({
         title: "Error",
         description: "Failed to save form template",
@@ -1585,11 +1456,10 @@ export default function DischargeSummary() {
                           }}
                         />
                         <Button
-                          type="button" // Add type="button" to prevent form submission
+                          type="button"
                           variant="destructive"
                           size="icon"
-                          onClick={() => removeMedicineAdvice(index)}
-                          disabled={formData.medicineAdvice.length === 1}
+                          onClick={() => removeMedicineAdvice(index, field.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -1618,7 +1488,7 @@ export default function DischargeSummary() {
               // Special handling for admission and discharge dates
               if (
                 field.id === "admissionDate" ||
-                field.id === "dateDischarged" 
+                field.id === "dateDischarged"
               ) {
                 value = formData[field.id] || "";
                 onChange = handleInputChange;

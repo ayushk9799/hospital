@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { dischargeSummaryTemplateStringDefault } from "../../../templates/dischargesummary";
-// import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
+import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
 import { headerTemplateString } from "../../../templates/headertemplate";
 
 // Keep the styles object as is
@@ -32,6 +32,7 @@ const styles = {
     color: "#2c3e50",
     width: "80%",
     marginLeft: "5px",
+    whiteSpace: "pre-line",
   },
   row: {
     display: "flex",
@@ -114,10 +115,11 @@ const hasValue = (obj) => {
 // Create the dynamic component
 const DischargeSummaryPDF = forwardRef((props, ref) => {
   const { formData, patient, formConfig, hospital } = props;
+  console.log(formData.clinicalSummary);
   const dischargeSummaryTemplateStringdatabase = useSelector(
     (state) => state.templates.dischargeSummaryTemplate
   );
- 
+
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(
     "React",
@@ -126,8 +128,8 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
     "formatDate",
     "hasValue",
     `return (${
-          dischargeSummaryTemplateStringdatabase ||
-          dischargeSummaryTemplateStringDefault
+      dischargeSummaryTemplateStringdatabase ||
+      dischargeSummaryTemplateStringDefault
     });`
   );
 
@@ -136,8 +138,6 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
   );
 
   const HospitalHeader = createDynamicComponentFromString(headerTemplateString);
-
-  
 
   try {
     // Get the component function
@@ -149,7 +149,7 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
       hasValue
     );
     // Execute the component function with the props
-    return ComponentFunction(formData,patient,hospital,formConfig,ref);
+    return ComponentFunction(formData, patient, hospital, formConfig, ref);
   } catch (error) {
     console.error("Error rendering dynamic discharge summary:", error);
     return React.createElement(
