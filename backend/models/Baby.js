@@ -51,6 +51,22 @@ const babySchema = new mongoose.Schema(
       type: Number, // in grams
       required: true,
     },
+    babyHandOverName: {
+      type: String,
+      trim: true,
+    },
+    babyHandOverRelation: {
+      type: String,
+      trim: true,
+    },
+    babyFatherName : {
+      type : String,
+      trim : true
+    },
+    certificatedCreated : {
+      type : Boolean,
+      default : false
+    },
     apgarScore: {
       oneMinute: {
         type: Number,

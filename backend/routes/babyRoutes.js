@@ -12,13 +12,18 @@ router.post("/", verifyToken, async (req, res) => {
 
     const baby = new Baby(babyData);
 
-   const number= await Baby.updateBirthCounter(session,babyData.dateOfBirth);
+    const number = await Baby.updateBirthCounter(session, babyData.dateOfBirth);
     baby.birthCounter = number;
     
     await baby.save({ session });
     await session.commitTransaction();
     session.endSession();
-    res.status(201).json(baby);
+
+    // Fetch the saved baby with populated mother data
+    const populatedBaby = await Baby.findById(baby._id)
+      .populate("mother", "name registrationNumber");
+    
+    res.status(201).json(populatedBaby);
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
@@ -39,15 +44,52 @@ router.get("/admission/:ipdAdmissionId", verifyToken, async (req, res) => {
 });
 
 // Update baby record
-router.put("/:id", verifyToken, async (req, res) => {
+router.put("/", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const baby = await Baby.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-    });
+    // Remove _id from update data to prevent MongoDB errors
+    const { _id, ...updateData } = req.body;
+
+    const baby = await Baby.findByIdAndUpdate(
+      _id,
+      updateData,
+      {
+        new: true,
+        runValidators: true,
+        session
+      }
+    );
+
     if (!baby) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: "Baby record not found" });
     }
-    res.json(baby);
+
+    await session.commitTransaction();
+    session.endSession();
+
+    // Fetch the updated baby with populated mother data
+    const populatedBaby = await Baby.findById(baby._id)
+      .populate("mother", "name registrationNumber");
+    
+    res.json(populatedBaby);
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).json({ message: error.message });
+  }
+});
+
+// Get all baby records
+router.get("/", verifyToken, async (req, res) => {
+  try {
+    const babies = await Baby.find({})
+      .populate("mother", "name registrationNumber")
+      .sort("-createdAt");
+    res.json(babies);
   } catch (error) {
     res.status(400).json({ message: error.message });
   }

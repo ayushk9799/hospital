@@ -338,7 +338,6 @@ const BabyTable = ({ value = [], onChange }) => {
 
     updateBaby(index, "time", formattedTime);
   };
-  console.log(value);
   return (
     <div className="space-y-4">
       <Table>
@@ -1000,7 +999,6 @@ export default function DischargeSummary() {
   };
 
   const removeMedicineAdvice = (index, id) => {
-    console.log(id);
     setFormData((prev) => ({
       ...prev,
       [id]: prev[id]?.filter((_, i) => i !== index),
@@ -1268,8 +1266,7 @@ export default function DischargeSummary() {
 
   const handleSaveCustomConfig = async (newConfig) => {
     try {
-      console.log(newConfig);
-      console.log(savedConfig);
+   
       await dispatch(
         updateTemplate({ dischargeFormTemplates: newConfig })
       ).unwrap();
@@ -1282,7 +1279,6 @@ export default function DischargeSummary() {
         variant: "success",
       });
     } catch (error) {
-      console.log(error);
       toast({
         title: "Error",
         description: "Failed to save form template",

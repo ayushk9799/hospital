@@ -43,12 +43,11 @@ const BirthCertificatePrint = ({
   return (
     <>
       <Button
-        variant="ghost"
-        className="bg-purple-600 hover:bg-purple-700 text-white"
+        variant="outline"
         onClick={handlePrint}
       >
         <Printer className="h-4 w-4 mr-2" />
-        Print Certificate
+        Print
       </Button>
 
       <div style={{ display: "none" }}>
@@ -142,7 +141,7 @@ const BirthCertificatePrint = ({
                   <span className="font-bold uppercase underline">
                     {motherData?.name}{" "}
                     <span className="font-bold">{basicFormData?.guardianRelationWithPatient}</span>{" "}
-                    <span className="font-bold">{basicFormData?.guardianName}</span>
+                    <span className="font-bold">{basicFormData?.babyFatherName}</span>
                   </span>{" "}
                   WAS ADMITTED IN THIS HOSPITAL ON{" "}
                   <span className="uppercase">
@@ -156,8 +155,8 @@ const BirthCertificatePrint = ({
                   </span>
                   . WEIGHT OF THE CHILD AT THE TIME OF BIRTH {babyData.weight} GM
                   AND THIS BABY HANDED OVER TO{" "}
-                  <span className="uppercase">{basicFormData?.relationToChild}</span>{" "}
-                  <span className="uppercase">{basicFormData?.handOverName}</span>{" "}
+                  <span className="uppercase">{basicFormData?.babyHandOverRelation}</span>{" "}
+                  <span className="uppercase">{basicFormData?.babyHandOverName}</span>{" "}
                   AFTER EXAMINATION BY PAEDIATRICIAN.
                 </p>
               </div>
@@ -257,7 +256,7 @@ const BirthCertificatePrint = ({
                   <span className="font-bold uppercase underline">
                     {motherData?.name}{" "}
                     <span className="font-bold">{basicFormData?.guardianRelationWithPatient}</span>{" "}
-                    <span className="font-bold">{basicFormData?.guardianName}</span>
+                    <span className="font-bold">{basicFormData?.babyFatherName}</span>
                   </span>{" "}
                   WAS ADMITTED IN THIS HOSPITAL ON{" "}
                   <span className="">
@@ -271,8 +270,8 @@ const BirthCertificatePrint = ({
                   </span>
                   . WEIGHT OF THE CHILD AT THE TIME OF BIRTH {babyData.weight} GM
                   AND THIS BABY HANDED OVER TO{" "}
-                  <span className="">{basicFormData?.relationToChild}</span>{" "}
-                  <span className="uppercase">{basicFormData?.handOverName}</span>{" "}
+                  <span className="">{basicFormData?.babyHandOverRelation}</span>{" "}
+                  <span className="uppercase">{basicFormData?.babyHandOverName}</span>{" "}
                   AFTER EXAMINATION BY PAEDIATRICIAN.
                 </p>
               </div>

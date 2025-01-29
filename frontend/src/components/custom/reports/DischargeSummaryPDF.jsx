@@ -115,7 +115,6 @@ const hasValue = (obj) => {
 // Create the dynamic component
 const DischargeSummaryPDF = forwardRef((props, ref) => {
   const { formData, patient, formConfig, hospital } = props;
-  console.log(formData.clinicalSummary);
   const dischargeSummaryTemplateStringdatabase = useSelector(
     (state) => state.templates.dischargeSummaryTemplate
   );

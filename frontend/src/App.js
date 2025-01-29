@@ -64,6 +64,8 @@ import PrefixSettings from "./pages/PrefixSettings";
 import BabyRegistration from "./pages/BabyRegistration";
 import ViewBabies from "./pages/ViewBabies";
 import BabyDetails from "./pages/BabyDetails";
+import DepartmentManger from "./pages/DepartmentManger";
+import ViewAllBabies from "./pages/ViewAllBabies";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -250,7 +252,9 @@ const AppContent = () => {
                   path="/patients/:ipdAdmissionId/babies"
                   element={<ViewBabies />}
                 />
+                <Route path="patients/babies" element={<ViewAllBabies />} />
                 <Route path="/babies/:babyId" element={<BabyDetails />} />
+                <Route path="/settings/department" element={<DepartmentManger />} />
               </>
             )}
           </Routes>

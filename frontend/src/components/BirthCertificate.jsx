@@ -1,10 +1,12 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { format } from "date-fns";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { Input } from "./ui/input";
 import { useToast } from "../hooks/use-toast";
 import BirthCertificatePrint from "./BirthCertificatePrint";
+import { useDispatch, useSelector } from "react-redux";
+import {editBaby} from '../redux/slices/babySlice'
 
 export default function BirthCertificate({
   open,
@@ -15,12 +17,52 @@ export default function BirthCertificate({
   certificateNumber,
 }) {
   const { toast } = useToast();
+  const dispatch = useDispatch();
+  const {editBabyStatus} = useSelector(state=>state.babies);
+  
+  
   const [basicFormData, setbasicFormData] = useState({
-    guardianName : motherData?.guardianName || "",
+    babyFatherName : babyData?.babyFatherName || "",
     guardianRelationWithPatient : "W/O",
-    handOverName: "",
-    relationToChild : "FATHER"
+    babyHandOverName: babyData?.babyHandOverName || "",
+    babyHandOverRelation : babyData?.babyHandOverRelation || ""
   });
+
+  useEffect(() => {
+    setbasicFormData({
+      babyFatherName: babyData?.babyFatherName || "",
+      guardianRelationWithPatient: "W/O",
+      babyHandOverName: babyData?.babyHandOverName || "",
+      babyHandOverRelation: babyData?.babyHandOverRelation || ""
+    });
+  }, [babyData]);
+
+  const handleSaveCertificate = () => {
+    if(basicFormData.babyFatherName === "") {
+      toast({
+        title: "Error",
+        description: "Please Enter Husband Name",
+        variant: "destructive",
+      });
+      return;
+    }
+    dispatch(editBaby({...babyData, ...basicFormData}))
+      .unwrap()
+      .then(() => {
+        toast({
+          title: "Success",
+          variant : 'success',
+          description: "Birth certificate details saved successfully",
+        });
+      })
+      .catch((error) => {
+        toast({
+          title: "Error",
+          description: error.message || "Failed to save birth certificate details",
+          variant: "destructive",
+        });
+      });
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -106,11 +148,13 @@ export default function BirthCertificate({
                 />{" "}
                 <Input
                   className="w-50 px-1 py-0 h-6 inline-block font-bold uppercase text-center"
-                  value={basicFormData.guardianName}
+                  value={basicFormData.babyFatherName}
+                  placeholder="Enter Husband Name"
+                  autoFocus
                   onChange={(e) =>
                     setbasicFormData({
                       ...basicFormData,
-                      guardianName: e.target.value,
+                      babyFatherName: e.target.value,
                     })
                   }
                 />
@@ -129,21 +173,21 @@ export default function BirthCertificate({
               THIS BABY HANDED OVER TO{" "}
               <Input
                 className="w-24 px-1 py-0 h-6 inline-block font-bold uppercase text-center"
-                value={basicFormData.relationToChild}
+                value={basicFormData.babyHandOverRelation}
                 onChange={(e) =>
                   setbasicFormData({
                     ...basicFormData,
-                    relationToChild: e.target.value,
+                    babyHandOverRelation: e.target.value,
                   })
                 }
               />{" "}
               <Input
                 className="w-50 px-1 py-0 h-6 inline-block font-bold uppercase text-center"
-                value={basicFormData.handOverName}
+                value={basicFormData.babyHandOverName}
                 onChange={(e) =>
                   setbasicFormData({
                     ...basicFormData,
-                    handOverName: e.target.value,
+                    babyHandOverName: e.target.value,
                   })
                 }
               />{" "}
@@ -161,7 +205,10 @@ export default function BirthCertificate({
       </div>
 
         {/* Print Button */}
-        <div className="flex justify-end p-4">
+        <div className="flex gap-2 justify-end py-2">
+
+          <Button variant='outline' onClick={()=> onOpenChange(false)}>Cancel</Button>
+          
           <BirthCertificatePrint 
             hospitalInfo={hospitalInfo}
             motherData={motherData}
@@ -169,6 +216,14 @@ export default function BirthCertificate({
             certificateNumber={certificateNumber}
             basicFormData={basicFormData}
           />
+          <Button 
+            variant='outline' 
+            onClick={handleSaveCertificate} 
+            disabled={editBabyStatus === 'loading'}
+             className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            {editBabyStatus === 'loading' ? 'Saving...' : 'Save'}
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

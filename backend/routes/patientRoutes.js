@@ -801,20 +801,70 @@ router.get("/:id", verifyToken, async (req, res) => {
 });
 
 router.put("/:id", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+  
   try {
-    // could be changed according to frontend
-    const patient = await Patient.findByIdAndUpdate(req.params.id, req.body, {
+    const { visitID, type, ...patientData } = req.body;
+    
+    // Update patient data
+    const patient = await Patient.findByIdAndUpdate(req.params.id, patientData, {
       new: true,
       runValidators: true,
+      session
     });
 
     if (!patient) {
-      return res.status(404).json({ message: "Patient not found" });
+      throw new Error("Patient not found");
     }
 
+    // Update visit/admission data if visitID and type are provided
+    if (visitID && type) {
+      const Model = type === "OPD" ? Visit : IPDAdmission;
+      const visitData = {
+        patientName: patient.name,
+        contactNumber: patient.contactNumber,
+      };
+
+      const updatedVisit = await Model.findByIdAndUpdate(
+        visitID,
+        visitData,
+        {
+          new: true,
+          runValidators: true,
+          session
+        }
+      );
+
+       await ServicesBill.findByIdAndUpdate(updatedVisit.bills.services[0],
+        {
+          patientInfo: {
+            name: patientData?.name,
+            phone: patientData.contactNumber,
+            age: patientData?.age,
+            address: patientData?.address,
+            gender: patientData?.gender
+          }
+        }, {
+          new: true,
+          runValidators: true,
+          session
+        }
+      )
+
+      if (!updatedVisit) {
+        throw new Error(`${type} record not found`);
+      }
+    }
+
+    await session.commitTransaction();
     res.json(patient);
+
   } catch (error) {
+    await session.abortTransaction();
     res.status(400).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 });
 

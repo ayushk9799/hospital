@@ -68,6 +68,8 @@ export default function BabyRegistration() {
       fiveMinutes: "",
       tenMinutes: "",
     },
+    babyHandOverName: "",
+    babyHandOverRelation: "",
   });
 
   const [showCertificate, setShowCertificate] = useState(false);
@@ -151,6 +153,7 @@ export default function BabyRegistration() {
       setShowCertificate(true);
 
       toast({
+        variant:'success',
         title: "Success",
         description: "Baby record has been registered successfully",
       });
@@ -163,9 +166,6 @@ export default function BabyRegistration() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
 
   // Extract hours, minutes, and meridiem from time string
   const [hours, minutes, meridiem] = formData.timeOfBirth.split(/[:\s]/);
@@ -194,7 +194,7 @@ export default function BabyRegistration() {
             </CardHeader>
 
             <ScrollArea className="flex-1">
-              <CardContent className="p-4 space-y-6">
+              <CardContent className="p-4 space-y-4">
                 {/* Mother Info Card */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-6 bg-gradient-to-r from-pink-50 to-blue-50 rounded-xl border-2 border-pink-100">
                   <div className="flex items-center gap-3">
@@ -442,6 +442,41 @@ export default function BabyRegistration() {
                           value={formData.apgarScore.tenMinutes}
                           onChange={handleInputChange}
                           className="border-2 border-blue-200 hover:border-blue-300 transition-colors"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Add Baby Handover Section before the submit button */}
+                  <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-6 rounded-xl border-2 border-purple-100">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Heart className="h-5 w-5 text-purple-500 shrink-0" />
+                      <h3 className="font-semibold text-gray-700 text-lg">
+                        Baby Handover Details
+                      </h3>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-gray-700">Handover Person Name</Label>
+                        <Input
+                          type="text"
+                          name="babyHandOverName"
+                          value={formData.babyHandOverName}
+                          onChange={handleInputChange}
+                          className="border-2 border-purple-200 hover:border-purple-300 transition-colors"
+                          placeholder="Enter name"
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-gray-700">Relation with Baby</Label>
+                        <Input
+                          type="text"
+                          name="babyHandOverRelation"
+                          value={formData.babyHandOverRelation}
+                          onChange={handleInputChange}
+                          className="border-2 border-purple-200 hover:border-purple-300 transition-colors"
+                          placeholder="Enter relation"
                         />
                       </div>
                     </div>

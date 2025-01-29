@@ -187,7 +187,7 @@ export default function AdmittedPatients() {
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className="h-[600px]">
+            <ScrollArea className="h-[calc(100vh-8rem)]">
               <div className="hidden md:block">
                 <Table>
                   <TableHeader className="bg-muted/50">
@@ -207,12 +207,12 @@ export default function AdmittedPatients() {
                       <TableHead className="text-right w-[120px]">
                         Due (₹)
                       </TableHead>
-                      <TableHead className="text-center w-[100px]">
+                      {/* <TableHead className="text-center w-[100px]">
                         Bills
-                      </TableHead>
-                      <TableHead className="text-center w-[120px]">
+                      </TableHead> */}
+                      {/* <TableHead className="text-center w-[120px]">
                         Service
-                      </TableHead>
+                      </TableHead> */}
                       <TableHead className="text-center w-[120px]">
                         Actions
                       </TableHead>
@@ -246,7 +246,7 @@ export default function AdmittedPatients() {
                         <TableCell className="text-right tabular-nums font-bold text-red-600">
                           {patient.amountDue.toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-center">
+                        {/* <TableCell className="text-center">
                           <Button
                             onClick={() => handleOpenBill(patient)}
                             variant="outline"
@@ -256,8 +256,8 @@ export default function AdmittedPatients() {
                             <FileText className="h-4 w-4" />
                             Bills
                           </Button>
-                        </TableCell>
-                        <TableCell className="text-center">
+                        </TableCell> */}
+                        {/* <TableCell className="text-center">
                           {" "}
                           <Button
                             onClick={() => handleAddServices(patient)}
@@ -268,28 +268,16 @@ export default function AdmittedPatients() {
                             <Plus className="h-4 w-4" />
                             Add Services
                           </Button>
-                        </TableCell>
+                        </TableCell> */}
                         <TableCell className="text-center">
-                          <div className="flex gap-2 justify-center">
-                            <Button
-                              onClick={() =>
-                                handleDischarge(patient._id, patient)
-                              }
-                              variant="default"
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                              {patient.status === "Discharged"
-                                ? "View/Edit Discharge Summary"
-                                : "Discharge"}
-                            </Button>
-                            {patient.department
+                          <div className="flex gap-2 justify-end pr-4">
+                          {patient.department
                               ?.toLowerCase()
                               .includes("obstetric") &&
                               patient?.patient?.gender?.toLowerCase() ===
                                 "female" && (
                                 <>
-                                  <Button
+                                  {/* <Button
                                     onClick={() =>
                                       navigate(
                                         `/patients/baby-registration/${patient._id}`,
@@ -307,11 +295,12 @@ export default function AdmittedPatients() {
                                   >
                                     <Baby className="h-4 w-4" />
                                     Register Birth
-                                  </Button>
+                                  </Button> */}
                                   <Button
                                     onClick={() =>
                                       navigate(
-                                        `/patients/${patient._id}/babies`
+                                        `/patients/${patient._id}/babies`,
+                                        {state : {motherData : patient.patient}}
                                       )
                                     }
                                     variant="outline"
@@ -319,10 +308,41 @@ export default function AdmittedPatients() {
                                     className="border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center gap-1"
                                   >
                                     <Baby className="h-4 w-4 text-pink-500" />
-                                    View Babies
+                                    {/* View Babies */}
                                   </Button>
                                 </>
                               )}
+                          <Button
+                            onClick={() => handleOpenBill(patient)}
+                            variant="outline"
+                            size="sm"
+                            className="inline-flex items-center"
+                          >
+                            <FileText className="h-4 w-4" />
+                            Bills
+                          </Button>
+                          <Button
+                            onClick={() => handleAddServices(patient)}
+                            variant="outline"
+                            size="sm"
+                            className="inline-flex items-center"
+                          >
+                            <Plus className="h-4 w-4" />
+                            Services
+                          </Button>
+                            <Button
+                              onClick={() =>
+                                handleDischarge(patient._id, patient)
+                              }
+                              variant="default"
+                              size="sm"
+                              className="bg-blue-600 hover:bg-blue-700 text-white"
+                            >
+                              {patient.status === "Discharged"
+                                ? "View/Edit Discharge Summary"
+                                : "Discharge"}
+                            </Button>
+                            
                           </div>
                         </TableCell>
                       </TableRow>

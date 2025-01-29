@@ -910,14 +910,14 @@ setFormData((prev)=>({
                             <SelectTrigger>
                               <SelectValue placeholder={
                               doctors.length === 1
-                                ? `Dr. ${doctors[0].name}`
+                                ? `${doctors[0].name}`
                                 : "Select Doctor"
                             } />
                             </SelectTrigger>
                             <SelectContent>
                               {doctors.map((doctor) => (
                                 <SelectItem key={doctor._id} value={doctor._id}>
-                                  Dr.{doctor.name}
+                                  {doctor.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -961,14 +961,14 @@ setFormData((prev)=>({
                           <SelectTrigger>
                             <SelectValue placeholder={
                               doctors.length === 1
-                                ? `Dr. ${doctors[0].name}`
+                                ? `${doctors[0].name}`
                                 : "Select Doctor"
                             } />
                           </SelectTrigger>
                           <SelectContent>
                             {doctors.map((doctor) => (
                               <SelectItem key={doctor._id} value={doctor._id}>
-                                Dr. {doctor.name}
+                                {doctor.name}
                               </SelectItem>
                             ))}
                           </SelectContent>
