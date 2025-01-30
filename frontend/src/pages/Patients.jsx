@@ -176,7 +176,7 @@ export default function Patients() {
     const navigate = useNavigate();
 
     const handleDischarge = (patient) => {
-      navigate(`/patients/discharge/${patient._id}`, { state: { patient } });
+      navigate(`/patients/discharge/${patient._id}`, { state: { ignoreList: true, dischargeData: patient } });
     };
 
     const getStatusBadgeVariant = (status) => {

@@ -129,6 +129,7 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
     `return (${
       dischargeSummaryTemplateStringdatabase ||
       dischargeSummaryTemplateStringDefault
+      
     });`
   );
 

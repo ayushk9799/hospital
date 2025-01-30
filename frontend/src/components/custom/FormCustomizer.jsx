@@ -30,6 +30,7 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { useToast } from "../../hooks/use-toast";
+import { Textarea } from "../ui/textarea";
 
 const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
@@ -70,16 +71,26 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
 
         // Merge default fields with enabled status
         defaultSection.fields.forEach((defaultField) => {
-          const isEnabled = enabledSection?.fields.some(
+          const enabledField = enabledSection?.fields.find(
             (f) => f.id === defaultField.id
           );
-          mergedFields.push({ ...defaultField, hidden: !isEnabled });
+          mergedFields.push({
+            ...defaultField,
+            hidden: !enabledField,
+            templates: enabledField?.templates || defaultField.templates || [],
+            sectionId: defaultSection.id, // Add sectionId to each field
+          });
         });
 
         // Add enabled fields not present in default
         enabledSection?.fields.forEach((enabledField) => {
           if (!defaultSection.fields.some((f) => f.id === enabledField.id)) {
-            mergedFields.push({ ...enabledField, hidden: false });
+            mergedFields.push({
+              ...enabledField,
+              hidden: false,
+              templates: enabledField.templates || [],
+              sectionId: defaultSection.id, // Add sectionId to each field
+            });
           }
         });
 
@@ -94,7 +105,12 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
         )
         .map((section) => ({
           ...section,
-          fields: section.fields.map((field) => ({ ...field, hidden: false })),
+          fields: section.fields.map((field) => ({
+            ...field,
+            hidden: false,
+            templates: field.templates || [],
+            sectionId: section.id, // Add sectionId to each field
+          })),
         }));
 
       return {
@@ -148,9 +164,9 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
   };
 
   const handleEditField = (sectionId, fieldId, updates) => {
-    setCustomConfig({
-      ...customConfig,
-      sections: customConfig.sections.map((section) => {
+    setCustomConfig((prevConfig) => ({
+      ...prevConfig,
+      sections: prevConfig.sections.map((section) => {
         if (section.id !== sectionId) return section;
 
         return {
@@ -158,25 +174,32 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
           fields: section.fields.map((field) => {
             if (field.id !== fieldId) return field;
 
+            // Preserve existing field properties and merge with updates
+            const updatedField = {
+              ...field,
+              ...updates,
+              sectionId: section.id,
+              templates: updates.templates || field.templates || [],
+            };
+
             if (SPECIAL_FIELDS[field.id]) {
               return {
-                ...field,
+                ...updatedField,
                 ...SPECIAL_FIELDS[field.id],
-                ...updates,
               };
             }
 
-            return { ...field, ...updates };
+            return updatedField;
           }),
         };
       }),
-    });
+    }));
   };
 
   const handleAddField = (sectionId, newField) => {
-    setCustomConfig({
-      ...customConfig,
-      sections: customConfig.sections.map((section) => {
+    setCustomConfig((prevConfig) => ({
+      ...prevConfig,
+      sections: prevConfig.sections.map((section) => {
         if (section.id !== sectionId) return section;
 
         const specialField = Object.entries(SPECIAL_FIELDS).find(
@@ -189,6 +212,8 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
           type: newField.type,
           hidden: false,
           width: "full",
+          sectionId: section.id,
+          templates: [],
           ...(newField.type === "multiselect" && {
             component: "MultiSelectInput",
             suggestions: "[]",
@@ -201,7 +226,7 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
           fields: [...section.fields, fieldConfig],
         };
       }),
-    });
+    }));
     setShowAddField(null);
   };
 
@@ -276,19 +301,51 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
     );
   };
 
-  const FieldSettings = ({ field }) => {
-    const [settings, setSettings] = useState(field);
+  const FieldSettings = ({ field, customConfig, onSave }) => {
     const { toast } = useToast();
+    const [newTemplate, setNewTemplate] = useState({ name: "", content: "" });
 
     const isIdTaken = (id) => {
       if (id === field.id) return false;
       return customConfig.sections.some((section) =>
-        section.fields.some((f) => f.id === id)
+        section.fields.some((f) => f.id === id && f.id !== field.id)
       );
     };
 
+    const handleAddTemplate = () => {
+      if (!newTemplate.name || !newTemplate.content) {
+        toast({
+          title: "Error",
+          description: "Both template name and content are required",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      handleEditField(field.sectionId, field.id, {
+        ...field,
+        templates: [...(field.templates || []), newTemplate],
+      });
+
+      setNewTemplate({ name: "", content: "" });
+    };
+
+    const handleRemoveTemplate = (index) => {
+      handleEditField(field.sectionId, field.id, {
+        ...field,
+        templates: field.templates.filter((_, i) => i !== index),
+      });
+    };
+
+    const handleFieldChange = (key, value) => {
+      handleEditField(field.sectionId, field.id, {
+        ...field,
+        [key]: value,
+      });
+    };
+
     const handleSave = () => {
-      if (isIdTaken(settings.id)) {
+      if (isIdTaken(field.id)) {
         toast({
           title: "Error",
           description: "Field ID must be unique",
@@ -296,54 +353,118 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
         });
         return;
       }
-      handleEditField(field.sectionId, field.id, settings);
+      onSave();
       setShowFieldSettings(null);
     };
 
     return (
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Field Settings: {field.label}</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label>Field ID</Label>
-            <Input
-              value={settings.id}
-              onChange={(e) => setSettings({ ...settings, id: e.target.value })}
-              placeholder="Unique field identifier"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label>Field Type</Label>
-            <Select
-              value={settings.type}
-              onValueChange={(value) =>
-                setSettings({ ...settings, type: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {FIELD_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {settings.type === "multiselect" && (
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label>Suggestions Source</Label>
+              <Label>Field ID</Label>
               <Input
-                value={settings.suggestions || ""}
-                onChange={(e) =>
-                  setSettings({ ...settings, suggestions: e.target.value })
-                }
-                placeholder="e.g., diagnosisTemplate"
+                value={field.id}
+                onChange={(e) => handleFieldChange("id", e.target.value)}
+                placeholder="Unique field identifier"
               />
+            </div>
+            <div className="space-y-2">
+              <Label>Field Label</Label>
+              <Input
+                value={field.label}
+                onChange={(e) => handleFieldChange("label", e.target.value)}
+                placeholder="Field label"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Field Type</Label>
+              <Select
+                value={field.type}
+                onValueChange={(value) => handleFieldChange("type", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {FIELD_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Templates Section - Only show for textarea fields in clinical info section */}
+          {field.type === "textarea" && field.sectionId === "clinicalInfo" && (
+            <div className="space-y-4 border-t pt-4">
+              <Label className="text-lg font-semibold">
+                Pre-saved Templates
+              </Label>
+              <div className="space-y-4">
+                {field.templates?.map((template, index) => (
+                  <div
+                    key={index}
+                    className="flex items-start gap-2 p-2 bg-secondary/10 rounded-md"
+                  >
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>{template.name}</Label>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleRemoveTemplate(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {template.content}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+
+                <div className="space-y-2 border-t pt-4">
+                  <Label>Add New Template</Label>
+                  <div className="space-y-2">
+                    <Input
+                      placeholder="Template Name"
+                      value={newTemplate.name}
+                      onChange={(e) =>
+                        setNewTemplate((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                    />
+                    <Textarea
+                      placeholder="Template Content"
+                      value={newTemplate.content}
+                      onChange={(e) =>
+                        setNewTemplate((prev) => ({
+                          ...prev,
+                          content: e.target.value,
+                        }))
+                      }
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={handleAddTemplate}
+                      className="w-full"
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Template
+                    </Button>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -358,14 +479,26 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
   };
 
   const handleSave = () => {
-    const finalConfig = {
+    // Create a clean version of the config without internal properties
+    const cleanConfig = {
       ...customConfig,
       sections: customConfig.sections.map((section) => ({
         ...section,
-        fields: section.fields.filter((field) => !field.hidden),
+        fields: section.fields
+          .filter((field) => !field.hidden)
+          .map((field) => {
+            const cleanField = { ...field };
+            // Remove internal properties
+            delete cleanField.sectionId;
+            // Only include templates if they exist
+            if (!cleanField.templates?.length) {
+              delete cleanField.templates;
+            }
+            return cleanField;
+          }),
       })),
     };
-    onSave(finalConfig);
+    onSave(cleanConfig);
   };
 
   return (
@@ -463,6 +596,8 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                                           ...field,
                                           sectionId: section.id,
                                         }}
+                                        customConfig={customConfig}
+                                        onSave={handleSave}
                                       />
                                     </Dialog>
                                     <Button

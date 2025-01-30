@@ -3,7 +3,7 @@ import { format, addDays } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplate } from "../templates/headertemplate";
-// import { opdRxTemplateStringExperimental } from "../templatesExperiments/opdRxExperimental";
+ import { opdRxTemplateStringExperimental } from "../templatesExperiments/opdRxExperimental";
 
 export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
   return React.createElement("div", { className: "print-content" },
@@ -26,7 +26,7 @@ export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
           fontSize: '16px',
           fontFamily: 'Arial, sans-serif'
         }
-      }, format(new Date(patient?.bookingDate).toLocaleString(), 'dd/MM/yyyy')),
+      }, patient?.bookingDate ? patient?.bookingDate.split('T')[0]?.split('-').reverse().join('/') : ''),
 
       React.createElement("div", { 
         style: {
@@ -55,6 +55,7 @@ export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
 
 const OPDRxTemplate = forwardRef((props, ref) => {
   const { patient, hospital } = props;
+  console.log(patient);
   const headerTemplateString = useSelector(
     (state) => state.templates.headerTemplate
   );
