@@ -640,6 +640,8 @@ router.post("/details", verifyToken, async (req, res) => {
       guardianName: admission.guardianName,
       relation: admission.relation,
       assignedBed: admission.assignedBed,
+      dischargeData: admission.dischargeData,
+      formConfig: admission.formConfig,
       dateDischarged: admission.dateDischarged,
       clinicalSummary: admission.clinicalSummary,
       comorbidities: admission.comorbidities,

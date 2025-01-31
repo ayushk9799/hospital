@@ -117,6 +117,15 @@ const FormField = ({
     });
   };
 
+  const handleTemplateSelect = (content) => {
+    onChange({
+      target: {
+        name: field.id,
+        value: content,
+      },
+    });
+  };
+
   switch (field.type) {
     case "text":
       return (
@@ -157,14 +166,51 @@ const FormField = ({
       );
     case "textarea":
       return (
-        <div>
+        <div className="py-2">
           <Label htmlFor={field.id}>{field.label}</Label>
+          {field.templates && field.templates.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-2">
+              {field.templates.map((template, index) => (
+                <div key={index} className="relative group">
+                  <button
+                    onClick={() => {
+                      if (value === template.content) {
+                        // Deselect if already selected
+                        handleTemplateSelect("");
+                      } else {
+                        handleTemplateSelect(template.content);
+                      }
+                    }}
+                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors
+                      ${
+                        value === template.content
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary hover:bg-secondary/80"
+                      }`}
+                    type="button"
+                  >
+                    {template.name}
+                  </button>
+
+                  {/* Hover Preview - Only show when not selected */}
+                  {value !== template.content && (
+                    <div className="absolute z-50 invisible group-hover:visible bg-popover text-popover-foreground p-3 rounded-lg shadow-lg min-w-[200px] max-w-[400px] mt-2 left-0 whitespace-pre-wrap text-sm border">
+                      <div className="font-semibold mb-1">
+                        Template Preview:
+                      </div>
+                      {template.content}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
           <Textarea
             id={field.id}
             name={field.id}
             value={value}
             onChange={onChange}
-            className="mt-1 min-h-[6rem] leading-tight"
+            className="mt-1 min-h-[9rem] leading-tight"
             {...extraProps}
           />
         </div>
@@ -851,6 +897,7 @@ export default function DischargeSummary() {
 
       setIsPrintDialogOpen(true);
     } catch (error) {
+      console.log(error);
       toast({
         title: "Error",
         description: "Failed to discharge patient. Please try again.",
@@ -1266,7 +1313,6 @@ export default function DischargeSummary() {
 
   const handleSaveCustomConfig = async (newConfig) => {
     try {
-   
       await dispatch(
         updateTemplate({ dischargeFormTemplates: newConfig })
       ).unwrap();
@@ -1305,7 +1351,7 @@ export default function DischargeSummary() {
             // Handle special components separately
             if (field.type === "vitals") {
               return (
-                <div key={field.id}>
+                <div key={field.id} className=" py-2">
                   <Label htmlFor={field.id}>{field.label}</Label>
                   {renderVitalsInputs(field.prefix)}
                 </div>
@@ -1314,7 +1360,7 @@ export default function DischargeSummary() {
 
             if (field.type === "investigations") {
               return (
-                <div key={field.id}>
+                <div key={field.id} className=" py-2">
                   <Label htmlFor={field.id}>{field.label}</Label>
                   <div className="space-y-2 mt-2">
                     {formData.investigations.map((investigation, index) => (
@@ -1373,7 +1419,7 @@ export default function DischargeSummary() {
 
             if (field.type === "medicineAdvice") {
               return (
-                <div key={field.id}>
+                <div key={field.id} className=" py-2">
                   <Label htmlFor={field.id}>{field.label}</Label>
                   <div className="space-y-2 mt-2">
                     {formData[field.id]?.map((item, index) => (
