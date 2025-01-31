@@ -59,13 +59,13 @@ const babySchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    babyFatherName : {
-      type : String,
-      trim : true
+    babyFatherName: {
+      type: String,
+      trim: true,
     },
-    certificatedCreated : {
-      type : Boolean,
-      default : false
+    certificatedCreated: {
+      type: Boolean,
+      default: false,
     },
     apgarScore: {
       oneMinute: {
@@ -121,6 +121,9 @@ babySchema.statics.updateBirthCounter = async function (session, dateOfBirth) {
   );
   return `${counterDoc.year}-${counterDoc.month}/${counterDoc.yearlyCount}-${counterDoc.monthlyCount}`;
 };
+
+// Add index to birthCounter field in the babySchema
+babySchema.index({ birthCounter: 1 });
 
 babySchema.plugin(hospitalPlugin);
 export const Baby = mongoose.model("Baby", babySchema);

@@ -855,7 +855,6 @@ const CreateServiceBill = ({
     };
 
     setBillData(updatedBill);
-console.log(updatedBill)
     // Update billDataForPrint if needed
     const formattedBillDataForPrint = {
       _id: updatedBill._id,

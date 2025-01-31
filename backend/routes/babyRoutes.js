@@ -4,6 +4,24 @@ import { verifyToken } from "../middleware/authMiddleware.js";
 import { Baby } from "../models/Baby.js";
 const router = express.Router();
 // Create new baby record
+router.post("/search", verifyToken, async (req, res) => {
+  try {
+    const searchNumber = req.body.searchNumber;
+    if (!searchNumber) {
+      throw new Error("Search number is required");
+    }
+    const babies = await Baby.find({
+      birthCounter: { $regex: searchNumber, $options: "i" },
+    })
+      .populate("mother", "name registrationNumber")
+      .sort("-createdAt")
+      .limit(10);
+
+    res.json(babies);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
 router.post("/", verifyToken, async (req, res) => {
   try {
     const babyData = req.body;
@@ -14,15 +32,17 @@ router.post("/", verifyToken, async (req, res) => {
 
     const number = await Baby.updateBirthCounter(session, babyData.dateOfBirth);
     baby.birthCounter = number;
-    
+
     await baby.save({ session });
     await session.commitTransaction();
     session.endSession();
 
     // Fetch the saved baby with populated mother data
-    const populatedBaby = await Baby.findById(baby._id)
-      .populate("mother", "name registrationNumber");
-    
+    const populatedBaby = await Baby.findById(baby._id).populate(
+      "mother",
+      "name registrationNumber"
+    );
+
     res.status(201).json(populatedBaby);
   } catch (error) {
     await session.abortTransaction();
@@ -52,15 +72,11 @@ router.put("/", verifyToken, async (req, res) => {
     // Remove _id from update data to prevent MongoDB errors
     const { _id, ...updateData } = req.body;
 
-    const baby = await Baby.findByIdAndUpdate(
-      _id,
-      updateData,
-      {
-        new: true,
-        runValidators: true,
-        session
-      }
-    );
+    const baby = await Baby.findByIdAndUpdate(_id, updateData, {
+      new: true,
+      runValidators: true,
+      session,
+    });
 
     if (!baby) {
       await session.abortTransaction();
@@ -72,9 +88,11 @@ router.put("/", verifyToken, async (req, res) => {
     session.endSession();
 
     // Fetch the updated baby with populated mother data
-    const populatedBaby = await Baby.findById(baby._id)
-      .populate("mother", "name registrationNumber");
-    
+    const populatedBaby = await Baby.findById(baby._id).populate(
+      "mother",
+      "name registrationNumber"
+    );
+
     res.json(populatedBaby);
   } catch (error) {
     await session.abortTransaction();
@@ -94,5 +112,7 @@ router.get("/", verifyToken, async (req, res) => {
     res.status(400).json({ message: error.message });
   }
 });
+
+// Add this route before the final export
 
 export default router;

@@ -88,7 +88,6 @@ const dischargeSlice = createSlice({
       })
       .addCase(dischargePatient.fulfilled, (state, action) => {
         state.status = "succeeded";
-        console.log(action.payload);
         state.dischargeData = action.payload.dischargeData;
         state.formConfig = action.payload.formConfig;
       })

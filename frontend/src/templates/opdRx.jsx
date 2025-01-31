@@ -55,7 +55,6 @@ export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
 
 const OPDRxTemplate = forwardRef((props, ref) => {
   const { patient, hospital } = props;
-  console.log(patient);
   const headerTemplateString = useSelector(
     (state) => state.templates.headerTemplate
   );
