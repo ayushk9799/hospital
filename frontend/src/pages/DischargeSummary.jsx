@@ -1805,7 +1805,7 @@ export default function DischargeSummary() {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <div  className="space-y-4">
             {formConfig.sections.map(renderFormSection)}
 
             <div className="flex flex-col sm:flex-row justify-end mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
@@ -1827,14 +1827,15 @@ export default function DischargeSummary() {
                 {savingStatus === "loading" ? "Saving..." : "Save"}
               </Button>
               <Button
-                type="submit"
+                type="button"
+                onClick={handleSubmit}
                 disabled={dischargeStatus === "loading" || !patientId}
                 className="w-full sm:w-auto"
               >
                 {dischargeStatus === "loading" ? "Discharging..." : "Discharge"}
               </Button>
             </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
 

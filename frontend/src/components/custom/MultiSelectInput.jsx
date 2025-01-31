@@ -12,7 +12,7 @@ const MultiSelectInput = forwardRef(
       selectedValues,
       setSelectedValues,
       onSuggestionSelect,
-      onError=false
+      onError = false,
     },
     ref
   ) => {
@@ -50,7 +50,39 @@ const MultiSelectInput = forwardRef(
     };
 
     const handleKeyDown = (e) => {
-      if (showSuggestions && filteredSuggestions.length > 0) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        // First check if we have a highlighted suggestion
+        if (
+          highlightedIndex !== -1 &&
+          showSuggestions &&
+          filteredSuggestions.length > 0
+        ) {
+          handleSuggestionClick(filteredSuggestions[highlightedIndex]);
+        }
+        // Otherwise, add custom value if valid
+        else {
+          const trimmedValue = inputValue.trim();
+          if (
+            trimmedValue &&
+            !selectedValues?.some((val) => val.name === trimmedValue)
+          ) {
+            const newSelectedValues = [
+              ...selectedValues,
+              { name: trimmedValue },
+            ];
+            setSelectedValues(newSelectedValues);
+            if (onSuggestionSelect) {
+              onSuggestionSelect(newSelectedValues);
+            }
+            setInputValue("");
+            setShowSuggestions(false);
+            if (ref && ref.current) {
+              ref.current.focus();
+            }
+          }
+        }
+      } else if (showSuggestions && filteredSuggestions.length > 0) {
         if (e.key === "ArrowDown") {
           e.preventDefault();
           setHighlightedIndex((prevIndex) =>
@@ -61,17 +93,6 @@ const MultiSelectInput = forwardRef(
           setHighlightedIndex((prevIndex) =>
             prevIndex > 0 ? prevIndex - 1 : filteredSuggestions.length - 1
           );
-        } else if (e.key === "Enter" && highlightedIndex !== -1) {
-          e.preventDefault();
-          handleSuggestionClick(filteredSuggestions[highlightedIndex]);
-        }
-      } else if (e.key === "Enter") {
-        e.preventDefault();
-        setSelectedValues([...selectedValues, { name: inputValue }]);
-        setInputValue("");
-        setShowSuggestions(false);
-        if (ref && ref.current) {
-          ref.current.focus();
         }
       }
     };
@@ -138,7 +159,9 @@ const MultiSelectInput = forwardRef(
             onFocus={() => setShowSuggestions(true)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={placeholder || "Search or type"}
-            className={`pr-8 hover:cursor-pointer font-semibold w-full ${onError?`border-red-500 focus-visible:ring-red-500`:""}`}
+            className={`pr-8 hover:cursor-pointer font-semibold w-full ${
+              onError ? `border-red-500 focus-visible:ring-red-500` : ""
+            }`}
           />
           <ChevronsUpDown className="absolute right-2 top-1/2 transform -translate-y-1/2 h-4 w-4 opacity-50" />
         </div>
