@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import {
   Card,
   CardContent,
@@ -11,7 +11,6 @@ import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
-import { useDispatch } from "react-redux";
 import { fetchItems } from "../redux/slices/pharmacySlice";
 import { Separator } from "../components/ui/separator";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -74,6 +73,7 @@ import {
   DEFAULT_FORM_CONFIG,
 } from "../config/dischargeSummaryConfig";
 import FormCustomizer from "../components/custom/FormCustomizer";
+import { searchBabyByNumber } from "../redux/slices/babySlice";
 
 const LabReportTable = ({ report }) => {
   return (
@@ -103,6 +103,7 @@ const LabReportTable = ({ report }) => {
 const FormField = ({
   field,
   value,
+  label,
   onChange,
   suggestions,
   extraProps = {},
@@ -135,7 +136,7 @@ const FormField = ({
           }`}
         >
           <Label htmlFor={field.id} className="w-24 font-bold">
-            {field.label}:
+            {label?.toUpperCase() || field.label}:
           </Label>
           <Input
             id={field.id}
@@ -342,6 +343,9 @@ const FormField = ({
 
 // Add new component for baby table
 const BabyTable = ({ value = [], onChange }) => {
+  const dispatch = useDispatch();
+  const { searchResults, searchStatus } = useSelector((state) => state.babies);
+
   const addBaby = () => {
     onChange([
       ...value,
@@ -384,6 +388,28 @@ const BabyTable = ({ value = [], onChange }) => {
 
     updateBaby(index, "time", formattedTime);
   };
+
+  // Add this effect to handle search results
+  useEffect(() => {
+    if (searchStatus === "succeeded" && searchResults.length > 0) {
+      const latestResult = searchResults[0];
+      const updatedBabies = value.map((baby) => {
+        if (baby.number === latestResult.birthCounter) {
+          return {
+            ...baby,
+            sex: latestResult.gender.toLowerCase(),
+            weight: latestResult.weight,
+            date: latestResult.dateOfBirth.split("T")[0],
+            time: latestResult.timeOfBirth,
+            apgar: Object.values(latestResult.apgarScore).join(","),
+          };
+        }
+        return baby;
+      });
+      onChange(updatedBabies);
+    }
+  }, [searchResults, searchStatus]);
+
   return (
     <div className="space-y-4">
       <Table>
@@ -402,11 +428,31 @@ const BabyTable = ({ value = [], onChange }) => {
           {value.map((baby, index) => (
             <TableRow key={index}>
               <TableCell>
-                <Input
-                  type="text"
-                  value={baby.number}
-                  onChange={(e) => updateBaby(index, "number", e.target.value)}
-                />
+                <div className="relative">
+                  <Input
+                    type="text"
+                    value={baby.number}
+                    onChange={(e) =>
+                      updateBaby(index, "number", e.target.value)
+                    }
+                    className="flex-1 pr-10"
+                  />
+                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 hover:bg-transparent "
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        baby.number &&
+                          dispatch(searchBabyByNumber(baby.number));
+                      }}
+                    >
+                      <Search className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                    </Button>
+                  </div>
+                </div>
               </TableCell>
               <TableCell>
                 <Select
@@ -695,6 +741,15 @@ export default function DischargeSummary() {
           roomNumber: dischargeData.assignedRoom?.roomNumber || "",
           registrationNumber: dischargeData.registrationNumber || "",
           ipdNumber: dischargeData.ipdNumber || "",
+          relation: dischargeData.relation
+            ? dischargeData.relation?.toLowerCase()
+            : "",
+          ...(dischargeData.relation
+            ? {
+                [dischargeData.relation?.toLowerCase()]:
+                  dischargeData.guardianName || "",
+              }
+            : {}),
         });
       } else if (!ignoreList) {
         setPatient(patientFromStore);
@@ -789,6 +844,10 @@ export default function DischargeSummary() {
         name: patient.patient?.name || patient.name || "",
         age: patient.patient?.age || patient.age || "",
         gender: patient.patient?.gender || patient.gender || "",
+        relation: patient.relation ? patient.relation?.toLowerCase() : "",
+        ...(patient.relation
+          ? { [patient.relation?.toLowerCase()]: patient.guardianName || "" }
+          : {}),
         contactNumber:
           patient.patient?.contactNumber || patient.contactNumber || "",
         address: patient.patient?.address || patient.address || "",
@@ -897,7 +956,6 @@ export default function DischargeSummary() {
 
       setIsPrintDialogOpen(true);
     } catch (error) {
-      console.log(error);
       toast({
         title: "Error",
         description: "Failed to discharge patient. Please try again.",
@@ -1524,7 +1582,7 @@ export default function DischargeSummary() {
             // For standard form fields
             let value;
             let onChange;
-
+            let label;
             // Check if this is a patientInfo field
             if (section.id === "patientInfo") {
               // Special handling for admission and discharge dates
@@ -1535,7 +1593,13 @@ export default function DischargeSummary() {
                 value = formData[field.id] || "";
                 onChange = handleInputChange;
               } else {
-                value = patientInfo[field.id] || "";
+                value =
+                  patientInfo[field.id] ||
+                  patientInfo?.[patientInfo?.relation] ||
+                  "";
+                if (!patientInfo?.[field.id]) {
+                  label = patientInfo?.relation;
+                }
                 onChange = handlePatientInfoChange;
               }
             } else {
@@ -1597,6 +1661,7 @@ export default function DischargeSummary() {
                 key={field.id}
                 field={field}
                 value={value}
+                label={label}
                 onChange={onChange}
                 suggestions={suggestions}
                 extraProps={extraProps}

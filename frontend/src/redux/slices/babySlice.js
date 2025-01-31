@@ -26,11 +26,12 @@ export const createBaby = createLoadingAsyncThunk(
     } catch (error) {
       throw error.message || "Failed to register baby";
     }
-  },  { useGlobalLoader: true }
+  },
+  { useGlobalLoader: true }
 );
 
 // Create baby record
-export const editBaby = createAsyncThunk(
+export const editBaby = createLoadingAsyncThunk(
   "babies/saveCertificate",
   async (babyData) => {
     try {
@@ -57,7 +58,7 @@ export const editBaby = createAsyncThunk(
 );
 
 // Get babies by mother's IPD admission
-export const getBabiesByAdmission = createAsyncThunk(
+export const getBabiesByAdmission = createLoadingAsyncThunk(
   "babies/getBabiesByAdmission",
   async (ipdAdmissionId) => {
     try {
@@ -86,7 +87,7 @@ export const getBabiesByAdmission = createAsyncThunk(
 );
 
 // Create baby record
-export const fetchAllBabies = createAsyncThunk(
+export const fetchAllBabies = createLoadingAsyncThunk(
   "babies/fetchAllBabies",
   async () => {
     try {
@@ -95,7 +96,7 @@ export const fetchAllBabies = createAsyncThunk(
         headers: {
           "Content-Type": "application/json",
         },
-        credentials: "include"
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -111,13 +112,41 @@ export const fetchAllBabies = createAsyncThunk(
   }
 );
 
+// Add this thunk after fetchAllBabies
+export const searchBabyByNumber = createLoadingAsyncThunk(
+  "babies/searchByNumber",
+  async (searchNumber) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/babies/search`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ searchNumber }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to search babies");
+      }
+
+      return await response.json();
+    } catch (error) {
+      throw error.message || "Failed to search babies";
+    }
+  }
+);
+
 const initialState = {
   babies: [], // all babies
   currentPatientBabies: [], // babies for specific patient
-  status: 'idle',
-  fetchCurrentPatientBabiesStatus: 'idle',
-  createBabyStatus: 'idle',
-  editBabyStatus: 'idle',
+  searchResults: [],
+  status: "idle",
+  fetchCurrentPatientBabiesStatus: "idle",
+  createBabyStatus: "idle",
+  editBabyStatus: "idle",
+  searchStatus: "idle",
   error: null,
 };
 
@@ -154,11 +183,15 @@ const babySlice = createSlice({
       .addCase(editBaby.fulfilled, (state, action) => {
         state.editBabyStatus = "succeeded";
         // Update the baby in the babies array
-        const index = state.babies.findIndex(baby => baby._id === action.payload._id);
+        const index = state.babies.findIndex(
+          (baby) => baby._id === action.payload._id
+        );
         if (index !== -1) {
           state.babies[index] = action.payload;
         }
-        const index2 = state.currentPatientBabies.findIndex(baby => baby._id === action.payload._id);
+        const index2 = state.currentPatientBabies.findIndex(
+          (baby) => baby._id === action.payload._id
+        );
         if (index !== -1) {
           state.currentPatientBabies[index2] = action.payload;
         }
@@ -191,6 +224,19 @@ const babySlice = createSlice({
       })
       .addCase(fetchAllBabies.rejected, (state, action) => {
         state.status = "failed";
+        state.error = action.error.message;
+      })
+      // Search Baby by Number
+      .addCase(searchBabyByNumber.pending, (state) => {
+        state.searchStatus = "loading";
+        state.error = null;
+      })
+      .addCase(searchBabyByNumber.fulfilled, (state, action) => {
+        state.searchStatus = "succeeded";
+        state.searchResults = action.payload;
+      })
+      .addCase(searchBabyByNumber.rejected, (state, action) => {
+        state.searchStatus = "failed";
         state.error = action.error.message;
       });
   },
