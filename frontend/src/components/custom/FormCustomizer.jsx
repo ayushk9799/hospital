@@ -36,6 +36,7 @@ const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
   { value: "textarea", label: "Text Area" },
   { value: "date", label: "Date" },
+  { value: "time", label: "Time" },
   { value: "multiselect", label: "Multi Select" },
   { value: "vitals", label: "Vitals" },
   { value: "investigations", label: "Investigations" },

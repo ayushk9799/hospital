@@ -75,6 +75,31 @@ import {
 import FormCustomizer from "../components/custom/FormCustomizer";
 import { searchBabyByNumber } from "../redux/slices/babySlice";
 
+// Time conversion helper functions
+const convertTo12Hour = (time24) => {
+  if (!time24) return "";
+  const [hours24, minutes] = time24.split(":");
+  let hours12 = parseInt(hours24);
+  const meridiem = hours12 >= 12 ? "PM" : "AM";
+
+  if (hours12 === 0) hours12 = 12;
+  else if (hours12 > 12) hours12 -= 12;
+
+  return `${hours12.toString().padStart(2, "0")}:${minutes} ${meridiem}`;
+};
+
+const convertTo24Hour = (time12, meridiem) => {
+  console.log(time12, meridiem);
+  if (!time12) return "";
+  let [hours, minutes] = time12.split(":");
+  hours = parseInt(hours);
+
+  if (meridiem === "PM" && hours !== 12) hours += 12;
+  if (meridiem === "AM" && hours === 12) hours = 0;
+
+  return `${hours.toString().padStart(2, "0")}:${minutes}`;
+};
+
 const LabReportTable = ({ report }) => {
   return (
     <Table>
@@ -216,6 +241,66 @@ const FormField = ({
           />
         </div>
       );
+    case "time": {
+      const timeValue = value ? value.split(" ")[0] : "";
+      const meridiem = value ? value.split(" ")[1] || "AM" : "AM";
+
+      // Convert from 12-hour format to 24-hour format for input value
+      const time24 = timeValue;
+
+      return (
+        <div className="flex items-center gap-2">
+          <Label htmlFor={field.id} className="w-24 font-bold">
+            {label?.toUpperCase() || field.label}:
+          </Label>
+          <div className="flex gap-2">
+            <Input
+              id={field.id}
+              name={field.id}
+              type="time"
+              value={time24}
+              onChange={(e) => {
+                const newTime24 = e.target.value;
+                if (newTime24) {
+                  const time12 = convertTo12Hour(newTime24).split(" ");
+                  onChange({
+                    target: {
+                      name: field.id,
+                      value: `${time12[0]} ${time12[1] || meridiem}`,
+                    },
+                  });
+                }
+              }}
+              className="h-8 w-32"
+              {...extraProps}
+            />
+            <Select
+              value={meridiem}
+              onValueChange={(newMeridiem) => {
+                if (timeValue) {
+                  const newTime24 = convertTo24Hour(timeValue, newMeridiem);
+                  const time12 = convertTo12Hour(newTime24).split(" ");
+                  onChange({
+                    target: {
+                      name: field.id,
+                      value: `${time12[0]} ${newMeridiem}`,
+                    },
+                  });
+                }
+              }}
+            >
+              <SelectTrigger className="w-20">
+                <SelectValue placeholder="AM/PM" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="AM">AM</SelectItem>
+                <SelectItem value="PM">PM</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      );
+    }
     case "multiselect":
       // Convert value to array of objects if it's a string
       const selectedValues =
@@ -1588,7 +1673,9 @@ export default function DischargeSummary() {
               // Special handling for admission and discharge dates
               if (
                 field.id === "admissionDate" ||
-                field.id === "dateDischarged"
+                field.id === "dateDischarged" ||
+                field.id === "timeDischarged" ||
+                field.id === "admittedTime"
               ) {
                 value = formData[field.id] || "";
                 onChange = handleInputChange;
@@ -1672,7 +1759,6 @@ export default function DischargeSummary() {
       </div>
     );
   };
-
   // Add a new useEffect to handle form config changes
   useEffect(() => {
     if (savedConfig) {
