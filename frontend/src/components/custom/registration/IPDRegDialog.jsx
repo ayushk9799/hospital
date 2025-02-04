@@ -43,6 +43,7 @@ import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 import BillModal from "./BillModal";
 import { fetchHospitalInfo } from "../../../redux/slices/HospitalSlice";
 import MultiSelectInput from "../MultiSelectInput";
+import { Label } from "../../ui/label";
 
 const paymentMethods = [
   { name: "Cash" },
@@ -110,6 +111,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         .split("/")
         .reverse()
         .join("-"),
+        bookingTime: new Date().toLocaleTimeString('en-US', { 
+          hour12: false, 
+          hour: '2-digit', 
+          minute: '2-digit'
+        }),
       timeSlot: {
         start: "",
         end: "",
@@ -639,33 +645,63 @@ setFormData((prev)=>({
                       error={errors.name}
                     />
                     {isMobile ? (
-                      <div className="grid grid-cols-2 gap-2">
-                        <MemoizedInput
-                          id="age"
-                          label="Age"
-                          type="number"
-                          value={formData.age}
-                          onChange={handleAgeChange}
-                          error={errors.age}
-                        />
-                        <div className="relative">
+                      <>
+                        <div className="grid grid-cols-2 gap-2">
                           <MemoizedInput
-                            id="registrationNumber"
-                            label="UHID Number"
-                            tabIndex={-1}
-                            value={formData.registrationNumber}
-                            onChange={handleInputChange}
-                            className="pr-10"
+                            id="age"
+                            label="Age"
+                            type="number"
+                            value={formData.age}
+                            onChange={handleAgeChange}
+                            error={errors.age}
                           />
-                          <button
-                            type="button"
-                            onClick={handleSearch}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                          >
-                            <Search className="h-5 w-5" />
-                          </button>
+                          <div className="relative">
+                            <MemoizedInput
+                              id="registrationNumber"
+                              label="UHID Number"
+                              tabIndex={-1}
+                              value={formData.registrationNumber}
+                              onChange={handleInputChange}
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleSearch}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                            >
+                              <Search className="h-5 w-5" />
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                        <div>
+                          <Select
+                            id="gender"
+                            value={formData.gender}
+                            onValueChange={(value) =>
+                              handleInputChange({
+                                target: { id: "gender", value },
+                              })
+                            }
+                          >
+                            <SelectTrigger
+                              className={errors.gender ? "border-red-500" : ""}
+                            >
+                              <SelectValue placeholder="Gender" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Male">Male</SelectItem>
+                              <SelectItem value="Female">Female</SelectItem>
+                              <SelectItem value="Other">Other</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          {errors.gender && (
+                            <p className="text-red-500 text-xs mt-1">
+                              {errors.gender}
+                            </p>
+                          )}
+                        </div>
+                        
+                      </>
                     ) : (
                       <><div className="grid grid-cols-2 gap-1">
                          
@@ -754,6 +790,55 @@ setFormData((prev)=>({
                         </div>
                       </>
                     )}
+                    <div className="relative grid grid-cols-2 gap-2">
+                      <div className="relative">
+                        <Input
+                          type="date"
+                          id="admission.bookingDate"
+                          value={formData.admission.bookingDate}
+                          onChange={handleInputChange}
+                          tabIndex={-1}
+                          className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+                            errors["admission.bookingDate"] ? "border-red-500" : "border-gray-300"
+                          }`}
+                        />
+                        <Label
+                          htmlFor="admission.bookingDate"
+                          className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
+                            errors["admission.bookingDate"] ? "text-red-500" : "text-gray-500"
+                          }`}
+                        >
+                          Booking Date
+                          {errors["admission.bookingDate"] && (
+                            <span className="text-red-500 ml-1">*Required</span>
+                          )}
+                        </Label>
+                      </div>
+
+                      <div className="relative">
+                        <Input
+                          type="time"
+                          id="admission.bookingTime"
+                          value={formData.admission.bookingTime}
+                          onChange={handleInputChange}
+                          tabIndex={-1}
+                          className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+                            errors["admission.bookingTime"] ? "border-red-500" : "border-gray-300"
+                          }`}
+                        />
+                        <Label
+                          htmlFor="admission.bookingTime"
+                          className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
+                            errors["admission.bookingTime"] ? "text-red-500" : "text-gray-500"
+                          }`}
+                        >
+                          Booking Time
+                          {errors["admission.bookingTime"] && (
+                            <span className="text-red-500 ml-1">*Required</span>
+                          )}
+                        </Label>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="space-y-4">

@@ -253,7 +253,7 @@ export default function Patients() {
                     {patient.assignedRoom?.roomNumber || "--"}
                   </TableCell> */}
                   <TableCell>
-                    {format(new Date(patient.bookingDate), "dd-MM-yyyy")}
+                    {format(new Date(patient.bookingDate), "dd MMM")} {" "} {patient?.bookingTime}
                   </TableCell>
                   <TableCell>
                     {patient.dateDischarged
@@ -504,7 +504,7 @@ export default function Patients() {
         <EditPatientDialog 
           open={isEditDialogOpen} 
           setOpen={setIsEditDialogOpen}
-          patientData={{...selectedPatient?.patient, registrationNumber : selectedPatient?.registrationNumber, type : selectedPatient?.type, visitID : selectedPatient?._id}}
+          patientData={{...selectedPatient?.patient, registrationNumber : selectedPatient?.registrationNumber, type : selectedPatient?.type, visitID : selectedPatient?._id, guardianName : selectedPatient?.guardianName, relation : selectedPatient?.relation}}
         />
         <Tabs
           defaultValue="OPD"

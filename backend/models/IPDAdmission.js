@@ -11,6 +11,7 @@ const Counter = mongoose.model("IPDCounter", CounterSchema);
 const ipdAdmissionSchema = new mongoose.Schema(
   {
     bookingDate: { type: Date },
+    bookingTime : {type : String},
     bookingNumber: { type: Number },
     patientName: { type: String },
     contactNumber: { type: String },

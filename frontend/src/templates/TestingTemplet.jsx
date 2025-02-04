@@ -51,9 +51,9 @@ export const testingTemplateString = `(patient, hospital, ref) => {
                 React.createElement("span", { style: { fontWeight: 'bold', display: 'inline-block', width: '35mm' } }, "UHID/Reg No :"),
                 patient?.registrationNumber || ''
             ),
-            React.createElement("div", null,
+           React.createElement("div", null,
                 React.createElement("span", { style: { fontWeight: 'bold', display: 'inline-block', width: '35mm' } }, "Reg. Date :"),
-                format(new Date(patient?.createdAt).toLocaleString(), 'dd-MMM-yyyy HH:mm') || ''
+                new Date(patient?.createdAt).toLocaleString("en-IN", { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' ,hour12: true})
             ),
             React.createElement("div", null,
                 React.createElement("span", { style: { fontWeight: 'bold', display: 'inline-block', width: '35mm' } }, "Valid For :"),
