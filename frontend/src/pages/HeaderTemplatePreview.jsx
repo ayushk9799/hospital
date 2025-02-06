@@ -1,30 +1,108 @@
-// import React from "react";
+import React, { useState } from "react";
 import { Button } from "../components/ui/button";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import { headerTemplateString } from "../templates/headertemplate";
-// import {headerTemplateString2 as headerTemplateStringExperimental} from "../templatesExperiments/HospitalHeaderTemplate";
+import { headerTemplateString3 as headerTemplateStringExperimental } from "../templatesExperiments/HospitalHeaderTemplate";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
+import { Input } from "../components/ui/input";
+import { cn } from "../lib/utils";
 
 export default function HeaderTemplatePreview() {
   const { hospitalInfo } = useSelector((state) => state.hospital);
   const dispatch = useDispatch();
   const headerTemplates = useSelector(
-    (state) => state.templates.headerTemplate
+    (state) => state.templates.headerTemplateArray
   );
+
+  // Define available templates
+  const [availableTemplates, setAvailableTemplates] = useState([
+    { name: "experimental", value: headerTemplateStringExperimental },
+    { name: "System Default", value: headerTemplateString },
+    ...(headerTemplates || []),
+  ]);
+
+  const [selectedTemplate, setSelectedTemplate] = useState(
+    availableTemplates[0] || { name: "", value: "" }
+  );
+
+  const [editingTemplateId, setEditingTemplateId] = useState(null);
+
+  const handleNameEdit = (template, newName) => {
+    const updatedTemplates = availableTemplates.map((t) =>
+      t === template ? { ...t, name: newName } : t
+    );
+    setAvailableTemplates(updatedTemplates);
+    if (selectedTemplate === template) {
+      setSelectedTemplate({ ...template, name: newName });
+    }
+  };
+
   const HospitalHeader = createDynamicComponentFromString(
-    headerTemplates
+    selectedTemplate?.value || ""
   );
+
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold">
-          Hospital Header Preview
-        </h1>
-        {/* <Button onClick={()=>{
-          dispatch(updateTemplate({headerTemplate:headerTemplateStringExperimental}));
-        }}>Save Template</Button> */}
+      <div className="flex flex-col gap-6 mb-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl sm:text-2xl font-bold">
+            Hospital Header Preview
+          </h1>
+          <Button
+            onClick={() => {
+              if (selectedTemplate) {
+                dispatch(
+                  updateTemplate({
+                    headerTemplate: {
+                      name: selectedTemplate.name,
+                      value: selectedTemplate.value,
+                    },
+                  })
+                );
+              }
+            }}
+          >
+            Save Template
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          {availableTemplates.map((template, index) => (
+            <div key={index} className="relative">
+              {editingTemplateId === index ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={template.name}
+                    onChange={(e) => handleNameEdit(template, e.target.value)}
+                    onBlur={() => setEditingTemplateId(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setEditingTemplateId(null);
+                      }
+                    }}
+                    className="w-[150px]"
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "relative min-w-[150px]",
+                    selectedTemplate === template &&
+                      "border-2 border-primary bg-primary/10"
+                  )}
+                  onClick={() => setSelectedTemplate(template)}
+                  onDoubleClick={() => setEditingTemplateId(index)}
+                >
+                  {template.name || "Unnamed Template"}
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex justify-center bg-gray-100 p-4 min-h-[calc(100vh-200px)] overflow-auto">

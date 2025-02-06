@@ -66,6 +66,10 @@ import ViewBabies from "./pages/ViewBabies";
 import BabyDetails from "./pages/BabyDetails";
 import DepartmentManger from "./pages/DepartmentManger";
 import ViewAllBabies from "./pages/ViewAllBabies";
+import LabRegDialog from "./components/custom/registration/LabRegDialog";
+import AllLabTests from "./pages/AllLabTests";
+import LabReportDetails from "./pages/LabReportDetails";
+import LabList from "./pages/LabList";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -170,14 +174,25 @@ const AppContent = () => {
                 />
                 <Route path="/addstaff" element={<AddStaff />} />
                 <Route path="/editstaff/:staffId" element={<AddStaff />} />
-                <Route path="/lab" element={<Lab />} />
                 <Route
+                  path="/lab"
+                  element={<Lab />}
+                />
+                <Route path="/lab/list" element={<LabList />} />
+                <Route path="/lab/registration" element={<LabRegDialog />} />
+                <Route path="/lab/all-tests" element={<AllLabTests />} />
+                <Route
+
                   path="/lab/create/:category/:type"
                   element={<CreateLabReport />}
                 />
                 <Route
                   path="/lab/blood-work/create"
                   element={<CreateBloodWork />}
+                />
+                <Route
+                  path="/lab/reports/:labId"
+                  element={<LabReportDetails />}
                 />
                 <Route path="/create-room" element={<CreateRoom />} />
                 <Route
@@ -254,7 +269,10 @@ const AppContent = () => {
                 />
                 <Route path="patients/babies" element={<ViewAllBabies />} />
                 <Route path="/babies/:babyId" element={<BabyDetails />} />
-                <Route path="/settings/department" element={<DepartmentManger />} />
+                <Route
+                  path="/settings/department"
+                  element={<DepartmentManger />}
+                />
               </>
             )}
           </Routes>

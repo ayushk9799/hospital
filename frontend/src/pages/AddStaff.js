@@ -30,7 +30,7 @@ export default function AddStaff() {
   const location = useLocation();
   const { staffId } = useParams();
   const { status, error } = useSelector((state) => state.staff);
-  const {userData}=useSelector((state)=>state.user)
+  const { userData } = useSelector((state) => state.user);
   const departments = useSelector((state) => state.departments.departments);
   // const { userData } = useSelector((state) => state.user);
 
@@ -75,7 +75,8 @@ export default function AddStaff() {
   const [newCertification, setNewCertification] = useState("");
 
   // Check if user has permission to create staff
-  const hasCreateStaffPermission = userData.permissions?.includes("create_staff");
+  const hasCreateStaffPermission =
+    userData.permissions?.includes("create_staff");
   const hasEditStaffPermission = userData.permissions?.includes("edit_staff");
 
   // Reset form function
@@ -85,7 +86,7 @@ export default function AddStaff() {
     setNewQualification("");
     setNewCertification("");
   };
-  useEffect(() => {}, [formData]); 
+  useEffect(() => {}, [formData]);
 
   useEffect(() => {
     if (location.state?.editMode && location.state?.staffData) {
@@ -168,9 +169,10 @@ export default function AddStaff() {
       setFormData({ ...formData, [id]: value });
     }
   };
-
+  console.log(formData);
   const handleCheckboxChange = (id, checked) => {
     const currentRoles = formData.roles || [];
+    console.log(id);
     const updatedRoles = checked
       ? [...currentRoles, id]
       : currentRoles?.filter((role) => role !== id);
@@ -253,13 +255,56 @@ export default function AddStaff() {
     return Object.keys(newErrors).length === 0;
   };
 
+  const cleanFormData = (data) => {
+    const cleanData = {};
+
+    for (const [key, value] of Object.entries(data)) {
+      // Handle nested objects like shift and payrollInfo
+      if (value && typeof value === "object" && !Array.isArray(value)) {
+        // Special handling for shift object
+        if (key === "shift") {
+          // Only include shift if both type and hours are properly set
+          if (value.type && value.hours?.start && value.hours?.end) {
+            cleanData[key] = {
+              type: value.type,
+              hours: {
+                start: value.hours.start,
+                end: value.hours.end,
+              },
+            };
+          }
+        } else {
+          const cleanNested = cleanFormData(value);
+          if (Object.keys(cleanNested).length > 0) {
+            cleanData[key] = cleanNested;
+          }
+        }
+      }
+      // Handle arrays - only include non-empty arrays
+      else if (Array.isArray(value)) {
+        if (value.length > 0) {
+          cleanData[key] = value;
+        }
+      }
+      // Handle primitive values - exclude null, undefined, empty strings
+      else if (value !== null && value !== undefined && value !== "") {
+        cleanData[key] = value;
+      }
+    }
+
+    return cleanData;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
       try {
+        // Clean the form data
+        const cleanedData = cleanFormData(formData);
+
         if (editMode) {
           await dispatch(
-            updateStaffMember({ id: formData._id, data: formData })
+            updateStaffMember({ id: formData._id, data: cleanedData })
           ).unwrap();
           toast({
             variant: "success",
@@ -267,7 +312,7 @@ export default function AddStaff() {
             description: "Staff member has been updated successfully.",
           });
         } else {
-          await dispatch(createStaffMember(formData)).unwrap();
+          await dispatch(createStaffMember(cleanedData)).unwrap();
           toast({
             variant: "success",
             title: "Staff Added",
@@ -610,22 +655,20 @@ export default function AddStaff() {
                 <span className="text-red-500 text-sm">{errors.username}</span>
               )}
             </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
-                {errors.password && (
-                  <span className="text-red-500 text-sm">
-                    {errors.password}
-                  </span>
-                )}
-              </div>
-            
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="********"
+                value={formData.password}
+                onChange={handleInputChange}
+              />
+              {errors.password && (
+                <span className="text-red-500 text-sm">{errors.password}</span>
+              )}
+            </div>
+
             <div>
               <Label htmlFor="employeeID">Employee ID</Label>
               <Input

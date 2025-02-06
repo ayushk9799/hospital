@@ -4,7 +4,7 @@ import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { dischargeSummaryTemplateStringDefault } from "../../../templates/dischargesummary";
 import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
-import { headerTemplateString } from "../../../templates/headertemplate";
+import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 
 // Keep the styles object as is
 const styles = {
@@ -115,10 +115,21 @@ const hasValue = (obj) => {
 // Create the dynamic component
 const DischargeSummaryPDF = forwardRef((props, ref) => {
   const { formData, patient, formConfig, hospital } = props;
- console.log(formData)
-  const dischargeSummaryTemplateStringdatabase = useSelector(
-    (state) => state.templates.dischargeSummaryTemplate
+  console.log(formData);
+  console.log(patient);
+
+  const dischargeSummaryTemplates = useSelector(
+    (state) => state.templates.dischargeSummaryTemplateArray
   );
+  const dischargeSummaryTemplatedatabseString=useSelector(
+    (state)=>state.templates.dischargeSummaryTemplate
+  )
+
+  // Get the default or first available template
+  const dischargeSummaryTemplateString =
+    dischargeSummaryTemplates?.length > 0
+      ? dischargeSummaryTemplates[0].value
+      : dischargeSummaryTemplatedatabseString||dischargeSummaryTemplateStringDefault;
 
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(
@@ -128,16 +139,24 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
     "formatDate",
     "hasValue",
     `return (${
-      dischargeSummaryTemplateStringdatabase ||
-      dischargeSummaryTemplateStringDefault
+      dischargeSummaryTemplateString ||
+      dischargeSummaryTemplateStringDefault ||
+      configBasedDischargeSummaryTemplate
     });`
   );
 
-  const headerTemplateString = useSelector(
+  const headerTemplates = useSelector(
     (state) => state.templates.headerTemplate
   );
 
-  const HospitalHeader = createDynamicComponentFromString(headerTemplateString);
+  const headerTemplateString =
+    headerTemplates?.length > 0
+      ? headerTemplates[0].value
+      : headerTemplateStringDefault;
+
+  const HospitalHeader = createDynamicComponentFromString(
+    headerTemplateString || headerTemplateStringDefault
+  );
 
   try {
     // Get the component function

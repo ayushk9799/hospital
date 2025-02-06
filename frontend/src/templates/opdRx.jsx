@@ -3,7 +3,7 @@ import { format, addDays } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplate } from "../templates/headertemplate";
- import { opdRxTemplateStringExperimental } from "../templatesExperiments/opdRxExperimental";
+import { opdRxTemplateStringExperimental } from "../templatesExperiments/opdRxExperimental";
 
 export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
   return React.createElement("div", { className: "print-content" },
@@ -52,12 +52,20 @@ export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
 
 const OPDRxTemplate = forwardRef((props, ref) => {
   const { patient, hospital } = props;
-  const headerTemplateString = useSelector(
+
+  const headerTemplates = useSelector(
     (state) => state.templates.headerTemplate
   );
-  const opdRxTemplateDatabase = useSelector(
-    (state) => state.templates.opdRxTemplate
-  );
+  const opdRxTemplates = useSelector((state) => state.templates.opdRxTemplate);
+
+  const headerTemplateString =
+    headerTemplates?.length > 0 ? headerTemplates[0].value : headerTemplate;
+
+  const opdRxTemplateString =
+    opdRxTemplates?.length > 0
+      ? opdRxTemplates[0].value
+      : opdRxTemplateStringDefault;
+
   const HospitalHeader = createDynamicComponentFromString(
     headerTemplateString || headerTemplate
   );
@@ -67,7 +75,7 @@ const OPDRxTemplate = forwardRef((props, ref) => {
     "HospitalHeader",
     "format",
     "addDays",
-    `return (${ opdRxTemplateDatabase||opdRxTemplateStringDefault});`
+    `return (${opdRxTemplateString || opdRxTemplateStringDefault});`
   );
 
   try {

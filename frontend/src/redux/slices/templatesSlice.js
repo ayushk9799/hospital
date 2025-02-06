@@ -84,11 +84,11 @@ export const updateServiceBillCollections = createAsyncThunk(
 
 const initialState = {
   labTestsTemplate: [],
-  headerTemplate: "",
+  headerTemplateArray: [],
   diagnosisTemplate: [],
-  dischargeSummaryTemplate: "",
-  opdPrescriptionTemplate: "",
-  opdRxTemplate: "",
+  dischargeSummaryTemplateArray: [],
+  opdPrescriptionTemplateArray: [],
+  opdRxTemplateArray: [],
   status: "idle",
   error: null,
   serviceBillCollections: [],
@@ -107,12 +107,15 @@ const templatesSlice = createSlice({
       .addCase(fetchTemplates.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.labTestsTemplate = action.payload.labTestsTemplate;
-        state.headerTemplate = action.payload.headerTemplate;
+        state.headerTemplateArray = action.payload.headerTemplateArray || [];
+        state.headerTemplate=action.payload.headerTemplate ||"";
+        state.dischargeSummaryTemplate=state.payload.dischargeSummaryTemplate||"";
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
-        state.dischargeSummaryTemplate =
-          action.payload.dischargeSummaryTemplate;
-        state.opdPrescriptionTemplate = action.payload.opdPrescriptionTemplate;
-        state.opdRxTemplate = action.payload.opdRxTemplate;
+        state.dischargeSummaryTemplateArray =
+          action.payload.dischargeSummaryTemplateArray || [];
+        state.opdPrescriptionTemplateArray =
+          action.payload.opdPrescriptionTemplateArray || [];
+        state.opdRxTemplateArray = action.payload.opdRxTemplateArray || [];
         state.comorbidities = action.payload.comorbidities;
         state.medicinelist = action.payload.medicinelist;
         state.serviceBillCollections = action.payload.service_collections;
@@ -130,19 +133,19 @@ const templatesSlice = createSlice({
         if (action.payload.labTestsTemplate) {
           state.labTestsTemplate = action.payload.labTestsTemplate;
         }
-        if (action.payload.headerTemplate) {
-          state.headerTemplate = action.payload.headerTemplate;
+        if (action.payload.headerTemplateArray) {
+          state.headerTemplateArray = action.payload.headerTemplateArray || [];
         }
-        if (action.payload.dischargeSummaryTemplate) {
-          state.dischargeSummaryTemplate =
-            action.payload.dischargeSummaryTemplate;
+        if (action.payload.dischargeSummaryTemplateArray) {
+          state.dischargeSummaryTemplateArray =
+            action.payload.dischargeSummaryTemplateArray || [];
         }
-        if (action.payload.opdPrescriptionTemplate) {
-          state.opdPrescriptionTemplate =
-            action.payload.opdPrescriptionTemplate;
+        if (action.payload.opdPrescriptionTemplateArray) {
+          state.opdPrescriptionTemplateArray =
+            action.payload.opdPrescriptionTemplateArray || [];
         }
-        if (action.payload.opdRxTemplate) {
-          state.opdRxTemplate = action.payload.opdRxTemplate;
+        if (action.payload.opdRxTemplateArray) {
+          state.opdRxTemplateArray = action.payload.opdRxTemplateArray || [];
         }
         if (action.payload.dischargeFormTemplates) {
           state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
