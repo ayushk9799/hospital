@@ -8,8 +8,7 @@ const staffSchema = new mongoose.Schema({
   },
   username: {
     type: String,
-    unique: true,
-    sparse: true,
+  
     trim: true,
   },
   password: {
@@ -17,7 +16,7 @@ const staffSchema = new mongoose.Schema({
     trim: true,
   },
   hospital: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital" },
-  employeeID: { type: String, unique: true, sparse: true },
+  employeeID: { type: String },
   department: [{ type: String }],
   roles: [
     {

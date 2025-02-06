@@ -30,7 +30,7 @@ export default function AddStaff() {
   const location = useLocation();
   const { staffId } = useParams();
   const { status, error } = useSelector((state) => state.staff);
-  const {userData}=useSelector((state)=>state.user)
+  const { userData } = useSelector((state) => state.user);
   const departments = useSelector((state) => state.departments.departments);
   // const { userData } = useSelector((state) => state.user);
 
@@ -75,7 +75,8 @@ export default function AddStaff() {
   const [newCertification, setNewCertification] = useState("");
 
   // Check if user has permission to create staff
-  const hasCreateStaffPermission = userData.permissions?.includes("create_staff");
+  const hasCreateStaffPermission =
+    userData.permissions?.includes("create_staff");
   const hasEditStaffPermission = userData.permissions?.includes("edit_staff");
 
   // Reset form function
@@ -85,7 +86,7 @@ export default function AddStaff() {
     setNewQualification("");
     setNewCertification("");
   };
-  useEffect(() => {}, [formData]); 
+  useEffect(() => {}, [formData]);
 
   useEffect(() => {
     if (location.state?.editMode && location.state?.staffData) {
@@ -257,9 +258,65 @@ export default function AddStaff() {
     e.preventDefault();
     if (validateForm()) {
       try {
+        // Create a clean data object by removing empty fields
+        const cleanData = Object.entries(formData).reduce(
+          (acc, [key, value]) => {
+            // Handle nested objects
+            if (key === "shift") {
+              // Only include shift if both type and hours are properly filled
+              if (value.type && value.hours?.start && value.hours?.end) {
+                acc[key] = value;
+              }
+              return acc;
+            }
+
+            // Handle payrollInfo nested object
+            if (key === "payrollInfo") {
+              const cleanPayrollInfo = Object.entries(value).reduce(
+                (payroll, [field, val]) => {
+                  if (val && val.trim() !== "") {
+                    payroll[field] = val;
+                  }
+                  return payroll;
+                },
+                {}
+              );
+
+              if (Object.keys(cleanPayrollInfo).length > 0) {
+                acc[key] = cleanPayrollInfo;
+              }
+              return acc;
+            }
+
+            // Handle arrays - only include if they have elements
+            if (Array.isArray(value)) {
+              if (value.length > 0) {
+                acc[key] = value;
+              }
+              return acc;
+            }
+
+            // Handle string fields
+            if (typeof value === "string") {
+              if (value.trim() !== "") {
+                acc[key] = value;
+              }
+              return acc;
+            }
+
+            // Handle other non-empty values
+            if (value !== null && value !== undefined && value !== "") {
+              acc[key] = value;
+            }
+
+            return acc;
+          },
+          {}
+        );
+
         if (editMode) {
           await dispatch(
-            updateStaffMember({ id: formData._id, data: formData })
+            updateStaffMember({ id: formData._id, data: cleanData })
           ).unwrap();
           toast({
             variant: "success",
@@ -267,7 +324,7 @@ export default function AddStaff() {
             description: "Staff member has been updated successfully.",
           });
         } else {
-          await dispatch(createStaffMember(formData)).unwrap();
+          await dispatch(createStaffMember(cleanData)).unwrap();
           toast({
             variant: "success",
             title: "Staff Added",
@@ -610,22 +667,20 @@ export default function AddStaff() {
                 <span className="text-red-500 text-sm">{errors.username}</span>
               )}
             </div>
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="********"
-                  value={formData.password}
-                  onChange={handleInputChange}
-                />
-                {errors.password && (
-                  <span className="text-red-500 text-sm">
-                    {errors.password}
-                  </span>
-                )}
-              </div>
-            
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                type="password"
+                placeholder="********"
+                value={formData.password}
+                onChange={handleInputChange}
+              />
+              {errors.password && (
+                <span className="text-red-500 text-sm">{errors.password}</span>
+              )}
+            </div>
+
             <div>
               <Label htmlFor="employeeID">Employee ID</Label>
               <Input
