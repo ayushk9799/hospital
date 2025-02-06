@@ -17,6 +17,7 @@ function formatDate(date) {
 const visitSchema = new mongoose.Schema(
   {
     bookingDate: { type: Date },
+    bookingTime : {type : String},
     bookingNumber: { type: Number },
     patientName: { type: String },
     contactNumber: { type: String },

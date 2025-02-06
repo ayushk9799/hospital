@@ -715,6 +715,8 @@ const patientSlice = createSlice({
         if (index !== -1) {
           state.patientlist[index] = {
             ...state.patientlist[index],
+            guardianName : updatedPatient?.guardianName,
+            relation : updatedPatient?.relation,
             patient: {
               ...state.patientlist[index].patient,
               ...updatedPatient

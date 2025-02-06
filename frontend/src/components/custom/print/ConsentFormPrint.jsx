@@ -63,57 +63,59 @@ const ConsentFormPrint = ({ patient }) => {
           <div className="grid grid-cols-2">
             <div className="grid grid-cols-3">
               <span>Patient Name:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.name || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.patient?.name || ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>Guardian Name:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.guardianName || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.guardianName || ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>UHID Number:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.registrationNumber || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.registrationNumber || ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>IPD Number:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.ipdNumber || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.ipdNumber || ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>Room No:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.assignedRoom?.roomNumber || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.assignedRoom?.roomNumber || ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>Age:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.age ? `${patient?.patient?.age} Years` : 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.patient?.age ? `${patient?.patient?.age} Years` : ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>Gender:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.gender || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.patient?.gender || ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>Address:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.address || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.patient?.address || ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>Mobile No:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.contactNumber || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.patient?.contactNumber || ""}</span>
             </div>
             <div className="grid grid-cols-3">
               <span>Admission Date:</span>
               <span className="font-semibold capitalize col-span-2">
-                {patient?.createdAt ? format(new Date(patient.createdAt), 'dd-MMM-yyyy h:mm a') : 'N/A'}
+                {/* {patient?.createdAt ? format(new Date(patient.createdAt), 'dd-MMM-yyyy h:mm a') : ""} */}
+                {patient?.bookingDate ? format(new Date(patient.bookingDate), 'dd-MMM-yyyy') : ""} {" "}
+                {patient?.bookingTime || ""}
               </span>
             </div>
             <div className="grid grid-cols-3">
               <span>Consultant:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.doctor?.name || 'N/A'}</span>
+              <span className="font-semibold capitalize col-span-2">{patient?.doctor?.name || ""}</span>
             </div>
           </div>
           <Separator className="my-2 bg-black" />
           <div className="underline font-semibold mx-4 underline-offset-2">Person to notify in case of Emergency</div>
           <div className="flex justify-between mb-4 mx-4">
-            <div className="capitalize">Name: {patient?.guardianName || 'N/A'}</div> 
-            <div >Mobile No: {patient?.patient?.contactNumber || 'N/A'}</div>
-            <div className="capitalize">Relation with Patient : {patient?.relation || 'N/A'}</div>
+            <div className="capitalize">Name: {patient?.guardianName || ""}</div> 
+            <div >Mobile No: {patient?.patient?.contactNumber || ""}</div>
+            <div className="capitalize">Relation with Patient : {patient?.relation || ""}</div>
           </div>
           <div className="space-y-4 text-justify px-4">
             <p className="text-lg font-semibold mb-2">सामान्य सहमति</p>
@@ -139,11 +141,11 @@ const ConsentFormPrint = ({ patient }) => {
           <div className="mt-[50px] flex justify-between px-4">
             <div className="text-center">
                 <p className="border-t-[1px] border-black">Signature of Patient</p>
-                <p className="uppercase text-xs">({patient?.patient?.name || 'N/A'})</p>
+                <p className="uppercase text-xs">({patient?.patient?.name || ""})</p>
             </div>
             <div className="text-center">
                 <p className="border-t-[1px] border-black">Signature of Guardian</p>
-                <p className="text-xs uppercase">({patient?.guardianName || 'N/A'})</p>
+                <p className="text-xs uppercase">{patient?.guardianName ? `(${patient?.guardianName})` : ""}</p>
             </div>
           </div>
         </div>

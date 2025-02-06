@@ -11,6 +11,10 @@ import MemoizedInput from "../registration/MemoizedInput";
 import { FloatingLabelSelect } from "../registration/PatientInfoForm";
 import {
   SelectItem,
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
 } from "../../ui/select";
 import { useDispatch, useSelector } from 'react-redux';
 import { differenceInYears } from "date-fns";
@@ -18,6 +22,8 @@ import {editPatient} from '../../../redux/slices/patientSlice'
 import { useToast } from "../../../hooks/use-toast";
 
 const EditPatientDialog = ({ open, setOpen, patientData }) => {
+  console.log('abc', patientData);
+  
     const {editPatientStatus} = useSelector(state=>state.patients)
     const { toast } = useToast();
   const dispatch = useDispatch();
@@ -29,6 +35,8 @@ const EditPatientDialog = ({ open, setOpen, patientData }) => {
     age: '',
     gender: '',
     registrationNumber: '',
+    guardianName: '',
+    relation: '',
   });
   const [errors, setErrors] = useState({});
 
@@ -43,6 +51,8 @@ const EditPatientDialog = ({ open, setOpen, patientData }) => {
         age: patientData?.age || '',
         gender: patientData?.gender || '',
         registrationNumber: patientData?.registrationNumber || '',
+        guardianName: patientData?.guardianName || '',
+        relation: patientData?.relation || '',
       });
     }
   }, [patientData]);
@@ -57,6 +67,8 @@ const EditPatientDialog = ({ open, setOpen, patientData }) => {
       age: '',
       gender: '',
       registrationNumber: '',
+      guardianName: '',
+      relation: '',
     });
     setErrors({});
   };
@@ -148,6 +160,38 @@ const EditPatientDialog = ({ open, setOpen, patientData }) => {
             onChange={handleInputChange}
             error={errors.name}
           />
+
+          <div className="grid grid-cols-[1fr_2fr] gap-2">
+            <Select
+              id="relation"
+              value={formData.relation}
+              onValueChange={(value) =>
+                handleInputChange({
+                  target: { id: "relation", value },
+                })
+              }
+            >
+              <SelectTrigger
+                className={errors.relation ? "border-red-500" : ""}
+              >
+                <SelectValue placeholder="Relation" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Father">Father</SelectItem>
+                <SelectItem value="Husband">Husband</SelectItem>
+                <SelectItem value="Mother">Mother</SelectItem>
+                <SelectItem value="Wife">Wife</SelectItem>
+                <SelectItem value="Guardian">Guardian</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <MemoizedInput
+              id="guardianName"
+              value={formData.guardianName}
+              onChange={handleInputChange}
+              label={`${formData.relation ? formData.relation + "'s Name" : "Guardian's Name"}`}
+            />
+          </div>
 
           <div className="flex items-end gap-4">
             <div className="w-full sm:w-30 relative">

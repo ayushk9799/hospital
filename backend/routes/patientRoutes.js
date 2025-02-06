@@ -634,6 +634,7 @@ router.post("/details", verifyToken, async (req, res) => {
       registrationNumber: admission.registrationNumber,
       ipdNumber: admission.ipdNumber,
       bookingDate: admission.bookingDate,
+      bookingTime : admission.bookingTime,
       department: admission.department,
       doctor: admission.assignedDoctor,
       assignedRoom: admission.assignedRoom,
@@ -820,15 +821,18 @@ router.put("/:id", verifyToken, async (req, res) => {
       throw new Error("Patient not found");
     }
 
+    let updatedVisit;
     // Update visit/admission data if visitID and type are provided
     if (visitID && type) {
       const Model = type === "OPD" ? Visit : IPDAdmission;
       const visitData = {
         patientName: patient.name,
         contactNumber: patient.contactNumber,
+        guardianName: patientData?.guardianName,
+        relation: patientData?.relation
       };
 
-      const updatedVisit = await Model.findByIdAndUpdate(
+      updatedVisit = await Model.findByIdAndUpdate(
         visitID,
         visitData,
         {
@@ -838,7 +842,11 @@ router.put("/:id", verifyToken, async (req, res) => {
         }
       );
 
-       await ServicesBill.findByIdAndUpdate(updatedVisit.bills.services[0],
+      if (!updatedVisit) {
+        throw new Error(`${type} record not found`);
+      }
+
+      await ServicesBill.findByIdAndUpdate(updatedVisit.bills.services[0],
         {
           patientInfo: {
             name: patientData?.name,
@@ -852,18 +860,16 @@ router.put("/:id", verifyToken, async (req, res) => {
           runValidators: true,
           session
         }
-      )
-
-      if (!updatedVisit) {
-        throw new Error(`${type} record not found`);
-      }
+      );
     }
 
     await session.commitTransaction();
-    res.json(patient);
+    res.json({...patient.toObject(), guardianName: updatedVisit?.guardianName, relation: updatedVisit?.relation});
 
   } catch (error) {
-    await session.abortTransaction();
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
     res.status(400).json({ message: error.message });
   } finally {
     session.endSession();
@@ -1466,6 +1472,8 @@ router.post(
         vitals: admission.vitals || null,
         comorbidities: admission.comorbidities || [],
         operationName: admission.operationName || null,
+        guardianName : admission.guardianName || null,
+        relation : admission.relation || null
       });
 
       let bill;
@@ -1519,8 +1527,8 @@ router.post(
           totalAmount: Number(paymentInfo.totalAmount),
           subtotal: services.reduce((sum, service) => sum + service.rate, 0)
             ? services.reduce((sum, service) => sum + service.rate, 0) +
-              roomCharge
-            : Number(paymentInfo.totalAmount),
+            roomCharge
+          : Number(paymentInfo.totalAmount),
           additionalDiscount: paymentInfo.additionalDiscount || 0,
           amountPaid: Number(paymentInfo.amountPaid) || 0,
           patientType: "IPD",
