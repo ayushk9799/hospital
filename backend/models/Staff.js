@@ -33,7 +33,7 @@ const staffSchema = new mongoose.Schema({
   ],
   yearsOfExperience: Number,
   currentPatients: [{ type: mongoose.Schema.Types.ObjectId, ref: "Patient" }],
-  email: { type: String, unique: true, sparse: true },
+  email: { type: String },
   contactNumber: { type: String },
   address: {
     type: String,
@@ -89,6 +89,8 @@ const staffSchema = new mongoose.Schema({
       'create_patients',
       'edit_patients',
       'delete_patients',
+      'give_discount',
+      'can_discharge',
       
       // Inventory Management
       'view_inventory',
@@ -131,6 +133,8 @@ const staffSchema = new mongoose.Schema({
       'view_suppliers',
       'create_suppliers',
       'edit_suppliers',
+      
+      'record_expense',
       
       // Appointments
       'view_appointments',

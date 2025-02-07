@@ -30,6 +30,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '.
 const Expenses = () => {
   const dispatch = useDispatch();
   const { expenses, expensesStatus, deleteExpenseStatus } = useSelector((state) => state.expenses);
+  const userPermissions=useSelector(state=>state.user?.userData?.permissions||[]);
   const [searchTerm, setSearchTerm] = useState('')
   const [filterStatus, setFilterStatus] = useState('All')
   const [dateFilter, setDateFilter] = useState('All')
@@ -303,8 +304,8 @@ const Expenses = () => {
           </div>
           {!isSmallScreen && (
             <div className="flex space-x-2">
-              <Button variant="outline" onClick={handleAddExpense}>
-                <Plus className="mr-2 h-4 w-4" /> Add Expense
+              <Button variant="outline" onClick={handleAddExpense} disabled={!userPermissions?.includes("record_expense")}>
+                <Plus className="mr-2 h-4 w-4" /> {userPermissions?.includes("record_expense")?"Add Expense":"No permission to add expense"}
               </Button>
             </div>
           )}

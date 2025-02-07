@@ -558,6 +558,28 @@ export default function AddStaff() {
                 </div>
               ))}
             </div>
+            <div className="grid grid-cols-2 space-y-2">
+              {permissionGroups["Expense/Return"]?.map((permission) => (
+                <div
+                  key={permission.id}
+                  className="flex items-center space-x-2"
+                >
+                  <Checkbox
+                    id={permission.id}
+                    checked={(formData.permissions || []).includes(
+                      permission.id
+                    )}
+                    onCheckedChange={(checked) =>
+                      handlePermissionChange(permission.id, checked)
+                    }
+                  />
+                  <label htmlFor={permission.id} className="text-sm">
+                    {permission.label}
+                  </label>
+                </div>
+              ))}
+            </div>
+            
           </div>
 
           {/* Column 3: Staff, Hospital & Other Management */}

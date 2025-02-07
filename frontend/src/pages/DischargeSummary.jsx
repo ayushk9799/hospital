@@ -1006,8 +1006,24 @@ export default function DischargeSummary() {
 
   const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
 
+  // Add this selector to get the current user's permissions
+  const userPermissions = useSelector(
+    (state) => state.user?.userData?.permissions || []
+  );
+  const hasDischargePermission = userPermissions.includes("can_discharge");
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Add permission check
+    if (!hasDischargePermission) {
+      toast({
+        title: "Permission Denied",
+        description: "You don't have permission to discharge patients.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const dischargePayload = {
       patientId: patientId || patient._id,
@@ -1805,7 +1821,7 @@ export default function DischargeSummary() {
           </div>
         </CardHeader>
         <CardContent className="p-4">
-          <div  className="space-y-4">
+          <div className="space-y-4">
             {formConfig.sections.map(renderFormSection)}
 
             <div className="flex flex-col sm:flex-row justify-end mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
@@ -1829,10 +1845,18 @@ export default function DischargeSummary() {
               <Button
                 type="button"
                 onClick={handleSubmit}
-                disabled={dischargeStatus === "loading" || !patientId}
+                disabled={
+                  dischargeStatus === "loading" ||
+                  !patientId ||
+                  !hasDischargePermission
+                }
                 className="w-full sm:w-auto"
               >
-                {dischargeStatus === "loading" ? "Discharging..." : "Discharge"}
+                {!hasDischargePermission
+                  ? "No Permission to Discharge"
+                  : dischargeStatus === "loading"
+                  ? "Discharging..."
+                  : "Discharge"}
               </Button>
             </div>
           </div>
