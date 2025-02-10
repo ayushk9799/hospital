@@ -133,7 +133,8 @@ const staffSchema = new mongoose.Schema({
       'view_suppliers',
       'create_suppliers',
       'edit_suppliers',
-      
+      'view_otherscollection_all',
+      'view_otherscollection_for_just_today',
       'record_expense',
       
       // Appointments

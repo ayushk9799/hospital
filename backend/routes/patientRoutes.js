@@ -348,8 +348,10 @@ router.post(
               let payments = new Payment({
                 amount: pm.amount,
                 paymentMethod: pm.method,
+                associatedInvoiceOrId:bill.invoiceNumber,
                 paymentType: { name: "Services", id: bill._id },
                 type: "Income",
+                createdByName:user?.name,
                 createdBy: user._id,
               });
               await payments.save({ session });
@@ -471,8 +473,10 @@ router.post(
                 let payments = new Payment({
                   amount: pm.amount,
                   paymentMethod: pm.method,
+                  associatedInvoiceOrId:bill.invoiceNumber,
                   paymentType: { name: "Services", id: bill._id },
                   type: "Income",
+                  createdByName:user?.name,
                   createdBy: user._id,
                 });
                 await payments.save({ session });
@@ -1064,8 +1068,10 @@ router.post(
           let payment = new Payment({
             amount: pm.amount,
             paymentMethod: pm.method,
+            associatedInvoiceOrId:bill.invoiceNumber,
             paymentType: { name: "Services", id: bill._id },
             type: "Income",
+            createdByName:user?.name,
             createdBy: user._id,
           });
           payments.push(payment);
@@ -1544,8 +1550,10 @@ router.post(
               let payments = new Payment({
                 amount: pm.amount,
                 paymentMethod: pm.method,
+                associatedInvoiceOrId:bill.invoiceNumber,
                 paymentType: { name: "Services", id: bill._id },
                 type: "Income",
+                createdByName:user?.name,
                 createdBy: user._id,
               });
               await payments.save({ session });

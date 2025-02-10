@@ -66,6 +66,7 @@ import ViewBabies from "./pages/ViewBabies";
 import BabyDetails from "./pages/BabyDetails";
 import DepartmentManger from "./pages/DepartmentManger";
 import ViewAllBabies from "./pages/ViewAllBabies";
+import Payments from "./pages/Payments";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -207,6 +208,7 @@ const AppContent = () => {
                   element={<HospitalInfo />}
                 />
                 <Route path="/expenses" element={<Expenses />} />
+                <Route path="/payments" element={<Payments />} />
                 <Route
                   path="/settings/customization"
                   element={<Customization />}
@@ -254,7 +256,10 @@ const AppContent = () => {
                 />
                 <Route path="patients/babies" element={<ViewAllBabies />} />
                 <Route path="/babies/:babyId" element={<BabyDetails />} />
-                <Route path="/settings/department" element={<DepartmentManger />} />
+                <Route
+                  path="/settings/department"
+                  element={<DepartmentManger />}
+                />
               </>
             )}
           </Routes>

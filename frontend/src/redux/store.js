@@ -14,6 +14,7 @@ import dashboardReducer from "./slices/dashboardSlice";
 import dischargeReducer from "./slices/dischargeSlice";
 import expenseReducer from "./slices/expenseSlice";
 import babyReducer from "./slices/babySlice";
+import paymentReducer from "./slices/paymentSlice";
 
 export const store = configureStore({
   reducer: {
@@ -32,5 +33,6 @@ export const store = configureStore({
     discharge: dischargeReducer,
     expenses: expenseReducer,
     babies: babyReducer,
+    payments: paymentReducer,
   },
 });

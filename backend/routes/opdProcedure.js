@@ -107,12 +107,14 @@ router.post("/", verifyToken, async (req, res) => {
       const newPayment = new Payment({
         amount: Number(payment.amount),
         paymentMethod: payment.method,
+        associatedInvoiceOrId:servicesBill.invoiceNumber,
         paymentType: {
           name: "Services",
           id: servicesBill._id.toString(),
         },
         type: "Income",
-        description: `Payment for OPD Procedure - ${procedureName} for patient ${name}`,
+        createdByName:req.user?.name,
+        description: `${procedureName} for patient ${name}`,
         createdBy: req.user._id,
       });
 

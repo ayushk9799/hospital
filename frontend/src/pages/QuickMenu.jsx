@@ -1,4 +1,4 @@
-import React, { useState ,useEffect, useMemo} from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "../components/ui/card";
 import { useDispatch } from "react-redux";
 import { fetchPatients } from "../redux/slices/patientSlice";
@@ -19,14 +19,14 @@ import {
   Receipt,
   CreditCard,
   BarChart,
-  Baby
+  Baby,
 } from "lucide-react";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
 import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
 import OPDProcedureDialog from "../components/custom/procedures/OPDProcedureDialog";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {fetchDepartments} from '../redux/slices/departmentSlice'
+import { fetchDepartments } from "../redux/slices/departmentSlice";
 
 const QuickMenu = () => {
   const [isOPDDialogOpen, setIsOPDDialogOpen] = useState(false);
@@ -36,33 +36,37 @@ const QuickMenu = () => {
   const todaysPatient = useSelector(
     (state) => state.patients.todaysPatientList
   );
-  const {departments, status} = useSelector(state=>state.departments);
+  const { departments, status } = useSelector((state) => state.departments);
 
   const hasObstetrics = useMemo(() => {
-    if(departments.length === 0) return false;
-    return departments?.some(dept => 
-      dept.name.toLowerCase().includes('obstetrics')
+    if (departments.length === 0) return false;
+    return departments?.some((dept) =>
+      dept.name.toLowerCase().includes("obstetrics")
     );
   }, [departments]);
 
   useEffect(() => {
-    if(status === 'idle') {
+    if (status === "idle") {
       dispatch(fetchDepartments());
     }
   }, [departments]);
 
   useEffect(() => {
-    dispatch(fetchPatients({ startDate: new Date().toLocaleDateString('en-In').split('/').reverse().join('-') }));
+    dispatch(
+      fetchPatients({
+        startDate: new Date()
+          .toLocaleDateString("en-In")
+          .split("/")
+          .reverse()
+          .join("-"),
+      })
+    );
   }, []);
   const navigate = useNavigate();
 
   // Filter today's patients
-  const opdPatients = todaysPatient.filter(
-    (patient) => patient.type === "OPD"
-  );
-  const ipdPatients = todaysPatient.filter(
-    (patient) => patient.type === "IPD"
-  );
+  const opdPatients = todaysPatient.filter((patient) => patient.type === "OPD");
+  const ipdPatients = todaysPatient.filter((patient) => patient.type === "IPD");
 
   const quickActions = [
     {
@@ -108,7 +112,7 @@ const QuickMenu = () => {
       color: "bg-yellow-200 text-yellow-800 hover:bg-yellow-300",
     },
     {
-      title: "Billings",
+      title: "Billings/Invoices",
       description: "Manage patient bills and payments",
       icon: Calculator,
       action: () => navigate("/billings"),
@@ -150,11 +154,18 @@ const QuickMenu = () => {
       color: "bg-violet-200 text-violet-800 hover:bg-violet-300",
     },
     {
-      title: "Expenses",
+      title: "Expenses/Debit",
       description: "Track and manage expenses",
       icon: CreditCard,
       action: () => navigate("/expenses"),
       color: "bg-rose-200 text-rose-800 hover:bg-rose-300",
+    },
+    {
+      title: "Payments",
+      description: "View and manage all payments",
+      icon: Receipt,
+      action: () => navigate("/payments"),
+      color: "bg-lime-200 text-lime-800 hover:bg-lime-300",
     },
     {
       title: "Statistics",

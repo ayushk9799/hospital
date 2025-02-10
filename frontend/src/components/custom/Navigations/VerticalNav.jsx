@@ -40,8 +40,8 @@ const labReportTypes = [
 export const navItems = [
   { name: "Quick Menu", icon: Home, path: "/" },
   { name: "Patients List", icon: Users, path: "/patients" },
-  { name: "Billings", icon: ReceiptText, path: "/billings" },
-  { name: "Expenses", icon: IndianRupee, path: "/expenses" },
+  { name: "Billings/Invoices", icon: ReceiptText, path: "/billings" },
+  { name: "Expenses/Debit", icon: IndianRupee, path: "/expenses" },
   { name: "Doctors", icon: Stethoscope, path: "/doctors" },
   { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy" },
   { name: "Lab", icon: TestTube, path: "/lab" },

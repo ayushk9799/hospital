@@ -268,8 +268,10 @@ router.post("/:id/payments", verifyToken, async (req, res) => {
     const payment = new Payment({
       amount: paymentAmount,
       paymentMethod,
+      associatedInvoiceOrId: bill.invoiceNumber,
       paymentType: { name: "Services", id: bill._id },
       type: "Income",
+      createdByName:user.name,
       createdBy: user._id,
     });
     await payment.save({ session });
