@@ -1,0 +1,341 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
+import {
+  Search,
+  Plus,
+  Filter,
+  Calendar as CalendarIcon,
+  X,
+  UserX,
+  MoreVertical,
+} from "lucide-react";
+import { format } from "date-fns";
+import { useMediaQuery } from "../hooks/use-media-query";
+import { motion, AnimatePresence } from "framer-motion";
+import { Badge } from "../components/ui/badge";
+import { DateRangePicker } from "../assets/Data";
+import { Backend_URL } from "../assets/Data";
+import LabRegDialog from "../components/custom/registration/LabRegDialog";
+
+export default function LabList() {
+  const navigate = useNavigate();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dateFilter, setDateFilter] = useState("Today");
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+  const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [tests, setTests] = useState([]);
+  const [filteredTests, setFilteredTests] = useState([]);
+
+  const isSmallScreen = useMediaQuery("(max-width: 640px)");
+  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+
+  useEffect(() => {
+    fetchTests();
+  }, [dateFilter, dateRange]);
+
+  const fetchTests = async () => {
+    try {
+      const dateRangeParams = getDateRange();
+      const queryParams = new URLSearchParams(dateRangeParams).toString();
+      const response = await fetch(
+        `${Backend_URL}/api/lab/tests?${queryParams}`
+      );
+      const data = await response.json();
+      if (data.success) {
+        setTests(data.tests);
+        setFilteredTests(data.tests);
+      }
+    } catch (error) {
+      console.error("Failed to fetch lab tests:", error);
+    }
+  };
+
+  useEffect(() => {
+    const filtered = tests.filter((test) =>
+      Object.values(test).some((value) =>
+        String(value).toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+    setFilteredTests(filtered);
+  }, [searchTerm, tests]);
+
+  const getDateRange = () => {
+    const today = new Date();
+    switch (dateFilter) {
+      case "Today":
+        return {
+          startDate: format(today, "yyyy-MM-dd"),
+          endDate: format(today, "yyyy-MM-dd"),
+        };
+      case "Yesterday":
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return {
+          startDate: format(yesterday, "yyyy-MM-dd"),
+          endDate: format(yesterday, "yyyy-MM-dd"),
+        };
+      case "This Week":
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - 7);
+        return {
+          startDate: format(weekStart, "yyyy-MM-dd"),
+          endDate: format(today, "yyyy-MM-dd"),
+        };
+      case "Custom":
+        if (dateRange.from && dateRange.to) {
+          return {
+            startDate: format(dateRange.from, "yyyy-MM-dd"),
+            endDate: format(dateRange.to, "yyyy-MM-dd"),
+          };
+        }
+        return null;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "Completed":
+        return "text-green-600";
+      case "In Progress":
+        return "text-yellow-600";
+      case "Pending":
+        return "text-red-600";
+      default:
+        return "text-gray-600";
+    }
+  };
+
+  const handleDateRangeSearch = () => {
+    setDateRange(tempDateRange);
+    setDateFilter("Custom");
+  };
+
+  const handleDateRangeCancel = () => {
+    setTempDateRange({ from: null, to: null });
+    setDateFilter("Today");
+  };
+
+  const TestCard = ({ test }) => (
+    <Card className="mb-4">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h3 className="font-semibold">{test.patientName}</h3>
+            <p className="text-sm text-gray-500">Lab No: {test.labNumber}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge
+              variant={
+                test.status === "Completed"
+                  ? "success"
+                  : test.status === "In Progress"
+                  ? "warning"
+                  : "destructive"
+              }
+            >
+              {test.status}
+            </Badge>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => navigate(`/lab/reports/${test._id}`)}
+                >
+                  View Details
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <span className="text-gray-500">Date: </span>
+            {format(new Date(test.bookingDate), "dd/MM/yyyy")}
+          </div>
+          <div>
+            <span className="text-gray-500">Tests: </span>
+            {test.labTests.map((t) => t.name).join(", ")}
+          </div>
+          <div>
+            <span className="text-gray-500">Amount: </span>₹
+            {test.paymentInfo.totalAmount.toLocaleString("en-IN")}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  return (
+    <Card className="w-full border-none shadow-none">
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Laboratory Tests</CardTitle>
+            <CardDescription>Manage and view lab test records</CardDescription>
+          </div>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Registration
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent>
+        <LabRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+
+        <div className="flex flex-col space-y-4 mb-4">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="w-full md:w-1/2 relative">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tests..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8"
+              />
+              {searchTerm && (
+                <button
+                  onClick={() => setSearchTerm("")}
+                  className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dateFilter}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onSelect={() => setDateFilter("Today")}>
+                    Today
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>
+                    Yesterday
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>
+                    This Week
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>
+                    Custom Range
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+
+              {dateFilter === "Custom" && (
+                <DateRangePicker
+                  from={tempDateRange.from}
+                  to={tempDateRange.to}
+                  onSelect={(range) => setTempDateRange(range)}
+                  onSearch={handleDateRangeSearch}
+                  onCancel={handleDateRangeCancel}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
+        {isSmallScreen ? (
+          filteredTests.length > 0 ? (
+            <div className="space-y-4">
+              {filteredTests.map((test) => (
+                <TestCard key={test._id} test={test} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-12">
+              <UserX className="h-16 w-16 text-gray-400 mb-4" />
+              <p className="text-xl font-semibold text-gray-600">
+                No tests found
+              </p>
+              <p className="text-gray-500">
+                Try adjusting your search or filters
+              </p>
+            </div>
+          )
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Lab Number</TableHead>
+                  <TableHead>Patient Name</TableHead>
+                  <TableHead>Registration Date</TableHead>
+                  <TableHead>Tests</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTests.map((test) => (
+                  <TableRow key={test._id}>
+                    <TableCell>{test.labNumber}</TableCell>
+                    <TableCell>{test.patientName}</TableCell>
+                    <TableCell>
+                      {format(new Date(test.bookingDate), "dd/MM/yyyy")}
+                    </TableCell>
+                    <TableCell>
+                      {test.labTests.map((t) => t.name).join(", ")}
+                    </TableCell>
+                    <TableCell>
+                      <span className={getStatusColor(test.status)}>
+                        {test.status}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      ₹{test.paymentInfo.totalAmount.toLocaleString("en-IN")}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="link"
+                        onClick={() => navigate(`/lab/reports/${test._id}`)}
+                      >
+                        View Details
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}

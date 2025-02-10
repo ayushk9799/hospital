@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import { Input } from "../ui/input";
 import { ChartNoAxesColumnDecreasingIcon, ChevronsUpDown } from "lucide-react";
 import { useFloating, offset, flip, shift } from "@floating-ui/react";
+import { ScrollArea } from "../ui/scroll-area";
 
 const MultiSelectInput = forwardRef(
   (
@@ -13,6 +14,7 @@ const MultiSelectInput = forwardRef(
       setSelectedValues,
       onSuggestionSelect,
       onError = false,
+      height = true
     },
     ref
   ) => {
@@ -178,22 +180,27 @@ const MultiSelectInput = forwardRef(
             }}
             className="z-[9999] bg-popover rounded-md border shadow-md"
           >
-            <ul className="max-h-60 overflow-y-auto">
-              {filteredSuggestions.map((suggestion, index) => (
-                <li
-                  key={suggestion.name}
-                  onClick={() => handleSuggestionClick(suggestion)}
-                  className={`px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground
-                    ${
-                      index === highlightedIndex
-                        ? "bg-accent text-accent-foreground"
-                        : ""
-                    }`}
-                >
-                  {suggestion.name}
-                </li>
-              ))}
-            </ul>
+            <ScrollArea className={`${!height ? "" : "h-[200px]"}`}>
+              <ul>
+
+
+                {filteredSuggestions.map((suggestion, index) => (
+                  <li
+                    key={suggestion.name}
+
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className={`px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground
+                      ${
+                        index === highlightedIndex
+                          ? "bg-accent text-accent-foreground"
+                          : ""
+                      }`}
+                  >
+                    {suggestion.name}
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
           </div>
         )}
       </div>

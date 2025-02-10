@@ -152,23 +152,33 @@ const OPDPrescriptionTemplate = forwardRef((props, ref) => {
     selectedComorbidities,
     hospital,
   } = props;
-  const headerTemplateString = useSelector(
+
+  const headerTemplates = useSelector(
     (state) => state.templates.headerTemplate
   );
-  const opdPrescriptionTemplateDatabase = useSelector(
+  const opdPrescriptionTemplates = useSelector(
     (state) => state.templates.opdPrescriptionTemplate
   );
+
+  const headerTemplateString =
+    headerTemplates?.length > 0 ? headerTemplates[0].value : headerTemplate;
+
+  const opdPrescriptionTemplateString =
+    opdPrescriptionTemplates?.length > 0
+      ? opdPrescriptionTemplates[0].value
+      : opdPrescriptionTemplateStringDefault;
+
   const HospitalHeader = createDynamicComponentFromString(
     headerTemplateString || headerTemplate
   );
+
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(
     "React",
     "HospitalHeader",
     "format",
-
     `return (${
-      opdPrescriptionTemplateDatabase || opdPrescriptionTemplateStringDefault
+      opdPrescriptionTemplateString || opdPrescriptionTemplateStringDefault
     });`
   );
 

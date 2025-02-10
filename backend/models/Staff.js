@@ -17,6 +17,7 @@ const staffSchema = new mongoose.Schema({
   },
   hospital: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital" },
   employeeID: { type: String },
+  employeeID: { type: String },
   department: [{ type: String }],
   roles: [
     {

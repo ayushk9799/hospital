@@ -114,14 +114,19 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     if (!template) {
       template = new Template({
         labTestsTemplate: [],
-        headerTemplate: "",
+        headerTemplateArray: [],
         diagnosisTemplate: [],
-        comorbidities:[],
-        opdRxTemplate:"",
-        medicinelist:[],
+        headerTemplate: "",
         dischargeSummaryTemplate: "",
         opdPrescriptionTemplate: "",
-        dischargeFormTemplates:{}
+        opdRxTemplate: "",
+        opdPrescriptionTemplateArray: [],
+        opdRxTemplateArray: [],
+        comorbidities: [],
+        medicinelist: [],
+        dischargeSummaryTemplateArray: [],
+        opdPrescriptionTemplateArray: [],
+        dischargeFormTemplates: {},
       });
     }
 
@@ -129,35 +134,29 @@ router.post("/template/create", identifyHospital, async (req, res) => {
       template.labTestsTemplate.push(req.body.labTestsTemplate);
     }
     if (req.body.headerTemplate) {
-      template.headerTemplate = req.body.headerTemplate;
+      template.headerTemplateArray.push(req.body.headerTemplate);
     }
     if (req.body.diagnosisTemplate) {
-      template.diagnosisTemplate = req.body.diagnosisTemplate;
+      template.diagnosisTemplate.push(req.body.diagnosisTemplate);
     }
-    if(req.body.opdRxTemplate){
-      template.opdRxTemplate=req.body.opdRxTemplate;
+    if (req.body.opdRxTemplate) {
+      template.opdRxTemplateArray.push(req.body.opdRxTemplate);
     }
-    if(req.body.comorbidities)
-    {
-      template.comorbidities=req.body.comorbidities;
+    if (req.body.dischargeSummaryTemplate) {
+      template.dischargeSummaryTemplateArray.push(req.body.dischargeSummaryTemplate);
     }
-    if(req.body.medicinelist)
-    {
-      template.medicinelist=req.body.medicinelist;
+    if (req.body.opdPrescriptionTemplate) {
+      template.opdPrescriptionTemplateArray.push(req.body.opdPrescriptionTemplate);
     }
-    if(req.body.dischargeSummaryTemplate)
-    {
-      template.dischargeSummaryTemplate=req.body.dischargeSummaryTemplate;
+    if (req.body.comorbidities) {
+      template.comorbidities = req.body.comorbidities;
     }
-    if(req.body.opdPrescriptionTemplate)
-    {
-      template.opdPrescriptionTemplate=req.body.opdPrescriptionTemplate;
+    if (req.body.medicinelist) {
+      template.medicinelist = req.body.medicinelist;
     }
-    if(req.body.dischargeFormTemplates)
-    {
-      template.dischargeFormTemplates=req.body.dischargeFormTemplates;
+    if (req.body.dischargeFormTemplates) {
+      template.dischargeFormTemplates = req.body.dischargeFormTemplates;
     }
-        
 
     await template.save({ session });
 

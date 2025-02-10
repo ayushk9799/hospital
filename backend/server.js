@@ -24,6 +24,7 @@ import dashboardRoute from "./routes/dashboardRoute.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
 import registrationRoutes from "./routes/registrationRoutes.js";
 import babyRoutes from "./routes/babyRoutes.js";
+import labRoutes from "./routes/labRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 dotenv.config({ path: "./config/config.env" });
 
@@ -70,6 +71,7 @@ app.use("/api/opd-procedures", opdProcedureRoutes);
 app.use("/api/registration", registrationRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/babies", babyRoutes);
+app.use("/api/lab", labRoutes);
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {

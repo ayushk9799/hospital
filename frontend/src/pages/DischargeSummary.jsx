@@ -1699,11 +1699,15 @@ export default function DischargeSummary() {
                 value =
                   patientInfo[field.id] ||
                   patientInfo?.[patientInfo?.relation] ||
+                  formData?.[field.id] ||
                   "";
                 if (!patientInfo?.[field.id]) {
                   label = patientInfo?.relation;
+
                 }
                 onChange = handlePatientInfoChange;
+
+               
               }
             } else {
               value = field.id.includes(".")
