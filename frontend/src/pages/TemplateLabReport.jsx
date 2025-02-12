@@ -20,16 +20,18 @@ import { useSelector, useDispatch } from "react-redux";
 import { addLabReport } from "../redux/slices/patientSlice";
 import { useToast } from "../hooks/use-toast";
 
-const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
+const TemplateLabReport = ({ template, patientData, onClose, searchWhere, component }) => {
   const [fields, setFields] = useState([]);
   const [reportDate, setReportDate] = useState(new Date());
   const [allReports, setAllReports] = useState([]);
   const [generatedDate, setGeneratedDate] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
+  console.log(patientData);
   const dispatch = useDispatch();
   const { toast } = useToast();
   const componentRef = useRef(null);
+  console.log(template);
 
   useEffect(() => {
     if (template && template.fields) {
@@ -53,7 +55,7 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere }) => {
         initializeEmptyFields();
       }
     }
-  }, []);
+  }, [template]);
 
   const handleDateChange = (date) => {
     loadReportForDate(allReports, date);
@@ -364,9 +366,9 @@ body * {
     try {
       const resultAction = await dispatch(
         addLabReport({
-          visitId: patientData._id,
+          _id: patientData._id,
           labReport: labReportData,
-          searchWhere: searchWhere,
+          component: component,
         })
       );
 
@@ -440,7 +442,7 @@ body * {
                   />
                 ) : field.options ? (
                   <SearchSuggestion
-                    suggestions={field.options.map((option) => ({
+                    suggestions={field.options?.map((option) => ({
                       name: option,
                     }))}
                     placeholder={`Select ${field.label}`}

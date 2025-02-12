@@ -5,10 +5,9 @@ import { Backend_URL } from "../../assets/Data";
 // Async thunk for fetching payments
 export const fetchPayments = createLoadingAsyncThunk(
   "payments/fetchPayments",
-  async ({ type, startDate, endDate }, { rejectWithValue }) => {
+  async ({  startDate, endDate }, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams({
-        type,
         startDate,
         endDate,
       });

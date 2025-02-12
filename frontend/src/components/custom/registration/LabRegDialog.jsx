@@ -1,5 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import {
+  createLabRegistration,
+  setCreateRegistrationStatusIdle,
+} from "../../../redux/slices/labSlice";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Search, Loader2, Info } from "lucide-react";
@@ -28,11 +32,13 @@ import { Label } from "../../ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Separator } from "../../ui/separator";
+import { searchPatients } from "../../../redux/slices/patientSlice";
 import MemoizedInput from "./MemoizedInput";
 import { labCategories } from "../../../assets/Data";
 import { format, differenceInDays } from "date-fns";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
+import LabDetailsModal from "./LabDetailsModal";
 
 const paymentMethods = [
   { name: "Cash" },
@@ -47,13 +53,18 @@ export default function LabRegDialog({ open, onOpenChange }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 640px)");
-  const [showBillModal, setShowBillModal] = useState(false);
-  const [billData, setBillData] = useState(null);
-  const [completedBill, setCompletedBill] = useState(null);
+  const [showLabDetailsModal, setShowLabDetailsModal] = useState(false);
+  const [labRegistrationData, setLabRegistrationData] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchedPatient, setSearchedPatient] = useState(null);
-  const labtestsTemplate=useSelector((state)=>state.templates.labTestsTemplate)
-const allLabTests=labtestsTemplate?.map((test)=>({name:test.name,rate:test.rate}))
+  const { createRegistrationStatus, error } = useSelector((state) => state.lab);
+  const labtestsTemplate = useSelector(
+    (state) => state.templates.labTestsTemplate
+  );
+  const allLabTests = labtestsTemplate?.map((test) => ({
+    name: test.name,
+    rate: test.rate,
+  }));
   const doctors = useSelector((state) => state.staff.doctors);
   const departments = useSelector((state) => state.departments.departments);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
@@ -199,29 +210,42 @@ const allLabTests=labtestsTemplate?.map((test)=>({name:test.name,rate:test.rate}
     setIsSearching(true);
 
     try {
-      const response = await fetch(
-        `${Backend_URL}/api/patients/search/${formData.registrationNumber}`
-      );
-      const data = await response.json();
-
-      if (data.success) {
-        setSearchedPatient(data.patient);
+      const response = await dispatch(
+        searchPatients(formData.registrationNumber)
+      ).unwrap();
+      console.log(response);
+      let data = response.results?.[0];
+      console.log(data);
+      if (response.results?.length > 0) {
+        setSearchedPatient(data);
         const tempGuardianName =
-          data.patient?.visits[0]?.guardianName ||
-          data.patient?.admissionDetails[0]?.guardianName ||
+          data.visits[0]?.guardianName ||
+          data.admissionDetails[0]?.guardianName ||
           "";
         const tempRelation =
-          data.patient?.visits[0]?.relation ||
-          data.patient?.admissionDetails[0]?.relation ||
-          "";
+          data.visits[0]?.relation || data.admissionDetails[0]?.relation || "";
 
         setFormData((prev) => ({
           ...prev,
-          name: data.patient.name,
-          age: data.patient.age,
-          gender: data.patient.gender,
-          contactNumber: data.patient.contactNumber,
-          address: data.patient.address,
+          name: data.name,
+          age: data.age,
+          gender: data.gender,
+          lastVisitType: data.lastVisitType,
+          lastVisit: data.lastVisit,
+          lastVisitId: (() => {
+            const lastVisit = data.visits?.[data.visits?.length - 1];
+            const lastAdmission = data.admissionDetails?.[data.admissionDetails?.length - 1];
+            
+            if (!lastVisit && !lastAdmission) return null;
+            if (!lastVisit) return lastAdmission?._id;
+            if (!lastAdmission) return lastVisit?._id;
+            
+            return new Date(lastVisit.bookingDate) > new Date(lastAdmission.bookingDate)
+              ? lastVisit._id
+              : lastAdmission._id;
+          })(),
+          contactNumber: data.contactNumber,
+          address: data.address,
           guardianName: tempGuardianName,
           relation: tempRelation,
         }));
@@ -254,35 +278,21 @@ const allLabTests=labtestsTemplate?.map((test)=>({name:test.name,rate:test.rate}
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-  
-
     if (validateForm()) {
       try {
-        const response = await fetch(`${Backend_URL}/api/lab/register`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData),
-          credentials: "include",
+        const result = await dispatch(createLabRegistration(formData)).unwrap();
+        toast({
+          title: "Registration Successful",
+          description: "Lab registration completed successfully",
+          variant: "success",
         });
-
-        const data = await response.json();
-
-        if (data.success) {
-          toast({
-            title: "Registration Successful",
-            description: "Lab registration completed successfully",
-            variant: "success",
-          });
-
-          setBillData(data.bill);
-          setCompletedBill(data);
-          setShowBillModal(true);
-          onOpenChange(false);
-        }
+        setLabRegistrationData(result);
+        setShowLabDetailsModal(true);
+        onOpenChange(false);
       } catch (error) {
         toast({
           title: "Registration Failed",
-          description: "Could not complete lab registration",
+          description: error || "Could not complete lab registration",
           variant: "destructive",
         });
       }
@@ -335,6 +345,27 @@ const allLabTests=labtestsTemplate?.map((test)=>({name:test.name,rate:test.rate}
       }, 500);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (createRegistrationStatus === "succeeded") {
+      toast({
+        title: "Registration Successful",
+        description: "Lab registration completed successfully",
+        variant: "success",
+      });
+      setLabRegistrationData(labRegistrationData);
+      setShowLabDetailsModal(true);
+      onOpenChange(false);
+      dispatch(setCreateRegistrationStatusIdle());
+    } else if (createRegistrationStatus === "failed") {
+      toast({
+        title: "Registration Failed",
+        description: error || "Could not complete lab registration",
+        variant: "destructive",
+      });
+      dispatch(setCreateRegistrationStatusIdle());
+    }
+  }, [createRegistrationStatus, error, dispatch, toast, onOpenChange]);
 
   return (
     <>
@@ -610,12 +641,11 @@ const allLabTests=labtestsTemplate?.map((test)=>({name:test.name,rate:test.rate}
         </DialogContent>
       </Dialog>
 
-      {showBillModal && hospitalInfo && (
-        <BillModal
-          isOpen={showBillModal}
-          setShowBillModal={setShowBillModal}
-          billData={billData}
-          completedBill={completedBill}
+      {showLabDetailsModal && hospitalInfo && (
+        <LabDetailsModal
+          isOpen={showLabDetailsModal}
+          setShowModal={setShowLabDetailsModal}
+          labData={labRegistrationData}
           hospitalInfo={hospitalInfo}
         />
       )}

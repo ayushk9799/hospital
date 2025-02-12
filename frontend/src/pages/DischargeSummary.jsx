@@ -1906,6 +1906,7 @@ export default function DischargeSummary() {
                     handleCloseLabReport();
                   }
                 }}
+                component="DischargeSummary"
                 searchWhere="ipd"
               />
             ) : (

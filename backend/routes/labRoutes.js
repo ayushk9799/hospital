@@ -6,6 +6,8 @@ import { BillCounter } from "../models/BillCounter.js";
 import { Payment } from "../models/Payment.js";
 import { verifyToken, checkPermission } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
+import { Visit } from "../models/Visits.js";
+import { IPDAdmission } from "../models/IPDAdmission.js";
 
 const router = express.Router();
 
@@ -28,6 +30,9 @@ router.post("/register", verifyToken, async (req, res) => {
       department,
       notes,
       bookingDate,
+      lastVisitType,
+      lastVisit,
+      lastVisitId,
     } = req.body;
 
     const user = req.user;
@@ -58,6 +63,9 @@ router.post("/register", verifyToken, async (req, res) => {
       referredBy,
       department,
       notes,
+      lastVisitType: lastVisitType,
+      lastVisit: lastVisit,
+      lastVisitId: lastVisitId,
       bookingDate: bookingDate || new Date(),
     });
 
@@ -179,55 +187,160 @@ router.get("/registration/:labNumber", verifyToken, async (req, res) => {
 });
 
 // Update lab test results
-router.put("/update-results/:labNumber", verifyToken, async (req, res) => {
+
+// Add lab report
+router.post("/addLabReport", verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
-    const { testResults } = req.body;
+    const { labReport, component } = req.body;
+
+    // Handle Discharge Summary case
+    if (component === "DischargeSummary") {
+      let registration = await IPDAdmission.findOne({
+        _id: req.body._id,
+      }).session(session);
+      if (!registration) {
+        throw new Error("IPD admission not found");
+      }
+
+      let existingReportIndex = registration.labReports.findIndex(
+        (report) =>
+          report.name === labReport.name &&
+          report.date.toISOString().split("T")[0] === labReport.date
+      );
+
+      if (existingReportIndex !== -1) {
+        registration.labReports[existingReportIndex] = {
+          ...registration.labReports[existingReportIndex],
+          ...labReport,
+        };
+      } else {
+        registration.labReports.push(labReport);
+      }
+
+      await registration.save({ session });
+      await session.commitTransaction();
+
+      return res.json({
+        success: true,
+        visit: registration,
+        message: "Lab report added successfully",
+      });
+    }
+
+    // Handle regular Lab Registration case
     const registration = await LabRegistration.findOne({
-      labNumber: req.params.labNumber,
+      _id: req.body._id,
     }).session(session);
 
     if (!registration) {
       throw new Error("Lab registration not found");
     }
 
-    // Update test results
-    testResults.forEach((result) => {
-      const test = registration.labTests.find((t) => t.name === result.name);
-      if (test) {
-        test.result = result.result;
-        test.reportStatus = "Completed";
-        test.reportDate = new Date();
-        test.normalRange = result.normalRange;
-        test.units = result.units;
-      }
-    });
-
-    // Update overall status if all tests are completed
-    const allCompleted = registration.labTests.every(
-      (test) => test.reportStatus === "Completed"
+    // Add lab report to registration
+    const existingReportIndex = registration.labReports.findIndex(
+      (report) =>
+        report.name === labReport.name &&
+        report.date.toISOString().split("T")[0] === labReport.date
     );
-    if (allCompleted) {
-      registration.status = "Completed";
+
+    if (existingReportIndex !== -1) {
+      registration.labReports[existingReportIndex] = {
+        ...registration.labReports[existingReportIndex],
+        ...labReport,
+      };
     } else {
-      registration.status = "In Progress";
+      registration.labReports.push(labReport);
+    }
+
+    // Find and update corresponding record
+    let correspondingRecord;
+    if (registration.lastVisitType === "OPD") {
+      correspondingRecord = await Visit.findById(
+        registration.lastVisitId
+      ).session(session);
+    } else if (registration.lastVisitType === "IPD") {
+      correspondingRecord = await IPDAdmission.findById(
+        registration.lastVisitId
+      ).session(session);
+    }
+
+    if (correspondingRecord) {
+      if (!correspondingRecord.labReports) {
+        correspondingRecord.labReports = [];
+      }
+
+      const existingReportIndex = correspondingRecord.labReports.findIndex(
+        (report) =>
+          report.name === labReport.name &&
+          report.date.toISOString().split("T")[0] === labReport.date
+      );
+
+      if (existingReportIndex !== -1) {
+        correspondingRecord.labReports[existingReportIndex] = {
+          ...correspondingRecord.labReports[existingReportIndex],
+          ...labReport,
+        };
+      } else {
+        correspondingRecord.labReports.push(labReport);
+      }
+
+      await correspondingRecord.save({ session });
     }
 
     await registration.save({ session });
     await session.commitTransaction();
 
-    res.json({
+    return res.json({
       success: true,
       registration,
-      message: "Test results updated successfully",
+      message: "Lab report added successfully",
     });
   } catch (error) {
     await session.abortTransaction();
-    res.status(400).json({ success: false, error: error.message });
+    return res.status(400).json({ success: false, error: error.message });
   } finally {
     session.endSession();
+  }
+});
+
+// Get lab reports
+router.get("/lab-reports/:labNumber", verifyToken, async (req, res) => {
+  try {
+    const registration = await LabRegistration.findOne({
+      labNumber: req.params.labNumber,
+    });
+
+    if (!registration) {
+      return res.status(404).json({
+        success: false,
+        message: "Lab registration not found",
+      });
+    }
+
+    // Get reports from both registration and corresponding record
+    let correspondingReports = [];
+    if (registration.lastVisitType === "OPD") {
+      const visit = await Visit.findById(registration.lastVisitId);
+      if (visit) {
+        correspondingReports = visit.labReports || [];
+      }
+    } else if (registration.lastVisitType === "IPD") {
+      const admission = await IPDAdmission.findById(registration.lastVisitId);
+      if (admission) {
+        correspondingReports = admission.labReports || [];
+      }
+    }
+
+    res.json({
+      success: true,
+      labReports: registration.labReports,
+      correspondingReports,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

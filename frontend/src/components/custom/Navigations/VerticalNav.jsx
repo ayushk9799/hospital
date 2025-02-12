@@ -44,7 +44,7 @@ export const navItems = [
   { name: "Expenses/Debit", icon: IndianRupee, path: "/expenses" },
   { name: "Doctors", icon: Stethoscope, path: "/doctors" },
   { name: "Pharmacy", icon: BriefcaseMedicalIcon, path: "/pharmacy" },
-  { name: "Lab", icon: TestTube, path: "/lab" },
+  { name: "Lab", icon: TestTube, path: "/lab/list" },
   { name: "Rooms", icon: Bed, path: "/rooms" },
   { name: "Services", icon: ClipboardList, path: "/services" },
   { name: "Statistics", icon: BarChart, path: "/statistics" },

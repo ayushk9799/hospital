@@ -8,7 +8,7 @@ const staffSchema = new mongoose.Schema({
   },
   username: {
     type: String,
-  
+
     trim: true,
   },
   password: {
@@ -82,68 +82,73 @@ const staffSchema = new mongoose.Schema({
       year: Number,
     },
   ],
-  permissions: [{
-    type: String,
-    enum: [
-      // Patient Management
-      'view_patients',
-      'create_patients',
-      'edit_patients',
-      'delete_patients',
-      'give_discount',
-      'can_discharge',
-      
-      // Inventory Management
-      'view_inventory',
-      'create_inventory',
-      'edit_inventory',
-      'delete_inventory',
-      'edit_inventory_price',
-      'edit_inventory_quantity',
-      
-      // Financial Management
-      'view_financial',
-      'create_bills',
-      'edit_bills',
-      'delete_bills',
-      'collect_payments',
-      'view_reports',
-      
-      // Clinical Operations
-      'view_prescriptions',
-      'create_prescriptions',
-      'edit_prescriptions',
-      'record_vitals',
-      
-      // Staff Management
-      'view_staff',
-      'create_staff',
-      'edit_staff',
-      'delete_staff',
-      
-      // Hospital Management
-      'view_hospital',
-      'edit_hospital',
-      
-      // Purchase Management
-      'create_purchase',
-      'view_purchase',
-      'edit_purchase',
-      
-      // Supplier Management
-      'view_suppliers',
-      'create_suppliers',
-      'edit_suppliers',
-      'view_otherscollection_all',
-      'view_otherscollection_for_just_today',
-      'record_expense',
-      
-      // Appointments
-      'view_appointments',
-      'create_appointments',
-      'edit_appointments'
-    ]
-  }],
+  permissions: [
+    {
+      type: String,
+      enum: [
+        // Patient Management
+        "view_patients",
+        "create_patients",
+        "edit_patients",
+        "delete_patients",
+        "give_discount",
+        "can_discharge",
+
+        // Inventory Management
+        "view_inventory",
+        "create_inventory",
+        "edit_inventory",
+        "delete_inventory",
+        "edit_inventory_price",
+        "edit_inventory_quantity",
+
+        // Financial Management
+        "view_financial",
+        "create_bills",
+        "edit_bills",
+        "delete_bills",
+        "collect_payments",
+        "view_reports",
+
+        // Clinical Operations
+        "view_prescriptions",
+        "create_prescriptions",
+        "edit_prescriptions",
+        "record_vitals",
+
+        // Staff Management
+        "view_staff",
+        "create_staff",
+        "edit_staff",
+        "delete_staff",
+
+        // Hospital Management
+        "view_hospital",
+        "edit_hospital",
+
+        // Purchase Management
+        "create_purchase",
+        "view_purchase",
+        "edit_purchase",
+
+        // Supplier Management
+        "view_suppliers",
+        "create_suppliers",
+        "edit_suppliers",
+
+        // Collections/Payments Viewing
+        "view_otherscollection_all", // Permission to view all collections/payments
+        "view_otherscollection_for_just_today", // Permission to view only today's collections/payments
+
+        "record_expense",
+
+        // Appointments
+        "view_appointments",
+        "create_appointments",
+        "edit_appointments",
+      ],
+    },
+  ],
 });
 
 staffSchema.plugin(hospitalPlugin);

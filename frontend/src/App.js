@@ -18,6 +18,9 @@ import VerticalNav, {
   navItems,
 } from "./components/custom/Navigations/VerticalNav";
 import HorizontalNav from "./components/custom/Navigations/HorizontalNav";
+import LabList from "./pages/LabList";
+import LabRegDialog from "./components/custom/registration/LabRegDialog";
+import AllLabTests from "./pages/AllLabTests";
 import Statistics from "./pages/Statistics";
 import Billings from "./pages/Billings";
 import Doctors from "./pages/Doctors";
@@ -171,7 +174,13 @@ const AppContent = () => {
                 />
                 <Route path="/addstaff" element={<AddStaff />} />
                 <Route path="/editstaff/:staffId" element={<AddStaff />} />
-                <Route path="/lab" element={<Lab />} />
+                <Route
+                  path="/lab"
+                  element={<Lab />}
+                />
+                <Route path="/lab/list" element={<LabList />} />
+                <Route path="/lab/registration" element={<LabRegDialog />} />
+                <Route path="/lab/all-tests" element={<AllLabTests />} />
                 <Route
                   path="/lab/create/:category/:type"
                   element={<CreateLabReport />}

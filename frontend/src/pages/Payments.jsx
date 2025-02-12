@@ -33,7 +33,15 @@ import {
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { Badge } from "../components/ui/badge";
-import { CalendarIcon, Filter, Search, X, FileX, Printer } from "lucide-react";
+import {
+  CalendarIcon,
+  Filter,
+  Search,
+  X,
+  FileX,
+  Printer,
+  ListFilter,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPayments } from "../redux/slices/paymentSlice";
 import { setLoading } from "../redux/slices/loaderSlice";
@@ -45,11 +53,12 @@ import { useReactToPrint } from "react-to-print";
 const Payments = () => {
   const dispatch = useDispatch();
   const { payments, status } = useSelector((state) => state.payments);
+  const { userData } = useSelector((state) => state.user);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("Today");
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
-  const [filters, setFilters] = useState({ type: "all" });
+  const [paymentTypeFilter, setPaymentTypeFilter] = useState("All");
   const { toast } = useToast();
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
@@ -100,7 +109,6 @@ const Payments = () => {
       const dateRangeParams = getDateRange();
       await dispatch(
         fetchPayments({
-          type: filters.type,
           startDate: dateRangeParams?.startDate,
           endDate: dateRangeParams?.endDate,
         })
@@ -154,6 +162,48 @@ const Payments = () => {
   };
 
   const filteredPayments = payments.filter((payment) => {
+    // First check user permissions
+    const hasAllCollectionPermission = userData?.permissions?.includes(
+      "view_otherscollection_all"
+    );
+    const hasTodayCollectionPermission = userData?.permissions?.includes(
+      "view_otherscollection_for_just_today"
+    );
+
+    // If user has no permissions, only show their own payments
+    if (!hasAllCollectionPermission && !hasTodayCollectionPermission) {
+      if (payment.createdBy?._id !== userData?._id) {
+        return false;
+      }
+    }
+
+    // If user only has today's permission, filter for today's payments
+    if (!hasAllCollectionPermission && hasTodayCollectionPermission) {
+      const today = new Date();
+      const paymentDate = new Date(payment.createdAt);
+      if (
+        paymentDate.getDate() !== today.getDate() ||
+        paymentDate.getMonth() !== today.getMonth() ||
+        paymentDate.getFullYear() !== today.getFullYear()
+      ) {
+        if (payment.createdBy?._id !== userData?._id) {
+          return false;
+        }
+      }
+    }
+
+    // Apply payment type filter
+    if (paymentTypeFilter !== "All") {
+      if (payment.type !== paymentTypeFilter) {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return true;
+    }
+
+    // Apply search filters
     let searchMatch =
       payment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.associatedInvoiceOrId
@@ -161,11 +211,19 @@ const Payments = () => {
         .includes(searchTerm.toLowerCase()) ||
       payment.createdByName?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    if (filters.type !== "all") {
-      searchMatch = payment.type === filters.type;
-    }
     return searchMatch;
   });
+
+  // Calculate totals based on filtered payments
+  const totalCredit = filteredPayments
+    .filter((p) => p.type === "Income")
+    .reduce((acc, p) => acc + p.amount, 0);
+
+  const totalDebit = filteredPayments
+    .filter((p) => p.type === "Expense")
+    .reduce((acc, p) => acc + p.amount, 0);
+
+  const netAmount = totalCredit - totalDebit;
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -218,11 +276,10 @@ const Payments = () => {
         </div>
       </CardHeader>
       <CardContent>
-        {/* Top Filters and Search – not printed */}
         <div className="flex flex-col space-y-4 mb-4 no-print">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1 flex gap-2">
-              <div className="relative">
+              <div className="relative flex-grow">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search payments..."
@@ -261,21 +318,40 @@ const Payments = () => {
                     className="overflow-hidden w-full"
                   >
                     <div className="space-y-2">
-                      <Select
-                        value={filters.type}
-                        onValueChange={(value) =>
-                          setFilters({ ...filters, type: value })
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All</SelectItem>
-                          <SelectItem value="Income">CREDIT</SelectItem>
-                          <SelectItem value="Expense">DEBIT</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <ListFilter className="mr-2 h-4 w-4" />
+                            {paymentTypeFilter === "All"
+                              ? "Payment Type"
+                              : paymentTypeFilter}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-[200px]"
+                        >
+                          <DropdownMenuLabel>
+                            Filter by Payment Type
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() => setPaymentTypeFilter("All")}
+                          >
+                            All
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => setPaymentTypeFilter("Income")}
+                          >
+                            Credit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => setPaymentTypeFilter("Expense")}
+                          >
+                            Debit
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -330,21 +406,37 @@ const Payments = () => {
               </AnimatePresence>
             ) : (
               <div className="flex gap-2">
-                <Select
-                  value={filters.type}
-                  onValueChange={(value) =>
-                    setFilters({ ...filters, type: value })
-                  }
-                >
-                  <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Select type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="Income">CREDIT</SelectItem>
-                    <SelectItem value="Expense">DEBIT</SelectItem>
-                  </SelectContent>
-                </Select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <ListFilter className="mr-2 h-4 w-4" />
+                      {paymentTypeFilter === "All"
+                        ? "Payment Type"
+                        : paymentTypeFilter}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>
+                      Filter by Payment Type
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentTypeFilter("All")}
+                    >
+                      All
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentTypeFilter("Income")}
+                    >
+                      Income
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentTypeFilter("Expense")}
+                    >
+                      Expense
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -399,39 +491,25 @@ const Payments = () => {
                 <CardContent className="p-4">
                   <h3 className="font-semibold">Total Credit</h3>
                   <p className="text-2xl">
-                    ₹
-                    {payments
-                      .filter((p) => p.type === "Income")
-                      .reduce((acc, p) => acc + p.amount, 0)
-                      .toFixed(2)}
+                    ₹{Number(totalCredit.toFixed(2))?.toLocaleString("en-IN")}
                   </p>
                 </CardContent>
               </Card>
+
               <Card className="bg-red-100">
                 <CardContent className="p-4">
                   <h3 className="font-semibold">Total Debit</h3>
                   <p className="text-2xl">
-                    ₹
-                    {payments
-                      .filter((p) => p.type === "Expense")
-                      .reduce((acc, p) => acc + p.amount, 0)
-                      .toFixed(2)}
+                    ₹{Number(totalDebit.toFixed(2))?.toLocaleString("en-IN")}
                   </p>
                 </CardContent>
               </Card>
+
               <Card className="bg-green-100">
                 <CardContent className="p-4">
                   <h3 className="font-semibold">Net Amount</h3>
                   <p className="text-2xl">
-                    ₹
-                    {(
-                      payments
-                        .filter((p) => p.type === "Income")
-                        .reduce((acc, p) => acc + p.amount, 0) -
-                      payments
-                        .filter((p) => p.type === "Expense")
-                        .reduce((acc, p) => acc + p.amount, 0)
-                    ).toFixed(2)}
+                    ₹{Number(netAmount.toFixed(2))?.toLocaleString("en-IN")}
                   </p>
                 </CardContent>
               </Card>
@@ -472,12 +550,16 @@ const Payments = () => {
                         <TableCell>
                           {payment.description ||
                             payment.associatedInvoiceOrId ||
-                            "--"}
+                            payment.paymentType?.name}
                         </TableCell>
                         <TableCell className="font-medium">
                           ₹{payment.amount.toFixed(2)}
                         </TableCell>
-                        <TableCell>{payment.createdByName}</TableCell>
+                        <TableCell>
+                          {payment.createdByName ||
+                            payment.createdBy?.name ||
+                            "--"}
+                        </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>

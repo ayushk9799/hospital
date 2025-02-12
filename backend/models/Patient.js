@@ -7,7 +7,7 @@ const patientSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    registrationNumber: { 
+    registrationNumber: {
       type: String,
     },
     dateOfBirth: { type: String },
@@ -25,14 +25,14 @@ const patientSchema = new mongoose.Schema(
     ],
     visits: [{ type: mongoose.Schema.Types.ObjectId, ref: "visit" }],
     lastVisit: { type: Date, default: Date.now },
-    lastVisitType : {type : String, enum : ['OPD', 'IPD']}
+    lastVisitType: { type: String, enum: ["OPD", "IPD"] },
   },
   { timestamps: true }
 );
 
 // Add compound index for hospital-wise unique registration numbers
 patientSchema.index(
-  { hospital: 1, registrationNumber: 1 }, 
+  { hospital: 1, registrationNumber: 1 },
   { unique: true, sparse: true }
 );
 

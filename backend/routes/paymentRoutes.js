@@ -7,19 +7,18 @@ const router = express.Router();
 // Get filtered payments
 router.get("/filter", verifyToken, async (req, res) => {
   try {
-    const { type, startDate, endDate } = req.query;
+    const { startDate, endDate } = req.query;
     const query = {
       hospitalId: req.user.hospitalId,
       createdAt: {
+
         $gte: new Date(startDate),
         $lte: new Date(endDate),
       },
     };
 
     // Add type filter if not "all"
-    if (type && type !== "all") {
-      query.type = type;
-    }
+   
 
     const payments = await Payment.find(query)
       .sort({ createdAt: -1 })

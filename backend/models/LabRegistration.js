@@ -22,7 +22,7 @@ const labRegistrationSchema = new mongoose.Schema(
     // Registration Details
     bookingDate: { type: Date, default: Date.now },
     bookingNumber: { type: Number },
-    labNumber: { type: String, unique: true },
+    labNumber: { type: String },
     registrationNumber: { type: String }, // UHID if exists
 
     // References to existing records if any
@@ -33,19 +33,25 @@ const labRegistrationSchema = new mongoose.Schema(
     // Lab Tests and Reports
     labTests: [
       {
-        name: { type: String, required: true },
-        category: { type: String },
+        name: { type: String },
+
         reportStatus: {
           type: String,
           enum: ["Pending", "In Progress", "Completed"],
           default: "Pending",
         },
-        result: { type: mongoose.Schema.Types.Mixed },
-        reportDate: { type: Date },
-        normalRange: { type: String },
-        units: { type: String },
       },
     ],
+    labReports: [
+      {
+        date: { type: Date },
+        name: { type: String },
+        report: { type: mongoose.Schema.Types.Mixed },
+      },
+    ],
+    lastVisitType: { type: String, enum: ["OPD", "IPD"] },
+    lastVisit: { type: Date, default: Date.now },
+    lastVisitId: { type: mongoose.Schema.Types.ObjectId },
 
     // Payment Information
     paymentInfo: {
@@ -97,7 +103,7 @@ labRegistrationSchema.statics.getCurrentLabNumber = async function (session) {
     {},
     { upsert: true, new: true, setDefaultsOnInsert: true, session }
   );
-  return `LAB/${yearSuffix}/${(doc.sequence + 1).toString().padStart(4, "0")}`;
+  return `LAB/${yearSuffix}/${(doc.sequence + 1).toString()}`;
 };
 
 // Pre-save middleware to handle patient data
@@ -112,7 +118,6 @@ labRegistrationSchema.pre("save", async function (next) {
     }
   }
 
-  // Calculate balance due before saving
   if (this.paymentInfo) {
     this.paymentInfo.balanceDue =
       (this.paymentInfo.totalAmount || 0) - (this.paymentInfo.amountPaid || 0);

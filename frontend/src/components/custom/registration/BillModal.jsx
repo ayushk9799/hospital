@@ -152,7 +152,7 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                     <Label className="font-semibold mr-2">Date:</Label>
                     <p>
                       {bill?.createdAt
-                        ? format(new Date(bill.createdAt), "dd/MM/yyyy")
+                        ? format(new Date(bill?.createdAt), "dd/MM/yyyy")
                         : "N/A"}
                     </p>
                   </div>

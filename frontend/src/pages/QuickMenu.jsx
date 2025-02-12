@@ -136,7 +136,7 @@ const QuickMenu = () => {
       title: "Laboratory",
       description: "Manage lab tests and reports",
       icon: TestTube2,
-      action: () => navigate("/lab"),
+      action: () => navigate("/lab/list"),
       color: "bg-orange-200 text-orange-800 hover:bg-orange-300",
     },
     {

@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchLabRegistrations } from "../redux/slices/labSlice";
 import {
   Table,
   TableBody,
@@ -37,51 +39,50 @@ import { useMediaQuery } from "../hooks/use-media-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "../components/ui/badge";
 import { DateRangePicker } from "../assets/Data";
-import { Backend_URL } from "../assets/Data";
 import LabRegDialog from "../components/custom/registration/LabRegDialog";
+import LabDetailsModal from "../components/custom/registration/LabDetailsModal";
 
 export default function LabList() {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("Today");
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [tests, setTests] = useState([]);
-  const [filteredTests, setFilteredTests] = useState([]);
+  const [selectedTest, setSelectedTest] = useState(null);
+  const [showDetailsModal, setShowDetailsModal] = useState(false);
 
+  const { registrations, registrationsStatus, error } = useSelector(
+    (state) => state.lab
+  );
+  const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
-  const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const [filteredTests, setFilteredTests] = useState([]);
 
   useEffect(() => {
     fetchTests();
-  }, [dateFilter, dateRange]);
+  }, [dateFilter, dateRange, dispatch]);
 
   const fetchTests = async () => {
-    try {
-      const dateRangeParams = getDateRange();
-      const queryParams = new URLSearchParams(dateRangeParams).toString();
-      const response = await fetch(
-        `${Backend_URL}/api/lab/tests?${queryParams}`
-      );
-      const data = await response.json();
-      if (data.success) {
-        setTests(data.tests);
-        setFilteredTests(data.tests);
-      }
-    } catch (error) {
-      console.error("Failed to fetch lab tests:", error);
+    const dateRangeParams = getDateRange();
+    if (dateRangeParams) {
+      dispatch(fetchLabRegistrations(dateRangeParams));
     }
   };
 
   useEffect(() => {
-    const filtered = tests.filter((test) =>
-      Object.values(test).some((value) =>
-        String(value).toLowerCase().includes(searchTerm.toLowerCase())
-      )
+    const filtered = registrations.filter(
+      (test) =>
+        test.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        test.labNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        test.contactNumber?.includes(searchTerm) ||
+        test.labTests?.some((t) =>
+          t.name.toLowerCase().includes(searchTerm.toLowerCase())
+        )
     );
     setFilteredTests(filtered);
-  }, [searchTerm, tests]);
+  }, [searchTerm, registrations]);
 
   const getDateRange = () => {
     const today = new Date();
@@ -141,6 +142,11 @@ export default function LabList() {
     setDateFilter("Today");
   };
 
+  const handleViewDetails = (test) => {
+    setSelectedTest(test);
+    setShowDetailsModal(true);
+  };
+
   const TestCard = ({ test }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
@@ -168,9 +174,7 @@ export default function LabList() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => navigate(`/lab/reports/${test._id}`)}
-                >
+                <DropdownMenuItem onClick={() => handleViewDetails(test)}>
                   View Details
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -190,6 +194,12 @@ export default function LabList() {
             <span className="text-gray-500">Amount: </span>₹
             {test.paymentInfo.totalAmount.toLocaleString("en-IN")}
           </div>
+          {test.referredBy && (
+            <div>
+              <span className="text-gray-500">Referred By: </span>
+              {test.referredBy.name}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -212,6 +222,12 @@ export default function LabList() {
 
       <CardContent>
         <LabRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+        <LabDetailsModal
+          isOpen={showDetailsModal}
+          setShowModal={setShowDetailsModal}
+          labData={selectedTest}
+          hospitalInfo={hospitalInfo}
+        />
 
         <div className="flex flex-col space-y-4 mb-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -322,12 +338,32 @@ export default function LabList() {
                       ₹{test.paymentInfo.totalAmount.toLocaleString("en-IN")}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        variant="link"
-                        onClick={() => navigate(`/lab/reports/${test._id}`)}
-                      >
-                        View Details
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => handleViewDetails(test)}
+                          >
+                            View Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() =>
+                              navigate("/lab", { state: { patientData: test } })
+                            }
+                          >
+                            Make Report
+                          </DropdownMenuItem>
+                          {/* <DropdownMenuItem
+                            onClick={() => handleExistingBills(test)}
+                          >
+                            Print Bill
+                          </DropdownMenuItem> */}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))}
