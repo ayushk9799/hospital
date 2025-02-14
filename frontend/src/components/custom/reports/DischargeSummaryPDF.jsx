@@ -3,8 +3,8 @@ import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { dischargeSummaryTemplateStringDefault } from "../../../templates/dischargesummary";
-// import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
-import { headerTemplateString } from "../../../templates/headertemplate";
+import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
+import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 
 // Keep the styles object as is
 const styles = {
@@ -114,11 +114,11 @@ const hasValue = (obj) => {
 
 // Create the dynamic component
 const DischargeSummaryPDF = forwardRef((props, ref) => {
-  const { formData, patient, formConfig, hospital } = props;
- console.log(formData)
-  const dischargeSummaryTemplateStringdatabase = useSelector(
-    (state) => state.templates.dischargeSummaryTemplate
-  );
+  const { formData, patient, formConfig, hospital, templateString } = props;
+  console.log(formData);
+  console.log(patient);
+
+  // Get the default or first available template
 
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(
@@ -127,17 +127,21 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
     "HospitalHeader",
     "formatDate",
     "hasValue",
-    `return (${
-      dischargeSummaryTemplateStringdatabase ||
-      dischargeSummaryTemplateStringDefault
-    });`
+    `return (${templateString});`
   );
 
-  const headerTemplateString = useSelector(
-    (state) => state.templates.headerTemplate
+  const headerTemplates = useSelector(
+    (state) => state.templates.headerTemplateArray
   );
 
-  const HospitalHeader = createDynamicComponentFromString(headerTemplateString);
+  const headerTemplateString =
+    headerTemplates?.length > 0
+      ? headerTemplates[0].value
+      : headerTemplateStringDefault;
+
+  const HospitalHeader = createDynamicComponentFromString(
+    headerTemplateString || headerTemplateStringDefault
+  );
 
   try {
     // Get the component function

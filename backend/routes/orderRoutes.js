@@ -33,6 +33,7 @@ router.post("/create", async (req, res) => {
       paymentMethod: "Cash", // You might want to make this dynamic
       paymentType: { name: "Pharmacy", id: supplierDoc?._id },
       type: "Expense",
+      
       status: total.paidAmount === total.totalAmount ? "paid" : "due",
       description: `Payment for order ${new mongoose.Types.ObjectId()}`,
     });

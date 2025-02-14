@@ -30,8 +30,8 @@ router.post('/create', verifyToken, async (req, res) => {
       amount,
       amountPaid,
       date: expenseDate,
-      createdBy: req.user._id,
-      createdByName: req.user.name
+      createdBy: req.user?._id,
+      createdByName: req.user?.name
     });
 
     if (amountPaid > 0) {
@@ -40,6 +40,7 @@ router.post('/create', verifyToken, async (req, res) => {
         paymentMethod,
         paymentType: { name: 'Expense', id: newExpense._id },
         type: 'Expense',
+        createdByName:req.user?.name,
         createdBy: req.user._id,
         description: description || 'Payment for Expense',
       });
@@ -101,6 +102,7 @@ router.post('/update/:id', verifyToken, async (req, res) => {
         paymentMethod,
         paymentType: { name: 'Expense', id: expense._id },
         type: 'Expense',
+        createdByName:req.user?.name,
         createdBy: req.user._id,
         description: description || 'Additional Payment for Expense',
       });
@@ -153,6 +155,7 @@ router.post('/:id/pay', verifyToken, async (req, res) => {
       paymentMethod,
       paymentType: { name: 'Expense', id: expense._id },
       type: 'Expense',
+      createdByName:req.user?.name,
       createdBy: req.user._id,
       description: description || 'Payment for Expense',
     });

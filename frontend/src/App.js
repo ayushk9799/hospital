@@ -18,6 +18,9 @@ import VerticalNav, {
   navItems,
 } from "./components/custom/Navigations/VerticalNav";
 import HorizontalNav from "./components/custom/Navigations/HorizontalNav";
+import LabList from "./pages/LabList";
+import LabRegDialog from "./components/custom/registration/LabRegDialog";
+import AllLabTests from "./pages/AllLabTests";
 import Statistics from "./pages/Statistics";
 import Billings from "./pages/Billings";
 import Doctors from "./pages/Doctors";
@@ -66,6 +69,7 @@ import ViewBabies from "./pages/ViewBabies";
 import BabyDetails from "./pages/BabyDetails";
 import DepartmentManger from "./pages/DepartmentManger";
 import ViewAllBabies from "./pages/ViewAllBabies";
+import Payments from "./pages/Payments";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -170,7 +174,13 @@ const AppContent = () => {
                 />
                 <Route path="/addstaff" element={<AddStaff />} />
                 <Route path="/editstaff/:staffId" element={<AddStaff />} />
-                <Route path="/lab" element={<Lab />} />
+                <Route
+                  path="/lab"
+                  element={<Lab />}
+                />
+                <Route path="/lab/list" element={<LabList />} />
+                <Route path="/lab/registration" element={<LabRegDialog />} />
+                <Route path="/lab/all-tests" element={<AllLabTests />} />
                 <Route
                   path="/lab/create/:category/:type"
                   element={<CreateLabReport />}
@@ -207,6 +217,7 @@ const AppContent = () => {
                   element={<HospitalInfo />}
                 />
                 <Route path="/expenses" element={<Expenses />} />
+                <Route path="/payments" element={<Payments />} />
                 <Route
                   path="/settings/customization"
                   element={<Customization />}
@@ -254,7 +265,10 @@ const AppContent = () => {
                 />
                 <Route path="patients/babies" element={<ViewAllBabies />} />
                 <Route path="/babies/:babyId" element={<BabyDetails />} />
-                <Route path="/settings/department" element={<DepartmentManger />} />
+                <Route
+                  path="/settings/department"
+                  element={<DepartmentManger />}
+                />
               </>
             )}
           </Routes>

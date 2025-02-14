@@ -6,13 +6,38 @@ const templateSchema = new mongoose.Schema({
     {
       name: String,
       fields: mongoose.Schema.Types.Mixed,
+      rate: Number,
     },
   ],
   headerTemplate: String,
-  diagnosisTemplate: [String],
   dischargeSummaryTemplate: String,
   opdPrescriptionTemplate: String,
   opdRxTemplate: String,
+  headerTemplateArray: [
+    {
+      name: String,
+      value: String,
+    },
+  ],
+  diagnosisTemplate: [String],
+  dischargeSummaryTemplateArray: [
+    {
+      name: String,
+      value: String,
+    },
+  ],
+  opdPrescriptionTemplateArray: [
+    {
+      name: String,
+      value: String,
+    },
+  ],
+  opdRxTemplateArray: [
+    {
+      name: String,
+      value: String,
+    },
+  ],
   comorbidities: [String],
   medicinelist: [String],
   service_collections: [

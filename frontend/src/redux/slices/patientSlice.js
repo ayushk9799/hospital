@@ -189,18 +189,18 @@ export const fetchPatientDetails = createLoadingAsyncThunk(
 
 export const addLabReport = createLoadingAsyncThunk(
   "patients/addLabReport",
-  async ({ visitId, labReport, searchWhere }, { rejectWithValue }) => {
+  async ({ _id, labReport, component }, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/patients/addLabReport`, {
+      const response = await fetch(`${Backend_URL}/api/lab/addLabReport`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
         body: JSON.stringify({
-          visitId,
-          labReport,
-          searchWhere,
+          _id,
+          labReport,  
+          component,
         }),
       });
 
@@ -544,27 +544,27 @@ const patientSlice = createSlice({
       .addCase(addLabReport.fulfilled, (state, action) => {
         state.addLabReportStatus = "succeeded";
         // Update the patient in the patientlist with the new lab report
-        const updatedPatient = action.payload.visit;
-        const { labReports } = updatedPatient;
-        const index = state.patientlist.findIndex(
-          (patient) => patient._id === updatedPatient._id
-        );
-        if (index !== -1) {
-          state.patientlist[index] = {
-            ...state.patientlist[index],
-            labReports,
-          };
-        }
-        // If the updated patient is the currently selected patient, update it as well
-        if (
-          state.selectedPatient &&
-          state.selectedPatient._id === updatedPatient._id
-        ) {
-          state.selectedPatient = {
-            ...state.selectedPatient,
-            ...updatedPatient,
-          };
-        }
+        // const updatedPatient = action.payload.visit;
+        // const { labReports } = updatedPatient;
+        // const index = state.patientlist.findIndex(
+        //   (patient) => patient._id === updatedPatient._id
+        // );
+        // if (index !== -1) {
+        //   state.patientlist[index] = {
+        //     ...state.patientlist[index],
+        //     labReports,
+        //   };
+        // }
+        // // If the updated patient is the currently selected patient, update it as well
+        // if (
+        //   state.selectedPatient &&
+        //   state.selectedPatient._id === updatedPatient._id
+        // ) {
+        //   state.selectedPatient = {
+        //     ...state.selectedPatient,
+        //     ...updatedPatient,
+        //   };
+        // }
       })
       .addCase(addLabReport.rejected, (state, action) => {
         state.addLabReportStatus = "failed";

@@ -39,8 +39,10 @@ export const permissionGroups = {
     { id: "edit_bills", label: "Edit Bills" },
     { id: "delete_bills", label: "Delete Bills" },
     { id: "view_reports", label: "View Reports" },
+    { id: "record_expense", label: "Record Expense" },
+    {id:"view_otherscollection_all",label:"View Other's collection for all days"},
+    {id:"view_otherscollection_for_just_today",label:"View Other's collection for only today"}
   ],
-  "Expense/Return": [{ id: "record_expense", label: "Record Expense" }],
   "Staff Management": [
     { id: "view_staff", label: "View Staff" },
     { id: "create_staff", label: "Create Staff" },

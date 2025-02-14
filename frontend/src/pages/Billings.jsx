@@ -169,7 +169,6 @@ const Billings = () => {
   };
 
   const filteredBills = useMemo(() => {
-   
     const billsToFilter = searchResults || bills;
 
     return billsToFilter.filter((bill) => {
@@ -277,6 +276,7 @@ const Billings = () => {
   };
 
   const handleViewBill = (bill) => {
+    console.log(bill);
     setSelectedBill(bill);
     setIsViewDialogOpen(true);
     setOpenDropdownId(null);
@@ -770,9 +770,7 @@ const Billings = () => {
                     <TableHead className="font-semibold">Phone</TableHead>
                     {!isMediumScreen && (
                       <>
-                        <TableHead className="font-semibold">
-                          Patient Type
-                        </TableHead>
+                        <TableHead className="font-semibold">Type</TableHead>
                         <TableHead className="font-semibold">
                           Date & Time
                         </TableHead>
@@ -782,6 +780,7 @@ const Billings = () => {
                     <TableHead className="font-semibold">Paid</TableHead>
                     <TableHead className="font-semibold">Due</TableHead>
                     <TableHead className="font-semibold">Status</TableHead>
+                    <TableHead className="font-semibold">Created By</TableHead>
                     <TableHead className="font-semibold">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -841,6 +840,7 @@ const Billings = () => {
                           {getBillStatus(bill)}
                         </Badge>
                       </TableCell>
+                      <TableCell>{bill.createdBy?.name || "N/A"}</TableCell>
                       <TableCell>
                         <DropdownMenu
                           open={openDropdownId === bill._id}

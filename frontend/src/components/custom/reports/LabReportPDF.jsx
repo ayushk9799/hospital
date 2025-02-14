@@ -1,11 +1,22 @@
 import React from "react";
 import { format } from "date-fns";
 import HospitalHeader from "../../../utils/print/HospitalHeader";
-
+import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
+import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
+import { useSelector } from "react-redux";
 const LabReportPDF = React.forwardRef(
   ({ reportData, patientData, hospital }, ref) => {
     const reportEntries = Object.entries(reportData.report);
-    
+    const headerTemplateStrings = useSelector(
+      (state) => state.templates.headerTemplateArray
+    );
+    const headerTemplateString =
+      headerTemplateStrings?.length > 0
+        ? headerTemplateStrings[0].value
+        : headerTemplateStringDefault;
+    const HospitalHeader = createDynamicComponentFromString(
+      headerTemplateString || headerTemplateStringDefault
+    );
     return (
       <div ref={ref} className="page">
         <HospitalHeader hospitalInfo={hospital} />

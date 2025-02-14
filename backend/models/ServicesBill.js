@@ -17,7 +17,7 @@ const servicesBillSchema = new mongoose.Schema({
   payments : [{ type: mongoose.Schema.Types.ObjectId, ref: 'Payment' }],
   patientType : {
     type : String,
-    enum : ["OPD","IPD","OPDProcedure"],
+    enum : ["OPD","IPD","OPDProcedure","Lab"],
     required : true,
   },
   patient : {

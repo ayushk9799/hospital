@@ -43,6 +43,7 @@ router.post("/create-sales-bill", verifyToken, async (req, res) => {
         paymentMethod,
         paymentType: { name: "Pharmacy", id: newPharmacyBill._id },
         type: "Income",
+        createdByName:user?.name,
         createdBy: user._id,
       });
       await payment.save({ session });

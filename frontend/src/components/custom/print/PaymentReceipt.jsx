@@ -4,7 +4,7 @@ import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import { Printer } from "lucide-react";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
-import { headerTemplateString } from "../../../templates/headertemplate";
+import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { format } from "date-fns";
 import { numberToWords } from "../../../assets/Data";
 
@@ -12,11 +12,15 @@ const PaymentReceipt = ({ payment, billData, styleData }) => {
     
   const { hospitalInfo } = useSelector((state) => state.hospital);
   const headerTemplateStrings = useSelector(
-    (state) => state.templates.headerTemplate
+    (state) => state.templates.headerTemplateArray
   );
+  const headerTemplateString =
+    headerTemplateStrings?.length > 0
+      ? headerTemplateStrings[0].value
+      : headerTemplateStringDefault;
   const componentRef = useRef();
   const HospitalHeader = createDynamicComponentFromString(
-    headerTemplateStrings || headerTemplateString
+    headerTemplateString || headerTemplateStringDefault
   );
 
   const formatAmount = (amount) => {

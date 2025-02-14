@@ -669,7 +669,6 @@ export default function AddStaff() {
               <Label htmlFor="name">Full Name</Label>
               <Input
                 id="name"
-                placeholder="John Doe"
                 value={formData.name}
                 onChange={handleInputChange}
               />
@@ -681,7 +680,6 @@ export default function AddStaff() {
               <Label htmlFor="username">Username</Label>
               <Input
                 id="username"
-                placeholder="johndoe"
                 value={formData.username}
                 onChange={handleInputChange}
               />
@@ -694,7 +692,6 @@ export default function AddStaff() {
               <Input
                 id="password"
                 type="password"
-                placeholder="********"
                 value={formData.password}
                 onChange={handleInputChange}
               />
@@ -707,7 +704,6 @@ export default function AddStaff() {
               <Label htmlFor="employeeID">Employee ID</Label>
               <Input
                 id="employeeID"
-                placeholder="EMP001"
                 value={formData.employeeID}
                 onChange={handleInputChange}
               />
@@ -716,7 +712,6 @@ export default function AddStaff() {
               <Label htmlFor="contactNumber">Contact Number</Label>
               <Input
                 id="contactNumber"
-                placeholder="+91 9876543210"
                 value={formData.contactNumber}
                 onChange={handleInputChange}
               />
@@ -726,7 +721,6 @@ export default function AddStaff() {
               <Input
                 id="email"
                 type="email"
-                placeholder="john@example.com"
                 value={formData.email}
                 onChange={handleInputChange}
               />
@@ -772,7 +766,6 @@ export default function AddStaff() {
               <Input
                 id="yearsOfExperience"
                 type="number"
-                placeholder="5"
                 value={formData.yearsOfExperience}
                 onChange={handleInputChange}
               />
@@ -823,7 +816,6 @@ export default function AddStaff() {
               <Input
                 id="salary"
                 type="number"
-                placeholder="50000"
                 value={formData.salary}
                 onChange={handleInputChange}
               />
@@ -832,7 +824,6 @@ export default function AddStaff() {
               <Label htmlFor="payrollInfo.bankName">Bank Name</Label>
               <Input
                 id="payrollInfo.bankName"
-                placeholder="Bank of America"
                 value={formData?.payrollInfo?.bankName}
                 onChange={handleInputChange}
               />
@@ -841,7 +832,6 @@ export default function AddStaff() {
               <Label htmlFor="payrollInfo.accountNumber">Account Number</Label>
               <Input
                 id="payrollInfo.accountNumber"
-                placeholder="1234567890"
                 value={formData?.payrollInfo?.accountNumber}
                 onChange={handleInputChange}
               />
@@ -850,7 +840,6 @@ export default function AddStaff() {
               <Label htmlFor="payrollInfo.ifscCode">IFSC Code</Label>
               <Input
                 id="payrollInfo.ifscCode"
-                placeholder="ABCD0001234"
                 value={formData?.payrollInfo?.ifscCode}
                 onChange={handleInputChange}
               />
@@ -974,7 +963,6 @@ export default function AddStaff() {
               <Label htmlFor="address">Address</Label>
               <Textarea
                 id="address"
-                placeholder="123 Main St, Anytown USA"
                 value={formData.address}
                 onChange={handleInputChange}
               />

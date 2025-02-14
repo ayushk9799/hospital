@@ -9,7 +9,7 @@ import {
 import { Button } from "../../ui/button";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { Label } from "../../ui/label";
-import {headerTemplateString} from "../../../templates/headertemplate";
+import {headerTemplateString as headerTemplateStringDefault} from "../../../templates/headertemplate";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -99,9 +99,13 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
   const bill = completedBill?.bill || billData;
   const patient = completedBill?.patient || billData?.patientInfo;
    const headerTemplateStrings = useSelector(
-    (state) => state.templates.headerTemplate
+    (state) => state.templates.headerTemplateArray
   );
-  const HospitalHeader = createDynamicComponentFromString(headerTemplateStrings||headerTemplateString);
+  const headerTemplateString =
+    headerTemplateStrings?.length > 0
+      ? headerTemplateStrings[0].value
+      : headerTemplateStringDefault;
+  const HospitalHeader = createDynamicComponentFromString(headerTemplateString||headerTemplateStringDefault);
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-visible rounded-lg">
@@ -152,7 +156,7 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                     <Label className="font-semibold mr-2">Date:</Label>
                     <p>
                       {bill?.createdAt
-                        ? format(new Date(bill.createdAt), "dd/MM/yyyy")
+                        ? format(new Date(bill?.createdAt), "dd/MM/yyyy")
                         : "N/A"}
                     </p>
                   </div>
