@@ -3,8 +3,10 @@ import { Button } from "../components/ui/button";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
+import { headerTemplateString4 } from "../templatesExperiments/HospitalHeaderTemplate";
 import { headerTemplateString } from "../templates/headertemplate";
-import { headerTemplateString3 as headerTemplateStringExperimental } from "../templatesExperiments/HospitalHeaderTemplate";
+import {headerTemplateString2} from "../templatesExperiments/HospitalHeaderTemplate"
+import { headerTemplateString3 as headerTemplateStringExperimental, headerTemplateString as headerTemplateStringGolpathar } from "../templatesExperiments/HospitalHeaderTemplate";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import { Input } from "../components/ui/input";
 import { cn } from "../lib/utils";
@@ -20,6 +22,14 @@ export default function HeaderTemplatePreview() {
   const [availableTemplates, setAvailableTemplates] = useState([
     { name: "experimental", value: headerTemplateStringExperimental },
     { name: "System Default", value: headerTemplateString },
+    {
+      name:"image",
+      value:headerTemplateString2
+    },
+    {
+      name:"wbcwdxb",
+      value:headerTemplateString4
+    },
     ...(headerTemplates || []),
   ]);
 
@@ -30,12 +40,21 @@ export default function HeaderTemplatePreview() {
   const [editingTemplateId, setEditingTemplateId] = useState(null);
 
   const handleNameEdit = (template, newName) => {
-    const updatedTemplates = availableTemplates.map((t) =>
-      t === template ? { ...t, name: newName } : t
+    // Find the template index
+    const templateIndex = availableTemplates.findIndex((t) => t === template);
+    if (templateIndex === -1) return;
+
+    // Create new array with updated template
+    const updatedTemplates = availableTemplates.map((t, index) =>
+      index === templateIndex ? { ...t, name: newName } : t
     );
+
+    // Update state with the new array
     setAvailableTemplates(updatedTemplates);
+
+    // Update selected template if it's the one being edited
     if (selectedTemplate === template) {
-      setSelectedTemplate({ ...template, name: newName });
+      setSelectedTemplate(updatedTemplates[templateIndex]);
     }
   };
 
@@ -50,7 +69,7 @@ export default function HeaderTemplatePreview() {
           <h1 className="text-xl sm:text-2xl font-bold">
             Hospital Header Preview
           </h1>
-          <Button
+          {/* <Button
             onClick={() => {
               if (selectedTemplate) {
                 dispatch(
@@ -65,7 +84,7 @@ export default function HeaderTemplatePreview() {
             }}
           >
             Save Template
-          </Button>
+          </Button> */}
         </div>
 
         <div className="flex flex-wrap gap-3">

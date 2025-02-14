@@ -162,56 +162,46 @@ const Payments = () => {
   };
 
   const filteredPayments = payments.filter((payment) => {
-    // First check user permissions
     const hasAllCollectionPermission = userData?.permissions?.includes(
       "view_otherscollection_all"
     );
     const hasTodayCollectionPermission = userData?.permissions?.includes(
       "view_otherscollection_for_just_today"
     );
-
-    // If user has no permissions, only show their own payments
-    if (!hasAllCollectionPermission && !hasTodayCollectionPermission) {
-      if (payment.createdBy?._id !== userData?._id) {
-        return false;
+    let letmethink=true;
+    // Always allow user to see their own payments regardless of permissions
+    const isOwnPayment = payment.createdBy?._id === userData?._id;
+    if (isOwnPayment) {
+      return letmethink;
+    } else {
+      // Handle permissions for others' payments
+      if (!hasAllCollectionPermission && !hasTodayCollectionPermission) {
+        return false; // No permissions to view any others' payments
       }
-    }
 
-    // If user only has today's permission, filter for today's payments
-    if (!hasAllCollectionPermission && hasTodayCollectionPermission) {
-      const today = new Date();
-      const paymentDate = new Date(payment.createdAt);
-      if (
-        paymentDate.getDate() !== today.getDate() ||
-        paymentDate.getMonth() !== today.getMonth() ||
-        paymentDate.getFullYear() !== today.getFullYear()
-      ) {
-        if (payment.createdBy?._id !== userData?._id) {
-          return false;
+      if (hasTodayCollectionPermission && !hasAllCollectionPermission) {
+        const today = new Date();
+        const paymentDate = new Date(payment.createdAt);
+        const isTodayPayment =
+          paymentDate.getDate() === today.getDate() &&
+          paymentDate.getMonth() === today.getMonth() &&
+          paymentDate.getFullYear() === today.getFullYear();
+
+        if (!isTodayPayment) {
+          letmethink=false;
+        }
+        else{
+          letmethink=true;
         }
       }
     }
 
-    // Apply payment type filter
-    if (paymentTypeFilter !== "All") {
-      if (payment.type !== paymentTypeFilter) {
-        return false;
-      } else {
-        return true;
-      }
-    } else {
-      return true;
+    // Payment type filter
+    if (paymentTypeFilter !== "All" && payment.type !== paymentTypeFilter) {
+      letmethink=false;
     }
 
-    // Apply search filters
-    let searchMatch =
-      payment.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      payment.associatedInvoiceOrId
-        ?.toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      payment.createdByName?.toLowerCase().includes(searchTerm.toLowerCase());
-
-    return searchMatch;
+    return letmethink;
   });
 
   // Calculate totals based on filtered payments
@@ -491,7 +481,7 @@ const Payments = () => {
                 <CardContent className="p-4">
                   <h3 className="font-semibold">Total Credit</h3>
                   <p className="text-2xl">
-                    ₹{Number(totalCredit.toFixed(2))?.toLocaleString("en-IN")}
+                    ₹{Number(totalCredit?.toFixed(2))?.toLocaleString("en-IN")}
                   </p>
                 </CardContent>
               </Card>
@@ -500,7 +490,7 @@ const Payments = () => {
                 <CardContent className="p-4">
                   <h3 className="font-semibold">Total Debit</h3>
                   <p className="text-2xl">
-                    ₹{Number(totalDebit.toFixed(2))?.toLocaleString("en-IN")}
+                    ₹{Number(totalDebit?.toFixed(2))?.toLocaleString("en-IN")}
                   </p>
                 </CardContent>
               </Card>
@@ -509,7 +499,7 @@ const Payments = () => {
                 <CardContent className="p-4">
                   <h3 className="font-semibold">Net Amount</h3>
                   <p className="text-2xl">
-                    ₹{Number(netAmount.toFixed(2))?.toLocaleString("en-IN")}
+                    ₹{Number(netAmount?.toFixed(2))?.toLocaleString("en-IN")}
                   </p>
                 </CardContent>
               </Card>
@@ -553,7 +543,7 @@ const Payments = () => {
                             payment.paymentType?.name}
                         </TableCell>
                         <TableCell className="font-medium">
-                          ₹{payment.amount.toFixed(2)}
+                          ₹{payment.amount?.toFixed(2)}
                         </TableCell>
                         <TableCell>
                           {payment.createdByName ||

@@ -628,6 +628,12 @@ export default function DischargeSummary() {
   const [patient, setPatient] = useState(null);
   const ignoreList = location.state?.ignoreList || false;
   const dischargeData = location.state?.dischargeData || null;
+  const dischargeSummaryTemplates = useSelector(
+    (state) => state.templates.dischargeSummaryTemplateArray
+  );
+  const [selectedTemplateDischargeSummary, setSelectedTemplateDischargeSummary] = useState(
+    dischargeSummaryTemplates[0] || { name: "", value: "" }
+  );
   const savedConfig = useSelector(
     (state) => state.templates.dischargeFormTemplates
   );
@@ -1947,6 +1953,8 @@ export default function DischargeSummary() {
           formConfig={formConfig}
           patient={patientInfo}
           hospital={hospital}
+          templateString={selectedTemplateDischargeSummary?.value}
+
         />
       </div>
 

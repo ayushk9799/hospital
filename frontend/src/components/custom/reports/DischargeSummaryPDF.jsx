@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { dischargeSummaryTemplateStringDefault } from "../../../templates/dischargesummary";
- import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
+import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 
 // Keep the styles object as is
@@ -114,22 +114,11 @@ const hasValue = (obj) => {
 
 // Create the dynamic component
 const DischargeSummaryPDF = forwardRef((props, ref) => {
-  const { formData, patient, formConfig, hospital } = props;
+  const { formData, patient, formConfig, hospital, templateString } = props;
   console.log(formData);
   console.log(patient);
 
-  const dischargeSummaryTemplates = useSelector(
-    (state) => state.templates.dischargeSummaryTemplateArray
-  );
-  const dischargeSummaryTemplatedatabseString=useSelector(
-    (state)=>state.templates.dischargeSummaryTemplate
-  )
-
   // Get the default or first available template
-  const dischargeSummaryTemplateString =
-    dischargeSummaryTemplates?.length > 0
-      ? dischargeSummaryTemplates[0].value
-      : dischargeSummaryTemplatedatabseString||dischargeSummaryTemplateStringDefault;
 
   // Create a function that returns JSX from the template string
   const templateFunction = new Function(
@@ -138,15 +127,11 @@ const DischargeSummaryPDF = forwardRef((props, ref) => {
     "HospitalHeader",
     "formatDate",
     "hasValue",
-    `return (${
-      dischargeSummaryTemplateString ||
-      dischargeSummaryTemplateStringDefault ||
-      configBasedDischargeSummaryTemplate
-    });`
+    `return (${templateString});`
   );
 
   const headerTemplates = useSelector(
-    (state) => state.templates.headerTemplate
+    (state) => state.templates.headerTemplateArray
   );
 
   const headerTemplateString =

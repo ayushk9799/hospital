@@ -1,25 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "../components/ui/button";
 import { useSelector, useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import OPDRxTemplate, { opdRxTemplateStringDefault } from "../templates/opdRx";
+import { Input } from "../components/ui/input";
+import { cn } from "../lib/utils";
+import {
+  opdRxTemplateStringExperimental2,
+  opdRxTemplateStringExperimental3,
+  opdRxTemplateStringExperimental1
+} from "../templatesExperiments/opdRxExperimental";
 //  import { opdRxTemplateStringExperimental } from "../templatesExperiments/opdRxExperimental";
 
 export default function OPDRxTemplatePreview() {
   const dispatch = useDispatch();
   const { hospitalInfo } = useSelector((state) => state.hospital);
+  const opdRxTemplates = useSelector(
+    (state) => state.templates.opdRxTemplateArray
+  );
 
   // Sample data for preview with proper date fields
   const patient = {
     patient: {
-    name: "Sample Patient",
-    age: "45",
-    gender: "Male",
-    address: "123 Sample Street",
+      name: "Sample Patient",
+      age: "45",
+      gender: "Male",
+      address: "123 Sample Street",
     },
     registrationNumber: "REG123",
     contactNumber: "9876543210",
-    guardian: "Sample Guardian",
+    guardianName: "Sample Guardian",
     createdAt: new Date().toISOString(),
     bookingDate: new Date().toISOString(),
     doctor: {
@@ -28,24 +38,108 @@ export default function OPDRxTemplatePreview() {
     },
     department: "General Medicine",
     vitals: {
-      bloodPressure: "120/80",
+      bloodPressure: "",
       weight: "70",
     },
   };
 
-  // const handleSaveTemplate = () => {
-  //   dispatch(
-  //     updateTemplate({ opdRxTemplate: opdRxTemplateStringExperimental })
-  //   );
-  // };
+  // Define available templates
+  const [availableTemplates, setAvailableTemplates] = useState([
+    { name: "System Default", value: opdRxTemplateStringDefault },
+    {
+      name: "Experimental",
+      value: opdRxTemplateStringExperimental2,
+    },
+    {
+      name: "Minimal",
+      value: opdRxTemplateStringExperimental3,
+    },
+    {
+      name: "Experimental 3",
+      value: opdRxTemplateStringExperimental1,
+    },
+    ...(opdRxTemplates || []),
+  ]);
+
+  const [selectedTemplate, setSelectedTemplate] = useState(
+    availableTemplates[0] || { name: "", value: "" }
+  );
+
+  const [editingTemplateId, setEditingTemplateId] = useState(null);
+
+  const handleNameEdit = (template, newName) => {
+    const templateIndex = availableTemplates.findIndex((t) => t === template);
+    if (templateIndex === -1) return;
+
+    const updatedTemplates = availableTemplates.map((t, index) =>
+      index === templateIndex ? { ...t, name: newName } : t
+    );
+
+    setAvailableTemplates(updatedTemplates);
+
+    if (selectedTemplate === template) {
+      setSelectedTemplate(updatedTemplates[templateIndex]);
+    }
+  };
+
+  const handleSaveTemplate = () => {
+    if (selectedTemplate) {
+      dispatch(
+        updateTemplate({
+          opdRxTemplate: {
+            name: selectedTemplate.name,
+            value: selectedTemplate.value,
+          },
+        })
+      );
+    }
+  };
 
   return (
     <div className="p-4 sm:p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-xl sm:text-2xl font-bold">
-          OPD Rx Template Preview
-        </h1>
-        {/* <Button onClick={handleSaveTemplate}>Save Template</Button> */}
+      <div className="flex flex-col gap-6 mb-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-xl sm:text-2xl font-bold">
+            OPD Rx Template Preview
+          </h1>
+          {/* <Button onClick={handleSaveTemplate}>Save Template</Button> */}
+        </div>
+
+        <div className="flex flex-wrap gap-3">
+          {availableTemplates.map((template, index) => (
+            <div key={index} className="relative">
+              {editingTemplateId === index ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={template.name}
+                    onChange={(e) => handleNameEdit(template, e.target.value)}
+                    onBlur={() => setEditingTemplateId(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        setEditingTemplateId(null);
+                      }
+                    }}
+                    className="w-[150px]"
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "relative min-w-[150px]",
+                    selectedTemplate === template &&
+                      "border-2 border-primary bg-primary/10"
+                  )}
+                  onClick={() => setSelectedTemplate(template)}
+                  onDoubleClick={() => setEditingTemplateId(index)}
+                >
+                  {template.name || "Unnamed Template"}
+                </Button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex justify-center bg-gray-100 p-4 min-h-[calc(100vh-200px)] overflow-auto">
@@ -58,7 +152,11 @@ export default function OPDRxTemplatePreview() {
             position: "relative",
           }}
         >
-          <OPDRxTemplate hospital={hospitalInfo} patient={patient} />
+          <OPDRxTemplate
+            hospital={hospitalInfo}
+            patient={patient}
+            templateString={selectedTemplate.value}
+          />
         </div>
       </div>
     </div>

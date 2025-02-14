@@ -22,7 +22,7 @@ import { numberToWords } from "../../../assets/Data";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Badge } from "../../ui/badge";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
-import { headerTemplateString } from "../../../templates/headertemplate";
+import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { useSelector } from "react-redux";
 import { useMediaQuery } from "../../../hooks/use-media-query";
 import { Checkbox } from "../../ui/checkbox";
@@ -96,10 +96,14 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
   };
 
   const headerTemplateStrings = useSelector(
-    (state) => state.templates.headerTemplate
+    (state) => state.templates.headerTemplateArray
   );
+  const headerTemplateString =
+    headerTemplateStrings?.length > 0
+      ? headerTemplateStrings[0].value
+      : headerTemplateStringDefault;
   const HospitalHeader = createDynamicComponentFromString(
-    headerTemplateStrings || headerTemplateString
+    headerTemplateString || headerTemplateStringDefault
   );
 
   const getStatusBadgeVariant = (status) => {

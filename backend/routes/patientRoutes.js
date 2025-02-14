@@ -65,6 +65,9 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
         populate: {
           path: "payments",
         },
+      }).populate({
+        path: "assignedDoctor",
+        select: "name",
       });
 
     // Calculate financial details for each patient
@@ -721,6 +724,12 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
         path: "bills.pharmacy",
         populate: {
           path: "payments",
+        },
+      })
+      .populate({
+        path: "assignedDoctor",
+        populate: {
+          path: "name",
         },
       });
 

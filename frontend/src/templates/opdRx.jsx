@@ -51,21 +51,16 @@ export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
 }`;
 
 const OPDRxTemplate = forwardRef((props, ref) => {
-  const { patient, hospital } = props;
+  const { patient, hospital, templateString } = props;
 
   const headerTemplates = useSelector(
-    (state) => state.templates.headerTemplate
+    (state) => state.templates.headerTemplateArray
   );
-  const opdRxTemplates = useSelector((state) => state.templates.opdRxTemplate);
 
   const headerTemplateString =
     headerTemplates?.length > 0 ? headerTemplates[0].value : headerTemplate;
 
-  const opdRxTemplateString =
-    opdRxTemplates?.length > 0
-      ? opdRxTemplates[0].value
-      : opdRxTemplateStringDefault;
-
+ 
   const HospitalHeader = createDynamicComponentFromString(
     headerTemplateString || headerTemplate
   );
@@ -75,7 +70,7 @@ const OPDRxTemplate = forwardRef((props, ref) => {
     "HospitalHeader",
     "format",
     "addDays",
-    `return (${opdRxTemplateString || opdRxTemplateStringDefault});`
+    `return (${templateString});`
   );
 
   try {

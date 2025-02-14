@@ -27,7 +27,7 @@ import { AlertCircle } from "lucide-react";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Checkbox } from "../../ui/checkbox";
-import {headerTemplateString} from "../../../templates/headertemplate";
+import {headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { X } from "lucide-react";
 import PaymentReceipt from "../print/PaymentReceipt";
 
@@ -37,8 +37,12 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [selectedServices, setSelectedServices] = useState([]);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
-  const headerTemplateStrings = useSelector((state) => state.templates.headerTemplate);
-  const HeaderComponent = createDynamicComponentFromString(headerTemplateStrings||headerTemplateString);
+  const headerTemplateStrings = useSelector((state) => state.templates.headerTemplateArray);
+  const headerTemplateString =
+    headerTemplateStrings?.length > 0
+      ? headerTemplateStrings[0].value
+      : headerTemplateStringDefault;
+  const HeaderComponent = createDynamicComponentFromString(headerTemplateString||headerTemplateStringDefault);
   const [printPaymentHistory, setPrintPaymentHistory] = useState(true);
 
   React.useEffect(() => {
