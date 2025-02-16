@@ -60,12 +60,10 @@ router.get("/getHospital", async (req, res) => {
     }
     res.status(200).json(hospital);
   } catch (error) {
-    res
-      .status(500)
-      .json({
-        message: "Error fetching hospital details",
-        error: error.message,
-      });
+    res.status(500).json({
+      message: "Error fetching hospital details",
+      error: error.message,
+    });
   }
 });
 
@@ -143,10 +141,14 @@ router.post("/template/create", identifyHospital, async (req, res) => {
       template.opdRxTemplateArray.push(req.body.opdRxTemplate);
     }
     if (req.body.dischargeSummaryTemplate) {
-      template.dischargeSummaryTemplateArray.push(req.body.dischargeSummaryTemplate);
+      template.dischargeSummaryTemplateArray.push(
+        req.body.dischargeSummaryTemplate
+      );
     }
     if (req.body.opdPrescriptionTemplate) {
-      template.opdPrescriptionTemplateArray.push(req.body.opdPrescriptionTemplate);
+      template.opdPrescriptionTemplateArray.push(
+        req.body.opdPrescriptionTemplate
+      );
     }
     if (req.body.comorbidities) {
       template.comorbidities = req.body.comorbidities;
@@ -216,12 +218,10 @@ router.post(
       res.status(200).json(template.service_collections);
     } catch (error) {
       await session.abortTransaction();
-      res
-        .status(400)
-        .json({
-          message: "Error updating service bill collections",
-          error: error.message,
-        });
+      res.status(400).json({
+        message: "Error updating service bill collections",
+        error: error.message,
+      });
     } finally {
       session.endSession();
     }
@@ -238,4 +238,97 @@ router.get("/getUploadUrl", identifyHospital, async (req, res) => {
       .json({ message: "Error fetching upload url", error: error.message });
   }
 });
+
+// Add new route for editing template items
+router.put("/template/edit", identifyHospital, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const template = await Template.findOne().session(session);
+    if (!template) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Template not found" });
+    }
+
+    // Handle updates for each template array
+    const {
+      field, // The array field to update (e.g., 'labTestsTemplate')
+      index, // The index of the item to update
+      newValue, // The new value to set
+    } = req.body;
+
+    if (!template[field]) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: "Invalid template field" });
+    }
+
+    if (Array.isArray(template[field])) {
+      if (index < 0 || index >= template[field].length) {
+        await session.abortTransaction();
+        return res.status(400).json({ message: "Invalid index" });
+      }
+      // For labTestsTemplate array, replace the entire object
+      template[field][index] = newValue;
+    } else {
+      // Handle non-array fields
+      template[field] = newValue;
+    }
+
+    await template.save({ session });
+    await session.commitTransaction();
+    res.status(200).json(template);
+  } catch (error) {
+    await session.abortTransaction();
+    res
+      .status(400)
+      .json({ message: "Error updating template", error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
+// Add new route for deleting template items
+router.delete("/template/delete", identifyHospital, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const template = await Template.findOne().session(session);
+    if (!template) {
+      await session.abortTransaction();
+      return res.status(404).json({ message: "Template not found" });
+    }
+
+    const { field, index } = req.body;
+
+    if (!template[field]) {
+      await session.abortTransaction();
+      return res.status(400).json({ message: "Invalid template field" });
+    }
+
+    if (Array.isArray(template[field])) {
+      if (index < 0 || index >= template[field].length) {
+        await session.abortTransaction();
+        return res.status(400).json({ message: "Invalid index" });
+      }
+      template[field].splice(index, 1);
+    } else {
+      // For non-array fields, set to empty or default value
+      template[field] = Array.isArray(template[field]) ? [] : "";
+    }
+
+    await template.save({ session });
+    await session.commitTransaction();
+    res.status(200).json(template);
+  } catch (error) {
+    await session.abortTransaction();
+    res
+      .status(400)
+      .json({ message: "Error deleting template item", error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
 export default router;

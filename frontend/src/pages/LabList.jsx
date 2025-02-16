@@ -175,7 +175,7 @@ export default function LabList() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => handleViewDetails(test)}>
-                  View Details
+                  Print Bills
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -326,7 +326,7 @@ export default function LabList() {
                     <TableCell>
                       {format(new Date(test.bookingDate), "dd/MM/yyyy")}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="font-bold">
                       {test.labTests.map((t) => t.name).join(", ")}
                     </TableCell>
                     <TableCell>
@@ -348,7 +348,7 @@ export default function LabList() {
                           <DropdownMenuItem
                             onClick={() => handleViewDetails(test)}
                           >
-                            View Details
+                            Print Bills
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             onClick={() =>

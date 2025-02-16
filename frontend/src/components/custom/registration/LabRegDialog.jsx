@@ -91,7 +91,15 @@ export default function LabRegDialog({ open, onOpenChange }) {
     referredBy: "",
     department: departments.length === 1 ? departments[0].name : "",
     notes: "",
-    bookingDate: new Date().toISOString().split("T")[0],
+    bookingDate: new Date()
+      .toLocaleDateString("en-IN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      })
+      .split("/")
+      .reverse()
+      .join("-"),
   };
 
   const [formData, setFormData] = useState(initialFormData);
@@ -169,7 +177,7 @@ export default function LabRegDialog({ open, onOpenChange }) {
       price:
         test.rate || allLabTests.find((t) => t.name === test.name)?.rate || 0,
     }));
-
+    console.log(selectedTestDetails);
     const totalAmount = selectedTestDetails.reduce(
       (sum, test) => sum + (test.price || 0),
       0
@@ -204,7 +212,7 @@ export default function LabRegDialog({ open, onOpenChange }) {
       },
     }));
   };
-
+  console.log(formData);
   const handleSearch = async () => {
     if (!formData.registrationNumber) return;
     setIsSearching(true);
@@ -234,13 +242,15 @@ export default function LabRegDialog({ open, onOpenChange }) {
           lastVisit: data.lastVisit,
           lastVisitId: (() => {
             const lastVisit = data.visits?.[data.visits?.length - 1];
-            const lastAdmission = data.admissionDetails?.[data.admissionDetails?.length - 1];
-            
+            const lastAdmission =
+              data.admissionDetails?.[data.admissionDetails?.length - 1];
+
             if (!lastVisit && !lastAdmission) return null;
             if (!lastVisit) return lastAdmission?._id;
             if (!lastAdmission) return lastVisit?._id;
-            
-            return new Date(lastVisit.bookingDate) > new Date(lastAdmission.bookingDate)
+
+            return new Date(lastVisit.bookingDate) >
+              new Date(lastAdmission.bookingDate)
               ? lastVisit._id
               : lastAdmission._id;
           })(),
@@ -280,7 +290,56 @@ export default function LabRegDialog({ open, onOpenChange }) {
 
     if (validateForm()) {
       try {
-        const result = await dispatch(createLabRegistration(formData)).unwrap();
+        // Create a cleaned version of formData by removing empty values
+        const cleanedFormData = Object.entries(formData).reduce(
+          (acc, [key, value]) => {
+            // Special handling for arrays
+            if (Array.isArray(value)) {
+              if (value.length > 0) {
+                acc[key] = value;
+              }
+              return acc;
+            }
+
+            // Handle nested objects like paymentInfo
+            if (value && typeof value === "object") {
+              const cleanedNested = Object.entries(value).reduce(
+                (nestedAcc, [nestedKey, nestedValue]) => {
+                  // Handle arrays within nested objects
+                  if (Array.isArray(nestedValue)) {
+                    if (nestedValue.length > 0) {
+                      nestedAcc[nestedKey] = nestedValue;
+                    }
+                  }
+                  // Handle other nested values
+                  else if (
+                    nestedValue !== "" &&
+                    nestedValue !== null &&
+                    nestedValue !== undefined
+                  ) {
+                    nestedAcc[nestedKey] = nestedValue;
+                  }
+                  return nestedAcc;
+                },
+                {}
+              );
+
+              if (Object.keys(cleanedNested).length > 0) {
+                acc[key] = cleanedNested;
+              }
+            }
+            // Handle non-object values
+            else if (value !== "" && value !== null && value !== undefined) {
+              acc[key] = value;
+            }
+            return acc;
+          },
+          {}
+        );
+
+        const result = await dispatch(
+          createLabRegistration(cleanedFormData)
+        ).unwrap();
         toast({
           title: "Registration Successful",
           description: "Lab registration completed successfully",
@@ -520,7 +579,7 @@ export default function LabRegDialog({ open, onOpenChange }) {
                             variant="primary"
                             className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
                           >
-                            {test.name}
+                            {test.name + " " + "₹" + test.price}
                             <X
                               className="ml-1 h-3 w-3 cursor-pointer"
                               onClick={() => handleRemoveTest(test.name)}

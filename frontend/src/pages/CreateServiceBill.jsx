@@ -184,25 +184,26 @@ const CreateServiceBill = ({
           setAddedServices(formattedServices);
           setSelectedServices(formattedServices.map((service) => service.id));
           setAdditionalDiscount(billData.additionalDiscount || "");
-
+          console.log(billData);
           setBillPatientDetails({
-            _id: billData.patient._id,
-            name: billData.patientInfo.name,
-            contactNumber: billData.patientInfo.phone,
-            registrationNumber: billData.patient.registrationNumber,
-            age: billData.patient.age,
-            gender: billData.patient.gender,
-            address: billData.patient.address,
-            bloodGroup: billData.patient.bloodGroup,
-            ipdNumber: billData.patientInfo.ipdNumber,
-            type: billData.patientType,
+            _id: billData.patient?._id || billData.patientInfo?._id,
+            name: billData.patientInfo?.name || billData.patient?.name,
+            contactNumber: billData.patientInfo?.phone || billData.patient?.phone,
+            registrationNumber: billData.patient?.registrationNumber || billData.patientInfo?.registrationNumber,
+            age: billData.patient?.age || billData.patientInfo?.age,
+            gender: billData.patient?.gender || billData.patientInfo?.gender,
+            address: billData.patient?.address || billData.patientInfo?.address,
+            bloodGroup: billData.patient?.bloodGroup || billData.patientInfo?.bloodGroup,
+            ipdNumber: billData.patientInfo?.ipdNumber || billData.patient?.ipdNumber,
+            type: billData.patientType || billData.patientInfo?.type,
             bookingDate:
-              billData.patient.bookingDate || billData.createdAt || null,
+              billData.patient?.bookingDate || billData.createdAt || null,
           });
 
           setBillData(formattedBillData); // Now storing in the same format as initialBillDat
         })
         .catch((error) => {
+          console.log(error);
           toast({
             title: "Error fetching bill",
             description: "Could not load the bill details. Please try again.",

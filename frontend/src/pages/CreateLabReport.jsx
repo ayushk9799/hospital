@@ -32,7 +32,7 @@ const CreateLabReport = ({
   onFindingsDisplay,
   onClose,
   onSave,
-  searchWhere,
+  component,
 }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -379,9 +379,9 @@ text-align: right;
     try {
       const resultAction = await dispatch(
         addLabReport({
-          visitId: patientData._id,
+          _id: patientData._id,
           labReport: labReportData,
-          searchWhere: searchWhere,
+          component: component,
         })
       );
 

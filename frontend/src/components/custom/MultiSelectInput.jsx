@@ -14,7 +14,6 @@ const MultiSelectInput = forwardRef(
       setSelectedValues,
       onSuggestionSelect,
       onError = false,
-      height = true
     },
     ref
   ) => {
@@ -180,23 +179,25 @@ const MultiSelectInput = forwardRef(
             }}
             className="z-[9999] bg-popover rounded-md border shadow-md"
           >
-            <ScrollArea className={`${!height ? "" : "h-[200px]"}`}>
+            <ScrollArea
+              className={`${filteredSuggestions.length > 5 ? "h-[200px]" : ""}`}
+            >
               <ul>
-
-
                 {filteredSuggestions.map((suggestion, index) => (
                   <li
                     key={suggestion.name}
-
                     onClick={() => handleSuggestionClick(suggestion)}
-                    className={`px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground
+                    className={`px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground flex justify-between items-center
                       ${
                         index === highlightedIndex
                           ? "bg-accent text-accent-foreground"
                           : ""
                       }`}
                   >
-                    {suggestion.name}
+                    <span>{suggestion.name}</span>
+                    {suggestion.rate && (
+                      <span className="text-gray-600">₹{suggestion.rate}</span>
+                    )}
                   </li>
                 ))}
               </ul>

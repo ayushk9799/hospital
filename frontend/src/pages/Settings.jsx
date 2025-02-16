@@ -26,8 +26,8 @@ export default function Settings() {
     navigate("/settings/customization");
   };
 
-  const handleCreateTestTemplate = () => {
-    navigate("/settings/create-test-template");
+  const handleLabTemplates = () => {
+    navigate("/settings/lab-templates");
   };
 
   const handlePrintingTemplates = () => {
@@ -58,8 +58,8 @@ export default function Settings() {
         <Button onClick={handleCustomization} className="w-full sm:w-auto">
           Customization
         </Button>
-        <Button onClick={handleCreateTestTemplate} className="w-full sm:w-auto">
-          Create Test Template
+        <Button onClick={handleLabTemplates} className="w-full sm:w-auto">
+          Manage Lab Templates
         </Button>
         <Button onClick={handlePrintingTemplates} className="w-full sm:w-auto">
           Printing Templates

@@ -20,7 +20,13 @@ import { useSelector, useDispatch } from "react-redux";
 import { addLabReport } from "../redux/slices/patientSlice";
 import { useToast } from "../hooks/use-toast";
 
-const TemplateLabReport = ({ template, patientData, onClose, searchWhere, component }) => {
+const TemplateLabReport = ({
+  template,
+  patientData,
+  onClose,
+  searchWhere,
+  component,
+}) => {
   const [fields, setFields] = useState([]);
   const [reportDate, setReportDate] = useState(new Date());
   const [allReports, setAllReports] = useState([]);
@@ -125,7 +131,6 @@ const TemplateLabReport = ({ template, patientData, onClose, searchWhere, compon
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
-
       setIsPrinting(true);
       return new Promise((resolve) => {
         setTimeout(() => {
@@ -378,9 +383,13 @@ body * {
           description: "Lab Report added successfully",
           variant: "success",
         });
-        if (onClose) {
-          onClose(labReportData);
-        }
+
+        // Trigger print after successful save
+        handlePrint();
+
+        // if (onClose) {
+        //   onClose(labReportData);
+        // }
       } else {
         throw new Error("Failed to add lab report");
       }

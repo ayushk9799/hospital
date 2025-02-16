@@ -29,20 +29,20 @@ const LabReportPDF = React.forwardRef(
             </div>
             <div className="patient-info">
               <span className="patient-label">Age:</span>
-              <span className="patient-value">{patientData?.patient?.age}</span>
+              <span className="patient-value">{patientData?.patient?.age||patientData.age}</span>
             </div>
           </div>
           <div className="patient-column">
             <div className="patient-info">
               <span className="patient-label">Gender:</span>
               <span className="patient-value">
-                {patientData?.patient?.gender}
+                {patientData?.patient?.gender||patientData.gender}
               </span>
             </div>
             <div className="patient-info">
-              <span className="patient-label">Reg No:</span>
+              <span className="patient-label">Reg No/Lab No:</span>
               <span className="patient-value">
-                {patientData?.registrationNumber}
+                {patientData?.registrationNumber||patientData.labNumber}
               </span>
             </div>
           </div>

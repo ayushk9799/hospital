@@ -11,7 +11,7 @@ import { format, subMonths, isBefore } from "date-fns";
 import { cn } from "../lib/utils";
 
 // backend url
-export const Backend_URL = "https://thehospital.in";
+export const Backend_URL = "http://localhost:3000";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -37,7 +37,7 @@ export const permissionGroups = {
     { id: "view_financial", label: "View Financial Data" },
 
     { id: "edit_bills", label: "Edit Bills" },
-    { id: "delete_bills", label: "Delete Bills" },
+   
     { id: "view_reports", label: "View Reports" },
     { id: "record_expense", label: "Record Expense" },
     {id:"view_otherscollection_all",label:"View Other's collection for all days"},

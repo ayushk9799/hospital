@@ -82,6 +82,58 @@ export const updateServiceBillCollections = createAsyncThunk(
   }
 );
 
+// Add new async thunks
+export const editTemplate = createLoadingAsyncThunk(
+  "templates/editTemplate",
+  async ({ field, index, template }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/hospitals/template/edit`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            field,
+            index,
+            newValue: template,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to update template");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+export const deleteTemplate = createLoadingAsyncThunk(
+  "templates/deleteTemplate",
+  async ({ field, index }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/hospitals/template/delete`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            field,
+            index,
+          }),
+        }
+      );
+
+      if (!response.ok) throw new Error("Failed to delete template");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   labTestsTemplate: [],
   headerTemplateArray: [],
@@ -108,8 +160,9 @@ const templatesSlice = createSlice({
         state.status = "succeeded";
         state.labTestsTemplate = action.payload.labTestsTemplate;
         state.headerTemplateArray = action.payload.headerTemplateArray || [];
-        state.headerTemplate=action.payload.headerTemplate ||"";
-        state.dischargeSummaryTemplate=action.payload.dischargeSummaryTemplate||"";
+        state.headerTemplate = action.payload.headerTemplate || "";
+        state.dischargeSummaryTemplate =
+          action.payload.dischargeSummaryTemplate || "";
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
         state.dischargeSummaryTemplateArray =
           action.payload.dischargeSummaryTemplateArray || [];
@@ -126,10 +179,6 @@ const templatesSlice = createSlice({
         state.error = action.payload.message || "Failed to fetch templates";
       })
       .addCase(updateTemplate.fulfilled, (state, action) => {
-        // Update both diagnosis and lab test templates based on the response
-        if (action.payload.diagnosisTemplate) {
-          state.diagnosisTemplate = action.payload.diagnosisTemplate;
-        }
         if (action.payload.labTestsTemplate) {
           state.labTestsTemplate = action.payload.labTestsTemplate;
         }
@@ -153,6 +202,12 @@ const templatesSlice = createSlice({
       })
       .addCase(updateServiceBillCollections.fulfilled, (state, action) => {
         state.serviceBillCollections = action.payload;
+      })
+      .addCase(editTemplate.fulfilled, (state, action) => {
+        state.labTestsTemplate = action.payload.labTestsTemplate;
+      })
+      .addCase(deleteTemplate.fulfilled, (state, action) => {
+        state.labTestsTemplate = action.payload.labTestsTemplate;
       });
   },
 });

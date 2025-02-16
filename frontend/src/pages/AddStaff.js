@@ -242,14 +242,13 @@ export default function AddStaff() {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name) newErrors.name = "Name is required";
-    if (formData.roles?.includes("admin")) {
-      if (!formData.username)
-        newErrors.username = "Username is required for admin";
+    if (!formData.name.trim()) newErrors.name = "Name is required";
+    if (formData.roles?.includes("admin") && !formData.username.trim()) {
+      newErrors.username = "Username is required for admin";
     }
-    // Check if roles exist and have a length greater than 0
-    if (!formData.roles || formData.roles.length === 0)
+    if (!formData.roles || formData.roles.length === 0) {
       newErrors.roles = "At least one role is required";
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -261,9 +260,26 @@ export default function AddStaff() {
         // Create a clean data object by removing empty fields
         const cleanData = Object.entries(formData).reduce(
           (acc, [key, value]) => {
-            // Handle nested objects
+            // Preserve all fields in edit mode except empty objects
+            if (editMode) {
+              // Only exclude completely empty nested objects
+              if (key === "shift") {
+                if (value.type || value.hours?.start || value.hours?.end) {
+                  acc[key] = value;
+                }
+              } else if (key === "payrollInfo") {
+                const hasPayrollData = Object.values(value).some(
+                  (v) => v.trim() !== ""
+                );
+                if (hasPayrollData) acc[key] = value;
+              } else {
+                acc[key] = value;
+              }
+              return acc;
+            }
+
+            // Original logic for new entries
             if (key === "shift") {
-              // Only include shift if both type and hours are properly filled
               if (value.type && value.hours?.start && value.hours?.end) {
                 acc[key] = value;
               }
@@ -579,7 +595,6 @@ export default function AddStaff() {
                 </div>
               ))}
             </div>
-            
           </div>
 
           {/* Column 3: Staff, Hospital & Other Management */}

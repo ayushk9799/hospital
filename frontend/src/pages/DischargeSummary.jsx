@@ -1929,7 +1929,7 @@ export default function DischargeSummary() {
                     onClose={handleCloseLabReport}
                     onSave={handleSaveLabReport}
                     onFindingsDisplay={true}
-                    searchWhere="ipd"
+                    component="DischargeSummary"
                   />
                 );
               })()

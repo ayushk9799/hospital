@@ -181,7 +181,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                   )}
                 </div>
 
-                <div className="mx-auto w-full max-w-md">
+                {/* <div className="mx-auto w-full max-w-md">
                   <div className="border-2 p-6 rounded-lg shadow-sm">
                     <div className="text-center mb-4">
                       <h3 className="text-xl font-semibold">
@@ -261,7 +261,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                       </div>
                     </div>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Lab Tests Section */}
                 <div className="mt-4">

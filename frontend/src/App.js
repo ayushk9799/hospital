@@ -70,6 +70,8 @@ import BabyDetails from "./pages/BabyDetails";
 import DepartmentManger from "./pages/DepartmentManger";
 import ViewAllBabies from "./pages/ViewAllBabies";
 import Payments from "./pages/Payments";
+import LabTemplatesManager from "./pages/LabTemplatesManager";
+import EditTestTemplate from "./pages/EditTestTemplate";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -174,10 +176,7 @@ const AppContent = () => {
                 />
                 <Route path="/addstaff" element={<AddStaff />} />
                 <Route path="/editstaff/:staffId" element={<AddStaff />} />
-                <Route
-                  path="/lab"
-                  element={<Lab />}
-                />
+                <Route path="/lab" element={<Lab />} />
                 <Route path="/lab/list" element={<LabList />} />
                 <Route path="/lab/registration" element={<LabRegDialog />} />
                 <Route path="/lab/all-tests" element={<AllLabTests />} />
@@ -228,6 +227,10 @@ const AppContent = () => {
                   element={<OPDProcedure />}
                 />
                 <Route
+                  path="/settings/lab-templates"
+                  element={<LabTemplatesManager />}
+                />
+                <Route
                   path="/settings/create-test-template"
                   element={<CreateTestTemplate />}
                 />
@@ -268,6 +271,10 @@ const AppContent = () => {
                 <Route
                   path="/settings/department"
                   element={<DepartmentManger />}
+                />
+                <Route
+                  path="/settings/edit-test-template/:templateName"
+                  element={<EditTestTemplate />}
                 />
               </>
             )}

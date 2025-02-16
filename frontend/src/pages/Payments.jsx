@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -41,6 +41,7 @@ import {
   FileX,
   Printer,
   ListFilter,
+  ChartNoAxesColumnDecreasing,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPayments } from "../redux/slices/paymentSlice";
@@ -49,16 +50,22 @@ import { Input } from "../components/ui/input";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReactToPrint } from "react-to-print";
+import { fetchStaffMembers } from "../redux/slices/staffSlice";
 
 const Payments = () => {
   const dispatch = useDispatch();
   const { payments, status } = useSelector((state) => state.payments);
   const { userData } = useSelector((state) => state.user);
+  const { staffMembers } = useSelector((state) => state.staff);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFilter, setDateFilter] = useState("Today");
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [paymentTypeFilter, setPaymentTypeFilter] = useState("All");
+  const [staffAccountFilter, setStaffAccountFilter] = useState({
+    name: "All Staff",
+    id: "",
+  });
   const { toast } = useToast();
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
@@ -90,10 +97,10 @@ const Payments = () => {
         if (dateRange.from && dateRange.to) {
           return {
             startDate: new Date(
-              dateRange.from.setHours(0, 0, 0, 0)
+              dateRange.from?.setHours(0, 0, 0, 0)
             ).toISOString(),
             endDate: new Date(
-              dateRange.to.setHours(23, 59, 59, 999)
+              dateRange.to?.setHours(23, 59, 59, 999)
             ).toISOString(),
           };
         }
@@ -107,12 +114,14 @@ const Payments = () => {
     try {
       dispatch(setLoading(true));
       const dateRangeParams = getDateRange();
+      if(dateRangeParams?.startDate && dateRangeParams?.endDate){
       await dispatch(
         fetchPayments({
           startDate: dateRangeParams?.startDate,
           endDate: dateRangeParams?.endDate,
         })
       ).unwrap();
+    }
     } catch (error) {
       toast({
         title: "Error",
@@ -131,8 +140,14 @@ const Payments = () => {
   }, [status]);
 
   useEffect(() => {
-    fetchPaymentsData();
-  }, [dateFilter, dateRange]);
+    
+      fetchPaymentsData();
+    
+  }, [dateFilter, dateRange, searchTerm]);
+
+  useEffect(() => {
+    dispatch(fetchStaffMembers());
+  }, [dispatch]);
 
   const handleDateRangeSearch = () => {
     setDateRange(tempDateRange);
@@ -152,7 +167,7 @@ const Payments = () => {
       year: "numeric",
     });
   };
-
+  console.log("helooo");
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-IN", {
@@ -160,50 +175,74 @@ const Payments = () => {
       minute: "2-digit",
     });
   };
-
-  const filteredPayments = payments.filter((payment) => {
-    const hasAllCollectionPermission = userData?.permissions?.includes(
-      "view_otherscollection_all"
-    );
-    const hasTodayCollectionPermission = userData?.permissions?.includes(
-      "view_otherscollection_for_just_today"
-    );
-    let letmethink=true;
-    // Always allow user to see their own payments regardless of permissions
-    const isOwnPayment = payment.createdBy?._id === userData?._id;
-    if (isOwnPayment) {
-      return letmethink;
-    } else {
-      // Handle permissions for others' payments
-      if (!hasAllCollectionPermission && !hasTodayCollectionPermission) {
-        return false; // No permissions to view any others' payments
-      }
-
-      if (hasTodayCollectionPermission && !hasAllCollectionPermission) {
-        const today = new Date();
-        const paymentDate = new Date(payment.createdAt);
-        const isTodayPayment =
-          paymentDate.getDate() === today.getDate() &&
-          paymentDate.getMonth() === today.getMonth() &&
-          paymentDate.getFullYear() === today.getFullYear();
-
-        if (!isTodayPayment) {
-          letmethink=false;
+  const filteredPayments = useMemo(() => {
+    return payments.filter((payment) => {
+      const hasAllCollectionPermission = userData?.permissions?.includes(
+        "view_otherscollection_all"
+      );
+      const hasTodayCollectionPermission = userData?.permissions?.includes(
+        "view_otherscollection_for_just_today"
+      );
+      console.log(payment.createdBy?._id === userData?._id);
+      // 1. Permission Check (moved to the beginning)
+      if (payment.createdBy?._id !== userData?._id && payment.createdBy?._id) {
+        if (!hasAllCollectionPermission && !hasTodayCollectionPermission) {
+          console.log("hello");
+          return false; // No permissions to view others' payments
         }
-        else{
-          letmethink=true;
+        if (hasTodayCollectionPermission && !hasAllCollectionPermission) {
+          const today = new Date();
+          const paymentDate = new Date(payment.createdAt);
+          console.log(paymentDate);
+          console.log(paymentDate.getDate());
+          const isTodayPayment =
+            paymentDate.getDate() === today.getDate() &&
+            paymentDate.getMonth() === today.getMonth() &&
+            paymentDate.getFullYear() === today.getFullYear();
+          if (!isTodayPayment) {
+            return false; // No permission to view others' payments for other days
+          }
         }
       }
-    }
 
-    // Payment type filter
-    if (paymentTypeFilter !== "All" && payment.type !== paymentTypeFilter) {
-      letmethink=false;
-    }
+      // 2. Payment Type Filter
+      if (paymentTypeFilter !== "All" && payment.type !== paymentTypeFilter) {
+        return false;
+      }
 
-    return letmethink;
-  });
+      // 3. Staff Account Filter
+      if (
+        staffAccountFilter.id &&
+        payment.createdBy?._id !== staffAccountFilter.id
+      ) {
+        return false;
+      }
 
+      // 4. Search Term Filter
+      if (searchTerm) {
+        const searchText = searchTerm.toLowerCase();
+        const searchableFields = [
+          payment.description,
+          payment.paymentMethod,
+          payment.paymentType?.name,
+          payment.createdByName,
+          payment.createdBy?.name,
+          formatDate(payment.createdAt),
+          formatTime(payment.createdAt),
+          payment.amount?.toString(),
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        if (!searchableFields.includes(searchText)) {
+          return false;
+        }
+      }
+
+      return true; // Payment passed all filters
+    });
+  }, [payments, paymentTypeFilter, staffAccountFilter, searchTerm, userData]);
   // Calculate totals based on filtered payments
   const totalCredit = filteredPayments
     .filter((p) => p.type === "Income")
@@ -214,6 +253,21 @@ const Payments = () => {
     .reduce((acc, p) => acc + p.amount, 0);
 
   const netAmount = totalCredit - totalDebit;
+
+  const methodTotals = useMemo(() => {
+    const methods = {};
+    filteredPayments.forEach((payment) => {
+      if (!methods[payment.paymentMethod]) {
+        methods[payment.paymentMethod] = { credit: 0, debit: 0 };
+      }
+      if (payment.type === "Income") {
+        methods[payment.paymentMethod].credit += payment.amount;
+      } else {
+        methods[payment.paymentMethod].debit += payment.amount;
+      }
+    });
+    return methods;
+  }, [filteredPayments]);
 
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -342,7 +396,7 @@ const Payments = () => {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-
+                     <>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="w-full">
@@ -378,6 +432,60 @@ const Payments = () => {
                           >
                             Custom Range
                           </DropdownMenuItem>
+                          
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      {dateFilter === "Custom" && (
+                            <DateRangePicker
+                              from={tempDateRange.from}
+                              to={tempDateRange.to}
+                              onSelect={(range) => setTempDateRange(range)}
+                              onSearch={handleDateRangeSearch}
+                              onCancel={handleDateRangeCancel}
+                            />
+                          )}
+                          </>
+
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <ListFilter className="mr-2 h-4 w-4" />
+                            {staffAccountFilter.name === "All Staff"
+                              ? "All Staff"
+                              : staffAccountFilter.name}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-[200px]"
+                        >
+                          <DropdownMenuLabel>
+                            Filter by Staff Account
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              setStaffAccountFilter({
+                                name: "All Staff",
+                                id: "",
+                              })
+                            }
+                          >
+                            All Staff
+                          </DropdownMenuItem>
+                          {staffMembers?.map((staff) => (
+                            <DropdownMenuItem
+                              key={staff._id}
+                              onSelect={() =>
+                                setStaffAccountFilter({
+                                  name: staff.name,
+                                  id: staff._id,
+                                })
+                              }
+                            >
+                              {staff.name}
+                            </DropdownMenuItem>
+                          ))}
                         </DropdownMenuContent>
                       </DropdownMenu>
 
@@ -456,15 +564,61 @@ const Payments = () => {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
-
                 {dateFilter === "Custom" && (
-                  <DateRangePicker
-                    from={tempDateRange.from}
-                    to={tempDateRange.to}
-                    onSelect={(range) => setTempDateRange(range)}
-                    onSearch={handleDateRangeSearch}
-                    onCancel={handleDateRangeCancel}
-                  />
+                        <DateRangePicker
+                          from={tempDateRange.from}
+                          to={tempDateRange.to}
+                          onSelect={(range) => setTempDateRange(range)}
+                          onSearch={handleDateRangeSearch}
+                          onCancel={handleDateRangeCancel}
+                        />
+                      )}
+
+                {(userData?.permissions?.includes(
+                  "view_otherscollection_all"
+                ) ||
+                  userData?.permissions?.includes(
+                    "view_otherscollection_for_just_today"
+                  )) && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                        <ListFilter className="mr-2 h-4 w-4" />
+                        {staffAccountFilter.name === "All Staff"
+                          ? "All Staffs"
+                          : staffAccountFilter.name}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start" className="w-[200px]">
+                      <DropdownMenuLabel>
+                        Filter by Staff Account
+                      </DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        onSelect={() =>
+                          setStaffAccountFilter({
+                            name: "All Staff",
+                            id: "",
+                          })
+                        }
+                      >
+                        All Staff
+                      </DropdownMenuItem>
+                      {staffMembers?.map((staff) => (
+                        <DropdownMenuItem
+                          key={staff._id}
+                          onSelect={() =>
+                            setStaffAccountFilter({
+                              name: staff.name,
+                              id: staff._id,
+                            })
+                          }
+                        >
+                          {staff.name}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 )}
               </div>
             )}
@@ -476,33 +630,67 @@ const Payments = () => {
             <h2 className="text-2xl font-bold mb-4 print:block hidden">
               Payments Report
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-              <Card className="bg-blue-100">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold">Total Credit</h3>
-                  <p className="text-2xl">
-                    ₹{Number(totalCredit?.toFixed(2))?.toLocaleString("en-IN")}
-                  </p>
-                </CardContent>
-              </Card>
+            <div className="grid grid-cols-1 gap-4 mb-6">
+              <div className={`grid grid-cols-${Object.keys(methodTotals).length+3} md:grid-cols-${Object.keys(methodTotals).length+3} gap-4`}>
+                <Card className="bg-blue-100">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm">Total Credit</h3>
+                    <p className="text-xl">
+                      ₹
+                      {Number(totalCredit?.toFixed(2))?.toLocaleString("en-IN")}
+                    </p>
+                  </CardContent>
+                </Card>
 
-              <Card className="bg-red-100">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold">Total Debit</h3>
-                  <p className="text-2xl">
-                    ₹{Number(totalDebit?.toFixed(2))?.toLocaleString("en-IN")}
-                  </p>
-                </CardContent>
-              </Card>
+                <Card className="bg-red-100">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm">Total Debit</h3>
+                    <p className="text-xl">
+                      ₹{Number(totalDebit?.toFixed(2))?.toLocaleString("en-IN")}
+                    </p>
+                  </CardContent>
+                </Card>
 
-              <Card className="bg-green-100">
-                <CardContent className="p-4">
-                  <h3 className="font-semibold">Net Amount</h3>
-                  <p className="text-2xl">
-                    ₹{Number(netAmount?.toFixed(2))?.toLocaleString("en-IN")}
-                  </p>
-                </CardContent>
-              </Card>
+                <Card className="bg-green-100">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm">Net Amount</h3>
+                    <p className="text-xl">
+                      ₹{Number(netAmount?.toFixed(2))?.toLocaleString("en-IN")}
+                    </p>
+                  </CardContent>
+                </Card>
+                {Object.entries(methodTotals).map(([method, totals]) => (
+                  <Card key={method} className="bg-purple-100">
+                    <CardContent className="p-3">
+                      <h3 className="font-semibold text-sm mb-1">{method}</h3>
+                      <div className="flex justify-between text-sm">
+                        <div className="text-green-600 font-bold text-xl">
+                          +₹
+                          {Number(totals.credit.toFixed(2)).toLocaleString(
+                            "en-IN"
+                          )}
+                        </div>
+                        <div className="text-red-600 font-bold text-xl">
+                          -₹
+                          {Number(totals.debit.toFixed(2)).toLocaleString(
+                            "en-IN"
+                          )}
+                        </div>
+                      </div>
+                      <div className="text-xl text-center font-bold mt-1">
+                        Net: ₹
+                        {Number(
+                          (totals.credit - totals.debit).toFixed(2)
+                        ).toLocaleString("en-IN")}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+{/* 
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                
+              </div> */}
             </div>
 
             {filteredPayments.length > 0 ? (

@@ -171,12 +171,12 @@ const Billings = () => {
   const filteredBills = useMemo(() => {
     const billsToFilter = searchResults || bills;
 
-    return billsToFilter.filter((bill) => {
+    return billsToFilter?.filter((bill) => {
       const nameMatch =
-        bill.patientInfo.name
+        bill.patientInfo?.name
           .toLowerCase()
           .includes(searchTerm?.toLowerCase()) ||
-        bill.patientInfo.phone.includes(searchTerm);
+        bill.patientInfo?.phone.includes(searchTerm);
       const invoiceMatch =
         bill.invoiceNumber?.toLowerCase() === searchTerm?.toLowerCase();
       let dateMatch = true;
@@ -341,14 +341,14 @@ const Billings = () => {
       );
 
       if (existingBill) {
-        setSearchResults(existingBill);
+        setSearchResults([existingBill]);
       } else {
         // If not found in existing bills, make API call
         try {
           const result = await dispatch(
             searchBillByInvoice(searchValue)
           ).unwrap();
-          setSearchResults(result ? result : null);
+          setSearchResults(result ? [result] : null);
         } catch (error) {
           toast({
             title: "Error",
@@ -376,7 +376,7 @@ const Billings = () => {
           <div className="flex-grow">
             <div className="flex items-center mb-1">
               <h3 className="text-lg font-semibold capitalize">
-                {bill.patientInfo.name}
+                {bill.patientInfo?.name}
               </h3>
               <Badge variant="outline" className="ml-2 text-xs font-bold">
                 {bill.patientType === "OPDProcedure" &&
@@ -797,7 +797,7 @@ const Billings = () => {
                       }}
                     >
                       <TableCell>{bill.invoiceNumber || "N/A"}</TableCell>
-                      <TableCell>{bill.patientInfo.name}</TableCell>
+                      <TableCell>{bill.patientInfo?.name}</TableCell>
                       <TableCell>
                         {bill?.patient?.registrationNumber ||
                           bill?.patientInfo?.registrationNumber ||

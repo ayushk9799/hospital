@@ -71,6 +71,23 @@ const Lab = () => {
     setSelectedTest(null);
   };
 
+  const sortedLabTestsTemplate = React.useMemo(() => {
+    if (!labTestsTemplate || !patientData?.labTests) return labTestsTemplate;
+
+    return [...labTestsTemplate].sort((a, b) => {
+      const aMatches = patientData.labTests.some(
+        (test) => test.name.toLowerCase() === a.name.toLowerCase()
+      );
+      const bMatches = patientData.labTests.some(
+        (test) => test.name.toLowerCase() === b.name.toLowerCase()
+      );
+
+      if (aMatches && !bMatches) return -1;
+      if (!aMatches && bMatches) return 1;
+      return 0;
+    });
+  }, [labTestsTemplate, patientData]);
+
   return (
     <div className="container mx-auto p-4 flex h-screen">
       <div className="flex flex-col md:flex-row gap-8 w-full h-full">
@@ -110,14 +127,22 @@ const Lab = () => {
           <ScrollArea className="flex-grow">
             <div className="pr-4 space-y-4">
               {/* Display labTestsTemplate */}
-              {status === "succeeded" && labTestsTemplate && (
+              {status === "succeeded" && sortedLabTestsTemplate && (
                 <div className="mb-4">
                   <h2 className="text-xl font-bold mb-4">Lab Test Templates</h2>
                   <div className="space-y-4">
-                    {labTestsTemplate.map((template) => (
+                    {sortedLabTestsTemplate.map((template) => (
                       <Card
                         key={template._id}
-                        className="cursor-pointer hover:bg-gray-50 transition-colors"
+                        className={`cursor-pointer hover:bg-gray-50 transition-colors ${
+                          patientData?.labTests?.some(
+                            (test) =>
+                              test.name.toLowerCase() ===
+                              template.name.toLowerCase()
+                          )
+                            ? "border-2 border-blue-500"
+                            : ""
+                        }`}
                         onClick={() => handleTemplateSelection(template)}
                       >
                         <CardHeader>
