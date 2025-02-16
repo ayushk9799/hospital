@@ -38,6 +38,12 @@ const templateSchema = new mongoose.Schema({
       value: String,
     },
   ],
+  consentFormArray: [
+    {
+      name: String,
+      value: String,
+    },
+  ],
   comorbidities: [String],
   medicinelist: [String],
   service_collections: [

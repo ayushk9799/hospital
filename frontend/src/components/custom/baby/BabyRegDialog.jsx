@@ -30,13 +30,24 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
   const initialTime = format(now, "hh:mm a");
   const { createBabyStatus } = useSelector(state => state.babies);
 
+  const formatBookingTime = (timeString) => {
+    if (!timeString) return format(new Date(), "hh:mm a");
+    try {
+      // Assuming timeString is in "HH:mm" 24-hour format
+      const parsedTime = parse(timeString, "HH:mm", new Date());
+      return format(parsedTime, "hh:mm a");
+    } catch (error) {
+      return format(new Date(), "hh:mm a");
+    }
+  };
+
   const [formData, setFormData] = useState({
     gender: "",
     dateOfBirth: format(new Date(), "yyyy-MM-dd"),
     timeOfBirth: initialTime,
     weight: "",
-    admissionDate: format(new Date(), "yyyy-MM-dd"),
-    timeOfAdmission: format(new Date(), "hh:mm a"),
+    admissionDate: motherData?.bookingDate ? format(new Date(motherData.bookingDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
+    timeOfAdmission: formatBookingTime(motherData?.bookingTime),
     apgarScore: {
       oneMinute: "",
       fiveMinutes: "",
@@ -171,9 +182,8 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
                               }));
                             }
                           }}
-                          className="border-2 border-pink-200 hover:border-pink-300 transition-colors pl-10"
+                          className="border-2 border-pink-200 hover:border-pink-300 transition-colors "
                         />
-                        <Clock className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       </div>
                       <Select
                         value={formData.timeOfAdmission.split(" ")[1]?.toLowerCase() || "am"}

@@ -1,28 +1,129 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { useSelector } from "react-redux";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
+import ConsentDynamicForm from "./ConsentDynamicForm";
 import { Printer } from "lucide-react";
-import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
-import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
-import { format } from "date-fns";
-import { Separator } from "../../ui/separator";
+import {
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuItem,
+} from "../../ui/dropdown-menu";
+
+const consentFormTemplateStringDefault = `(patient, hospitalInfo, ref) => {
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    const date = new Date(dateString);
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return \`\${date.getDate().toString().padStart(2, '0')}-\${months[date.getMonth()]}-\${date.getFullYear()}\`;
+  };
+
+
+  return React.createElement("div", { ref: ref, className: "print-content", style : {marginTop : "20px"} },
+    React.createElement("div",null,
+      React.createElement(HospitalHeader, { hospitalInfo: hospitalInfo })
+    ),
+    React.createElement("div", { style: { display: "flex", justifyContent: "center", marginBottom: "12px", marginTop : "10px" } },
+      React.createElement("span", { style: { textDecoration: "underline", textDecorationThickness: "2px", textUnderlineOffset: "4px", fontSize: "20px" } }, "Admission Form")
+    ),
+    React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr" } },
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Patient Name:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.patient?.name || "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Guardian Name:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.guardianName || "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "UHID Number:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.registrationNumber || "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "IPD Number:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.ipdNumber || "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Room No:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.assignedRoom?.roomNumber || "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Age:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.patient?.age ? \`\${patient?.patient?.age} Years\` : "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Gender:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.patient?.gender || "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Address:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.patient?.address || "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Mobile No:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.patient?.contactNumber || "")
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Admission Date:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } },
+          \`\${formatDate(patient?.bookingDate)} \${patient?.bookingTime || ""}\`
+        )
+      ),
+      React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
+        React.createElement("span", null, "Consultant:"),
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.doctor?.name || "")
+      )
+    ),
+    React.createElement("div", { style: { margin: "8px 0", backgroundColor: "black", height: "1px" } }),
+    React.createElement("div", { style: { textDecoration: "underline", fontWeight: "600", margin: "0 16px", textUnderlineOffset: "2px" } }, "Person to notify in case of Emergency"),
+    React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: "16px", margin: "0 16px" } },
+      React.createElement("div", { style: { textTransform: "capitalize" } }, \`Name: \${patient?.guardianName || ""}\`),
+      React.createElement("div", null, \`Mobile No: \${patient?.patient?.contactNumber || ""}\`),
+      React.createElement("div", { style: { textTransform: "capitalize" } }, \`Relation with Patient : \${patient?.relation || ""}\`)
+    ),
+    React.createElement("div", { style: { display : "flex", flexDirection : "column", gap : "12px", marginTop: "16px", textAlign: "justify", padding: "0 16px" } },
+      React.createElement("p", { style: { fontSize: "18px", fontWeight: "600", marginBottom: "8px" } }, "सामान्य सहमति"),
+      React.createElement("p", null,
+        "मैं, __________________________________________ (रोगी/रिश्तेदार) सचेत मन की स्थिति में अस्पताल के सलाहकारों और पैरामेडिकल कर्मियों को चिकित्सा परीक्षण, पैथोलॉजिकल और रेडियोलॉजिकल और मेडिकल/सर्जिकल उपचार या किसी भी प्रकार की प्रक्रिया करने के लिए सहमति देता हूं और अधिकृत करता हूं।"
+      ),
+      React.createElement("p", null,
+        "ओपीडी/आईपीडी में रोगी देखभाल के दौरान प्रशासनिक/बीमा उद्देश्य के लिए कागजात के दस्तावेजीकरण और नैदानिक अनुसंधान और गोपनीयता के लिए जानकारी के प्रकटीकरण के साथ सलाह दी जाती है। हम पूरी तरह संतुष्ट हैं और अपनी इच्छा से इलाज/सर्जरी कराना चाहते हैं।"
+      ),
+      React.createElement("p", null,
+        "हम अस्पताल के बिल के समय पर भुगतान के लिए जिम्मेदार होंगे। उपचार/सर्जरी के दौरान और उसके दौरान किसी भी जटिलता के लिए मैं स्वयं जिम्मेदार रहूंगा। सर्जरी/उपचार से होने वाली किसी भी जटिलता और खतरे के लिए अस्पताल, अस्पताल कर्मचारी, डॉक्टर जिम्मेदार नहीं होंगे।"
+      ),
+      React.createElement("p", null,
+        "अस्पताल और अस्पताल के कर्मचारी किसी भी चोरी हुए सामान के लिए जिम्मेदार नहीं होंगे, मैं अपने सामान की सुरक्षा के लिए जिम्मेदार हूं।"
+      ),
+      React.createElement("p", null,
+        "मैंने ऊपर लिखी सभी बातें पढ़ी हैं और मुझे समझाया भी गया है।"
+      ),
+      React.createElement("p", null,
+        "ऊपर दी गई सभी जानकारियों को समझने के बाद मैं अपनी अनुमति देता हूं।"
+      )
+    ),
+    React.createElement("div", { style: { marginTop: "50px", display: "flex", justifyContent: "space-between", padding: "0 16px" } },
+      React.createElement("div", { style: { textAlign: "center" } },
+        React.createElement("p", { style: { borderTop: "1px solid black" } }, "Signature of Patient"),
+        React.createElement("p", { style: { textTransform: "uppercase", fontSize: "12px" } }, \`(\${patient?.patient?.name || ""})\`)
+      ),
+      React.createElement("div", { style: { textAlign: "center" } },
+        React.createElement("p", { style: { borderTop: "1px solid black" } }, "Signature of Guardian"),
+        React.createElement("p", { style: { fontSize: "12px", textTransform: "uppercase" } }, patient?.guardianName ? \`(\${patient?.guardianName})\` : "")
+      )
+    )
+  );
+}`;
 
 const ConsentFormPrint = ({ patient }) => {
+  const consentFormTemplates = useSelector(
+    (state) => state.templates.consentFormTemplateArray
 
-  const { hospitalInfo } = useSelector((state) => state.hospital);
-  const headerTemplateStrings = useSelector(
-    (state) => state.templates.headerTemplateArray
   );
-  const headerTemplateString =
-    headerTemplateStrings?.length > 0
-      ? headerTemplateStrings[0].value
-      : headerTemplateStringDefault;
+  const [selectedTemplate, setSelectedTemplate] = useState(null);
   const componentRef = useRef();
 
-  const HospitalHeader = createDynamicComponentFromString(
-    headerTemplateString || headerTemplateStringDefault
-  );
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     pageStyle: `
@@ -50,109 +151,57 @@ const ConsentFormPrint = ({ patient }) => {
     `,
   });
 
+  const handleTemplatePrint = (template) => {
+    setSelectedTemplate(template);
+    setTimeout(handlePrint, 100);
+  };
+
+  if (consentFormTemplates?.length <= 1) {
+    return (
+      <>
+        <DropdownMenuItem onClick={() => handleTemplatePrint(consentFormTemplates[0])}>
+          Consent Form
+        </DropdownMenuItem>
+
+        <div style={{ display: "none" }}>
+          <ConsentDynamicForm
+            ref={componentRef}
+            patient={patient}
+            templateString={selectedTemplate?.value || consentFormTemplateStringDefault}
+          />
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
-      <Button variant="ghost" className="font-normal text-start p-0 w-full" onClick={handlePrint}>
-        <div className=" w-full pl-2">Consent Form</div>
-      </Button>
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger className="cursor-pointer">
+          <Printer className="h-4 w-4 mr-2" />
+          Consent Form
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent sideOffset={2} alignOffset={-5}>
+          {consentFormTemplates?.map((template) => (
+            <DropdownMenuItem
+              key={template.name}
+              onSelect={(e) => {
+                e.preventDefault();
+                handleTemplatePrint(template);
+              }}
+            >
+              {template.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
 
       <div style={{ display: "none" }}>
-        <div ref={componentRef} className="print-content">
-          <div className="hidden print:block mb-2">
-            <HospitalHeader hospitalInfo={hospitalInfo} />
-          </div>
-          <div className="flex justify-center mb-2">
-            <span className="underline decoration-2 underline-offset-4 text-xl">Admission Form</span>
-          </div>
-          <div className="grid grid-cols-2">
-            <div className="grid grid-cols-3">
-              <span>Patient Name:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.name || ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>Guardian Name:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.guardianName || ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>UHID Number:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.registrationNumber || ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>IPD Number:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.ipdNumber || ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>Room No:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.assignedRoom?.roomNumber || ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>Age:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.age ? `${patient?.patient?.age} Years` : ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>Gender:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.gender || ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>Address:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.address || ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>Mobile No:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.patient?.contactNumber || ""}</span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>Admission Date:</span>
-              <span className="font-semibold capitalize col-span-2">
-                {/* {patient?.createdAt ? format(new Date(patient.createdAt), 'dd-MMM-yyyy h:mm a') : ""} */}
-                {patient?.bookingDate ? format(new Date(patient.bookingDate), 'dd-MMM-yyyy') : ""} {" "}
-                {patient?.bookingTime || ""}
-              </span>
-            </div>
-            <div className="grid grid-cols-3">
-              <span>Consultant:</span>
-              <span className="font-semibold capitalize col-span-2">{patient?.doctor?.name || ""}</span>
-            </div>
-          </div>
-          <Separator className="my-2 bg-black" />
-          <div className="underline font-semibold mx-4 underline-offset-2">Person to notify in case of Emergency</div>
-          <div className="flex justify-between mb-4 mx-4">
-            <div className="capitalize">Name: {patient?.guardianName || ""}</div> 
-            <div >Mobile No: {patient?.patient?.contactNumber || ""}</div>
-            <div className="capitalize">Relation with Patient : {patient?.relation || ""}</div>
-          </div>
-          <div className="space-y-4 text-justify px-4">
-            <p className="text-lg font-semibold mb-2">सामान्य सहमति</p>
-            <p>
-              मैं, __________________________________________ (रोगी/रिश्तेदार) सचेत मन की स्थिति में अस्पताल के सलाहकारों और पैरामेडिकल कर्मियों को चिकित्सा परीक्षण, पैथोलॉजिकल और रेडियोलॉजिकल और मेडिकल/सर्जिकल उपचार या किसी भी प्रकार की प्रक्रिया करने के लिए सहमति देता हूं और अधिकृत करता हूं।
-            </p>
-            <p>
-              ओपीडी/आईपीडी में रोगी देखभाल के दौरान प्रशासनिक/बीमा उद्देश्य के लिए कागजात के दस्तावेजीकरण और नैदानिक अनुसंधान और गोपनीयता के लिए जानकारी के प्रकटीकरण के साथ सलाह दी जाती है। हम पूरी तरह संतुष्ट हैं और अपनी इच्छा से इलाज/सर्जरी कराना चाहते हैं।
-            </p>
-            <p>
-              हम अस्पताल के बिल के समय पर भुगतान के लिए जिम्मेदार होंगे। उपचार/सर्जरी के दौरान और उसके दौरान किसी भी जटिलता के लिए मैं स्वयं जिम्मेदार रहूंगा। सर्जरी/उपचार से होने वाली किसी भी जटिलता और खतरे के लिए अस्पताल, अस्पताल कर्मचारी, डॉक्टर जिम्मेदार नहीं होंगे।
-            </p>
-            <p>
-              अस्पताल और अस्पताल के कर्मचारी किसी भी चोरी हुए सामान के लिए जिम्मेदार नहीं होंगे, मैं अपने सामान की सुरक्षा के लिए जिम्मेदार हूं।
-            </p>
-            <p>
-              मैंने ऊपर लिखी सभी बातें पढ़ी हैं और मुझे समझाया भी गया है।
-            </p>
-            <p>
-              ऊपर दी गई सभी जानकारियों को समझने के बाद मैं अपनी अनुमति देता हूं।
-            </p>
-          </div>
-          <div className="mt-[50px] flex justify-between px-4">
-            <div className="text-center">
-                <p className="border-t-[1px] border-black">Signature of Patient</p>
-                <p className="uppercase text-xs">({patient?.patient?.name || ""})</p>
-            </div>
-            <div className="text-center">
-                <p className="border-t-[1px] border-black">Signature of Guardian</p>
-                <p className="text-xs uppercase">{patient?.guardianName ? `(${patient?.guardianName})` : ""}</p>
-            </div>
-          </div>
-        </div>
+        <ConsentDynamicForm
+          ref={componentRef}
+          patient={patient}
+          templateString={selectedTemplate?.value || consentFormTemplates?.[0]?.value}
+        />
       </div>
     </>
   );

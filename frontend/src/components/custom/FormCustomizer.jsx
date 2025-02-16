@@ -9,7 +9,6 @@ import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import {
   GripVertical,
   X,
-  Plus,
   Edit2,
   Check,
   PlusCircle,
@@ -24,15 +23,12 @@ import {
 } from "../ui/select";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
 import { useToast } from "../../hooks/use-toast";
-import { Textarea } from "../ui/textarea";
+import FieldSettingDialog from "./FieldSettingDialog";
 
-const FIELD_TYPES = [
+export const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
   { value: "textarea", label: "Text Area" },
   { value: "date", label: "Date" },
@@ -62,6 +58,7 @@ const SPECIAL_FIELDS = {
 };
 
 const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
+
   const [customConfig, setCustomConfig] = useState(() => {
     const mergeConfigs = (defaultConfig, enabledConfig) => {
       const mergedSections = defaultConfig.sections.map((defaultSection) => {
@@ -125,7 +122,7 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
 
   const [editingField, setEditingField] = useState(null);
   const [showAddField, setShowAddField] = useState(null);
-  const [showFieldSettings, setShowFieldSettings] = useState(null);
+  const [showFieldSettings, setShowFieldSettings] = useState(false);
   const { toast } = useToast();
 
   const handleDragEnd = (result) => {
@@ -302,183 +299,6 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
     );
   };
 
-  const FieldSettings = ({ field, customConfig, onSave }) => {
-    const { toast } = useToast();
-    const [newTemplate, setNewTemplate] = useState({ name: "", content: "" });
-
-    const isIdTaken = (id) => {
-      if (id === field.id) return false;
-      return customConfig.sections.some((section) =>
-        section.fields.some((f) => f.id === id && f.id !== field.id)
-      );
-    };
-
-    const handleAddTemplate = () => {
-      if (!newTemplate.name || !newTemplate.content) {
-        toast({
-          title: "Error",
-          description: "Both template name and content are required",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      handleEditField(field.sectionId, field.id, {
-        ...field,
-        templates: [...(field.templates || []), newTemplate],
-      });
-
-      setNewTemplate({ name: "", content: "" });
-    };
-
-    const handleRemoveTemplate = (index) => {
-      handleEditField(field.sectionId, field.id, {
-        ...field,
-        templates: field.templates.filter((_, i) => i !== index),
-      });
-    };
-
-    const handleFieldChange = (key, value) => {
-      handleEditField(field.sectionId, field.id, {
-        ...field,
-        [key]: value,
-      });
-    };
-
-    const handleSave = () => {
-      if (isIdTaken(field.id)) {
-        toast({
-          title: "Error",
-          description: "Field ID must be unique",
-          variant: "destructive",
-        });
-        return;
-      }
-      onSave();
-      setShowFieldSettings(null);
-    };
-
-    return (
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Field Settings: {field.label}</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4 py-4">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label>Field ID</Label>
-              <Input
-                value={field.id}
-                onChange={(e) => handleFieldChange("id", e.target.value)}
-                placeholder="Unique field identifier"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Field Label</Label>
-              <Input
-                value={field.label}
-                onChange={(e) => handleFieldChange("label", e.target.value)}
-                placeholder="Field label"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Field Type</Label>
-              <Select
-                value={field.type}
-                onValueChange={(value) => handleFieldChange("type", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {FIELD_TYPES.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Templates Section - Only show for textarea fields in clinical info section */}
-          {field.type === "textarea" && field.sectionId === "clinicalInfo" && (
-            <div className="space-y-4 border-t pt-4">
-              <Label className="text-lg font-semibold">
-                Pre-saved Templates
-              </Label>
-              <div className="space-y-4">
-                {field.templates?.map((template, index) => (
-                  <div
-                    key={index}
-                    className="flex items-start gap-2 p-2 bg-secondary/10 rounded-md"
-                  >
-                    <div className="flex-1 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label>{template.name}</Label>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleRemoveTemplate(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        {template.content}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="space-y-2 border-t pt-4">
-                  <Label>Add New Template</Label>
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Template Name"
-                      value={newTemplate.name}
-                      onChange={(e) =>
-                        setNewTemplate((prev) => ({
-                          ...prev,
-                          name: e.target.value,
-                        }))
-                      }
-                    />
-                    <Textarea
-                      placeholder="Template Content"
-                      value={newTemplate.content}
-                      onChange={(e) =>
-                        setNewTemplate((prev) => ({
-                          ...prev,
-                          content: e.target.value,
-                        }))
-                      }
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleAddTemplate}
-                      className="w-full"
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Add Template
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setShowFieldSettings(null)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSave}>Save Settings</Button>
-        </div>
-      </DialogContent>
-    );
-  };
-
   const handleSave = () => {
     // Create a clean version of the config without internal properties
     const cleanConfig = {
@@ -505,7 +325,10 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
   return (
     <Card className="w-full max-w-2xl mx-auto flex flex-col h-[600px] min-h-[400px] max-h-[90vh]">
       <CardHeader className="border-b py-3">
+       <div className="flex justify-between items-center">
         <CardTitle>Customize Form Fields</CardTitle>
+        <Button variant='ghost' size='sm'><X className="h-4 w-4" onClick={onCancel}/></Button>
+       </div>
       </CardHeader>
       <ScrollArea className="flex-1">
         <CardContent className="p-4">
@@ -592,13 +415,15 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                                           <Settings className="h-3 w-3" />
                                         </Button>
                                       </DialogTrigger>
-                                      <FieldSettings
+                                      <FieldSettingDialog
                                         field={{
                                           ...field,
                                           sectionId: section.id,
                                         }}
                                         customConfig={customConfig}
                                         onSave={handleSave}
+                                        handleEditField={handleEditField}
+                                        setShowFieldSettings={setShowFieldSettings}
                                       />
                                     </Dialog>
                                     <Button

@@ -12,8 +12,6 @@ import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
 import { fetchItems } from "../redux/slices/pharmacySlice";
-import { Separator } from "../components/ui/separator";
-import { ScrollArea } from "../components/ui/scroll-area";
 import { Badge } from "../components/ui/badge";
 import {
   X,
@@ -25,13 +23,6 @@ import {
   Search,
   ArrowLeft,
 } from "lucide-react";
-import { Calendar } from "../components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "../components/ui/popover";
-import { format } from "date-fns";
 import TemplateLabReport from "./TemplateLabReport";
 import {
   fetchVisitDetails,
@@ -47,7 +38,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { fetchTemplates } from "../redux/slices/templatesSlice";
-import { labCategories, labReportFields } from "../assets/Data";
+import { labCategories } from "../assets/Data";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
 import CreateLabReport from "./CreateLabReport";
 import { useReactToPrint } from "react-to-print";
@@ -65,11 +56,9 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { toast } from "../hooks/use-toast";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import {
   getFormConfig,
-  mergeFormConfig,
   DEFAULT_FORM_CONFIG,
 } from "../config/dischargeSummaryConfig";
 import FormCustomizer from "../components/custom/FormCustomizer";
@@ -89,7 +78,6 @@ const convertTo12Hour = (time24) => {
 };
 
 const convertTo24Hour = (time12, meridiem) => {
-  console.log(time12, meridiem);
   if (!time12) return "";
   let [hours, minutes] = time12.split(":");
   hours = parseInt(hours);

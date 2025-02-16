@@ -4,6 +4,12 @@ import { useReactToPrint } from "react-to-print";
 import OPDRxTemplate from "../../../templates/opdRx";
 import { Button } from "../../ui/button";
 import { Printer } from "lucide-react";
+import {
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuItem,
+} from "../../ui/dropdown-menu";
 
 const OPDPrescriptionPrint = ({ patient }) => {
   const { hospitalInfo } = useSelector((state) => state.hospital);
@@ -40,22 +46,16 @@ const OPDPrescriptionPrint = ({ patient }) => {
 
   const handleTemplatePrint = (template) => {
     setSelectedTemplate(template);
-    setTimeout(
-      handlePrint,
-     100);
+    setTimeout(handlePrint, 100);
   };
 
   if (opdRxTemplateArray.length === 1) {
     return (
       <>
-        <Button
-          variant="ghost"
-          className="flex items-center w-full justify-start"
-          onClick={() => handleTemplatePrint(opdRxTemplateArray[0])}
-        >
+        <DropdownMenuItem onClick={() => handleTemplatePrint(opdRxTemplateArray[0])}>
           <Printer className="h-4 w-4 mr-2" />
           Print OPD (Rx)
-        </Button>
+        </DropdownMenuItem>
 
         <div style={{ display: "none" }}>
           <div ref={componentRef} className="print-content">
@@ -72,26 +72,29 @@ const OPDPrescriptionPrint = ({ patient }) => {
 
   return (
     <>
-      {opdRxTemplateArray.map((template) => (
-        <Button
-          key={template.name}
-          variant="ghost"
-          className="flex items-center w-full justify-start mb-2"
-          onClick={() => handleTemplatePrint(template)}
-        >
+      <DropdownMenuSub>
+        <DropdownMenuSubTrigger>
           <Printer className="h-4 w-4 mr-2" />
-          Print OPD Rx ({template.name})
-        </Button>
-      ))}
+          Print OPD (Rx)
+        </DropdownMenuSubTrigger>
+        <DropdownMenuSubContent>
+          {opdRxTemplateArray.map((template) => (
+            <DropdownMenuItem
+              key={template.name}
+              onClick={() => handleTemplatePrint(template)}
+            >
+              {template.name}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuSubContent>
+      </DropdownMenuSub>
 
       <div style={{ display: "none" }}>
         <div ref={componentRef} className="print-content">
           <OPDRxTemplate
             patient={patient}
             hospital={hospitalInfo}
-            templateString={
-              selectedTemplate?.value || opdRxTemplateArray[0]?.value
-            }
+            templateString={selectedTemplate?.value || opdRxTemplateArray[0]?.value}
           />
         </div>
       </div>

@@ -368,11 +368,11 @@ const OPDBillTokenModal = ({
             ))}
           </ul>
         </div>
-        <div className="flex flex-col text-[11px] items-end font-bold hidden print:flex print:items-end">
+        <div className="flex-col text-[11px] items-end font-bold hidden print:flex print:items-end">
           {hospitalInfo.name}
         </div>
 
-        <div className="flex flex-col text-[12px] items-center justify-center hidden print:flex print:items-center print:justify-center pt-3">
+        <div className="flex-col text-[12px] items-center justify-center hidden print:flex print:items-center print:justify-center pt-3">
           Get Well Soon
         </div>
       </div>
