@@ -6,7 +6,9 @@ import { Input } from "./ui/input";
 import { useToast } from "../hooks/use-toast";
 import BirthCertificatePrint from "./BirthCertificatePrint";
 import { useDispatch, useSelector } from "react-redux";
-import {editBaby} from '../redux/slices/babySlice'
+import {editBaby} from '../redux/slices/babySlice';
+// import { birthCertificateTemplateString } from "../templatesExperiments/BirthCertificateExperiment";
+import { headerTemplateString as headerTemplate } from '../templates/headertemplate'
 
 export default function BirthCertificate({
   open,
@@ -19,8 +21,18 @@ export default function BirthCertificate({
   const { toast } = useToast();
   const dispatch = useDispatch();
   const {editBabyStatus} = useSelector(state=>state.babies);
-  
-  
+  const birthCertificateTemplate = useSelector(state=> state.templates.birthCertificateTemplate);
+  const {headerTemplateArray, headerTemplate} = useSelector(state=> state.templates);
+
+  const headerTemplateString =
+  headerTemplateArray?.length > 0
+    ? headerTemplateArray[0].value
+    : headerTemplate;
+
+  const headerDefault = `(hospitalInfo) => {
+      return ${headerTemplateString}
+  }`
+
   const [basicFormData, setbasicFormData] = useState({
     babyFatherName : babyData?.babyFatherName || "",
     guardianRelationWithPatient : "W/O",
@@ -64,62 +76,17 @@ export default function BirthCertificate({
       });
   }
 
+  const BirthCertificateTempleteHeader = new Function("React", `return ${ birthCertificateTemplate || headerDefault}`)(React);
+  
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-[250mm] ">
       <div className="border-[1px] border-black mt-4">
-        {/* Hospital Header */}
-        <div className="grid grid-cols-6 border-b-[1px] border-black">
-            {/* Logo */}
-            <div className="border-r-[1px] border-black">
-              <img
-                src={hospitalInfo?.logo}
-                alt="Hospital Logo"
-                className="h-full w-full object-fit bg-white rounded-full p-1 border-2 border-white/50"
-              />
-            </div>
+        {/* Birth Certificate Header */}
 
-            {/* Hospital Info */}
-            <div className="col-span-5">
-              <div className="text-3xl font-bold mb-1 bg-purple-600 p-2 text-white flex justify-center items-center" style={{ fontFamily: "Arial" }}>
-                राजेश्‍वर मैटरनिटी एंड सर्जिकल हॉस्पिटल
-              </div>
-              <div className="flex justify-between px-2 text-sm">
-                  <p className="text-black ">
-                    EMAIL ID: <span className="underline"> {hospitalInfo?.email || "gayamshospital@gmail.com"} </span>
-                  </p>
-                  <p className="text-black ">
-                    Contact No:{hospitalInfo?.phone || "7646086230, 7646086231"}
-                  </p>
-              </div>
-
-              {/* Doctor Info */}
-              <div className="flex justify-between px-2 pb-2">
-                <div className="border-l-2 border-white/30">
-                  <p className="font-bold text-red-600 text-md">
-                    DR. ANUPAM KR CHAURASIA
-                  </p>
-                  <p className="text-black text-sm">
-                    MBBS, MS(OB/GY) MGIMS SEVAGRAM, WARDHA.
-                  </p>
-                  <p className="text-black text-sm">FMAS, DMAS, WLH DELHI.</p>
-                </div>
-                <div className="text-right border-r-2 border-white/30">
-                  <p className="font-bold text-red-600">DR. KUMARI ARTI</p>
-                  <p className="text-black text-sm">BHMS, NIH, WBUHS KOLKATA.</p>
-                  <p className="text-black text-sm">Dir: Rajeshwar M. S. Hospital</p>
-                </div>
-              </div>
-            </div>
-        </div>
-
-        {/* Address Line */}
-        <div className="text-center  border-b-[1px] border-black">
-          <p className="text-[#6B3E9B]">
-          मकान संख्या 276 नजदीकी डॉ अभय सिम्बा एंड जानकी डेंटल क्लिनिक आशा सिन्हा मोड़ ए पी कॉलोनी गया 823001
-          </p>
-        </div>
-
+        {BirthCertificateTempleteHeader(hospitalInfo)}
+        
       {/* Certificate Content */}
       <div className="space-y-3 px-4">
         {/* Certificate Number */}
@@ -215,6 +182,7 @@ export default function BirthCertificate({
             babyData={babyData}
             certificateNumber={certificateNumber}
             basicFormData={basicFormData}
+            birthCertificateTempleteHeader={BirthCertificateTempleteHeader}
           />
           <Button 
             variant='outline' 

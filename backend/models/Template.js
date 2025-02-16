@@ -53,6 +53,7 @@ const templateSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: null,
   },
+  birthCertificateTemplate : String
 });
 
 templateSchema.plugin(hospitalPlugin);

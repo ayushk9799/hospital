@@ -83,6 +83,7 @@ export const updateServiceBillCollections = createAsyncThunk(
 );
 
 const initialState = {
+    birthCertificateTemplate : '',
   labTestsTemplate: [],
   headerTemplateArray: [],
   diagnosisTemplate: [],
@@ -94,7 +95,8 @@ const initialState = {
   error: null,
   serviceBillCollections: [],
   dischargeFormTemplates: null,
-  updateTempleteStatus : 'idle'
+  updateTempleteStatus : 'idle',
+
 };
 
 const templatesSlice = createSlice({
@@ -123,6 +125,7 @@ const templatesSlice = createSlice({
         state.serviceBillCollections = action.payload.service_collections;
         state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
         state.consentFormTemplateArray = action.payload.consentFormArray;
+        state.birthCertificateTemplate = action.payload.birthCertificateTemplate;
 
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
