@@ -22,7 +22,6 @@ import {editPatient} from '../../../redux/slices/patientSlice'
 import { useToast } from "../../../hooks/use-toast";
 
 const EditPatientDialog = ({ open, setOpen, patientData }) => {
-  console.log('abc', patientData);
   
     const {editPatientStatus} = useSelector(state=>state.patients)
     const { toast } = useToast();

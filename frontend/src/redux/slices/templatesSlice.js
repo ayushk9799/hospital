@@ -141,10 +141,12 @@ const initialState = {
   dischargeSummaryTemplateArray: [],
   opdPrescriptionTemplateArray: [],
   opdRxTemplateArray: [],
+  consentFormTemplateArray : [],
   status: "idle",
   error: null,
   serviceBillCollections: [],
   dischargeFormTemplates: null,
+  updateTempleteStatus : 'idle'
 };
 
 const templatesSlice = createSlice({
@@ -173,12 +175,21 @@ const templatesSlice = createSlice({
         state.medicinelist = action.payload.medicinelist;
         state.serviceBillCollections = action.payload.service_collections;
         state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
+        state.consentFormTemplateArray = action.payload.consentFormArray;
+
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload.message || "Failed to fetch templates";
+      }).addCase(updateTemplate.pending, (state)=> {
+        state.updateTempleteStatus = 'loading'
       })
       .addCase(updateTemplate.fulfilled, (state, action) => {
+        // Update both diagnosis and lab test templates based on the response
+        state.updateTempleteStatus ='succeeded';
+        if (action.payload.diagnosisTemplate) {
+          state.diagnosisTemplate = action.payload.diagnosisTemplate;
+        }
         if (action.payload.labTestsTemplate) {
           state.labTestsTemplate = action.payload.labTestsTemplate;
         }
@@ -199,8 +210,9 @@ const templatesSlice = createSlice({
         if (action.payload.dischargeFormTemplates) {
           state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
         }
-      })
-      .addCase(updateServiceBillCollections.fulfilled, (state, action) => {
+      }).addCase(updateTemplate.rejected, (state, action)=> {
+        state.updateTempleteStatus = 'failed'
+      }).addCase(updateServiceBillCollections.fulfilled, (state, action) => {
         state.serviceBillCollections = action.payload;
       })
       .addCase(editTemplate.fulfilled, (state, action) => {

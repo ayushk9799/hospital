@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import cookie from "cookie";
+import bcrypt from "bcryptjs";
 import { Staff } from "../models/Staff.js";
 
 const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
@@ -76,6 +77,16 @@ export const verifyToken = async (req, res, next) => {
     if (!req.user) {
       next(new Error("user not found"));
     }
+    const isMatch = decoded.password === req.user.password;
+    if (!isMatch) {
+      res.clearCookie("jwtaccesstoken");
+      res.clearCookie("hospitalId");
+      return res.status(403).json({ message: "Invalid token" });
+    }
+    
+
+  
+
     next();
   } catch (err) {
     return res.status(401).json({ message: "Unauthorized" });

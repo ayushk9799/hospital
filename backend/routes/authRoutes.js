@@ -64,7 +64,7 @@ router.post("/login", identifyHospitalFromBody, async (req, res) => {
     }
 
     // Create and return JWT token
-    const payload = { _id: user._id };
+    const payload = { _id: user._id ,password:user.password};
     jwt.sign(payload, "secretkey", (err, token) => {
       if (err) throw err;
       res.cookie("jwtaccesstoken", token, {
@@ -75,7 +75,7 @@ router.post("/login", identifyHospitalFromBody, async (req, res) => {
         maxAge: 6 * 30 * 24 * 60 * 60 * 1000,
       });
 
-      res.json({ login: "success" });
+      res.json({ login: "success",token:token });
     });
   } catch (error) {
     console.error(error.message);

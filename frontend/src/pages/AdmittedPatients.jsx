@@ -1,36 +1,12 @@
 import React, { useEffect, useState } from "react";
-import {
-  FileText,
-  ArrowLeft,
-  Plus,
-  Search,
-  LogOut,
-  Pencil,
-  Baby,
-} from "lucide-react";
+import { FileText, ArrowLeft, Plus, Search, Pencil, Baby, AlertCircle, Loader2} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../hooks/use-toast";
-
-import {
-  fetchAdmittedPatients,
-  fetchAdmittedPatientsSearch,
-} from "../redux/slices/patientSlice";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "../components/ui/card";
+import { fetchAdmittedPatients, fetchAdmittedPatientsSearch} from "../redux/slices/patientSlice";
+import { Card, CardContent, CardHeader, CardTitle} from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "../components/ui/table";
 import { format } from "date-fns";
 import CreateServiceBill from "./CreateServiceBill";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -40,9 +16,7 @@ export default function AdmittedPatients() {
   const { toast } = useToast();
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  // const { admittedPatients, admittedPatientsStatus } = useSelector(
-  //   (state) => state.patients
-  // );
+  const { admittedPatientsStatus } = useSelector((state) => state.patients);
   const [admittedPatients, setAdmittedPatients] = useState([]);
 
   const [selectedPatient, setSelectedPatient] = useState(null);
@@ -115,6 +89,7 @@ export default function AdmittedPatients() {
       },
     });
   };
+
   const handleSearch = () => {
     if (searchQuery.length === 0) {
       toast({
@@ -130,6 +105,7 @@ export default function AdmittedPatients() {
         setAdmittedPatients(res);
       });
   };
+  
   const handleInputChangeSearch = (event) => {
     setSearchQuery(event.target.value);
   };
@@ -140,9 +116,15 @@ export default function AdmittedPatients() {
         <Card className="w-full">
           <CardHeader className="bg-primary text-primary-foreground">
             <div className="flex flex-row justify-between items-center gap-2">
-              <CardTitle className="text-xl font-bold">
-                Admitted Patients
-              </CardTitle>
+              <div className="flex items-center gap-2">
+                <Button variant='ghost' size='sm' onClick={()=> navigate(-1)} className='h-6 w-6'>
+                <ArrowLeft  className="h-4 w-4"  />
+                </Button>
+                
+                <CardTitle className="text-xl font-bold">
+                  Admitted Patients
+                </CardTitle>
+              </div>
               <div className="flex items-center gap-2">
                 <div className="relative">
                   {/* Desktop Search */}
@@ -152,6 +134,7 @@ export default function AdmittedPatients() {
                       placeholder="Search by UHID..."
                       value={searchQuery}
                       onChange={handleInputChangeSearch}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                       className="bg-white/90 border-0 pr-8 text-black w-72"
                     />
                     <Search
@@ -188,297 +171,268 @@ export default function AdmittedPatients() {
           </CardHeader>
           <CardContent className="p-0">
             <ScrollArea className="h-[calc(100vh-8rem)]">
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow>
-                      <TableHead className="w-[140px]">UHID No.</TableHead>
-                      <TableHead className="w-[120px]">IPD No.</TableHead>
-                      <TableHead className="w-[200px]">Name</TableHead>
-                      <TableHead className="w-[120px]">
-                        Admission Date
-                      </TableHead>
-                      <TableHead className="text-right w-[120px]">
-                        Amount (₹)
-                      </TableHead>
-                      <TableHead className="text-right w-[120px]">
-                        Paid (₹)
-                      </TableHead>
-                      <TableHead className="text-right w-[120px]">
-                        Due (₹)
-                      </TableHead>
-                      {/* <TableHead className="text-center w-[100px]">
-                        Bills
-                      </TableHead> */}
-                      {/* <TableHead className="text-center w-[120px]">
-                        Service
-                      </TableHead> */}
-                      <TableHead className="text-center w-[120px]">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {admittedPatients.map((patient) => (
-                      <TableRow
-                        key={patient._id}
-                        className="border-b hover:bg-muted/50"
-                      >
-                        <TableCell className="font-medium">
-                          {patient.patient.registrationNumber}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          {patient.ipdNumber || "-"}
-                        </TableCell>
-                        <TableCell>{patient.patient.name}</TableCell>
-                        <TableCell>
-                          {format(
-                            new Date(patient.admissionDate),
-                            "dd/MM/yyyy"
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums font-bold">
-                          {patient.totalAmount.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums font-bold text-green-600">
-                          {patient.amountPaid.toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right tabular-nums font-bold text-red-600">
-                          {patient.amountDue.toFixed(2)}
-                        </TableCell>
-                        {/* <TableCell className="text-center">
-                          <Button
-                            onClick={() => handleOpenBill(patient)}
-                            variant="outline"
-                            size="sm"
-                            className="inline-flex items-center gap-2"
-                          >
-                            <FileText className="h-4 w-4" />
-                            Bills
-                          </Button>
-                        </TableCell> */}
-                        {/* <TableCell className="text-center">
-                          {" "}
-                          <Button
-                            onClick={() => handleAddServices(patient)}
-                            variant="outline"
-                            size="sm"
-                            className="inline-flex items-center gap-2"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Add Services
-                          </Button>
-                        </TableCell> */}
-                        <TableCell className="text-center">
-                          <div className="flex gap-2 justify-end pr-4">
-                          {patient.department
-                              ?.toLowerCase()
-                              .includes("obstetric") &&
-                              patient?.patient?.gender?.toLowerCase() ===
-                                "female" && (
-                                <>
-                                  {/* <Button
+              {admittedPatientsStatus === "loading" ? (
+                <div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)]">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                  <span className="text-muted-foreground">Loading patients...</span>
+                </div>
+              ) : (
+                <>
+                  <div className="hidden md:block">
+                    <Table>
+                      <TableHeader className="bg-muted/50">
+                        <TableRow>
+                          <TableHead className="w-[140px]">UHID No.</TableHead>
+                          <TableHead className="w-[120px]">IPD No.</TableHead>
+                          <TableHead className="w-[200px]">Name</TableHead>
+                          <TableHead className="w-[150px]">Operation Name</TableHead>
+                          <TableHead className="w-[120px]">
+                            Admission Date
+                          </TableHead>
+                          <TableHead className="text-right w-[100px]">
+                            Amount (₹)
+                          </TableHead>
+                          <TableHead className="text-right w-[120px]">
+                            Paid (₹)
+                          </TableHead>
+                          <TableHead className="text-right w-[120px]">
+                            Due (₹)
+                          </TableHead>
+                          <TableHead className="text-center w-[120px]">
+                            Actions
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {admittedPatients.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={8} className="h-24 text-center">
+                              <div className="flex flex-col items-center justify-center text-muted-foreground">
+                                <AlertCircle className="h-8 w-8 mb-2" />
+                                <span>No admitted patients found</span>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          admittedPatients.map((patient) => (
+                            <TableRow
+                              key={patient._id}
+                              className="border-b hover:bg-muted/50"
+                            >
+                              <TableCell className="font-medium">
+                                {patient.patient.registrationNumber}
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {patient.ipdNumber || "-"}
+                              </TableCell>
+                              <TableCell>{patient.patient.name}</TableCell>
+                              <TableCell>
+                                {patient?.operationName?.length > 20 
+                                  ? `${patient.operationName.substring(0, 20)}...` 
+                                  : patient?.operationName}
+                              </TableCell>
+                              <TableCell>
+                                {format(
+                                  new Date(patient.admissionDate),
+                                  "dd/MM/yyyy"
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums font-bold">
+                                {patient.totalAmount.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums font-bold text-green-600">
+                                {patient.amountPaid.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-right tabular-nums font-bold text-red-600">
+                                {patient.amountDue.toFixed(2)}
+                              </TableCell>
+                              <TableCell className="text-center">
+                                <div className="flex gap-2 justify-end pr-4">
+                                {patient.department
+                                    ?.toLowerCase()
+                                    .includes("obstetric") &&
+                                    patient?.patient?.gender?.toLowerCase() ===
+                                      "female" && (
+                                      <>
+                                        <Button
+                                          onClick={() =>
+                                            navigate(
+                                              `/patients/${patient._id}/babies`,
+                                              {state : {motherData : {...patient.patient, bookingDate : patient.bookingDate, bookingTime : patient.bookingTime},}}
+                                            )
+                                          }
+                                          variant="outline"
+                                          size="sm"
+                                          className="border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center gap-1"
+                                        >
+                                          <Baby className="h-4 w-4 text-pink-500" />
+                                        </Button>
+                                      </>
+                                    )}
+                                <Button
+                                  onClick={() => handleOpenBill(patient)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="inline-flex items-center"
+                                >
+                                  <FileText className="h-4 w-4" />
+                                  Bills
+                                </Button>
+                                <Button
+                                  onClick={() => handleAddServices(patient)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="inline-flex items-center"
+                                >
+                                  <Plus className="h-4 w-4" />
+                                  Services
+                                </Button>
+                                  <Button
                                     onClick={() =>
-                                      navigate(
-                                        `/patients/baby-registration/${patient._id}`,
-                                        {
-                                          state: {
-                                            motherData: patient.patient,
-                                            admissionData: patient,
-                                          },
-                                        }
-                                      )
+                                      handleDischarge(patient._id, patient)
                                     }
                                     variant="default"
                                     size="sm"
-                                    className="bg-pink-600 hover:bg-pink-700 text-white inline-flex items-center gap-1"
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
                                   >
-                                    <Baby className="h-4 w-4" />
-                                    Register Birth
-                                  </Button> */}
-                                  <Button
-                                    onClick={() =>
-                                      navigate(
-                                        `/patients/${patient._id}/babies`,
-                                        {state : {motherData : patient.patient}}
-                                      )
-                                    }
-                                    variant="outline"
-                                    size="sm"
-                                    className="border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center gap-1"
-                                  >
-                                    <Baby className="h-4 w-4 text-pink-500" />
-                                    {/* View Babies */}
+                                    {patient.status === "Discharged"
+                                      ? "View/Edit Discharge Summary"
+                                      : "Discharge"}
                                   </Button>
-                                </>
-                              )}
-                          <Button
-                            onClick={() => handleOpenBill(patient)}
-                            variant="outline"
-                            size="sm"
-                            className="inline-flex items-center"
-                          >
-                            <FileText className="h-4 w-4" />
-                            Bills
-                          </Button>
-                          <Button
-                            onClick={() => handleAddServices(patient)}
-                            variant="outline"
-                            size="sm"
-                            className="inline-flex items-center"
-                          >
-                            <Plus className="h-4 w-4" />
-                            Services
-                          </Button>
-                            <Button
-                              onClick={() =>
-                                handleDischarge(patient._id, patient)
-                              }
-                              variant="default"
-                              size="sm"
-                              className="bg-blue-600 hover:bg-blue-700 text-white"
-                            >
-                              {patient.status === "Discharged"
-                                ? "View/Edit Discharge Summary"
-                                : "Discharge"}
-                            </Button>
-                            
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                                  
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
 
-              {/* Mobile view - shown only on mobile */}
-              <div className="block md:hidden">
-                {admittedPatients.map((patient) => (
-                  <Card key={patient._id} className="mb-2 mx-2">
-                    <CardContent className="p-3">
-                      <div className="space-y-1.5">
-                        {/* Header - Name and Registration */}
-                        <div className="flex justify-between items-center">
-                          <h3 className="font-semibold text-base">
-                            {patient.patient.name}
-                          </h3>
-                          <div className="text-xs text-muted-foreground space-y-0.5">
-                            <div>
-                              UHID No: {patient.patient.registrationNumber}
-                            </div>
-                            <div>IPD No: {patient.ipdNumber || "-"}</div>
-                          </div>
-                        </div>
-
-                        {/* Info Grid - 2 columns */}
-                        <div className="grid grid-cols-2 text-xs gap-x-4">
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Admission:
-                            </span>
-                            <span>
-                              {format(
-                                new Date(patient.admissionDate),
-                                "dd/MM/yyyy"
-                              )}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">
-                              Total:
-                            </span>
-                            <span className="font-medium">
-                              ₹{patient.totalAmount.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Paid:</span>
-                            <span className="font-medium text-green-600">
-                              ₹{patient.amountPaid.toFixed(2)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between">
-                            <span className="text-muted-foreground">Due:</span>
-                            <span className="font-medium text-red-600">
-                              ₹{patient.amountDue.toFixed(2)}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Actions */}
-                        <div className="flex gap-2 pt-1.5">
-                          <Button
-                            onClick={() => handleOpenBill(patient)}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 h-8 text-xs inline-flex items-center justify-center gap-1"
-                          >
-                            <FileText className="h-3 w-3" />
-                            Bills
-                          </Button>
-
-                          <Button
-                            onClick={() => handleAddServices(patient)}
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 h-8 text-xs inline-flex items-center justify-center gap-1"
-                          >
-                            <Plus className="h-3 w-3" />
-                            Add Services
-                          </Button>
-
-                          <Button
-                            onClick={() =>
-                              handleDischarge(patient._id, patient)
-                            }
-                            variant="default"
-                            size="sm"
-                            className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                          >
-                            Discharge
-                          </Button>
-                          {patient.department
-                            ?.toLowerCase()
-                            .includes("obstetric") && (
-                            <>
-                              <Button
-                                onClick={() =>
-                                  navigate(
-                                    `/patients/baby-registration/${patient._id}`,
-                                    {
-                                      state: {
-                                        motherData: patient.patient,
-                                        admissionData: patient,
-                                      },
-                                    }
-                                  )
-                                }
-                                variant="default"
-                                size="sm"
-                                className="flex-1 h-8 text-xs bg-pink-600 hover:bg-pink-700 text-white inline-flex items-center justify-center gap-1"
-                              >
-                                <Baby className="h-3 w-3" />
-                                Birth
-                              </Button>
-                              <Button
-                                onClick={() =>
-                                  navigate(`/patients/${patient._id}/babies`)
-                                }
-                                variant="outline"
-                                size="sm"
-                                className="flex-1 h-8 text-xs border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center justify-center gap-1"
-                              >
-                                <Baby className="h-3 w-3 text-pink-500" />
-                                Babies
-                              </Button>
-                            </>
-                          )}
-                        </div>
+                  {/* Mobile view - shown only on mobile */}
+                  <div className="block md:hidden">
+                    {admittedPatients.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center h-32 text-muted-foreground m-4">
+                        <AlertCircle className="h-8 w-8 mb-2" />
+                        <span>No admitted patients found</span>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                    ) : (
+                      admittedPatients.map((patient) => (
+                        <Card key={patient._id} className="mb-2 mx-2">
+                          <CardContent className="p-3">
+                            <div className="space-y-1.5">
+                              {/* Header - Name and Registration */}
+                              <div className="flex justify-between items-center">
+                                <h3 className="font-semibold text-base">
+                                  {patient.patient.name}
+                                </h3>
+                                <div className="text-xs text-muted-foreground space-y-0.5">
+                                  <div>
+                                    UHID No: {patient.patient.registrationNumber}
+                                  </div>
+                                  <div>IPD No: {patient.ipdNumber || "-"}</div>
+                                </div>
+                              </div>
+
+                              {/* Info Grid - 2 columns */}
+                              <div className="grid grid-cols-2 text-xs gap-x-4">
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    Admission:
+                                  </span>
+                                  <span>
+                                    {format(
+                                      new Date(patient.admissionDate),
+                                      "dd/MM/yyyy"
+                                    )}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">
+                                    Total:
+                                  </span>
+                                  <span className="font-medium">
+                                    ₹{patient.totalAmount.toFixed(2)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Paid:</span>
+                                  <span className="font-medium text-green-600">
+                                    ₹{patient.amountPaid.toFixed(2)}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Due:</span>
+                                  <span className="font-medium text-red-600">
+                                    ₹{patient.amountDue.toFixed(2)}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex gap-2 pt-1.5">
+                                {patient.department
+                                    ?.toLowerCase()
+                                    .includes("obstetric") &&
+                                    patient?.patient?.gender?.toLowerCase() ===
+                                      "female" && (
+                                      <Button
+                                        onClick={() =>
+                                          navigate(
+                                            `/patients/${patient._id}/babies`,
+                                            {state : {motherData : {...patient.patient, bookingDate : patient?.bookingDate, bookingTime : patient?.bookingTime},}}
+                                          )
+                                        }
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1 h-8 text-xs border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center justify-center gap-1"
+                                      >
+                                        <Baby className="h-3 w-3 text-pink-500" />
+                                        Babies
+                                      </Button>
+                                )}
+
+                                <Button
+                                  onClick={() => handleOpenBill(patient)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs inline-flex items-center justify-center gap-1"
+                                >
+                                  <FileText className="h-3 w-3" />
+                                  Bills
+                                </Button>
+
+                                <Button
+                                  onClick={() => handleAddServices(patient)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs inline-flex items-center justify-center gap-1"
+                                >
+                                  <Plus className="h-3 w-3" />
+                                  Add Services
+                                </Button>
+
+                                <Button
+                                  onClick={() =>
+                                    handleDischarge(patient._id, patient)
+                                  }
+                                  variant="default"
+                                  size="sm"
+                                  className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  {patient.status === "Discharged"
+                                    ? "View/Edit"
+                                    : "Discharge"}
+                                </Button>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+                </>
+              )}
             </ScrollArea>
           </CardContent>
         </Card>

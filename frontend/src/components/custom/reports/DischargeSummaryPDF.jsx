@@ -115,8 +115,6 @@ const hasValue = (obj) => {
 // Create the dynamic component
 const DischargeSummaryPDF = forwardRef((props, ref) => {
   const { formData, patient, formConfig, hospital, templateString } = props;
-  console.log(formData);
-  console.log(patient);
 
   // Get the default or first available template
 

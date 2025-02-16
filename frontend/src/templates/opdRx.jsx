@@ -65,6 +65,7 @@ const OPDRxTemplate = forwardRef((props, ref) => {
     headerTemplateString || headerTemplate
   );
 
+
   const templateFunction = new Function(
     "React",
     "HospitalHeader",

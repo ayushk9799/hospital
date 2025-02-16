@@ -5,10 +5,8 @@ import { Visit } from "../models/Visits.js";
 import { IPDAdmission } from "../models/IPDAdmission.js";
 import { ServicesBill } from "../models/ServicesBill.js";
 import { BillCounter } from "../models/BillCounter.js";
-import { getHospitalId } from "../utils/asyncLocalStorage.js";
 import { Service } from "../models/Services.js";
 import { Payment } from "../models/Payment.js";
-import { Template } from "../models/Template.js";
 import { checkPermission, verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 import { RegistrationNumber } from "../models/RegistrationNumber.js";
@@ -131,7 +129,7 @@ router.post("/admittedpatientsSearch", verifyToken, async (req, res) => {
   try {
     const { searchQuery } = req.body;
     const admittedPatients = await IPDAdmission.find({
-      registrationNumber: searchQuery,
+      registrationNumber: { $regex: new RegExp(searchQuery, 'i') },
     })
       .populate({
         path: "assignedRoom",
@@ -1475,6 +1473,12 @@ router.post(
         contactNumber: patient.contactNumber,
         registrationNumber: patient.registrationNumber || null,
         bookingDate: admission.bookingDate || new Date(),
+        bookingTime : admission.bookingTime || new Date().toLocaleTimeString('en-IN', {
+          timeZone: 'Asia/Kolkata',
+          hour12: false,
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
         reasonForAdmission: admission.reasonForAdmission || "Not specified",
         assignedDoctor: admission.assignedDoctor || null,
         ipdNumber: admission.ipdNumber || null,
@@ -1542,7 +1546,7 @@ router.post(
           totalAmount: Number(paymentInfo.totalAmount),
           subtotal: services.reduce((sum, service) => sum + service.rate, 0)
             ? services.reduce((sum, service) => sum + service.rate, 0) +
-            roomCharge
+          roomCharge
           : Number(paymentInfo.totalAmount),
           additionalDiscount: paymentInfo.additionalDiscount || 0,
           amountPaid: Number(paymentInfo.amountPaid) || 0,

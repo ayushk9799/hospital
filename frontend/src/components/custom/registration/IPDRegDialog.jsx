@@ -10,7 +10,6 @@ import {
 } from "../../ui/dialog";
 import { useSelector, useDispatch } from "react-redux";
 import { Input } from "../../ui/input";
-import { FloatingLabelSelect } from "./PatientInfoForm";
 import {
   Select,
   SelectTrigger,
@@ -32,7 +31,7 @@ import {
   formatSubmissionData,
 } from "./ipdRegHelpers";
 import { useToast } from "../../../hooks/use-toast";
-import { Loader2, Info, Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import MemoizedInput from "./MemoizedInput";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { fetchBills } from "../../../redux/slices/BillingSlice";
@@ -251,7 +250,12 @@ setFormData((prev)=>({
         admission: {
           ...prev.admission,
           guardianName : tempGuardianName,
-          relation : tempRelation
+          relation : tempRelation,
+          bookingTime: new Date().toLocaleTimeString('en-US', { 
+            hour12: false, 
+            hour: '2-digit', 
+            minute: '2-digit'
+          }),
         },
         paymentInfo: {
           ...prev.paymentInfo,

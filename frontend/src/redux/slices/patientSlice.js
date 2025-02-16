@@ -593,10 +593,10 @@ const patientSlice = createSlice({
         }
       })
       .addCase(readmitPatient.pending, (state) => {
-        state.status = "loading";
+        state.registerPatientStatus = "loading";
       })
       .addCase(readmitPatient.fulfilled, (state, action) => {
-        state.status = "succeeded";
+        state.registerPatientStatus = "succeeded";
         // Update the patient in the patientlist
         const updatedPatient = action.payload.patient;
         const index = state.patientlist.findIndex(
@@ -614,7 +614,7 @@ const patientSlice = createSlice({
         }
       })
       .addCase(readmitPatient.rejected, (state, action) => {
-        state.status = "failed";
+        state.registerPatientStatus = "failed";
         state.error = action.payload;
       })
       .addCase(fetchVisitDetails.pending, (state) => {
