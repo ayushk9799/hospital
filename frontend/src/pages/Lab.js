@@ -91,6 +91,19 @@ const Lab = () => {
     });
   }, [labTestsTemplate, patientData]);
 
+  const getReportStatusColor = (status) => {
+    switch (status) {
+      case "Completed":
+        return "text-green-600";
+      case "Sample Collected":
+        return "text-[#f5a158]";
+      case "Registered":
+        return "text-[#b51616]";
+      default:
+        return "text-black-600";
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 flex h-screen">
       <div className="flex flex-col md:flex-row gap-8 w-full h-full">
@@ -113,8 +126,16 @@ const Lab = () => {
                 <h3 className="font-medium mb-1">Ordered Tests:</h3>
                 <ul className="list-disc list-inside">
                   {patientData.labTests.map((test, index) => (
-                    <li key={index} className="text-gray-700">
+                    <li
+                      key={index}
+                      className={`${getReportStatusColor(
+                        test.reportStatus
+                      )} font-medium`}
+                    >
                       {test.name}
+                      <span className="text-gray-500 text-sm ml-2">
+                        ({test.reportStatus})
+                      </span>
                     </li>
                   ))}
                 </ul>

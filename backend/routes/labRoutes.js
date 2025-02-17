@@ -252,8 +252,24 @@ router.post("/addLabReport", verifyToken, async (req, res) => {
         ...labReport,
       };
       registration.labReports[existingReportIndex].reportStatus = "Completed";
+
+      // Update corresponding lab test status
+      const testIndex = registration.labTests.findIndex(
+        (test) => test.name === labReport.name
+      );
+      if (testIndex !== -1) {
+        registration.labTests[testIndex].reportStatus = "Completed";
+      }
     } else {
-      registration.labReports.push(labReport);
+      registration.labReports.push({ ...labReport, reportStatus: "Completed" });
+
+      // Update corresponding lab test status
+      const testIndex = registration.labTests.findIndex(
+        (test) => test.name === labReport.name
+      );
+      if (testIndex !== -1) {
+        registration.labTests[testIndex].reportStatus = "Completed";
+      }
     }
 
     // Find and update corresponding record
@@ -289,6 +305,16 @@ router.post("/addLabReport", verifyToken, async (req, res) => {
       }
 
       await correspondingRecord.save({ session });
+    }
+
+    // Update overall registration status
+    const allTestsCompleted = registration.labTests.every(
+      (test) => test.reportStatus === "Completed"
+    );
+    if (allTestsCompleted) {
+      registration.status = "Completed";
+    } else {
+      registration.status = "In Progress";
     }
 
     await registration.save({ session });

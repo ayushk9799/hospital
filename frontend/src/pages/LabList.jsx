@@ -306,9 +306,9 @@ export default function LabList() {
               />
               <Label
                 htmlFor="registered"
-                className={`${isUpdating ? "opacity-50" : ""} ${getReportStatusColor(
-                  "Registered"
-                )}`}
+                className={`${
+                  isUpdating ? "opacity-50" : ""
+                } ${getReportStatusColor("Registered")}`}
               >
                 Registered
               </Label>
@@ -321,9 +321,9 @@ export default function LabList() {
               />
               <Label
                 htmlFor="collected"
-                className={`${isUpdating ? "opacity-50" : ""} ${getReportStatusColor(
-                  "Sample Collected"
-                )}`}
+                className={`${
+                  isUpdating ? "opacity-50" : ""
+                } ${getReportStatusColor("Sample Collected")}`}
               >
                 Sample Collected
               </Label>
@@ -336,9 +336,9 @@ export default function LabList() {
               />
               <Label
                 htmlFor="completed"
-                className={`${isUpdating ? "opacity-50" : ""} ${getReportStatusColor(
-                  "Completed"
-                )}`}
+                className={`${
+                  isUpdating ? "opacity-50" : ""
+                } ${getReportStatusColor("Completed")}`}
               >
                 Completed
               </Label>
@@ -405,7 +405,21 @@ export default function LabList() {
                 </button>
               )}
             </div>
-
+            <div className="flex items-center gap-4 mb-4 text-sm">
+              <span className="font-medium">Test Status:</span>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#b51616]"></span>
+                <span>Registered</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-[#f5a158]"></span>
+                <span>Sample Collected</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <span className="w-2 h-2 rounded-full bg-green-600"></span>
+                <span>Completed</span>
+              </div>
+            </div>
             <div className="flex items-center gap-2">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -442,6 +456,8 @@ export default function LabList() {
             </div>
           </div>
         </div>
+
+        {/* Status Legend */}
 
         {isSmallScreen ? (
           filteredTests.length > 0 ? (

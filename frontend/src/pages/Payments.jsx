@@ -114,14 +114,14 @@ const Payments = () => {
     try {
       dispatch(setLoading(true));
       const dateRangeParams = getDateRange();
-      if(dateRangeParams?.startDate && dateRangeParams?.endDate){
-      await dispatch(
-        fetchPayments({
-          startDate: dateRangeParams?.startDate,
-          endDate: dateRangeParams?.endDate,
-        })
-      ).unwrap();
-    }
+      if (dateRangeParams?.startDate && dateRangeParams?.endDate) {
+        await dispatch(
+          fetchPayments({
+            startDate: dateRangeParams?.startDate,
+            endDate: dateRangeParams?.endDate,
+          })
+        ).unwrap();
+      }
     } catch (error) {
       toast({
         title: "Error",
@@ -140,9 +140,7 @@ const Payments = () => {
   }, [status]);
 
   useEffect(() => {
-    
-      fetchPaymentsData();
-    
+    fetchPaymentsData();
   }, [dateFilter, dateRange, searchTerm]);
 
   useEffect(() => {
@@ -167,7 +165,6 @@ const Payments = () => {
       year: "numeric",
     });
   };
-  console.log("helooo");
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     return date.toLocaleTimeString("en-IN", {
@@ -183,18 +180,14 @@ const Payments = () => {
       const hasTodayCollectionPermission = userData?.permissions?.includes(
         "view_otherscollection_for_just_today"
       );
-      console.log(payment.createdBy?._id === userData?._id);
       // 1. Permission Check (moved to the beginning)
       if (payment.createdBy?._id !== userData?._id && payment.createdBy?._id) {
         if (!hasAllCollectionPermission && !hasTodayCollectionPermission) {
-          console.log("hello");
           return false; // No permissions to view others' payments
         }
         if (hasTodayCollectionPermission && !hasAllCollectionPermission) {
           const today = new Date();
           const paymentDate = new Date(payment.createdAt);
-          console.log(paymentDate);
-          console.log(paymentDate.getDate());
           const isTodayPayment =
             paymentDate.getDate() === today.getDate() &&
             paymentDate.getMonth() === today.getMonth() &&
@@ -396,55 +389,54 @@ const Payments = () => {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                     <>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="outline" className="w-full">
-                            <CalendarIcon className="mr-2 h-4 w-4" />
-                            {dateFilter}
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                          align="start"
-                          className="w-[200px]"
-                        >
-                          <DropdownMenuLabel>
-                            Time Filter Options
-                          </DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onSelect={() => setDateFilter("Today")}
+                      <>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full">
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {dateFilter}
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent
+                            align="start"
+                            className="w-[200px]"
                           >
-                            Today
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => setDateFilter("Yesterday")}
-                          >
-                            Yesterday
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => setDateFilter("This Week")}
-                          >
-                            This Week
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onSelect={() => setDateFilter("Custom")}
-                          >
-                            Custom Range
-                          </DropdownMenuItem>
-                          
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      {dateFilter === "Custom" && (
-                            <DateRangePicker
-                              from={tempDateRange.from}
-                              to={tempDateRange.to}
-                              onSelect={(range) => setTempDateRange(range)}
-                              onSearch={handleDateRangeSearch}
-                              onCancel={handleDateRangeCancel}
-                            />
-                          )}
-                          </>
+                            <DropdownMenuLabel>
+                              Time Filter Options
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onSelect={() => setDateFilter("Today")}
+                            >
+                              Today
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => setDateFilter("Yesterday")}
+                            >
+                              Yesterday
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => setDateFilter("This Week")}
+                            >
+                              This Week
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onSelect={() => setDateFilter("Custom")}
+                            >
+                              Custom Range
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                        {dateFilter === "Custom" && (
+                          <DateRangePicker
+                            from={tempDateRange.from}
+                            to={tempDateRange.to}
+                            onSelect={(range) => setTempDateRange(range)}
+                            onSearch={handleDateRangeSearch}
+                            onCancel={handleDateRangeCancel}
+                          />
+                        )}
+                      </>
 
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -565,14 +557,14 @@ const Payments = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
                 {dateFilter === "Custom" && (
-                        <DateRangePicker
-                          from={tempDateRange.from}
-                          to={tempDateRange.to}
-                          onSelect={(range) => setTempDateRange(range)}
-                          onSearch={handleDateRangeSearch}
-                          onCancel={handleDateRangeCancel}
-                        />
-                      )}
+                  <DateRangePicker
+                    from={tempDateRange.from}
+                    to={tempDateRange.to}
+                    onSelect={(range) => setTempDateRange(range)}
+                    onSearch={handleDateRangeSearch}
+                    onCancel={handleDateRangeCancel}
+                  />
+                )}
 
                 {(userData?.permissions?.includes(
                   "view_otherscollection_all"
@@ -631,7 +623,14 @@ const Payments = () => {
               Payments Report
             </h2>
             <div className="grid grid-cols-1 gap-4 mb-6">
-              <div className={`grid grid-cols-${Object.keys(methodTotals).length+3} md:grid-cols-${Object.keys(methodTotals).length+3} gap-4`}>
+              <div
+                className={`grid gap-4`}
+                style={{
+                  gridTemplateColumns: `repeat(${
+                    Object.keys(methodTotals).length + 3
+                  }, minmax(0, 1fr))`,
+                }}
+              >
                 <Card className="bg-blue-100">
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Total Credit</h3>
@@ -687,7 +686,7 @@ const Payments = () => {
                   </Card>
                 ))}
               </div>
-{/* 
+              {/* 
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
                 
               </div> */}
