@@ -23,8 +23,11 @@ const labRegistrationSchema = new mongoose.Schema(
     bookingDate: { type: Date, default: Date.now },
     bookingNumber: { type: Number },
     labNumber: { type: String },
-    registrationNumber: { type: String }, // UHID if exists
-
+    registrationNumber: { type: String }, 
+    billDetails:{
+      invoiceNumber:{type:String},
+      billId:{type:mongoose.Schema.Types.ObjectId,ref:"ServiceBill"},
+    },
     // References to existing records if any
     patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
     visit: { type: mongoose.Schema.Types.ObjectId, ref: "visit" },
@@ -37,8 +40,8 @@ const labRegistrationSchema = new mongoose.Schema(
 
         reportStatus: {
           type: String,
-          enum: ["Pending", "In Progress", "Completed"],
-          default: "Pending",
+          enum: ["Registered", "Sample Collected", "Completed"],
+          default: "Registered",
         },
       },
     ],
@@ -47,6 +50,11 @@ const labRegistrationSchema = new mongoose.Schema(
         date: { type: Date },
         name: { type: String },
         report: { type: mongoose.Schema.Types.Mixed },
+        reportStatus: {
+          type: String,
+          enum: ["Registered", "Sample Collected", "Completed"],
+          default: "Registered",
+        },
       },
     ],
     lastVisitType: { type: String, enum: ["OPD", "IPD"] },
@@ -67,7 +75,6 @@ const labRegistrationSchema = new mongoose.Schema(
       balanceDue: { type: Number },
     },
 
-    // Status and Notes
     status: {
       type: String,
       enum: ["Registered", "In Progress", "Completed"],
@@ -75,7 +82,6 @@ const labRegistrationSchema = new mongoose.Schema(
     },
     notes: { type: String },
 
-    // Doctor Reference if referred
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
     department: { type: String },
   },

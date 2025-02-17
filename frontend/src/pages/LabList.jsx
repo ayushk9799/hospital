@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchLabRegistrations } from "../redux/slices/labSlice";
+import {
+  fetchLabRegistrations,
+  updateTestStatus,
+} from "../redux/slices/labSlice";
 import {
   Table,
   TableBody,
@@ -33,6 +36,8 @@ import {
   X,
   UserX,
   MoreVertical,
+  ChevronLeft,
+  Loader2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useMediaQuery } from "../hooks/use-media-query";
@@ -41,6 +46,15 @@ import { Badge } from "../components/ui/badge";
 import { DateRangePicker } from "../assets/Data";
 import LabRegDialog from "../components/custom/registration/LabRegDialog";
 import LabDetailsModal from "../components/custom/registration/LabDetailsModal";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "../components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
+import { Label } from "../components/ui/label";
 
 export default function LabList() {
   const navigate = useNavigate();
@@ -52,13 +66,20 @@ export default function LabList() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedTest, setSelectedTest] = useState(null);
   const [showDetailsModal, setShowDetailsModal] = useState(false);
+  const [selectedTestForStatus, setSelectedTestForStatus] = useState(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
 
-  const { registrations, registrationsStatus, error } = useSelector(
-    (state) => state.lab
-  );
+  const {
+    registrations,
+    registrationsStatus,
+    error,
+    updateTestStatus: updateStatus,
+  } = useSelector((state) => state.lab);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [filteredTests, setFilteredTests] = useState([]);
+
+  const isUpdating = updateStatus === "loading";
 
   useEffect(() => {
     fetchTests();
@@ -132,6 +153,19 @@ export default function LabList() {
     }
   };
 
+  const getReportStatusColor = (status) => {
+    switch (status) {
+      case "Completed":
+        return "text-green-600";
+      case "Sample Collected":
+        return "text-[#f5a158]";
+      case "Registered":
+        return "text-[#b51616]";
+      default:
+        return "text-black-600";
+    }
+  };
+
   const handleDateRangeSearch = () => {
     setDateRange(tempDateRange);
     setDateFilter("Custom");
@@ -145,6 +179,33 @@ export default function LabList() {
   const handleViewDetails = (test) => {
     setSelectedTest(test);
     setShowDetailsModal(true);
+  };
+
+  const handleTestClick = (registration, test) => {
+    setSelectedTestForStatus({ registration, test });
+    setShowStatusModal(true);
+  };
+
+  const handleStatusUpdate = async (newStatus) => {
+    if (selectedTestForStatus) {
+      try {
+        const response = await dispatch(
+          updateTestStatus({
+            registrationId: selectedTestForStatus.registration._id,
+            testName: selectedTestForStatus.test.name,
+            newStatus,
+          })
+        ).unwrap();
+
+        if (response.success) {
+          // Only close modal and reset state after successful update
+          setShowStatusModal(false);
+          setSelectedTestForStatus(null);
+        }
+      } catch (error) {
+        console.error("Failed to update test status:", error);
+      }
+    }
   };
 
   const TestCard = ({ test }) => (
@@ -188,7 +249,19 @@ export default function LabList() {
           </div>
           <div>
             <span className="text-gray-500">Tests: </span>
-            {test.labTests.map((t) => t.name).join(", ")}
+            {test.labTests.map((t, index) => (
+              <span key={index}>
+                <button
+                  onClick={() => handleTestClick(test, t)}
+                  className={`${getReportStatusColor(
+                    t.reportStatus
+                  )} hover:underline cursor-pointer`}
+                >
+                  {t.name}
+                </button>
+                {index < test.labTests.length - 1 ? ", " : ""}
+              </span>
+            ))}
           </div>
           <div>
             <span className="text-gray-500">Amount: </span>₹
@@ -205,13 +278,96 @@ export default function LabList() {
     </Card>
   );
 
+  const TestStatusModal = () => (
+    <Dialog
+      open={showStatusModal}
+      onOpenChange={(open) => {
+        // Only allow closing if not currently updating
+        if (!isUpdating) {
+          setShowStatusModal(open);
+        }
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Update Test Status</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <RadioGroup
+            defaultValue={selectedTestForStatus?.test.reportStatus}
+            onValueChange={handleStatusUpdate}
+            disabled={isUpdating}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="Registered"
+                id="registered"
+                disabled={isUpdating}
+              />
+              <Label
+                htmlFor="registered"
+                className={`${isUpdating ? "opacity-50" : ""} ${getReportStatusColor(
+                  "Registered"
+                )}`}
+              >
+                Registered
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="Sample Collected"
+                id="collected"
+                disabled={isUpdating}
+              />
+              <Label
+                htmlFor="collected"
+                className={`${isUpdating ? "opacity-50" : ""} ${getReportStatusColor(
+                  "Sample Collected"
+                )}`}
+              >
+                Sample Collected
+              </Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem
+                value="Completed"
+                id="completed"
+                disabled={isUpdating}
+              />
+              <Label
+                htmlFor="completed"
+                className={`${isUpdating ? "opacity-50" : ""} ${getReportStatusColor(
+                  "Completed"
+                )}`}
+              >
+                Completed
+              </Label>
+            </div>
+          </RadioGroup>
+          {isUpdating && (
+            <div className="flex items-center justify-center">
+              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <Card className="w-full border-none shadow-none">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Laboratory Tests</CardTitle>
-            <CardDescription>Manage and view lab test records</CardDescription>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <CardTitle>Laboratory Tests</CardTitle>
+              <CardDescription>
+                Manage and view lab test records
+              </CardDescription>
+            </div>
           </div>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
@@ -228,6 +384,7 @@ export default function LabList() {
           labData={selectedTest}
           hospitalInfo={hospitalInfo}
         />
+        <TestStatusModal />
 
         <div className="flex flex-col space-y-4 mb-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -327,10 +484,24 @@ export default function LabList() {
                       {format(new Date(test.bookingDate), "dd/MM/yyyy")}
                     </TableCell>
                     <TableCell className="font-bold">
-                      {test.labTests.map((t) => t.name).join(", ")}
+                      {test.labTests.map((t, index) => (
+                        <span key={index}>
+                          <button
+                            onClick={() => handleTestClick(test, t)}
+                            className={`${getReportStatusColor(
+                              t.reportStatus
+                            )} hover:underline cursor-pointer`}
+                          >
+                            {t.name}
+                          </button>
+                          {index < test.labTests.length - 1 ? ", " : ""}
+                        </span>
+                      ))}
                     </TableCell>
                     <TableCell>
-                      <span className={getStatusColor(test.status)}>
+                      <span
+                        className={`${getStatusColor(test.status)} font-bold`}
+                      >
                         {test.status}
                       </span>
                     </TableCell>

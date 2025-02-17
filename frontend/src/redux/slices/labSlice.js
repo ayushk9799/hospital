@@ -60,10 +60,37 @@ export const createLabRegistration = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+export const updateTestStatus = createLoadingAsyncThunk(
+  "lab/updateTestStatus",
+  async ({ registrationId, testName, newStatus }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/lab/update-test-status`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registrationId, testName, newStatus }),
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+      if (!data.success) {
+        return rejectWithValue(data.message || "Failed to update test status");
+      }
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   registrations: [],
   registrationsStatus: "idle",
   createRegistrationStatus: "idle",
+  updateTestStatus: "idle",
   error: null,
 };
 
@@ -73,6 +100,9 @@ const labSlice = createSlice({
   reducers: {
     setCreateRegistrationStatusIdle: (state) => {
       state.createRegistrationStatus = "idle";
+    },
+    setUpdateTestStatusIdle: (state) => {
+      state.updateTestStatus = "idle";
     },
   },
   extraReducers: (builder) => {
@@ -102,9 +132,28 @@ const labSlice = createSlice({
       .addCase(createLabRegistration.rejected, (state, action) => {
         state.createRegistrationStatus = "failed";
         state.error = action.payload;
+      })
+      // Update test status
+      .addCase(updateTestStatus.pending, (state) => {
+        state.updateTestStatus = "loading";
+        state.error = null;
+      })
+      .addCase(updateTestStatus.fulfilled, (state, action) => {
+        state.updateTestStatus = "succeeded";
+        const index = state.registrations.findIndex(
+          (reg) => reg._id === action.payload.registration._id
+        );
+        if (index !== -1) {
+          state.registrations[index] = action.payload.registration;
+        }
+      })
+      .addCase(updateTestStatus.rejected, (state, action) => {
+        state.updateTestStatus = "failed";
+        state.error = action.payload;
       });
   },
 });
 
-export const { setCreateRegistrationStatusIdle } = labSlice.actions;
+export const { setCreateRegistrationStatusIdle, setUpdateTestStatusIdle } =
+  labSlice.actions;
 export default labSlice.reducer;

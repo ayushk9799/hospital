@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "../hooks/use-toast";
 import {
   Card,
@@ -15,6 +15,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchTemplates } from "../redux/slices/templatesSlice";
 import CreateLabReport from "./CreateLabReport";
 import TemplateLabReport from "./TemplateLabReport";
+import { ChevronLeft } from "lucide-react";
+import { Button } from "../components/ui/button";
 
 const Lab = () => {
   const location = useLocation();
@@ -23,6 +25,7 @@ const Lab = () => {
   const { labTestsTemplate, status, error } = useSelector(
     (state) => state.templates
   );
+  const navigate = useNavigate();
 
   const [searchTerm, setSearchTerm] = useState("");
   const [patientData, setPatientData] = useState(null);
@@ -92,7 +95,12 @@ const Lab = () => {
     <div className="container mx-auto p-4 flex h-screen">
       <div className="flex flex-col md:flex-row gap-8 w-full h-full">
         <div className="w-full md:w-1/3 flex flex-col h-full">
-          <div className="text-3xl font-bold mb-6">Laboratory Reports</div>
+          <div className="flex items-center gap-4 mb-6">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="text-3xl font-bold">Laboratory Reports</div>
+          </div>
 
           {/* Patient Info */}
           {patientData && (

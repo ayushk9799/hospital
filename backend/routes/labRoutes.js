@@ -251,6 +251,7 @@ router.post("/addLabReport", verifyToken, async (req, res) => {
         ...registration.labReports[existingReportIndex],
         ...labReport,
       };
+      registration.labReports[existingReportIndex].reportStatus = "Completed";
     } else {
       registration.labReports.push(labReport);
     }
@@ -399,6 +400,97 @@ router.post("/search", verifyToken, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Update lab test status
+router.put("/update-test-status", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { registrationId, testName, newStatus } = req.body;
+
+    const registration = await LabRegistration.findById(registrationId).session(
+      session
+    );
+    if (!registration) {
+      throw new Error("Lab registration not found");
+    }
+
+    // Update test status in labTests array
+    const testIndex = registration.labTests.findIndex(
+      (test) => test.name === testName
+    );
+    if (testIndex === -1) {
+      throw new Error("Test not found");
+    }
+
+    registration.labTests[testIndex].reportStatus = newStatus;
+
+    // Update corresponding lab report if it exists
+    const reportIndex = registration.labReports.findIndex(
+      (report) => report.name === testName
+    );
+    if (reportIndex !== -1) {
+      registration.labReports[reportIndex].reportStatus = newStatus;
+    }
+
+    // Update overall status based on all test statuses
+    const allTestsCompleted = registration.labTests.every(
+      (test) => test.reportStatus === "Completed"
+    );
+    const hasInProgress = registration.labTests.some(
+      (test) => test.reportStatus === "Sample Collected"
+    );
+
+    if (allTestsCompleted) {
+      registration.status = "Completed";
+    } else if (hasInProgress) {
+      registration.status = "In Progress";
+    } else {
+      registration.status = "Registered";
+    }
+
+    await registration.save({ session });
+
+    // Update corresponding record (OPD/IPD) if it exists
+    if (registration.lastVisitId) {
+      const Model = registration.lastVisitType === "OPD" ? Visit : IPDAdmission;
+      const record = await Model.findById(registration.lastVisitId).session(
+        session
+      );
+
+      if (record) {
+        const recordTestIndex = record.labTests?.findIndex(
+          (test) => test.name === testName
+        );
+        if (recordTestIndex !== -1) {
+          record.labTests[recordTestIndex].reportStatus = newStatus;
+        }
+
+        const recordReportIndex = record.labReports?.findIndex(
+          (report) => report.name === testName
+        );
+        if (recordReportIndex !== -1) {
+          record.labReports[recordReportIndex].reportStatus = newStatus;
+        }
+
+        await record.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+    res.json({
+      success: true,
+      registration,
+      message: "Test status updated successfully",
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ success: false, error: error.message });
+  } finally {
+    session.endSession();
   }
 });
 

@@ -170,7 +170,7 @@ const Billings = () => {
 
   const filteredBills = useMemo(() => {
     const billsToFilter = searchResults || bills;
-
+console.log(billsToFilter)
     return billsToFilter?.filter((bill) => {
       const nameMatch =
         bill.patientInfo?.name
@@ -348,7 +348,7 @@ const Billings = () => {
           const result = await dispatch(
             searchBillByInvoice(searchValue)
           ).unwrap();
-          setSearchResults(result ? [result] : null);
+          setSearchResults(result ? result : null);
         } catch (error) {
           toast({
             title: "Error",

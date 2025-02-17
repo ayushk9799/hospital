@@ -6,6 +6,7 @@ import {
   Routes,
   Navigate,
 } from "react-router-dom";
+import { ScrollArea } from "./components/ui/scroll-area";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
 import { useDispatch, useSelector } from "react-redux";
@@ -122,7 +123,9 @@ const AppContent = () => {
 
   return (
     <div className="flex flex-col relative">
+     
       {isLoading && <div className="youtube-loader"></div>}
+      <ScrollArea className="h-screen">
       {isAuthenticated && (
         <HorizontalNav
           isCollapsed={isCollapsed}
@@ -276,6 +279,7 @@ const AppContent = () => {
           </Routes>
         </main>
       </div>
+      </ScrollArea>
     </div>
   );
 };
