@@ -8,9 +8,7 @@ import { headerTemplateString as headerTemplate } from "../../../templates/heade
 const ConsentDynamicForm = forwardRef((props, ref) => {
   const { patient, templateString } = props;
   const { hospitalInfo } = useSelector((state) => state.hospital);
-
   
-
   const headerTemplates = useSelector(
     (state) => state.templates.headerTemplateArray
   );

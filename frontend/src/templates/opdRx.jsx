@@ -3,7 +3,7 @@ import { format, addDays } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplate } from "../templates/headertemplate";
-//  import { opdRxTemplateStringExperimental } from "../templatesExperiments/opdRxExperimental";
+//  import { opdRxTemplateStringExperimental6 } from "../templatesExperiments/opdRxExperimental";
 
 export const opdRxTemplateStringDefault = `(patient, hospital, ref) => {
   return React.createElement("div", { className: "print-content" },

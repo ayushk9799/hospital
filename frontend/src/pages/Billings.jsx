@@ -433,13 +433,13 @@ console.log(billsToFilter)
                   <DropdownMenuItem onClick={() => handlePayments(bill)}>
                     Payments
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  {/* <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-red-600"
                     onClick={() => handleDeleteBill(bill)}
                   >
                     Delete Bill
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -875,13 +875,13 @@ console.log(billsToFilter)
                             >
                               Payments
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                            {/* <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600"
                               onClick={() => handleDeleteBill(bill)}
                             >
                               Delete Bill
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

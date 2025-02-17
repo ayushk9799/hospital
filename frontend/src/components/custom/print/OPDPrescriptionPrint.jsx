@@ -10,6 +10,8 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuItem,
 } from "../../ui/dropdown-menu";
+import {opdRxTemplateStringDefault} from '../../../templates/opdRx'
+
 
 const OPDPrescriptionPrint = ({ patient }) => {
   const { hospitalInfo } = useSelector((state) => state.hospital);
@@ -49,7 +51,7 @@ const OPDPrescriptionPrint = ({ patient }) => {
     setTimeout(handlePrint, 100);
   };
 
-  if (opdRxTemplateArray.length === 1) {
+  if (opdRxTemplateArray.length <= 1) {
     return (
       <>
         <DropdownMenuItem onClick={() => handleTemplatePrint(opdRxTemplateArray[0])}>
@@ -62,7 +64,7 @@ const OPDPrescriptionPrint = ({ patient }) => {
             <OPDRxTemplate
               patient={patient}
               hospital={hospitalInfo}
-              templateString={selectedTemplate?.value || opdRxTemplateArray[0]?.value}
+              templateString={selectedTemplate?.value || opdRxTemplateStringDefault}
             />
           </div>
         </div>
