@@ -433,13 +433,13 @@ const Billings = () => {
                   <DropdownMenuItem onClick={() => handlePayments(bill)}>
                     Payments
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
+                  {/* <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-red-600"
                     onClick={() => handleDeleteBill(bill)}
                   >
                     Delete Bill
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -875,13 +875,13 @@ const Billings = () => {
                             >
                               Payments
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator />
+                            {/* <DropdownMenuSeparator />
                             <DropdownMenuItem
                               className="text-red-600"
                               onClick={() => handleDeleteBill(bill)}
                             >
                               Delete Bill
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
