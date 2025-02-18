@@ -36,7 +36,6 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
   const [printPaymentHistory, setPrintPaymentHistory] = useState(true);
   const isMobile = useMediaQuery("(max-width: 640px)");
 
-
   React.useEffect(() => {
     if (labData?.labTests) {
       setSelectedTests(labData.labTests.map((_, index) => index));
@@ -157,6 +156,12 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                     <Label className="font-semibold mr-2">Lab No:</Label>
                     <p>{labData?.labNumber || "N/A"}</p>
                   </div>
+                  {labData?.invoiceNumber && (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Invoice No:</Label>
+                      <p>{labData.invoiceNumber}</p>
+                    </div>
+                  )}
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Contact:</Label>
                     <p>{labData?.contactNumber || "N/A"}</p>
@@ -274,7 +279,11 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                         </TableHead>
                         <TableHead>Test Name</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Report Date</TableHead>
+                        <TableHead className="text-right">Price</TableHead>
+                        <TableHead className="text-right">
+                          Amount Paid
+                        </TableHead>
+                        <TableHead className="text-right">Balance</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -294,15 +303,99 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                               {test.reportStatus}
                             </Badge>
                           </TableCell>
-                          <TableCell>
-                            {test.reportDate
-                              ? format(new Date(test.reportDate), "dd/MM/yyyy")
-                              : "Pending"}
+                          <TableCell className="text-right">
+                            ₹{test.price?.toFixed(2) || "0.00"}
+                          </TableCell>
+                          <TableCell className="text-right text-green-600">
+                            ₹{test.amountPaid?.toFixed(2) || "0.00"}
+                          </TableCell>
+                          <TableCell className="text-right text-red-600">
+                            ₹
+                            {(
+                              (test.price || 0) - (test.amountPaid || 0)
+                            ).toFixed(2)}
                           </TableCell>
                         </TableRow>
                       ))}
+                      <TableRow className="font-medium">
+                        <TableCell className="hidden print:table-cell"></TableCell>
+                        <TableCell colSpan={2} className="text-right">
+                          Total:
+                        </TableCell>
+                        <TableCell className="text-right">
+                          ₹
+                          {labData?.labTests
+                            ?.reduce((sum, test) => sum + (test.price || 0), 0)
+                            .toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right text-green-600">
+                          ₹
+                          {labData?.labTests
+                            ?.reduce(
+                              (sum, test) => sum + (test.amountPaid || 0),
+                              0
+                            )
+                            .toFixed(2)}
+                        </TableCell>
+                        <TableCell className="text-right text-red-600">
+                          ₹
+                          {labData?.labTests
+                            ?.reduce(
+                              (sum, test) =>
+                                sum +
+                                ((test.price || 0) - (test.amountPaid || 0)),
+                              0
+                            )
+                            .toFixed(2)}
+                        </TableCell>
+                      </TableRow>
                     </TableBody>
                   </Table>
+
+                  {/* Payment Summary Card */}
+                  <div className="flex justify-end">
+                    <div className="mt-4 border-2 rounded-lg p-4 bg-gray-50 w-1/2">
+                      <h4 className="text-lg font-semibold mb-3">
+                        Payment Summary
+                      </h4>
+                      <div className="space-y-1">
+                        <div className="flex justify-between">
+                          <span>Total Amount:</span>
+                          <span>
+                            ₹{labData.paymentInfo.totalAmount.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Discount:</span>
+                          <span>
+                            ₹{labData.paymentInfo.additionalDiscount.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between font-medium border-t pt-2">
+                          <span>Net Amount:</span>
+                          <span>
+                            ₹
+                            {(
+                              labData.paymentInfo.totalAmount -
+                              labData.paymentInfo.additionalDiscount
+                            ).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-green-600">
+                          <span>Amount Paid:</span>
+                          <span>
+                            ₹{labData.paymentInfo.amountPaid.toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between text-red-600 font-medium border-t pt-2">
+                          <span>Balance Due:</span>
+                          <span>
+                            ₹{labData.paymentInfo.balanceDue.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Payment History */}

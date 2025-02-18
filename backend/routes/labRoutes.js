@@ -113,6 +113,7 @@ router.post("/register", verifyToken, async (req, res) => {
     }
 
     await bill.save({ session });
+    labRegistration.invoiceNumber = invoiceNumber;
     await labRegistration.save({ session });
 
     await session.commitTransaction();

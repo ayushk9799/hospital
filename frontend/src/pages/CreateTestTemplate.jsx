@@ -7,6 +7,7 @@ import { ScrollArea } from "../components/ui/scroll-area";
 import { Checkbox } from "../components/ui/checkbox";
 import { labCategories, labReportFields } from "../assets/Data";
 import { Settings, Search } from "lucide-react";
+import { useToast } from "../hooks/use-toast";
 import {
   Dialog,
   DialogContent,
@@ -16,11 +17,13 @@ import {
 } from "../components/ui/dialog";
 
 export default function CreateTestTemplate() {
+  const { toast } = useToast();
   const dispatch = useDispatch();
   const [selectedTests, setSelectedTests] = useState({});
   const [selectedFields, setSelectedFields] = useState({});
   const [templateName, setTemplateName] = useState("");
   const [nameError, setNameError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [expandedFields, setExpandedFields] = useState({});
   const [rate, setRate] = useState("");
   const [showCreationModal, setShowCreationModal] = useState(false);
@@ -114,8 +117,60 @@ export default function CreateTestTemplate() {
   };
 
   const handleCreateTemplate = async () => {
+    let hasErrors = false;
+    const errors = {};
+
+    // Validate template name
     if (!templateName.trim()) {
       setNameError("Report/Test name is required.");
+      hasErrors = true;
+    }
+
+    // Validate if any fields are selected
+    const hasSelectedFields = Object.values(selectedFields).some((tests) =>
+      Object.values(tests).some((fields) =>
+        Object.values(fields).some((field) => field.isSelected)
+      )
+    );
+
+    if (!hasSelectedFields) {
+      toast({
+        variant: "destructive",
+        title: "Validation Error",
+        description: "Please select at least one field",
+      });
+      hasErrors = true;
+      return;
+    }
+
+    // Validate selected fields
+    Object.entries(selectedFields).forEach(([category, tests]) => {
+      Object.entries(tests).forEach(([test, fields]) => {
+        Object.entries(fields).forEach(([fieldName, field]) => {
+          if (field.isSelected) {
+            if (!field.label?.trim()) {
+              errors[`${category}-${test}-${fieldName}-label`] =
+                "Label is required";
+              hasErrors = true;
+            }
+            if (!field.unit?.trim()) {
+              errors[`${category}-${test}-${fieldName}-unit`] =
+                "Unit is required";
+              hasErrors = true;
+            }
+            if (!field.normalRange?.trim()) {
+              errors[`${category}-${test}-${fieldName}-normalRange`] =
+                "Normal Range is required";
+              hasErrors = true;
+            }
+          }
+        });
+      });
+    });
+
+    setFieldErrors(errors);
+
+    if (hasErrors) {
       return;
     }
 
@@ -502,45 +557,84 @@ export default function CreateTestTemplate() {
                             {expandedFields[fieldId] &&
                               selectedField?.isSelected && (
                                 <div className="mt-2 space-y-2 pl-6">
-                                  <Input
-                                    placeholder="Label"
-                                    value={selectedField.label || ""}
-                                    onChange={(e) =>
-                                      handleFieldPropertyChange(
-                                        category.name,
-                                        test,
-                                        field.name,
-                                        "label",
-                                        e.target.value
-                                      )
-                                    }
-                                  />
-                                  <Input
-                                    placeholder="Unit"
-                                    value={selectedField.unit || ""}
-                                    onChange={(e) =>
-                                      handleFieldPropertyChange(
-                                        category.name,
-                                        test,
-                                        field.name,
-                                        "unit",
-                                        e.target.value
-                                      )
-                                    }
-                                  />
-                                  <Input
-                                    placeholder="Normal Range"
-                                    value={selectedField.normalRange || ""}
-                                    onChange={(e) =>
-                                      handleFieldPropertyChange(
-                                        category.name,
-                                        test,
-                                        field.name,
-                                        "normalRange",
-                                        e.target.value
-                                      )
-                                    }
-                                  />
+                                  <div>
+                                    <Input
+                                      placeholder="Label"
+                                      value={selectedField.label || ""}
+                                      onChange={(e) =>
+                                        handleFieldPropertyChange(
+                                          category.name,
+                                          test,
+                                          field.name,
+                                          "label",
+                                          e.target.value
+                                        )
+                                      }
+                                    />
+                                    {fieldErrors[
+                                      `${formattedCategory}-${test}-${field.name}-label`
+                                    ] && (
+                                      <p className="text-red-500 text-xs mt-1">
+                                        {
+                                          fieldErrors[
+                                            `${formattedCategory}-${test}-${field.name}-label`
+                                          ]
+                                        }
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <Input
+                                      placeholder="Unit"
+                                      value={selectedField.unit || ""}
+                                      onChange={(e) =>
+                                        handleFieldPropertyChange(
+                                          category.name,
+                                          test,
+                                          field.name,
+                                          "unit",
+                                          e.target.value
+                                        )
+                                      }
+                                    />
+                                    {fieldErrors[
+                                      `${formattedCategory}-${test}-${field.name}-unit`
+                                    ] && (
+                                      <p className="text-red-500 text-xs mt-1">
+                                        {
+                                          fieldErrors[
+                                            `${formattedCategory}-${test}-${field.name}-unit`
+                                          ]
+                                        }
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div>
+                                    <Input
+                                      placeholder="Normal Range"
+                                      value={selectedField.normalRange || ""}
+                                      onChange={(e) =>
+                                        handleFieldPropertyChange(
+                                          category.name,
+                                          test,
+                                          field.name,
+                                          "normalRange",
+                                          e.target.value
+                                        )
+                                      }
+                                    />
+                                    {fieldErrors[
+                                      `${formattedCategory}-${test}-${field.name}-normalRange`
+                                    ] && (
+                                      <p className="text-red-500 text-xs mt-1">
+                                        {
+                                          fieldErrors[
+                                            `${formattedCategory}-${test}-${field.name}-normalRange`
+                                          ]
+                                        }
+                                      </p>
+                                    )}
+                                  </div>
                                   <Input
                                     placeholder="Options (comma separated)"
                                     value={selectedField.options || ""}

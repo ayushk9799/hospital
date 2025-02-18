@@ -14,6 +14,7 @@ const labRegistrationSchema = new mongoose.Schema(
   {
     // Basic Patient Info
     patientName: { type: String, required: true },
+    invoiceNumber:{type:String},
     age: { type: Number },
     gender: { type: String, enum: ["Male", "Female", "Other"] },
     contactNumber: { type: String },
@@ -43,6 +44,7 @@ const labRegistrationSchema = new mongoose.Schema(
           enum: ["Registered", "Sample Collected", "Completed"],
           default: "Registered",
         },
+        price: { type: Number },
       },
     ],
     labReports: [
