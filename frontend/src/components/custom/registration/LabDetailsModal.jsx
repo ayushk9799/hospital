@@ -30,7 +30,6 @@ import PaymentReceipt from "../print/PaymentReceipt";
 
 const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
   const componentRef = useRef();
-  console.log(labData);
   const [isPrinting, setIsPrinting] = useState(false);
   const [selectedTests, setSelectedTests] = useState([]);
   const [printPaymentHistory, setPrintPaymentHistory] = useState(true);
@@ -156,10 +155,10 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                     <Label className="font-semibold mr-2">Lab No:</Label>
                     <p>{labData?.labNumber || "N/A"}</p>
                   </div>
-                  {labData?.invoiceNumber && (
+                  {labData.billDetails?.invoiceNumber && (
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Invoice No:</Label>
-                      <p>{labData.invoiceNumber}</p>
+                      <p>{labData.billDetails?.invoiceNumber}</p>
                     </div>
                   )}
                   <div className="flex items-center">
@@ -280,10 +279,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                         <TableHead>Test Name</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead className="text-right">Price</TableHead>
-                        <TableHead className="text-right">
-                          Amount Paid
-                        </TableHead>
-                        <TableHead className="text-right">Balance</TableHead>
+                       
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -306,15 +302,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                           <TableCell className="text-right">
                             ₹{test.price?.toFixed(2) || "0.00"}
                           </TableCell>
-                          <TableCell className="text-right text-green-600">
-                            ₹{test.amountPaid?.toFixed(2) || "0.00"}
-                          </TableCell>
-                          <TableCell className="text-right text-red-600">
-                            ₹
-                            {(
-                              (test.price || 0) - (test.amountPaid || 0)
-                            ).toFixed(2)}
-                          </TableCell>
+                         
                         </TableRow>
                       ))}
                       <TableRow className="font-medium">
@@ -328,31 +316,11 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                             ?.reduce((sum, test) => sum + (test.price || 0), 0)
                             .toFixed(2)}
                         </TableCell>
-                        <TableCell className="text-right text-green-600">
-                          ₹
-                          {labData?.labTests
-                            ?.reduce(
-                              (sum, test) => sum + (test.amountPaid || 0),
-                              0
-                            )
-                            .toFixed(2)}
-                        </TableCell>
-                        <TableCell className="text-right text-red-600">
-                          ₹
-                          {labData?.labTests
-                            ?.reduce(
-                              (sum, test) =>
-                                sum +
-                                ((test.price || 0) - (test.amountPaid || 0)),
-                              0
-                            )
-                            .toFixed(2)}
-                        </TableCell>
+                        
                       </TableRow>
                     </TableBody>
                   </Table>
 
-                  {/* Payment Summary Card */}
                   <div className="flex justify-end">
                     <div className="mt-4 border-2 rounded-lg p-4 bg-gray-50 w-1/2">
                       <h4 className="text-lg font-semibold mb-3">
@@ -398,7 +366,6 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                   </div>
                 </div>
 
-                {/* Payment History */}
                 <div
                   className={`mt-4 ${!printPaymentHistory ? "no-print" : ""}`}
                 >

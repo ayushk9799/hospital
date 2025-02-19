@@ -15,6 +15,7 @@ const HospitalSchema = new mongoose.Schema({
   },
   logo2:String,
   pharmacyName: String,
+  morelogos:[String],
   pharmacyAddress: String,
   pharmacyContactNumber: String,
   pharmacyLogo: String,

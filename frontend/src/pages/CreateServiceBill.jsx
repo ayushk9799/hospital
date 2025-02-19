@@ -184,7 +184,6 @@ const CreateServiceBill = ({
           setAddedServices(formattedServices);
           setSelectedServices(formattedServices.map((service) => service.id));
           setAdditionalDiscount(billData.additionalDiscount || "");
-          console.log(billData);
           setBillPatientDetails({
             _id: billData.patient?._id || billData.patientInfo?._id,
             name: billData.patientInfo?.name || billData.patient?.name,
@@ -203,7 +202,6 @@ const CreateServiceBill = ({
           setBillData(formattedBillData); // Now storing in the same format as initialBillDat
         })
         .catch((error) => {
-          console.log(error);
           toast({
             title: "Error fetching bill",
             description: "Could not load the bill details. Please try again.",

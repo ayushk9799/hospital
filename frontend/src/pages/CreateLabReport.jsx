@@ -136,33 +136,29 @@ const CreateLabReport = ({
   background-color: #f8f9fa;
 }
 .header-name{
-    width:30%;
+    
     font-size: 20px;
     font-weight: bold;
     padding-right: 2mm;
 
 }
 .header-unit{
-    width:20%;
     font-size: 20px;
     font-weight: bold;
     text-align: center;
 }
 .header-value{
-    width:25%;
     font-size: 20px;
     font-weight: bold;
      text-align: center;
 }
 .header-range{
-    width:25%;
     font-size: 20px;
     font-weight: bold;
 text-align: right;
 }
 
 .test-name {
-  width: 30%;
   font-size: 10pt;
   color: #2c3e50;
   font-weight: bold;
@@ -170,19 +166,16 @@ text-align: right;
 }
 
 .test-value {
-  width: 25%;
   font-size: 10pt;
   text-align: center;
 }
 
 .test-unit {
-  width: 20%;
   font-size: 10pt;
   text-align: center;
 }
 
 .test-range {
-  width: 25%;
   font-size: 10pt;
   text-align: right;
 }
@@ -613,6 +606,7 @@ text-align: right;
                     <>
                       <div className="font-medium">
                         <Input
+                          tabIndex={-1}
                           value={field.label}
                           onChange={(e) =>
                             handleInputChange(e, field.name, "label")
@@ -640,7 +634,7 @@ text-align: right;
                           />
                         ) : (
                           <Input
-                            type={field.unit ? "number" : "text"}
+                            type={field.unit ? "text" : "text"}
                             id={field.name}
                             name={field.name}
                             value={field.value}
@@ -657,6 +651,7 @@ text-align: right;
                           }
                           placeholder="-"
                           className="px-1"
+                          tabIndex={-1}
                         />
                       </div>
                       <div className="flex items-center justify-between gap-2">
@@ -667,6 +662,7 @@ text-align: right;
                           }
                           placeholder="-"
                           className="flex-1"
+                          tabIndex={-1}
                         />
                         {!labReportFields[category][type].some(
                           (f) => f.name === field.name

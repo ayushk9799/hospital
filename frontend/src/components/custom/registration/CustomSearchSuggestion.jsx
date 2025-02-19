@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef, forwardRef } from "react";
 import { Input } from "../../ui/input";
 import { Badge } from "../../ui/badge"; // Add this import
 import { ChevronsUpDown } from "lucide-react";
+import { useFloating, offset, flip, shift } from "@floating-ui/react";
+
+import { ScrollArea } from "../../ui/scroll-area";
 
 export const SearchSuggestion = forwardRef(
   (
@@ -66,7 +69,17 @@ export const SearchSuggestion = forwardRef(
         }
       }
     };
-
+    const { refs, floatingStyles } = useFloating({
+      placement: "bottom-start",
+      middleware: [
+        offset(4),
+        flip({
+          fallbackPlacements: ["top-start"],
+        }),
+        shift(),
+      ],
+      strategy: "absolute",
+    });
     useEffect(() => {
       if (selectedIndex >= 0 && suggestionListRef.current) {
         const selectedElement =
@@ -79,7 +92,7 @@ export const SearchSuggestion = forwardRef(
 
     return (
       <div className="relative w-full max-w-md">
-        <div className="relative ">
+        <div className="relative " ref={refs.setReference}>
           <Input
             ref={ref}
             type="text"
@@ -95,47 +108,62 @@ export const SearchSuggestion = forwardRef(
         </div>
 
         {showSuggestions && filteredSuggestions.length > 0 && (
-          <ul
-            ref={suggestionListRef}
-            className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+          <div
+            ref={refs.setFloating}
+            style={{
+              ...floatingStyles,
+              width: "100%",
+              position: "absolute",
+              left: 0,
+              marginTop: "4px",
+            }}
+            className="z-[9999] bg-popover rounded-md border shadow-md"
           >
-            {filteredSuggestions.map((suggestion, index) => (
-              <li
-                key={suggestion._id}
-                onClick={() => handleSuggestionClick(suggestion)}
-                className={`px-4 py-2 cursor-pointer hover:bg-gray-100 ${
-                  index === selectedIndex ? "bg-gray-100" : ""
-                } ${
-                  suggestion.isTemplate
-                    ? "border-l-4 border-blue-500 bg-blue-50"
-                    : ""
-                }`}
-              >
-                <div className="flex justify-between items-center">
-                  <div className="flex items-center gap-2">
-                    <span className="capitalize">{suggestion.name}</span>
-                    {suggestion.isTemplate && (
-                      <Badge
-                        variant="secondary"
-                        className="bg-blue-100 text-blue-700 text-xs"
-                      >
-                        Template
-                      </Badge>
-                    )}
-                  </div>
-                  {showStock && suggestion.quantity !== undefined && (
-                    <Badge
-                      variant={
-                        suggestion.quantity <= 100 ? "destructive" : "success"
-                      }
-                    >
-                      {suggestion.quantity}
-                    </Badge>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
+            <ScrollArea
+              className={`${filteredSuggestions.length > 5 ? "h-[200px]" : ""}`}
+            >
+              <ul>
+                {filteredSuggestions.map((suggestion, index) => (
+                  <li
+                    key={suggestion._id}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className={`px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground ${
+                      index === selectedIndex
+                        ? "bg-accent text-accent-foreground"
+                        : ""
+                    } ${
+                      suggestion.isTemplate ? "border-l-4 border-blue-500" : ""
+                    }`}
+                  >
+                    <div className="flex justify-between items-center">
+                      <div className="flex items-center gap-2">
+                        <span className="capitalize">{suggestion.name}</span>
+                        {suggestion.isTemplate && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-blue-100 text-blue-700 text-xs"
+                          >
+                            Template
+                          </Badge>
+                        )}
+                      </div>
+                      {showStock && suggestion.quantity !== undefined && (
+                        <Badge
+                          variant={
+                            suggestion.quantity <= 100
+                              ? "destructive"
+                              : "success"
+                          }
+                        >
+                          {suggestion.quantity}
+                        </Badge>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </ScrollArea>
+          </div>
         )}
       </div>
     );

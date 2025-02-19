@@ -86,12 +86,65 @@ export const updateTestStatus = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+export const addLabPayment = createLoadingAsyncThunk(
+  "lab/addPayment",
+  async ({ labId, payment }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/lab/${labId}/payment`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(payment),
+      });
+      if (!response.ok) {
+        return rejectWithValue("Failed to add payment");
+      }
+      const data = await response.json();
+
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+export const searchLabRegistrations = createLoadingAsyncThunk(
+  "lab/searchRegistrations",
+  async (searchQuery, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/lab/search`, {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ searchQuery }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        return rejectWithValue(
+          data.message || "Failed to search lab registrations"
+        );
+      }
+      return data.registrations;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   registrations: [],
   registrationsStatus: "idle",
   createRegistrationStatus: "idle",
   updateTestStatus: "idle",
   error: null,
+  searchResults: [],
+  searchStatus: "idle",
 };
 
 const labSlice = createSlice({
@@ -103,6 +156,10 @@ const labSlice = createSlice({
     },
     setUpdateTestStatusIdle: (state) => {
       state.updateTestStatus = "idle";
+    },
+    clearSearchResults: (state) => {
+      state.searchResults = [];
+      state.searchStatus = "idle";
     },
   },
   extraReducers: (builder) => {
@@ -150,10 +207,41 @@ const labSlice = createSlice({
       .addCase(updateTestStatus.rejected, (state, action) => {
         state.updateTestStatus = "failed";
         state.error = action.payload;
+      })
+      .addCase(addLabPayment.pending, (state) => {
+        state.updateTestStatus = "loading";
+      })
+      .addCase(addLabPayment.fulfilled, (state, action) => {
+        state.updateTestStatus = "succeeded";
+        const index = state.registrations.findIndex(
+          (reg) => reg._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.registrations[index] = action.payload;
+        }
+      })
+      .addCase(addLabPayment.rejected, (state, action) => {
+        state.updateTestStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(searchLabRegistrations.pending, (state) => {
+        state.searchStatus = "loading";
+        state.error = null;
+      })
+      .addCase(searchLabRegistrations.fulfilled, (state, action) => {
+        state.searchStatus = "succeeded";
+        state.searchResults = action.payload;
+      })
+      .addCase(searchLabRegistrations.rejected, (state, action) => {
+        state.searchStatus = "failed";
+        state.error = action.payload;
       });
   },
 });
 
-export const { setCreateRegistrationStatusIdle, setUpdateTestStatusIdle } =
-  labSlice.actions;
+export const {
+  setCreateRegistrationStatusIdle,
+  setUpdateTestStatusIdle,
+  clearSearchResults,
+} = labSlice.actions;
 export default labSlice.reducer;

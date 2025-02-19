@@ -177,7 +177,6 @@ export default function LabRegDialog({ open, onOpenChange }) {
       price:
         test.rate || allLabTests.find((t) => t.name === test.name)?.rate || 0,
     }));
-    console.log(selectedTestDetails);
     const totalAmount = selectedTestDetails.reduce(
       (sum, test) => sum + (test.price || 0),
       0
@@ -212,7 +211,6 @@ export default function LabRegDialog({ open, onOpenChange }) {
       },
     }));
   };
-  console.log(formData);
   const handleSearch = async () => {
     if (!formData.registrationNumber) return;
     setIsSearching(true);
@@ -221,9 +219,7 @@ export default function LabRegDialog({ open, onOpenChange }) {
       const response = await dispatch(
         searchPatients(formData.registrationNumber)
       ).unwrap();
-      console.log(response);
       let data = response.results?.[0];
-      console.log(data);
       if (response.results?.length > 0) {
         setSearchedPatient(data);
         const tempGuardianName =

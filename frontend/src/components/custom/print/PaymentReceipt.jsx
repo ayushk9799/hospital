@@ -9,7 +9,7 @@ import { format } from "date-fns";
 import { numberToWords } from "../../../assets/Data";
 
 const PaymentReceipt = ({ payment, billData, styleData }) => {
-    
+ 
   const { hospitalInfo } = useSelector((state) => state.hospital);
   const headerTemplateStrings = useSelector(
     (state) => state.templates.headerTemplateArray
@@ -69,30 +69,34 @@ const PaymentReceipt = ({ payment, billData, styleData }) => {
                 <div className="grid grid-cols-2 py-2 px-4 border-black border-b-[1px]">
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Patient Name:</p>
-                        <p className="col-span-2 capitalize">{billData?.patient?.name || ''}</p>
+                        <p className="col-span-2 capitalize">{billData?.patient?.name || billData?.patientName}</p>
                     </div>
-                    <div className="grid grid-cols-3">
-                        <p className="font-semibold">UHID No:</p>
-                        <p className="col-span-2 capitalize">{billData?.patient?.registrationNumber || ''}</p>
-                    </div>
+                    {billData?.patient?.registrationNumber || billData?.registrationNumber && (
+                        <div className="grid grid-cols-3">
+                            <p className="font-semibold">UHID No:</p>
+                            <p className="col-span-2 capitalize">{billData?.patient?.registrationNumber || ''}</p>
+                        </div>
+                    )}
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Age/Gender:</p>
-                        <p className="col-span-2 capitalize">{billData?.patient?.age ? `${billData?.patient?.age} Years` : ''} / {billData?.patient?.gender || ''}</p>
+                        <p className="col-span-2 capitalize">{billData?.patient?.age||billData?.age ? `${billData?.patient?.age||billData?.age} Years` : ''} / {billData?.patient?.gender||billData?.gender || ''}</p>
                     </div>
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Receipt Date</p>
                         <p className="col-span-2 capitalize">
-                            {format(billData?.createdAt ? new Date(billData?.createdAt) : new Date(), "dd-MM-yyyy hh:mm a")}
+                            {format(payment?.createdAt ? new Date(payment?.createdAt) : new Date(), "dd-MM-yyyy hh:mm a")}
                         </p>
                     </div>
                     <div className="grid grid-cols-3">
                         <p className="font-semibold">Invoice No:</p>
-                        <p className="col-span-2 capitalize">{billData?.invoiceNumber || ''}</p>
+                        <p className="col-span-2 capitalize">{billData?.invoiceNumber || billData.billDetails?.invoiceNumber||""}</p>
                     </div>
-                    <div className="grid grid-cols-3">
-                        <p className="font-semibold">OPD/IPD No:</p>
-                        <p className="col-span-2 capitalize">{billData?.patientInfo?.ipdNumber || ''}</p>
-                    </div>
+                    {billData?.patientInfo?.ipdNumber && (
+                        <div className="grid grid-cols-3">
+                            <p className="font-semibold">OPD/IPD No:</p>
+                            <p className="col-span-2 capitalize">{billData?.patientInfo?.ipdNumber || ''}</p>
+                        </div>
+                    )}
                 </div>
                 <div className="grid grid-cols-12 pb-2 px-4 font-semibold border-black border-b-[1px] ">
                     <div className="col-span-2">S.No.</div>
@@ -106,8 +110,8 @@ const PaymentReceipt = ({ payment, billData, styleData }) => {
                 </div>
                 <div className=" border-black border-b-[1px] px-4 py-2">Amount(In Words) : {numberToWords(payment?.amount)} Only.</div>
                 <div className="px-4 py-2 border-black border-b-[1px]">
-                    <p>Payment Method : {payment?.paymentMethod || 'N/A'}</p>
-                    <p>UTR No.</p>
+                    <p>Payment Method : {payment?.paymentMethod || payment?.method || 'N/A'}</p>
+                    {payment?.utr && <p>UTR No. : {payment?.utr}</p>}
                 </div>
                 <div className="grid grid-cols-3 h-[60px]">
                     <div className="col-span-2 pl-4 flex items-center text-2xl justify-center" style={{ fontFamily: 'cursive' }}>Thank you</div>

@@ -13,6 +13,7 @@ const templateSchema = new mongoose.Schema({
   dischargeSummaryTemplate: String,
   opdPrescriptionTemplate: String,
   opdRxTemplate: String,
+  labReportUiTemplate: String,
   headerTemplateArray: [
     {
       name: String,
@@ -53,7 +54,7 @@ const templateSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: null,
   },
-  birthCertificateTemplate : String
+  birthCertificateTemplate: String,
 });
 
 templateSchema.plugin(hospitalPlugin);

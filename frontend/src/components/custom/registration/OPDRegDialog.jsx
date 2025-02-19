@@ -380,7 +380,7 @@ useEffect(()=>
   useEffect(() => {
     if (patientData || searchedPatient) {
       const sourceData = searchedPatient || patientData;
-      // console.log(sourceData);
+     
 
       const tempGuardianName = sourceData?.visits[0]?.guardianName || sourceData?.admissionDetails[0]?.guardianName || "";
       const tempRelation = sourceData?.visits[0]?.relation || sourceData?.admissionDetails[0]?.relation || "";

@@ -20,9 +20,75 @@ import { useSelector, useDispatch } from "react-redux";
 import { addLabReport } from "../redux/slices/patientSlice";
 import { useToast } from "../hooks/use-toast";
 
+const getValueColor = (value, normalRange, gender) => {
+  if (!value || !normalRange) return "inherit";
+
+  // Handle gender-specific ranges
+  if (
+    normalRange?.toLowerCase()?.includes("male") &&
+    normalRange?.toLowerCase()?.includes("female")
+  ) {
+    const ranges = normalRange?.split(",")?.map((r) => r?.trim());
+    const genderRange = ranges.find((r) =>
+      r?.toLowerCase()?.includes(gender?.toLowerCase())
+    );
+    if (genderRange) {
+      normalRange = genderRange.replace(/\(.*?\)/g, "").trim();
+    }
+  }
+
+  // Extract numeric values from the range
+  const numericValue = parseFloat(value);
+  if (isNaN(numericValue)) return "inherit";
+
+  // Handle different range patterns
+  if (normalRange.includes("-")) {
+    // Range pattern: "x-y"
+    const [min, max] = normalRange.split("-").map((v) => parseFloat(v));
+    if (!isNaN(min) && !isNaN(max)) {
+      if (numericValue < min) return "#FF4444"; // Red for low
+      if (numericValue > max) return "#FF4444"; // Red for high
+      return "#2ECC71"; // Green for normal
+    }
+  } else if (normalRange.startsWith("<")) {
+    // Range pattern: "<x"
+    const max = parseFloat(normalRange.substring(1));
+    if (!isNaN(max)) {
+      return numericValue > max ? "#FF4444" : "#2ECC71";
+    }
+  } else if (normalRange.startsWith(">")) {
+    // Range pattern: ">x"
+    const min = parseFloat(normalRange.substring(1));
+    if (!isNaN(min)) {
+      return numericValue < min ? "#FF4444" : "#2ECC71";
+    }
+  }
+
+  return "inherit";
+};
+
+const getGenderSpecificRange = (normalRange, gender) => {
+  if (!normalRange || !gender) return normalRange;
+
+  if (
+    normalRange.toLowerCase()?.includes("male") &&
+    normalRange.toLowerCase()?.includes("female")
+  ) {
+    const ranges = normalRange.split(",").map((r) => r.trim());
+    const genderRange = ranges.find((r) =>
+      r.toLowerCase()?.includes(gender.toLowerCase())
+    );
+    if (genderRange) {
+      return genderRange.replace(/\(.*?\)/g, "").trim();
+    }
+  }
+  return normalRange;
+};
+
 const TemplateLabReport = ({
   template,
   patientData,
+  onSave,
   onClose,
   searchWhere,
   component,
@@ -33,11 +99,9 @@ const TemplateLabReport = ({
   const [generatedDate, setGeneratedDate] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
-  console.log(patientData);
   const dispatch = useDispatch();
   const { toast } = useToast();
   const componentRef = useRef(null);
-  console.log(template);
 
   useEffect(() => {
     if (template && template.fields) {
@@ -109,15 +173,28 @@ const TemplateLabReport = ({
     );
   };
 
-  const handleInputChange = (e, fieldName) => {
+  const handleInputChange = (e, fieldName, fieldType) => {
     const { value } = e.target;
-    setFields((prevFields) =>
-      prevFields.map((field) =>
-        field.name === fieldName ? { ...field, value } : field
+   
+    if (fieldType) {
+      setFields((prevFields) =>
+        prevFields.map((field) =>
+          field.name === fieldName
+            ? { ...field,  [fieldType]: value }
+            : field
+        )
+      );
+    }
+    else{
+      setFields((prevFields) =>
+        prevFields.map((field) =>
+          field.name === fieldName
+          ? { ...field, value }
+          : field
       )
-    );
+      );
+    }
   };
-
   const handleOptionSelect = (fieldName, selectedOption) => {
     setFields((prevFields) =>
       prevFields.map((field) =>
@@ -138,218 +215,8 @@ const TemplateLabReport = ({
           resolve();
         }, 250);
       });
-    },
-    pageStyle: `
-    @media print {
-      @page {
-        size: A4;
-        margin: 20mm;
-      }
-      
-      body * {
-        visibility: hidden;
-      }
-      
-      .page, .page * {
-        visibility: visible;
-      }
-      
-      .page {
-        position: absolute;
-        left: 0;
-        top: 0;
-        width: 100%;
-        padding: 20mm;
-      }
-
-      .no-print {
-        display: none !important;
-      }
-
-      .page {
-font-family: "Tinos, serif";
-background-color: white;
-width: 210mm;
-min-height: 297mm;
-margin: 0 auto;
-box-sizing: border-box;
-}
-
-.header {
-margin-bottom: 5px;
-border-bottom: 1px solid #000000;
-padding-bottom: 2px;
-}
-
-.clinic-name {
-font-size: 24pt;
-text-align: center;
-font-family: "Tinos, serif";
-margin-bottom: 3mm;
-color: #1a5f7a;
-font-weight: bold;
-}
-
-.clinic-info {
-font-size: 10pt;
-text-align: center;
-color: #333333;
-margin-bottom: 2mm;
-}
-
-.doctor-info {
-font-size: 12pt;
-text-align: center;
-margin-top: 3mm;
-letter-spacing: 1pt;
-color: #1a5f7a;
-}
-
-.report-container {
-margin-top: 5px;
-border-top: 2px solid #ecf0f1;
-border-bottom: 2px solid #ecf0f1;
-}
-
-.report-row {
-display: flex;
-border-bottom: 1px solid #ecf0f1;
-padding: 3px 0;
-align-items: center;
-}
-
-.report-row.header {
-background-color: #f8f9fa;
-}
-.header-name{
-  width:30%;
-  font-size: 20px;
-  font-weight: bold;
-  padding-right: 2mm;
-
-}
-.header-unit{
-  width:20%;
-  font-size: 20px;
-  font-weight: bold;
-  text-align: center;
-}
-.header-value{
-  width:25%;
-  font-size: 20px;
-  font-weight: bold;
-   text-align: center;
-}
-.header-range{
-  width:25%;
-  font-size: 20px;
-  font-weight: bold;
-text-align: right;
-}
-
-.test-name {
-width: 30%;
-font-size: 10pt;
-color: #2c3e50;
-font-weight: bold;
-padding-right: 2mm;
-}
-
-.test-value {
-width: 25%;
-font-size: 10pt;
-text-align: center;
-}
-
-.test-unit {
-width: 20%;
-font-size: 10pt;
-text-align: center;
-}
-
-.test-range {
-width: 25%;
-font-size: 10pt;
-text-align: right;
-}
-
-.patient-details {
-display: flex;
-margin-top: 5px;
-padding: 3px;
-background-color: #f8f9fa;
-border-radius: 2mm;
-}
-
-.patient-column {
-flex: 1;
-padding: 0 2mm;
-}
-
-.patient-info {
-display: flex;
-margin-bottom: 2mm;
-align-items: center;
-}
-
-.patient-label {
-font-size: 10pt;
-font-weight: bold;
-color: #34495e;
-margin-right: 2mm;
-min-width: 20mm;
-}
-
-.patient-value {
-font-size: 10pt;
-color: #2c3e50;
-}
-
-.report-title {
-text-align: center;
-margin: 10px 0;
-}
-
-.report-title h2 {
-margin: 0;
-font-size: 1.5rem;
-font-weight: bold;
-}
-
-/* Print specific styles */
-@media print {
-@page {
-  size: A4;
-}
-
-body * {
-  visibility: hidden;
-}
-
-.page, .page * {
-  visibility: visible;
-}
-
-.page {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 100%;
-  padding:20px;
-}
-
-.no-print {
-  display: none !important;
-}
-
-/* Ensure all styles are applied in print */
-.page * {
-  -webkit-print-color-adjust: exact !important;
-  print-color-adjust: exact !important;
-}
-} 
     }
-  `,
+
   });
 
   const handleSubmit = async (e) => {
@@ -386,7 +253,9 @@ body * {
 
         // Trigger print after successful save
         handlePrint();
-
+        if (onSave) {
+          onSave(labReportData);
+        }
         // if (onClose) {
         //   onClose(labReportData);
         // }
@@ -425,72 +294,126 @@ body * {
               </PopoverContent>
             </Popover>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          {/* Table Header */}
+          {fields.some(
+            (field) =>
+              field.label.toLowerCase() !== "findings" &&
+              field.label.toLowerCase() !== "impressions" &&
+              (field.unit || field.normalRange)
+          ) && (
+            <div className="grid grid-cols-[4fr_2fr_1fr_3fr] gap-4 mb-2 font-bold bg-gray-100 p-2 rounded">
+              <div>Test Name</div>
+              <div>Value</div>
+              <div>Unit</div>
+              <div>Normal Range</div>
+            </div>
+          )}
+
+          {/* Table Body */}
+          <div className="space-y-2">
             {fields.map((field) => (
               <div
                 key={field.name}
-                className={`flex flex-col ${
+                className={
                   field.label.toLowerCase() === "findings" ||
                   field.label.toLowerCase() === "impressions"
-                    ? "md:col-span-2"
-                    : ""
-                }`}
+                    ? "col-span-full"
+                    : "grid grid-cols-[4fr_2fr_1fr_3fr] gap-2 items-center border-b pb-2"
+                }
               >
-                <Label htmlFor={field.name} className="mb-1">
-                  {field.label}
-                </Label>
                 {field.label.toLowerCase() === "findings" ||
                 field.label.toLowerCase() === "impressions" ? (
-                  <Textarea
-                    id={field.name}
-                    name={field.name}
-                    value={field.value}
-                    onChange={(e) => handleInputChange(e, field.name)}
-                    className="w-full"
-                    rows={4}
-                  />
-                ) : field.options ? (
-                  <SearchSuggestion
-                    suggestions={field.options?.map((option) => ({
-                      name: option,
-                    }))}
-                    placeholder={`Select ${field.label}`}
-                    value={field.value}
-                    setValue={(value) =>
-                      handleInputChange({ target: { value } }, field.name)
-                    }
-                    onSuggestionSelect={(suggestion) =>
-                      handleOptionSelect(field.name, suggestion)
-                    }
-                  />
-                ) : (
-                  <div className="flex items-center">
-                    <Input
-                      type={field?.unit ? "number" : "text"}
+                  <div className="col-span-full space-y-1">
+                    <Label htmlFor={field.name} className="mb-1">
+                      {field.label}
+                    </Label>
+                    <Textarea
                       id={field.name}
                       name={field.name}
                       value={field.value}
                       onChange={(e) => handleInputChange(e, field.name)}
-                      className="mr-2"
-                      step="0.01"
+                      className="h-32 w-full"
                     />
-                    {field.unit && (
-                      <span className="text-sm text-gray-500 w-16">
-                        {field.unit}
-                      </span>
-                    )}
                   </div>
-                )}
-                {field.normalRange && (
-                  <span className="text-xs text-gray-500 mt-1">
-                    Normal Range: {field.normalRange}
-                  </span>
+                ) : (
+                  <>
+                    <div className="font-medium">
+                      <Input
+                        value={field.label}
+                        onChange={(e) =>
+                          handleInputChange(e, field.name, "label")
+                        }
+                        className="px-1"
+                        tabIndex={-1}
+                      />
+                    </div>
+                    <div>
+                      {field.options ? (
+                        <SearchSuggestion
+                          suggestions={field.options?.map((option) => ({
+                            name: option,
+                          }))}
+                          placeholder={`Select ${field.label}`}
+                          value={field.value}
+                          setValue={(value) =>
+                            handleInputChange({ target: { value } }, field.name)
+                          }
+                          onSuggestionSelect={(suggestion) =>
+                            handleOptionSelect(field.name, suggestion)
+                          }
+                        />
+                      ) : (
+                        <Input
+                          type={field?.unit ? "text" : "text"}
+                          id={field.name}
+                          name={field.name}
+                          value={field.value}
+                          onChange={(e) => handleInputChange(e, field.name)}
+                          step="0.01"
+                          className="font-bold"
+                          style={{
+                            color: getValueColor(
+                              field.value,
+                              field.normalRange,
+                              patientData?.gender
+                            ),
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <Input
+                        value={field.unit}
+                        onChange={(e) =>
+                          handleInputChange(e, field.name, "unit")
+                        }
+                        placeholder="-"
+                        className="px-1"
+                        tabIndex={-1}
+                      />
+                    </div>
+                    <div>
+                      <Input
+                        value={getGenderSpecificRange(
+                          field.normalRange,
+                          patientData?.gender||patientData?.patient?.gender
+                        )}
+                        onChange={(e) =>
+                          handleInputChange(e, field.name, "normalRange")
+                        }
+                        placeholder="-"
+                        className="flex-1"
+                        tabIndex={-1}
+                      />
+                    </div>
+                  </>
                 )}
               </div>
             ))}
           </div>
 
-          <div className="flex justify-center space-x-4">
+          <div className="flex justify-center space-x-4 mt-6">
             <Button type="submit" className="w-full">
               Save Lab Report
             </Button>

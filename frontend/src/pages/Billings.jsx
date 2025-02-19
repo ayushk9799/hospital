@@ -170,7 +170,6 @@ const Billings = () => {
 
   const filteredBills = useMemo(() => {
     const billsToFilter = searchResults || bills;
-console.log(billsToFilter)
     return billsToFilter?.filter((bill) => {
       const nameMatch =
         bill.patientInfo?.name
@@ -276,7 +275,6 @@ console.log(billsToFilter)
   };
 
   const handleViewBill = (bill) => {
-    console.log(bill);
     setSelectedBill(bill);
     setIsViewDialogOpen(true);
     setOpenDropdownId(null);
@@ -796,7 +794,7 @@ console.log(billsToFilter)
                         }
                       }}
                     >
-                      <TableCell>{bill.invoiceNumber || "N/A"}</TableCell>
+                      <TableCell className="font-bold">{bill.invoiceNumber || "N/A"}</TableCell>
                       <TableCell>{bill.patientInfo?.name}</TableCell>
                       <TableCell>
                         {bill?.patient?.registrationNumber ||

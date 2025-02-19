@@ -111,9 +111,11 @@ router.post("/register", verifyToken, async (req, res) => {
         })
       );
     }
-
+    labRegistration.billDetails = {
+      invoiceNumber,
+      billId: bill._id,
+    };
     await bill.save({ session });
-    labRegistration.invoiceNumber = invoiceNumber;
     await labRegistration.save({ session });
 
     await session.commitTransaction();
@@ -394,27 +396,14 @@ router.get("/pending-tests", verifyToken, async (req, res) => {
 // Search lab registrations
 router.post("/search", verifyToken, async (req, res) => {
   try {
-    const { searchType, searchQuery } = req.body;
-    let query = {};
-
-    switch (searchType) {
-      case "labNumber":
-        query.labNumber = new RegExp(searchQuery, "i");
-        break;
-      case "patientName":
-        query.patientName = new RegExp(searchQuery, "i");
-        break;
-      case "registrationNumber":
-        query.registrationNumber = new RegExp(searchQuery, "i");
-        break;
-      case "contactNumber":
-        query.contactNumber = searchQuery;
-        break;
-      default:
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid search type" });
-    }
+    const { searchQuery } = req.body;
+    let query = {
+      $or: [
+        { labNumber: new RegExp(searchQuery, "i") },
+        { registrationNumber: new RegExp(searchQuery, "i") },
+        { contactNumber: new RegExp(searchQuery, "i") },
+      ],
+    };
 
     const registrations = await LabRegistration.find(query)
       .sort({ bookingDate: -1 })
@@ -516,6 +505,77 @@ router.put("/update-test-status", verifyToken, async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     res.status(400).json({ success: false, error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
+// Add payment to lab registration
+router.post("/:id/payment", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const { method, amount } = req.body;
+    const user = req.user;
+
+    const labRegistration = await LabRegistration.findById(id).session(session);
+    if (!labRegistration) {
+      throw new Error("Lab registration not found");
+    }
+
+    // Create payment record
+    const payment = new Payment({
+      amount: parseFloat(amount),
+      paymentMethod: method,
+      paymentType: { name: "Laboratory", id: labRegistration._id },
+      type: "Income",
+      createdBy: user._id,
+      associatedInvoiceOrId: labRegistration.invoiceNumber,
+    });
+
+    await payment.save({ session });
+
+    // Update lab registration payment info
+    labRegistration.paymentInfo.paymentMethod.push({
+      method,
+      amount: parseFloat(amount),
+    });
+
+    labRegistration.paymentInfo.amountPaid =
+      (labRegistration.paymentInfo.amountPaid || 0) + parseFloat(amount);
+
+    labRegistration.paymentInfo.balanceDue =
+      labRegistration.paymentInfo.totalAmount -
+      labRegistration.paymentInfo.amountPaid;
+
+    await labRegistration.save({ session });
+    // Update services bill if it exists
+    const bill = await ServicesBill.findOne({
+      invoiceNumber: labRegistration.billDetails?.invoiceNumber,
+    }).session(session);
+    if (bill) {
+      bill.amountPaid = (bill.amountPaid || 0) + parseFloat(amount);
+      bill.payments.push(payment._id);
+      await bill.save({ session });
+    }
+
+    await session.commitTransaction();
+    res.status(200).json({
+      success: true,
+      labRegistration,
+      payment,
+      message: "Payment added successfully",
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    console.error("Error adding payment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error adding payment",
+      error: error.message,
+    });
   } finally {
     session.endSession();
   }

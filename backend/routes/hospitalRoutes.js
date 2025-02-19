@@ -115,6 +115,7 @@ router.post("/template/create", identifyHospital, async (req, res) => {
         headerTemplateArray: [],
         diagnosisTemplate: [],
         headerTemplate: "",
+        labReportUiTemplate: "",
         dischargeSummaryTemplate: "",
         opdPrescriptionTemplate: "",
         opdRxTemplate: "",
@@ -158,6 +159,9 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     }
     if (req.body.dischargeFormTemplates) {
       template.dischargeFormTemplates = req.body.dischargeFormTemplates;
+    }
+    if (req.body.labReportUiTemplate) {
+      template.labReportUiTemplate = req.body.labReportUiTemplate;
     }
 
     await template.save({ session });

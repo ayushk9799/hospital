@@ -100,7 +100,6 @@ export default function CreateTestTemplate() {
     value
   ) => {
     const formattedCategory = formatKey(category);
-    console.log(value);
     setSelectedFields((prev) => ({
       ...prev,
       [formattedCategory]: {

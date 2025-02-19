@@ -72,6 +72,7 @@ import ViewAllBabies from "./pages/ViewAllBabies";
 import Payments from "./pages/Payments";
 import LabTemplatesManager from "./pages/LabTemplatesManager";
 import EditTestTemplate from "./pages/EditTestTemplate";
+import LabTemplatePreview from "./pages/LabTemplatePreview";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -123,162 +124,165 @@ const AppContent = () => {
 
   return (
     <div className="flex flex-col relative">
-     
       {isLoading && <div className="youtube-loader"></div>}
       <ScrollArea className="h-screen">
-      {isAuthenticated && (
-        <HorizontalNav
-          isCollapsed={isCollapsed}
-          setIsCollapsed={setIsCollapsed}
-          navItems={navItems}
-        />
-      )}
-      <div className="flex">
-        {isAuthenticated && <VerticalNav isCollapsed={isCollapsed} />}
-        <main
-          className={`${
-            isAuthenticated ? (isCollapsed ? "md:ml-16" : "md:ml-56") : ""
-          } px-0 sm:px-4 w-full h-full bg-gray-50 transition-all duration-300`}
-        >
-          <Routes>
-            <Route
-              path="/"
-              element={isAuthenticated ? <QuickMenu /> : <Home />}
-            />
-            <Route path="/about" element={<AboutPage />} />
-            <Route path="/contact" element={<ContactPage />} />
+        {isAuthenticated && (
+          <HorizontalNav
+            isCollapsed={isCollapsed}
+            setIsCollapsed={setIsCollapsed}
+            navItems={navItems}
+          />
+        )}
+        <div className="flex">
+          {isAuthenticated && <VerticalNav isCollapsed={isCollapsed} />}
+          <main
+            className={`${
+              isAuthenticated ? (isCollapsed ? "md:ml-16" : "md:ml-56") : ""
+            } px-0 sm:px-4 w-full h-full bg-gray-50 transition-all duration-300`}
+          >
+            <Routes>
+              <Route
+                path="/"
+                element={isAuthenticated ? <QuickMenu /> : <Home />}
+              />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
 
-            {isAuthenticated && (
-              <>
-                <Route
-                  path="/patient-overview/:patientId"
-                  element={<PatientOverview />}
-                />
-                <Route path="/billings" element={<Billings />} />
-                <Route path="/patients" element={<Patients />} />
-                <Route
-                  path="/patients/:patientId"
-                  element={<PatientDetails />}
-                />
-                <Route path="/appointments" element={<Appointments />} />
-                <Route path="/doctors" element={<Doctors />} />
-                <Route path="/rooms" element={<Rooms />} />
-                <Route path="/staff" element={<Reports />} />
-                <Route path="/settings" element={<Settings />} />
-                <Route path="/staff/:staffId" element={<StaffProfile />} />
-                <Route path="/analytics" element={<Analytics />} />
-                <Route
-                  path="/pharmacy"
-                  element={<Navigate to="/pharmacy/sales" replace />}
-                />
-                <Route path="/pharmacy/:tab" element={<Pharmacy />} />
-                <Route
-                  path="/pharmacy/all-bills"
-                  element={<PharmacyAllBills />}
-                />
-                <Route path="/addstaff" element={<AddStaff />} />
-                <Route path="/editstaff/:staffId" element={<AddStaff />} />
-                <Route path="/lab" element={<Lab />} />
-                <Route path="/lab/list" element={<LabList />} />
-                <Route path="/lab/registration" element={<LabRegDialog />} />
-                <Route path="/lab/all-tests" element={<AllLabTests />} />
-                <Route
-                  path="/lab/create/:category/:type"
-                  element={<CreateLabReport />}
-                />
-                <Route
-                  path="/lab/blood-work/create"
-                  element={<CreateBloodWork />}
-                />
-                <Route path="/create-room" element={<CreateRoom />} />
-                <Route
-                  path="/patients/discharge/:patientId?"
-                  element={<DischargeSummary />}
-                />
-                <Route
-                  path="/patients/admitted"
-                  element={<AdmittedPatients />}
-                />
-                <Route
-                  path="/patients/add-services/:patientId"
-                  element={<AddIPDServices />}
-                />
-                <Route path="/services" element={<Services />} />
-                <Route
-                  path="/billings/create-service-bill"
-                  element={<CreateServiceBill />}
-                />
-                <Route path="/statistics" element={<Statistics />} />
-                <Route
-                  path="/billings/edit/:billId"
-                  element={<CreateServiceBill />}
-                />
-                <Route
-                  path="/settings/hospital-info"
-                  element={<HospitalInfo />}
-                />
-                <Route path="/expenses" element={<Expenses />} />
-                <Route path="/payments" element={<Payments />} />
-                <Route
-                  path="/settings/customization"
-                  element={<Customization />}
-                />
-                <Route path="/search" element={<PatientSearch />} />
-                <Route
-                  path="/opd-procedure/:patientId"
-                  element={<OPDProcedure />}
-                />
-                <Route
-                  path="/settings/lab-templates"
-                  element={<LabTemplatesManager />}
-                />
-                <Route
-                  path="/settings/create-test-template"
-                  element={<CreateTestTemplate />}
-                />
-                <Route
-                  path="/settings/printing-templates"
-                  element={<PrintingTemplates />}
-                />
-                <Route
-                  path="/settings/printing-templates/discharge-preview"
-                  element={<DischargeTemplatePreview />}
-                />
-                <Route
-                  path="/settings/printing-templates/header-preview"
-                  element={<HeaderTemplatePreview />}
-                />
-                <Route
-                  path="/settings/printing-templates/opd-preview"
-                  element={<OPDTemplatePreview />}
-                />
-                <Route
-                  path="/settings/printing-templates/opd-rx-preview"
-                  element={<OPDRxTemplatePreview />}
-                />
-                <Route
-                  path="/settings/prefix-settings"
-                  element={<PrefixSettings />}
-                />
-                <Route
-                  path="/patients/:ipdAdmissionId/babies"
-                  element={<ViewBabies />}
-                />
-                <Route path="patients/babies" element={<ViewAllBabies />} />
-                <Route path="/babies/:babyId" element={<BabyDetails />} />
-                <Route
-                  path="/settings/department"
-                  element={<DepartmentManger />}
-                />
-                <Route
-                  path="/settings/edit-test-template/:templateName"
-                  element={<EditTestTemplate />}
-                />
-              </>
-            )}
-          </Routes>
-        </main>
-      </div>
+              {isAuthenticated && (
+                <>
+                  <Route
+                    path="/patient-overview/:patientId"
+                    element={<PatientOverview />}
+                  />
+                  <Route path="/billings" element={<Billings />} />
+                  <Route path="/patients" element={<Patients />} />
+                  <Route
+                    path="/patients/:patientId"
+                    element={<PatientDetails />}
+                  />
+                  <Route path="/appointments" element={<Appointments />} />
+                  <Route path="/doctors" element={<Doctors />} />
+                  <Route path="/rooms" element={<Rooms />} />
+                  <Route path="/staff" element={<Reports />} />
+                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/staff/:staffId" element={<StaffProfile />} />
+                  <Route path="/analytics" element={<Analytics />} />
+                  <Route
+                    path="/pharmacy"
+                    element={<Navigate to="/pharmacy/sales" replace />}
+                  />
+                  <Route path="/pharmacy/:tab" element={<Pharmacy />} />
+                  <Route
+                    path="/pharmacy/all-bills"
+                    element={<PharmacyAllBills />}
+                  />
+                  <Route path="/addstaff" element={<AddStaff />} />
+                  <Route path="/editstaff/:staffId" element={<AddStaff />} />
+                  <Route path="/lab" element={<Lab />} />
+                  <Route path="/lab/list" element={<LabList />} />
+                  <Route path="/lab/registration" element={<LabRegDialog />} />
+                  <Route path="/lab/all-tests" element={<AllLabTests />} />
+                  <Route
+                    path="/lab/create/:category/:type"
+                    element={<CreateLabReport />}
+                  />
+                  <Route
+                    path="/lab/blood-work/create"
+                    element={<CreateBloodWork />}
+                  />
+                  <Route path="/create-room" element={<CreateRoom />} />
+                  <Route
+                    path="/patients/discharge/:patientId?"
+                    element={<DischargeSummary />}
+                  />
+                  <Route
+                    path="/patients/admitted"
+                    element={<AdmittedPatients />}
+                  />
+                  <Route
+                    path="/patients/add-services/:patientId"
+                    element={<AddIPDServices />}
+                  />
+                  <Route path="/services" element={<Services />} />
+                  <Route
+                    path="/billings/create-service-bill"
+                    element={<CreateServiceBill />}
+                  />
+                  <Route path="/statistics" element={<Statistics />} />
+                  <Route
+                    path="/billings/edit/:billId"
+                    element={<CreateServiceBill />}
+                  />
+                  <Route
+                    path="/settings/hospital-info"
+                    element={<HospitalInfo />}
+                  />
+                  <Route path="/expenses" element={<Expenses />} />
+                  <Route path="/payments" element={<Payments />} />
+                  <Route
+                    path="/settings/customization"
+                    element={<Customization />}
+                  />
+                  <Route path="/search" element={<PatientSearch />} />
+                  <Route
+                    path="/opd-procedure/:patientId"
+                    element={<OPDProcedure />}
+                  />
+                  <Route
+                    path="/settings/lab-templates"
+                    element={<LabTemplatesManager />}
+                  />
+                  <Route
+                    path="/settings/create-test-template"
+                    element={<CreateTestTemplate />}
+                  />
+                  <Route
+                    path="/settings/printing-templates"
+                    element={<PrintingTemplates />}
+                  />
+                  <Route
+                    path="/settings/printing-templates/discharge-preview"
+                    element={<DischargeTemplatePreview />}
+                  />
+                  <Route
+                    path="/settings/printing-templates/header-preview"
+                    element={<HeaderTemplatePreview />}
+                  />
+                  <Route
+                    path="/settings/printing-templates/opd-preview"
+                    element={<OPDTemplatePreview />}
+                  />
+                  <Route
+                    path="/settings/printing-templates/opd-rx-preview"
+                    element={<OPDRxTemplatePreview />}
+                  />
+                  <Route
+                    path="/settings/printing-templates/lab-report-preview"
+                    element={<LabTemplatePreview />}
+                  />
+                  <Route
+                    path="/settings/prefix-settings"
+                    element={<PrefixSettings />}
+                  />
+                  <Route
+                    path="/patients/:ipdAdmissionId/babies"
+                    element={<ViewBabies />}
+                  />
+                  <Route path="patients/babies" element={<ViewAllBabies />} />
+                  <Route path="/babies/:babyId" element={<BabyDetails />} />
+                  <Route
+                    path="/settings/department"
+                    element={<DepartmentManger />}
+                  />
+                  <Route
+                    path="/settings/edit-test-template/:templateName"
+                    element={<EditTestTemplate />}
+                  />
+                </>
+              )}
+            </Routes>
+          </main>
+        </div>
       </ScrollArea>
     </div>
   );

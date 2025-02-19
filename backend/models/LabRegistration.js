@@ -14,7 +14,6 @@ const labRegistrationSchema = new mongoose.Schema(
   {
     // Basic Patient Info
     patientName: { type: String, required: true },
-    invoiceNumber:{type:String},
     age: { type: Number },
     gender: { type: String, enum: ["Male", "Female", "Other"] },
     contactNumber: { type: String },
@@ -99,7 +98,7 @@ labRegistrationSchema.statics.getNextLabNumber = async function (session) {
     { $inc: { sequence: 1 } },
     { upsert: true, new: true, setDefaultsOnInsert: true, session }
   );
-  return `LAB/${yearSuffix}/${doc.sequence.toString().padStart(4, "0")}`;
+  return `LAB/${yearSuffix}/${doc.sequence.toString()}`;
 };
 
 // Get current lab number without incrementing

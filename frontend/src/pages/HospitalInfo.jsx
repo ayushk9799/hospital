@@ -34,6 +34,7 @@ const HospitalInfo = () => {
   const { hospitalInfo, hospitalInfoStatus, updateStatus } = useSelector(
     (state) => state.hospital
   );
+  const moreLogosBlobs = useSelector((state) => state.hospital.moreLogosBlobs);
   const [formData, setFormData] = useState({
     name: "",
     logo: "",
@@ -51,6 +52,7 @@ const HospitalInfo = () => {
     pharmacyLogo: "",
     pharmacyExpiryThreshold: "",
     pharmacyItemCategories: [],
+    morelogos: [],
   });
 
   const [newCategory, setNewCategory] = useState("");
@@ -58,6 +60,8 @@ const HospitalInfo = () => {
   const [logoFile, setLogoFile] = useState(null);
   const [logo2Preview, setLogo2Preview] = useState(null);
   const [logo2File, setLogo2File] = useState(null);
+  const [moreLogoFiles, setMoreLogoFiles] = useState([]);
+  const [moreLogoPreview, setMoreLogoPreview] = useState([]);
 
   useEffect(() => {
     if (hospitalInfoStatus === "idle") {
@@ -111,6 +115,30 @@ const HospitalInfo = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleMoreLogosUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 0) {
+      setMoreLogoFiles((prevFiles) => [...prevFiles, ...files]);
+
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setMoreLogoPreview((prev) => [...prev, reader.result]);
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  };
+
+  const removeMoreLogo = (index) => {
+    setMoreLogoFiles((prev) => prev.filter((_, i) => i !== index));
+    setMoreLogoPreview((prev) => prev.filter((_, i) => i !== index));
+    setFormData((prev) => ({
+      ...prev,
+      morelogos: prev.morelogos.filter((_, i) => i !== index),
+    }));
   };
 
   const uploadLogo = async () => {
@@ -193,6 +221,53 @@ const HospitalInfo = () => {
     }
   };
 
+  const uploadMoreLogos = async () => {
+    if (!moreLogoFiles.length) return [];
+
+    const uploadedUrls = [];
+
+    for (const file of moreLogoFiles) {
+      try {
+        const response = await fetch(
+          `${Backend_URL}/api/hospitals/getUploadUrl`,
+          {
+            credentials: "include",
+          }
+        );
+
+        if (!response.ok) {
+          throw new Error("Failed to upload additional logo");
+        }
+
+        const data = await response.json();
+
+        const res = await fetch(data.url, {
+          method: "PUT",
+          body: file,
+          headers: {
+            "Content-Type": "image/png",
+          },
+        });
+
+        if (!res.ok) {
+          throw new Error("Failed to upload additional logo");
+        } else {
+          uploadedUrls.push(`${s3Domain}/${data.key}`);
+        }
+      } catch (error) {
+        console.error("Error uploading additional logo:", error);
+        toast({
+          title: "Additional Logo Upload Failed",
+          description:
+            "Failed to upload one or more additional logos. Please try again.",
+          variant: "destructive",
+        });
+      }
+    }
+
+    return uploadedUrls;
+  };
+
   const triggerLogoUpload = () => {
     document.getElementById("logo-upload").click();
   };
@@ -220,7 +295,20 @@ const HospitalInfo = () => {
         }
       }
 
+      if (moreLogoFiles.length > 0) {
+        const moreLogoUrls = await uploadMoreLogos();
+        if (moreLogoUrls.length > 0) {
+          updatedFormData.morelogos = [
+            ...(updatedFormData.morelogos || []),
+            ...moreLogoUrls,
+          ];
+        }
+      }
+
       await dispatch(updateHospitalInfo(updatedFormData)).unwrap();
+      setMoreLogoFiles([]);
+      setMoreLogoPreview([]);
+
       toast({
         variant: "success",
         title: "Updated Successfully",
@@ -346,11 +434,10 @@ const HospitalInfo = () => {
                 />
               </div>
               <div className="col-span-1">
-              <Label htmlFor="logo-upload" className="text-sm font-medium">
-                    Hospital Logo
-                  </Label>
+                <Label htmlFor="logo-upload" className="text-sm font-medium">
+                  Hospital Logo
+                </Label>
                 <div className="mb-6 grid grid-cols-2 gap-6">
-                  
                   <div
                     className="mt-2 flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-full sm:w-40 h-40 cursor-pointer"
                     onClick={triggerLogoUpload}
@@ -418,8 +505,71 @@ const HospitalInfo = () => {
                 </div>
 
                 <div className="mb-6">
-                 
-                 
+                  <Label className="text-sm font-medium mb-2 block">
+                    Additional Logos
+                  </Label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                    {/* Existing logos display */}
+                    {formData.morelogos?.map((logo, index) => (
+                      <div key={`existing-${index}`} className="relative">
+                        <img
+                          src={moreLogosBlobs[index] || logo}
+                          alt={`Additional Logo ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => removeMoreLogo(index)}
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    ))}
+
+                    {/* Preview of new uploads */}
+                    {moreLogoPreview.map((preview, index) => (
+                      <div key={`preview-${index}`} className="relative">
+                        <img
+                          src={preview}
+                          alt={`New Logo Preview ${index + 1}`}
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute top-2 right-2"
+                          onClick={() => removeMoreLogo(index)}
+                        >
+                          <X size={16} />
+                        </Button>
+                      </div>
+                    ))}
+
+                    {/* Upload button */}
+                    <div
+                      className="flex justify-center items-center rounded-lg border border-dashed border-gray-900/25 w-full h-32 cursor-pointer"
+                      onClick={() =>
+                        document.getElementById("more-logos-upload").click()
+                      }
+                    >
+                      <div className="text-center">
+                        <Upload className="h-8 w-8 text-gray-300 mx-auto" />
+                        <span className="mt-2 block text-sm font-semibold text-gray-900">
+                          Add More
+                        </span>
+                      </div>
+                    </div>
+                    <input
+                      id="more-logos-upload"
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleMoreLogosUpload}
+                      accept="image/*"
+                    />
+                  </div>
                 </div>
 
                 <CategoryField

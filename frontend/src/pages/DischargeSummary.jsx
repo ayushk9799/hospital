@@ -1893,6 +1893,7 @@ export default function DischargeSummary() {
               <TemplateLabReport
                 template={selectedTemplate}
                 patientData={patient}
+                onSave={handleSaveLabReport}
                 onClose={(reportData) => {
                   if (reportData) {
                     handleSaveLabReport(reportData);

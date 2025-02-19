@@ -1,102 +1,221 @@
 import React from "react";
 import { format } from "date-fns";
-import HospitalHeader from "../../../utils/print/HospitalHeader";
+import { useSelector } from "react-redux";
+// import { labReportTemplateStringExperiment } from "../../../templatesExperiments/labtemplateExperiment";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
-import { useSelector } from "react-redux";
+import { labReportTemplateStringDefault } from "../../../templates/labReportTemplate";
+
+// Define styles
+const styles = {
+  page: {
+    fontFamily: "Tinos, serif",
+    backgroundColor: "white",
+    width: "210mm",
+    minHeight: "297mm",
+    margin: "0 auto",
+    boxSizing: "border-box",
+    //padding: "10mm",
+    position: "relative",
+  },
+  headerContainer: {
+    display: "flex",
+    alignItems: "center",
+    gap: "1rem",
+    marginBottom: "1rem",
+   
+  },
+  header: {
+    marginBottom: "5px",
+    borderBottom: "1px solid #000000",
+    paddingBottom: "2px",
+  },
+  clinicName: {
+    fontSize: "24pt",
+    textAlign: "center",
+    fontFamily: "Tinos, serif",
+    marginBottom: "3mm",
+    color: "#1a5f7a",
+    fontWeight: "bold",
+  },
+  clinicInfo: {
+    fontSize: "10pt",
+    textAlign: "center",
+    color: "#333333",
+    marginBottom: "2mm",
+    flex: 1,
+  },
+  doctorInfo: {
+    fontSize: "12pt",
+    textAlign: "center",
+    marginTop: "3mm",
+    letterSpacing: "1pt",
+    color: "#1a5f7a",
+  },
+  reportContainer: {
+    marginTop: "5px",
+    borderTop: "2px solid #ecf0f1",
+    borderBottom: "2px solid #ecf0f1",
+  },
+  reportRow: {
+    display: "flex",
+    borderBottom: "1px solid #ecf0f1",
+    padding: "3px 0",
+    alignItems: "center",
+  },
+  reportRowHeader: {
+    backgroundColor: "#f8f9fa",
+    padding: "8px 0",
+  },
+  headerName: {
+   
+    fontSize: "11pt",
+    fontWeight: "bold",
+    paddingRight: "2mm",
+  },
+  headerUnit: {
+  
+    fontSize: "11pt",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  headerValue: {
+   
+    fontSize: "11pt",
+    fontWeight: "bold",
+    textAlign: "center",
+  },
+  headerRange: {
+    
+    fontSize: "11pt",
+    fontWeight: "bold",
+    textAlign: "right",
+  },
+  testName: {
+    
+    fontSize: "10pt",
+    color: "#2c3e50",
+    fontWeight: "bold",
+    paddingRight: "2mm",
+  },
+  testValue: {
+    width: "25%",
+    fontSize: "10pt",
+    textAlign: "center",
+  },
+  testUnit: {
+    width: "20%",
+    fontSize: "10pt",
+    textAlign: "center",
+  },
+  testRange: {
+    width: "25%",
+    fontSize: "10pt",
+    textAlign: "right",
+  },
+  patientDetails: {
+    marginTop: "5px",
+    padding: "8px",
+    backgroundColor: "#f8f9fa",
+    borderRadius: "2mm",
+    border: "1px solid #e2e8f0",
+  },
+  patientColumn: {
+    flex: 1,
+    padding: "0 2mm",
+  },
+  patientInfo: {
+    display: "flex",
+    marginBottom: "2mm",
+    alignItems: "center",
+  },
+  patientLabel: {
+    fontSize: "10pt",
+    fontWeight: "bold",
+    color: "#34495e",
+    marginRight: "2mm",
+    minWidth: "20mm",
+  },
+  patientValue: {
+    fontSize: "10pt",
+    color: "#2c3e50",
+  },
+  reportTitle: {
+    textAlign: "center",
+    margin: "10px 0",
+  },
+  reportTitleH2: {
+    margin: 0,
+    fontSize: "14pt",
+    fontWeight: "bold",
+    textDecoration: "underline",
+  },
+  footer: {
+    position: "absolute",
+    bottom: "20mm",
+    left: "10mm",
+    right: "10mm",
+   
+    paddingTop: "5mm",
+  },
+  footerText: {
+    fontSize: "8pt",
+    color: "#666",
+    marginBottom: "2mm",
+    textAlign: "center",
+  },
+  signature: {
+    marginTop: "10mm",
+    textAlign: "right",
+    paddingRight: "20mm",
+    borderTop: "1px solid #000",
+    paddingTop: "4mm",
+  },
+  signatureText: {
+    fontSize: "10pt",
+    fontWeight: "bold",
+  },
+};
+
 const LabReportPDF = React.forwardRef(
   ({ reportData, patientData, hospital }, ref) => {
-    const reportEntries = Object.entries(reportData.report);
     const headerTemplateStrings = useSelector(
       (state) => state.templates.headerTemplateArray
     );
+    const labReportTemplate = useSelector(
+      (state) => state.templates.labReportUiTemplate
+    );
+
     const headerTemplateString =
       headerTemplateStrings?.length > 0
         ? headerTemplateStrings[0].value
         : headerTemplateStringDefault;
+
     const HospitalHeader = createDynamicComponentFromString(
       headerTemplateString || headerTemplateStringDefault
     );
-    return (
-      <div ref={ref} className="page">
-        <HospitalHeader hospitalInfo={hospital} />
 
-        <div className="patient-details">
-          <div className="patient-column">
-            <div className="patient-info">
-              <span className="patient-label">Name:</span>
-              <span className="patient-value">{patientData?.patientName}</span>
-            </div>
-            <div className="patient-info">
-              <span className="patient-label">Age:</span>
-              <span className="patient-value">{patientData?.patient?.age||patientData.age}</span>
-            </div>
-          </div>
-          <div className="patient-column">
-            <div className="patient-info">
-              <span className="patient-label">Gender:</span>
-              <span className="patient-value">
-                {patientData?.patient?.gender||patientData.gender}
-              </span>
-            </div>
-            <div className="patient-info">
-              <span className="patient-label">Reg No/Lab No:</span>
-              <span className="patient-value">
-                {patientData?.registrationNumber||patientData.labNumber}
-              </span>
-            </div>
-          </div>
-          <div className="patient-column">
-            <div className="patient-info">
-              <span className="patient-label">Contact:</span>
-              <span className="patient-value">
-                {patientData?.contactNumber}
-              </span>
-            </div>
-            <div className="patient-info">
-              <span className="patient-label">Date:</span>
-              <span className="patient-value">
-                {format(reportData?.date, "dd/MM/yyyy")}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div className="report-title">
-          <h2>{reportData?.completeType}</h2>
-        </div>
-        <div className="report-container">
-          {reportEntries.some(
-            ([_, value]) => value.unit || value.normalRange
-          ) && (
-            <div className="report-row header">
-              <div className="header-name">Test Name</div>
-              <div className="header-value">Result</div>
-              <div className="header-unit">Unit</div>
-              <div className="header-range">Normal Range</div>
-            </div>
-          )}
-          {reportEntries
-            .filter(([_, value]) => value.value)
-            .map(([key, value]) => (
-              <div className="report-row" key={key}>
-                {value.unit || value.normalRange ? (
-                  <>
-                    <div className="test-name">{key}</div>
-                    <div className="test-value">{value.value}</div>
-                    <div className="test-unit">{value.unit}</div>
-                    <div className="test-range">{value.normalRange}</div>
-                  </>
-                ) : (
-                  <div className="col-span-full">
-                    <div className="font-bold mb-1">{key}</div>
-                    <div className="whitespace-pre-wrap">{value.value}</div>
-                  </div>
-                )}
-              </div>
-            ))}
-        </div>
-      </div>
+    // Create a function that returns JSX from the template string
+    const templateFunction = new Function(
+      "React",
+      "HospitalHeader",
+      "styles",
+      `return (${labReportTemplate||labReportTemplateStringDefault});`
     );
+
+    try {
+      // Get the component function
+      const ComponentFunction = templateFunction(React, HospitalHeader, styles);
+      // Execute the component function with the props
+      return ComponentFunction(reportData, patientData, hospital, ref);
+    } catch (error) {
+      console.error("Error rendering dynamic lab report:", error);
+      return React.createElement(
+        "div",
+        null,
+        "Error rendering lab report template"
+      );
+    }
   }
 );
 

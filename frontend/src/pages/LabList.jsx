@@ -4,6 +4,8 @@ import { useDispatch, useSelector } from "react-redux";
 import {
   fetchLabRegistrations,
   updateTestStatus,
+  searchLabRegistrations,
+  clearSearchResults,
 } from "../redux/slices/labSlice";
 import {
   Table,
@@ -55,6 +57,7 @@ import {
 } from "../components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Label } from "../components/ui/label";
+import LabPaymentDialog from "../components/custom/registration/LabPaymentDialog";
 
 export default function LabList() {
   const navigate = useNavigate();
@@ -68,12 +71,17 @@ export default function LabList() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [selectedTestForStatus, setSelectedTestForStatus] = useState(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [selectedLabForPayment, setSelectedLabForPayment] = useState(null);
+  const [openDropdownId, setOpenDropdownId] = useState(null);
 
   const {
     registrations,
     registrationsStatus,
     error,
     updateTestStatus: updateStatus,
+    searchResults,
+    searchStatus,
   } = useSelector((state) => state.lab);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
@@ -93,17 +101,34 @@ export default function LabList() {
   };
 
   useEffect(() => {
-    const filtered = registrations.filter(
-      (test) =>
-        test.patientName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        test.labNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        test.contactNumber?.includes(searchTerm) ||
-        test.labTests?.some((t) =>
-          t.name.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-    );
-    setFilteredTests(filtered);
-  }, [searchTerm, registrations]);
+    if (searchTerm) {
+      const filtered = registrations.filter(
+        (test) =>
+          test.labNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          test.registrationNumber
+            ?.toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          test.contactNumber?.includes(searchTerm)
+      );
+
+      if (filtered.length > 0) {
+        setFilteredTests(filtered);
+      } else {
+        // If no local results, search in backend
+        dispatch(searchLabRegistrations(searchTerm));
+      }
+    } else {
+      setFilteredTests(registrations);
+      dispatch(clearSearchResults());
+    }
+  }, [searchTerm, registrations, dispatch]);
+
+  // Add new useEffect to handle search results
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      setFilteredTests(searchResults);
+    }
+  }, [searchResults]);
 
   const getDateRange = () => {
     const today = new Date();
@@ -208,6 +233,12 @@ export default function LabList() {
     }
   };
 
+  const handlePayments = (test) => {
+    setSelectedLabForPayment(test);
+    setShowPaymentDialog(true);
+    setOpenDropdownId(null);
+  };
+
   const TestCard = ({ test }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
@@ -237,6 +268,9 @@ export default function LabList() {
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => handleViewDetails(test)}>
                   Print Bills
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handlePayments(test)}>
+                  Payments
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -385,13 +419,18 @@ export default function LabList() {
           hospitalInfo={hospitalInfo}
         />
         <TestStatusModal />
+        <LabPaymentDialog
+          isOpen={showPaymentDialog}
+          setIsOpen={setShowPaymentDialog}
+          labData={selectedLabForPayment}
+        />
 
         <div className="flex flex-col space-y-4 mb-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="w-full md:w-1/2 relative">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tests..."
+                placeholder="Search using Lab Number, UHID No or Contact Number..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8"
@@ -484,10 +523,13 @@ export default function LabList() {
                 <TableRow>
                   <TableHead>Lab Number</TableHead>
                   <TableHead>Patient Name</TableHead>
+                  <TableHead>Contact Number</TableHead>
                   <TableHead>Registration Date</TableHead>
                   <TableHead>Tests</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Total Amount</TableHead>
+                  <TableHead>Paid Amount</TableHead>
+                  <TableHead>Balance Due</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -495,7 +537,14 @@ export default function LabList() {
                 {filteredTests.map((test) => (
                   <TableRow key={test._id}>
                     <TableCell>{test.labNumber}</TableCell>
-                    <TableCell>{test.patientName}</TableCell>
+                    <TableCell className="font-bold">
+                      {`${test.patientName} ${
+                        test.registrationNumber
+                          ? `(${test.registrationNumber})`
+                          : ""
+                      }`}
+                    </TableCell>
+                    <TableCell>{test.contactNumber}</TableCell>
                     <TableCell>
                       {format(new Date(test.bookingDate), "dd/MM/yyyy")}
                     </TableCell>
@@ -521,8 +570,14 @@ export default function LabList() {
                         {test.status}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="font-bold text-black">
                       ₹{test.paymentInfo.totalAmount.toLocaleString("en-IN")}
+                    </TableCell>
+                    <TableCell className="font-bold text-green-600">
+                      ₹{test.paymentInfo.amountPaid?.toLocaleString("en-IN")}
+                    </TableCell>
+                    <TableCell className="font-bold text-red-600">
+                      ₹{test.paymentInfo.balanceDue?.toLocaleString("en-IN")}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -538,17 +593,17 @@ export default function LabList() {
                             Print Bills
                           </DropdownMenuItem>
                           <DropdownMenuItem
+                            onClick={() => handlePayments(test)}
+                          >
+                            Payments
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
                             onClick={() =>
                               navigate("/lab", { state: { patientData: test } })
                             }
                           >
                             Make Report
                           </DropdownMenuItem>
-                          {/* <DropdownMenuItem
-                            onClick={() => handleExistingBills(test)}
-                          >
-                            Print Bill
-                          </DropdownMenuItem> */}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

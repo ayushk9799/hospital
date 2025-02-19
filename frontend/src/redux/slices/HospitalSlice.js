@@ -38,12 +38,27 @@ export const fetchHospitalInfo = createLoadingAsyncThunk(
       }
     }
 
+    // Handle morelogos array
+    if (hospitalData.morelogos && hospitalData.morelogos.length > 0) {
+      hospitalData.moreLogosBlobs = [];
+      for (const logoUrl of hospitalData.morelogos) {
+        try {
+          const imageResponse = await fetch(logoUrl);
+          const blob = await imageResponse.blob();
+          hospitalData.moreLogosBlobs.push(URL.createObjectURL(blob));
+        } catch (error) {
+          console.error("Failed to fetch additional logo:", error);
+          hospitalData.moreLogosBlobs.push(null);
+        }
+      }
+    }
+
     return hospitalData;
   },
   { useGlobalLoading: true }
 );
 
-// New async thunk for updating hospital info  ///need to check 
+// New async thunk for updating hospital info  ///need to check
 export const updateHospitalInfo = createLoadingAsyncThunk(
   "hospital/updateHospitalInfo",
   async (hospitalData) => {
@@ -61,6 +76,7 @@ export const updateHospitalInfo = createLoadingAsyncThunk(
       throw new Error("Failed to update hospital data");
     }
     const updatedData = await response.json();
+
     // Fetch the new image if URL exists
     if (updatedData.logo) {
       try {
@@ -70,6 +86,33 @@ export const updateHospitalInfo = createLoadingAsyncThunk(
       } catch (error) {
         console.error("Failed to fetch updated hospital logo:", error);
         updatedData.hospitalLogoBlob = null;
+      }
+    }
+
+    // Handle logo2
+    if (updatedData.logo2) {
+      try {
+        const imageResponse = await fetch(updatedData.logo2);
+        const blob = await imageResponse.blob();
+        updatedData.hospitalLogo2Blob = URL.createObjectURL(blob);
+      } catch (error) {
+        console.error("Failed to fetch updated hospital logo2:", error);
+        updatedData.hospitalLogo2Blob = null;
+      }
+    }
+
+    // Handle morelogos array
+    if (updatedData.morelogos && updatedData.morelogos.length > 0) {
+      updatedData.moreLogosBlobs = [];
+      for (const logoUrl of updatedData.morelogos) {
+        try {
+          const imageResponse = await fetch(logoUrl);
+          const blob = await imageResponse.blob();
+          updatedData.moreLogosBlobs.push(URL.createObjectURL(blob));
+        } catch (error) {
+          console.error("Failed to fetch updated additional logo:", error);
+          updatedData.moreLogosBlobs.push(null);
+        }
       }
     }
 
@@ -84,6 +127,7 @@ const hospitalSlice = createSlice({
     hospitalInfo: null,
     hospitalLogoBlob: null,
     hospitalLogo2Blob: null, // Added for second logo
+    moreLogosBlobs: [], // Added for additional logos
     hospitalInfoStatus: "idle",
     updateStatus: "idle",
     error: null,
@@ -98,7 +142,14 @@ const hospitalSlice = createSlice({
         URL.revokeObjectURL(state.hospitalLogo2Blob);
         state.hospitalLogo2Blob = null;
       }
-    }
+      // Cleanup moreLogosBlobs
+      if (state.moreLogosBlobs && state.moreLogosBlobs.length > 0) {
+        state.moreLogosBlobs.forEach((blob) => {
+          if (blob) URL.revokeObjectURL(blob);
+        });
+        state.moreLogosBlobs = [];
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -111,12 +162,20 @@ const hospitalSlice = createSlice({
         if (state.hospitalLogo2Blob) {
           URL.revokeObjectURL(state.hospitalLogo2Blob);
         }
+        // Cleanup moreLogosBlobs
+        if (state.moreLogosBlobs && state.moreLogosBlobs.length > 0) {
+          state.moreLogosBlobs.forEach((blob) => {
+            if (blob) URL.revokeObjectURL(blob);
+          });
+          state.moreLogosBlobs = [];
+        }
       })
       .addCase(fetchHospitalInfo.fulfilled, (state, action) => {
         state.hospitalInfoStatus = "succeeded";
         state.hospitalInfo = action.payload;
         state.hospitalLogoBlob = action.payload.hospitalLogoBlob;
         state.hospitalLogo2Blob = action.payload.hospitalLogo2Blob;
+        state.moreLogosBlobs = action.payload.moreLogosBlobs || [];
       })
       .addCase(fetchHospitalInfo.rejected, (state, action) => {
         state.hospitalInfoStatus = "failed";
@@ -131,12 +190,20 @@ const hospitalSlice = createSlice({
         if (state.hospitalLogo2Blob) {
           URL.revokeObjectURL(state.hospitalLogo2Blob);
         }
+        // Cleanup moreLogosBlobs
+        if (state.moreLogosBlobs && state.moreLogosBlobs.length > 0) {
+          state.moreLogosBlobs.forEach((blob) => {
+            if (blob) URL.revokeObjectURL(blob);
+          });
+          state.moreLogosBlobs = [];
+        }
       })
       .addCase(updateHospitalInfo.fulfilled, (state, action) => {
         state.updateStatus = "succeeded";
         state.hospitalInfo = action.payload.hospital;
         state.hospitalLogoBlob = action.payload.hospital.hospitalLogoBlob;
         state.hospitalLogo2Blob = action.payload.hospital.hospitalLogo2Blob;
+        state.moreLogosBlobs = action.payload.hospital.moreLogosBlobs || [];
       })
       .addCase(updateHospitalInfo.rejected, (state, action) => {
         state.updateStatus = "failed";
@@ -146,7 +213,10 @@ const hospitalSlice = createSlice({
 });
 
 export const { cleanupLogoBlob } = hospitalSlice.actions;
-export const selectHospitalLogoBlob = (state) => state.hospital.hospitalLogoBlob;
-export const selectHospitalLogo2Blob = (state) => state.hospital.hospitalLogo2Blob; // New selector for logo2
+export const selectHospitalLogoBlob = (state) =>
+  state.hospital.hospitalLogoBlob;
+export const selectHospitalLogo2Blob = (state) =>
+  state.hospital.hospitalLogo2Blob; // New selector for logo2
+export const selectMoreLogosBlobs = (state) => state.hospital.moreLogosBlobs; // New selector for moreLogos blobs
 
 export default hospitalSlice.reducer;

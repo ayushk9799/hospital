@@ -179,6 +179,7 @@ const templatesSlice = createSlice({
         state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
         state.consentFormTemplateArray = action.payload.consentFormArray;
         state.birthCertificateTemplate = action.payload.birthCertificateTemplate;
+        state.labReportUiTemplate = action.payload.labReportUiTemplate;
 
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
