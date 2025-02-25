@@ -794,7 +794,9 @@ const Billings = () => {
                         }
                       }}
                     >
-                      <TableCell className="font-bold">{bill.invoiceNumber || "N/A"}</TableCell>
+                      <TableCell className="font-bold">
+                        {bill.invoiceNumber || "N/A"}
+                      </TableCell>
                       <TableCell>{bill.patientInfo?.name}</TableCell>
                       <TableCell>
                         {bill?.patient?.registrationNumber ||

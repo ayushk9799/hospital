@@ -431,7 +431,9 @@ const Payments = () => {
                           <DateRangePicker
                             from={tempDateRange.from}
                             to={tempDateRange.to}
-                            onSelect={(range) => setTempDateRange(range)}
+                            onSelect={(range) => {
+                              setTempDateRange(range);
+                            }}
                             onSearch={handleDateRangeSearch}
                             onCancel={handleDateRangeCancel}
                           />

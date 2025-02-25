@@ -139,6 +139,7 @@ const initialState = {
   labTestsTemplate: [],
   headerTemplateArray: [],
   diagnosisTemplate: [],
+  mergeTemplate:"",
   dischargeSummaryTemplateArray: [],
   opdPrescriptionTemplateArray: [],
   opdRxTemplateArray: [],
@@ -175,6 +176,7 @@ const templatesSlice = createSlice({
         state.opdRxTemplateArray = action.payload.opdRxTemplateArray || [];
         state.comorbidities = action.payload.comorbidities;
         state.medicinelist = action.payload.medicinelist;
+        state.mergeTemplate = action.payload.mergeTemplate;
         state.serviceBillCollections = action.payload.service_collections;
         state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
         state.consentFormTemplateArray = action.payload.consentFormArray;

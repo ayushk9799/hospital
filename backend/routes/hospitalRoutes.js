@@ -132,6 +132,9 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     if (req.body.labTestsTemplate) {
       template.labTestsTemplate.push(req.body.labTestsTemplate);
     }
+    if (req.body.mergeTemplate) {
+      template.mergeTemplate = req.body.mergeTemplate;
+    }
     if (req.body.headerTemplate) {
       template.headerTemplateArray.push(req.body.headerTemplate);
     }

@@ -66,6 +66,18 @@ export default function PrintingTemplates() {
             Preview and customize laboratory report template
           </span>
         </Button>
+
+        <Button
+          onClick={() =>
+            navigate("/settings/printing-templates/merge-template-preview")
+          }
+          className="w-full p-6 h-auto flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"
+        >
+          <span className="text-lg">Merge Template Report</span>
+          <span className="text-sm text-gray-200">
+            Preview and customize merge template report
+          </span>
+        </Button>
       </div>
     </div>
   );

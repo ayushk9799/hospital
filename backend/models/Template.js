@@ -10,6 +10,7 @@ const templateSchema = new mongoose.Schema({
     },
   ],
   headerTemplate: String,
+  mergeTemplate: String,
   dischargeSummaryTemplate: String,
   opdPrescriptionTemplate: String,
   opdRxTemplate: String,

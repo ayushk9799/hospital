@@ -68,7 +68,6 @@ import OPDPrescriptionPrint from "../components/custom/print/OPDPrescriptionPrin
 import ConsentFormPrint from "../components/custom/print/ConsentFormPrint";
 import EditPatientDialog from "../components/custom/patients/EditPatientDialog";
 
-
 export default function Patients() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -176,7 +175,9 @@ export default function Patients() {
     const navigate = useNavigate();
 
     const handleDischarge = (patient) => {
-      navigate(`/patients/discharge/${patient._id}`, { state: { ignoreList: true, dischargeData: patient } });
+      navigate(`/patients/discharge/${patient._id}`, {
+        state: { ignoreList: true, dischargeData: patient },
+      });
     };
 
     const getStatusBadgeVariant = (status) => {
@@ -253,7 +254,8 @@ export default function Patients() {
                     {patient.assignedRoom?.roomNumber || "--"}
                   </TableCell> */}
                   <TableCell>
-                    {format(new Date(patient.bookingDate), "dd MMM")} {" "} {patient?.bookingTime}
+                    {format(new Date(patient.bookingDate), "dd MMM")}{" "}
+                    {patient?.bookingTime}
                   </TableCell>
                   <TableCell>
                     {patient.dateDischarged
@@ -272,7 +274,7 @@ export default function Patients() {
               )}
               {type === "OPD" && (
                 <TableCell>
-                  {dateFilter === "Today" 
+                  {dateFilter === "Today"
                     ? format(new Date(patient.createdAt), "hh:mm a")
                     : format(new Date(patient.bookingDate), "dd-MM-yyyy")}
                 </TableCell>
@@ -297,13 +299,14 @@ export default function Patients() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    
                     <DropdownMenuItem
                       onClick={() => handleExistingBills(patient)}
                     >
                       Bills
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEditPatient(patient)}>
+                    <DropdownMenuItem
+                      onClick={() => handleEditPatient(patient)}
+                    >
                       Edit Patient
                     </DropdownMenuItem>
                     {patient.type === "OPD" && (
@@ -400,7 +403,9 @@ export default function Patients() {
                     >
                       Bills
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleEditPatient(patient)}>
+                    <DropdownMenuItem
+                      onClick={() => handleEditPatient(patient)}
+                    >
                       Edit Patient
                     </DropdownMenuItem>
                     {patient.type === "IPD" && (
@@ -501,10 +506,17 @@ export default function Patients() {
           open={isIPDDialogOpen}
           onOpenChange={setIsIPDDialogOpen}
         />
-        <EditPatientDialog 
-          open={isEditDialogOpen} 
+        <EditPatientDialog
+          open={isEditDialogOpen}
           setOpen={setIsEditDialogOpen}
-          patientData={{...selectedPatient?.patient, registrationNumber : selectedPatient?.registrationNumber, type : selectedPatient?.type, visitID : selectedPatient?._id, guardianName : selectedPatient?.guardianName, relation : selectedPatient?.relation}}
+          patientData={{
+            ...selectedPatient?.patient,
+            registrationNumber: selectedPatient?.registrationNumber,
+            type: selectedPatient?.type,
+            visitID: selectedPatient?._id,
+            guardianName: selectedPatient?.guardianName,
+            relation: selectedPatient?.relation,
+          }}
         />
         <Tabs
           defaultValue="OPD"
@@ -613,7 +625,9 @@ export default function Patients() {
                             <DateRangePicker
                               from={tempDateRange.from}
                               to={tempDateRange.to}
-                              onSelect={(range) => setTempDateRange(range)}
+                              onSelect={(range) => {
+                                setTempDateRange(range);
+                              }}
                               onSearch={handleDateRangeSearch}
                               onCancel={handleDateRangeCancel}
                             />

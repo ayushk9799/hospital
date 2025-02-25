@@ -64,6 +64,7 @@ import DischargeTemplatePreview from "./pages/DischargeTemplatePreview";
 import HeaderTemplatePreview from "./pages/HeaderTemplatePreview";
 import OPDTemplatePreview from "./pages/OPDTemplatePreview";
 import OPDRxTemplatePreview from "./pages/OPDRxTemplatePreview";
+import MergeTemplatePreview from "./pages/MergeTemplatePreview";
 import PrefixSettings from "./pages/PrefixSettings";
 import ViewBabies from "./pages/ViewBabies";
 import BabyDetails from "./pages/BabyDetails";
@@ -259,6 +260,10 @@ const AppContent = () => {
                   <Route
                     path="/settings/printing-templates/lab-report-preview"
                     element={<LabTemplatePreview />}
+                  />
+                  <Route
+                    path="/settings/printing-templates/merge-template-preview"
+                    element={<MergeTemplatePreview />}
                   />
                   <Route
                     path="/settings/prefix-settings"

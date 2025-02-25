@@ -315,7 +315,6 @@ const CreateServiceBill = ({
     );
 
     const subtotal = currentServicesTotal + baseAmount;
-
     let discountValue = 0;
     if (additionalDiscount !== "") {
       if (additionalDiscountType === "amount") {

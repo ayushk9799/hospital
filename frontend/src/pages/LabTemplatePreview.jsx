@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { useDispatch } from "react-redux";
  import { labReportTemplateStringDefault } from "../templates/labReportTemplate";
 import { updateTemplate } from "../redux/slices/templatesSlice";
-import { labReportTemplateStringExperiment } from "../templatesExperiments/labtemplateExperiment";
+import { labReportTemplateStringExperiment, mergedLabReportTemplateStringExperiment } from "../templatesExperiments/labtemplateExperiment";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 import { Input } from "../components/ui/input";
 import { cn } from "../lib/utils";
@@ -29,8 +29,8 @@ export default function LabTemplatePreview() {
     report: {
       "WHITE CELL COUNT(TC)": {
         value: "11600",
-        unit: "/Cu mm",
-        normalRange: "4000-11000",
+        unit: "million/cumm",
+        normalRange: "",
       },
       "RBC (RED BLOOD CELLS)": {
         value: "4.22",

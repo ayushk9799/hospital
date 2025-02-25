@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useToast } from "../hooks/use-toast";
 import {
@@ -17,6 +17,9 @@ import CreateLabReport from "./CreateLabReport";
 import TemplateLabReport from "./TemplateLabReport";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { Checkbox } from "../components/ui/checkbox";
+import MergedLabReportPDF from "../components/custom/reports/MergedLabReportPDF";
+import { useReactToPrint } from "react-to-print";
 
 const Lab = () => {
   const location = useLocation();
@@ -26,11 +29,24 @@ const Lab = () => {
     (state) => state.templates
   );
   const navigate = useNavigate();
+  const  hospital  = useSelector((state) => state.hospital.hospitalInfo);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [patientData, setPatientData] = useState(null);
   const [selectedTest, setSelectedTest] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
+  const [selectedReports, setSelectedReports] = useState([]);
+  const [showMergedReport, setShowMergedReport] = useState(false);
+  const [merging, setMerging] = useState(false);
+  const componentRef = useRef(null);
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+    onBeforeGetContent: () => {
+      return new Promise((resolve) => {
+        setTimeout(resolve, 250);
+      });
+    },
+  });
 
   useEffect(() => {
     if (status === "idle") {
@@ -74,6 +90,19 @@ const Lab = () => {
     setSelectedTest(null);
   };
 
+  const handleReportSelection = (report) => {
+    setSelectedReports((prev) => {
+      const isSelected = prev.some((r) => r.name === report.name);
+      if (isSelected) {
+        return prev.filter((r) => r.name !== report.name);
+      } else {
+        return [...prev, report];
+      }
+    });
+  };
+
+ 
+
   const sortedLabTestsTemplate = React.useMemo(() => {
     if (!labTestsTemplate || !patientData?.labTests) return labTestsTemplate;
 
@@ -108,20 +137,25 @@ const Lab = () => {
     <div className="container mx-auto p-4 flex h-screen">
       <div className="flex flex-col md:flex-row gap-8 w-full h-full">
         <div className="w-full md:w-1/3 flex flex-col h-full">
-          <div className="flex items-center gap-4 mb-6">
+          <div className="flex items-center gap-1 mb-3">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <div className="text-3xl font-bold">Laboratory Reports</div>
+            <div className="text-xl font-bold">Laboratory Reports</div>
           </div>
 
           {/* Patient Info */}
           {patientData && (
-            <div className="mb-4 p-4 bg-white rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-2">
-                Patient: {patientData.patientName}
-              </h2>
-              <p className="text-gray-600">Lab No: {patientData.labNumber}</p>
+            <div className="mb-4 p-2 bg-white rounded-lg shadow">
+              <div className="flex items-baseline ">
+                <div className="text-xl font-semibold">
+                  Name: {patientData.patientName}
+                </div>
+                <div className="text-gray-600">
+                  Lab No: {patientData.labNumber}
+                </div>
+              </div>
+
               <div className="mt-2">
                 <h3 className="font-medium mb-1">Ordered Tests:</h3>
                 <ul className="list-disc list-inside">
@@ -158,32 +192,80 @@ const Lab = () => {
               {/* Display labTestsTemplate */}
               {status === "succeeded" && sortedLabTestsTemplate && (
                 <div className="mb-4">
-                  <h2 className="text-xl font-bold mb-4">Lab Test Templates</h2>
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-lg font-bold">Lab Test Templates</h2>
+                    {patientData?.labTests?.length > 0 && (
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          onClick={() => setMerging(!merging)}
+                        >
+                          {merging ? "Cancel Merge" : "Select Reports"}
+                        </Button>
+                        {merging && (
+                          <Button onClick={handlePrint}>
+                            Merge & Print
+                          </Button>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   <div className="space-y-4">
-                    {sortedLabTestsTemplate.map((template) => (
-                      <Card
-                        key={template._id}
-                        className={`cursor-pointer hover:bg-gray-50 transition-colors ${
-                          patientData?.labTests?.some(
-                            (test) =>
-                              test.name.toLowerCase() ===
-                              template.name.toLowerCase()
-                          )
-                            ? "border-2 border-blue-500"
-                            : ""
-                        }`}
-                        onClick={() => handleTemplateSelection(template)}
-                      >
-                        <CardHeader>
-                          <CardTitle>{template.name.toUpperCase()}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                          <p className="text-sm text-gray-600">
-                            Fields: {Object.keys(template.fields).length}
-                          </p>
-                        </CardContent>
-                      </Card>
-                    ))}
+                    {sortedLabTestsTemplate.map((template) => {
+                      const isSelected = selectedReports.some(
+                        (report) =>
+                          report.name?.toLowerCase() ===
+                          template.name?.toLowerCase()
+                      );
+                      const hasReport = patientData?.labReports?.some(
+                        (report) =>
+                          report?.name?.toLowerCase() ===
+                          template?.name?.toLowerCase()
+                      );
+
+                      return (
+                        <Card
+                          key={template._id}
+                          className={`cursor-pointer hover:bg-gray-50 transition-colors p-0 ${
+                            patientData?.labTests?.some(
+                              (test) =>
+                                test.name.toLowerCase() ===
+                                template.name.toLowerCase()
+                            )
+                              ? "border-2 border-blue-500"
+                              : ""
+                          }`}
+                        >
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 ">
+                            <CardTitle>{`${template.name.toUpperCase()} (Fields: ${
+                              Object.keys(template.fields).length
+                            })`}</CardTitle>
+                            {hasReport && merging && (
+                              <Checkbox
+                                checked={isSelected}
+                                onCheckedChange={() =>
+                                  handleReportSelection(
+                                    patientData.labReports.find(
+                                      (report) =>
+                                        report?.name?.toLowerCase() ===
+                                        template?.name?.toLowerCase()
+                                    )
+                                  )
+                                }
+                              />
+                            )}
+                          </CardHeader>
+                          <CardContent>
+                            <Button
+                              className="mt-1 p-1"
+                              onClick={() => handleTemplateSelection(template)}
+                            >
+                              {hasReport ? "View Report" : "Create Report"}
+                            </Button>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -228,7 +310,7 @@ const Lab = () => {
         <div className="w-full md:w-2/3 h-full">
           <ScrollArea className="h-full">
             <div className="pr-4">
-              {selectedTemplate ? (
+              { selectedTemplate ? (
                 <TemplateLabReport
                   template={selectedTemplate}
                   patientData={patientData}
@@ -255,6 +337,15 @@ const Lab = () => {
           </ScrollArea>
         </div>
       </div>
+      <div className="max-w-[210mm] hidden mx-auto bg-white shadow-lg print:shadow-none print:block print:mx-0">
+                    <div ref={componentRef}>
+                      <MergedLabReportPDF
+                        reportsData={selectedReports}
+                        patientData={patientData}
+                        hospital={hospital}
+                      />
+                    </div>
+                  </div>
     </div>
   );
 };

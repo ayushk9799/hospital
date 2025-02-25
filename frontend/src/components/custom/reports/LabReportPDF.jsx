@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
-// import { labReportTemplateStringExperiment } from "../../../templatesExperiments/labtemplateExperiment";
+import { labReportTemplateStringExperiment } from "../../../templatesExperiments/labtemplateExperiment";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { labReportTemplateStringDefault } from "../../../templates/labReportTemplate";
@@ -15,20 +15,28 @@ const styles = {
     minHeight: "297mm",
     margin: "0 auto",
     boxSizing: "border-box",
-    //padding: "10mm",
     position: "relative",
+    // Add print-specific styles for page breaks
+    "@media print": {
+      pageBreakInside: "auto",
+      pageBreakAfter: "auto",
+      pageBreakBefore: "auto",
+    },
   },
   headerContainer: {
     display: "flex",
     alignItems: "center",
     gap: "1rem",
     marginBottom: "1rem",
-   
+    // Prevent breaking header across pages
+    pageBreakInside: "avoid",
+    breakInside: "avoid-page",
   },
   header: {
     marginBottom: "5px",
     borderBottom: "1px solid #000000",
     paddingBottom: "2px",
+    pageBreakAfter: "avoid",
   },
   clinicName: {
     fontSize: "24pt",
@@ -56,43 +64,42 @@ const styles = {
     marginTop: "5px",
     borderTop: "2px solid #ecf0f1",
     borderBottom: "2px solid #ecf0f1",
+    paddingBottom: "60mm", // Add padding to prevent overlap with footer
   },
   reportRow: {
     display: "flex",
     borderBottom: "1px solid #ecf0f1",
     padding: "3px 0",
     alignItems: "center",
+    pageBreakInside: "avoid", // Prevent breaking inside rows
+    breakInside: "avoid-page",
   },
   reportRowHeader: {
     backgroundColor: "#f8f9fa",
     padding: "8px 0",
+    pageBreakAfter: "avoid", // Don't break after header row
   },
   headerName: {
-   
     fontSize: "11pt",
     fontWeight: "bold",
     paddingRight: "2mm",
   },
   headerUnit: {
-  
     fontSize: "11pt",
     fontWeight: "bold",
     textAlign: "center",
   },
   headerValue: {
-   
     fontSize: "11pt",
     fontWeight: "bold",
     textAlign: "center",
   },
   headerRange: {
-    
     fontSize: "11pt",
     fontWeight: "bold",
     textAlign: "right",
   },
   testName: {
-    
     fontSize: "10pt",
     color: "#2c3e50",
     fontWeight: "bold",
@@ -119,6 +126,8 @@ const styles = {
     backgroundColor: "#f8f9fa",
     borderRadius: "2mm",
     border: "1px solid #e2e8f0",
+    pageBreakInside: "avoid", // Keep patient details together
+    breakInside: "avoid-page",
   },
   patientColumn: {
     flex: 1,
@@ -143,6 +152,7 @@ const styles = {
   reportTitle: {
     textAlign: "center",
     margin: "10px 0",
+    pageBreakAfter: "avoid", // Don't break between title and content
   },
   reportTitleH2: {
     margin: 0,
@@ -152,11 +162,14 @@ const styles = {
   },
   footer: {
     position: "absolute",
-    bottom: "20mm",
+    bottom: "7mm",
     left: "10mm",
     right: "10mm",
-   
     paddingTop: "5mm",
+    "@media print": {
+      position: "fixed", // Fixed position in print mode
+      backgroundColor: "white", // Ensure footer has background
+    },
   },
   footerText: {
     fontSize: "8pt",
@@ -185,7 +198,6 @@ const LabReportPDF = React.forwardRef(
     const labReportTemplate = useSelector(
       (state) => state.templates.labReportUiTemplate
     );
-
     const headerTemplateString =
       headerTemplateStrings?.length > 0
         ? headerTemplateStrings[0].value
@@ -194,6 +206,9 @@ const LabReportPDF = React.forwardRef(
     const HospitalHeader = createDynamicComponentFromString(
       headerTemplateString || headerTemplateStringDefault
     );
+
+    // Add general print styles to the document
+   
 
     // Create a function that returns JSX from the template string
     const templateFunction = new Function(
@@ -204,6 +219,7 @@ const LabReportPDF = React.forwardRef(
     );
 
     try {
+     
       // Get the component function
       const ComponentFunction = templateFunction(React, HospitalHeader, styles);
       // Execute the component function with the props

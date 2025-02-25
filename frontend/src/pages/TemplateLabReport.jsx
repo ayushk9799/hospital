@@ -10,7 +10,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "../components/ui/popover";
-import { format, parse } from "date-fns";
+import { format } from "date-fns";
 import { Backend_URL } from "../assets/Data";
 import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
@@ -19,6 +19,7 @@ import SearchSuggestion from "../components/custom/registration/CustomSearchSugg
 import { useSelector, useDispatch } from "react-redux";
 import { addLabReport } from "../redux/slices/patientSlice";
 import { useToast } from "../hooks/use-toast";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 const getValueColor = (value, normalRange, gender) => {
   if (!value || !normalRange) return "inherit";
@@ -83,6 +84,14 @@ const getGenderSpecificRange = (normalRange, gender) => {
     }
   }
   return normalRange;
+};
+
+// Helper function to reorder the list when items are dragged
+const reorder = (list, startIndex, endIndex) => {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+  return result;
 };
 
 const TemplateLabReport = ({
@@ -175,23 +184,18 @@ const TemplateLabReport = ({
 
   const handleInputChange = (e, fieldName, fieldType) => {
     const { value } = e.target;
-   
+
     if (fieldType) {
       setFields((prevFields) =>
         prevFields.map((field) =>
-          field.name === fieldName
-            ? { ...field,  [fieldType]: value }
-            : field
+          field.name === fieldName ? { ...field, [fieldType]: value } : field
         )
       );
-    }
-    else{
+    } else {
       setFields((prevFields) =>
         prevFields.map((field) =>
-          field.name === fieldName
-          ? { ...field, value }
-          : field
-      )
+          field.name === fieldName ? { ...field, value } : field
+        )
       );
     }
   };
@@ -215,8 +219,7 @@ const TemplateLabReport = ({
           resolve();
         }, 250);
       });
-    }
-
+    },
   });
 
   const handleSubmit = async (e) => {
@@ -272,6 +275,29 @@ const TemplateLabReport = ({
     }
   };
 
+  const handleDragEnd = (result) => {
+    // Dropped outside the list
+    if (!result.destination) {
+      return;
+    }
+
+    // Reorder the fields array based on drag result
+    const reorderedFields = reorder(
+      fields,
+      result.source.index,
+      result.destination.index
+    );
+
+    setFields(reorderedFields);
+  };
+
+  const shouldeTextarea = (unit, normalRange) => {
+    return (
+      [undefined, "", null, "N/A", "-"].includes(unit) &&
+      [undefined, "", null, "N/A", "-"].includes(normalRange)
+    );
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-6xl">
       <h1 className="text-3xl font-bold mb-6 text-center">
@@ -310,108 +336,152 @@ const TemplateLabReport = ({
             </div>
           )}
 
-          {/* Table Body */}
-          <div className="space-y-2">
-            {fields.map((field) => (
-              <div
-                key={field.name}
-                className={
-                  field.label.toLowerCase() === "findings" ||
-                  field.label.toLowerCase() === "impressions"
-                    ? "col-span-full"
-                    : "grid grid-cols-[4fr_2fr_1fr_3fr] gap-2 items-center border-b pb-2"
-                }
-              >
-                {field.label.toLowerCase() === "findings" ||
-                field.label.toLowerCase() === "impressions" ? (
-                  <div className="col-span-full space-y-1">
-                    <Label htmlFor={field.name} className="mb-1">
-                      {field.label}
-                    </Label>
-                    <Textarea
-                      id={field.name}
-                      name={field.name}
-                      value={field.value}
-                      onChange={(e) => handleInputChange(e, field.name)}
-                      className="h-32 w-full"
-                    />
-                  </div>
-                ) : (
-                  <>
-                    <div className="font-medium">
-                      <Input
-                        value={field.label}
-                        onChange={(e) =>
-                          handleInputChange(e, field.name, "label")
-                        }
-                        className="px-1"
-                        tabIndex={-1}
-                      />
-                    </div>
-                    <div>
-                      {field.options ? (
-                        <SearchSuggestion
-                          suggestions={field.options?.map((option) => ({
-                            name: option,
-                          }))}
-                          placeholder={`Select ${field.label}`}
-                          value={field.value}
-                          setValue={(value) =>
-                            handleInputChange({ target: { value } }, field.name)
-                          }
-                          onSuggestionSelect={(suggestion) =>
-                            handleOptionSelect(field.name, suggestion)
-                          }
-                        />
-                      ) : (
-                        <Input
-                          type={field?.unit ? "text" : "text"}
-                          id={field.name}
-                          name={field.name}
-                          value={field.value}
-                          onChange={(e) => handleInputChange(e, field.name)}
-                          step="0.01"
-                          className="font-bold"
+          {/* Table Body with Drag and Drop */}
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="fields">
+              {(provided) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  className="space-y-2"
+                >
+                  {fields.map((field, index) => (
+                    <Draggable
+                      key={field.name}
+                      draggableId={field.name}
+                      index={index}
+                    >
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          className={`${
+                            field.label.toLowerCase() === "findings" ||
+                            field.label.toLowerCase() === "impression" ||
+                            shouldeTextarea(field.unit, field.normalRange)
+                              ? "col-span-full"
+                              : "grid grid-cols-[4fr_2fr_1fr_3fr] gap-2 items-center border-b pb-2"
+                          } ${
+                            snapshot.isDragging
+                              ? "bg-blue-50 rounded shadow-md"
+                              : ""
+                          }`}
                           style={{
-                            color: getValueColor(
-                              field.value,
-                              field.normalRange,
-                              patientData?.gender
-                            ),
+                            ...provided.draggableProps.style,
+                            cursor: "grab",
                           }}
-                        />
+                        >
+                          {field.label.toLowerCase() === "findings" ||
+                          field.label.toLowerCase() === "impression" ||
+                          shouldeTextarea(field.unit, field.normalRange) ? (
+                            <div className="col-span-full space-y-1">
+                              <Label htmlFor={field.name} className="mb-1">
+                                {field.label}
+                              </Label>
+                              <Textarea
+                                id={field.name}
+                                value={field.value}
+                                onChange={(e) =>
+                                  handleInputChange(e, field.name)
+                                }
+                                className="h-32 w-full"
+                              />
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium">
+                                <Input
+                                  value={field.label}
+                                  onChange={(e) =>
+                                    handleInputChange(e, field.name, "label")
+                                  }
+                                  className="px-1"
+                                  tabIndex={-1}
+                                />
+                              </div>
+                              <div>
+                                {field.options ? (
+                                  <SearchSuggestion
+                                    suggestions={field.options?.map(
+                                      (option) => ({
+                                        name: option,
+                                      })
+                                    )}
+                                    placeholder={`Select ${field.label}`}
+                                    value={field.value}
+                                    setValue={(value) =>
+                                      handleInputChange(
+                                        { target: { value } },
+                                        field.name
+                                      )
+                                    }
+                                    onSuggestionSelect={(suggestion) =>
+                                      handleOptionSelect(field.name, suggestion)
+                                    }
+                                  />
+                                ) : (
+                                  <Input
+                                    type={field?.unit ? "text" : "text"}
+                                    id={field.name}
+                                    name={field.name}
+                                    value={field.value}
+                                    onChange={(e) =>
+                                      handleInputChange(e, field.name)
+                                    }
+                                    step="0.01"
+                                    className="font-bold"
+                                    style={{
+                                      color: getValueColor(
+                                        field.value,
+                                        field.normalRange,
+                                        patientData?.gender
+                                      ),
+                                    }}
+                                  />
+                                )}
+                              </div>
+                              <div>
+                                <Input
+                                  value={field.unit}
+                                  onChange={(e) =>
+                                    handleInputChange(e, field.name, "unit")
+                                  }
+                                  placeholder="-"
+                                  className="px-1"
+                                  tabIndex={-1}
+                                />
+                              </div>
+                              <div>
+                                <Input
+                                  value={getGenderSpecificRange(
+                                    field.normalRange,
+                                    patientData?.gender ||
+                                      patientData?.patient?.gender
+                                  )}
+                                  onChange={(e) =>
+                                    handleInputChange(
+                                      e,
+                                      field.name,
+                                      "normalRange"
+                                    )
+                                  }
+                                  placeholder="-"
+                                  className="flex-1"
+                                  tabIndex={-1}
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
                       )}
-                    </div>
-                    <div>
-                      <Input
-                        value={field.unit}
-                        onChange={(e) =>
-                          handleInputChange(e, field.name, "unit")
-                        }
-                        placeholder="-"
-                        className="px-1"
-                        tabIndex={-1}
-                      />
-                    </div>
-                    <div>
-                      <Input
-                        value={getGenderSpecificRange(
-                          field.normalRange,
-                          patientData?.gender||patientData?.patient?.gender
-                        )}
-                        onChange={(e) =>
-                          handleInputChange(e, field.name, "normalRange")
-                        }
-                        placeholder="-"
-                        className="flex-1"
-                        tabIndex={-1}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
 
           <div className="flex justify-center space-x-4 mt-6">
             <Button type="submit" className="w-full">

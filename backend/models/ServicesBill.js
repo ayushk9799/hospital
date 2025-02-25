@@ -8,7 +8,7 @@ const servicesBillSchema = new mongoose.Schema({
     quantity : {type : Number, default : 1},
     rate : Number,
     category : String,
-    date: Date,
+    date: { type: Date },
   }],
   totalAmount : { type: Number, required : true},
   subtotal : { type: Number, required : true},

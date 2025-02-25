@@ -34,6 +34,10 @@ export default function Settings() {
     navigate("/settings/printing-templates");
   };
 
+  const handleMergeTemplateReport = () => {
+    navigate("/settings/merge-template-report");
+  };
+
   const handlePrefixSettings = () => {
     navigate("/settings/prefix-settings");
   };

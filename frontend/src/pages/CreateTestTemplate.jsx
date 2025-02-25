@@ -152,16 +152,7 @@ export default function CreateTestTemplate() {
                 "Label is required";
               hasErrors = true;
             }
-            if (!field.unit?.trim()) {
-              errors[`${category}-${test}-${fieldName}-unit`] =
-                "Unit is required";
-              hasErrors = true;
-            }
-            if (!field.normalRange?.trim()) {
-              errors[`${category}-${test}-${fieldName}-normalRange`] =
-                "Normal Range is required";
-              hasErrors = true;
-            }
+          
           }
         });
       });

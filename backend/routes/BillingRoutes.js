@@ -69,9 +69,9 @@ router.post("/update-bill/:id", async (req, res) => {
 
   try {
     const { id } = req.params;
-    const { services, totals, patientInfo } = req.body;
+    const { services, totals } = req.body;
 
-    const bill = await ServicesBill.findById(id).session(session);
+    const bill = await ServicesBill.findById(id).populate("payments").session(session);
     if (!bill) {
       throw new Error("Bill not found");
     }
@@ -87,17 +87,14 @@ router.post("/update-bill/:id", async (req, res) => {
       bill.subtotal = totals.subtotal;
       bill.additionalDiscount = totals.additionalDiscount;
     }
-    bill.patientInfo = patientInfo || bill.patientInfo;
+   
 
     await bill.save({ session });
 
-    const updatedBill = await ServicesBill.findById(bill._id)
-      .populate("payments")
-      .session(session)
-      .lean();
+  
 
     await session.commitTransaction();
-    res.status(200).json(updatedBill);
+    res.status(200).json(bill);
   } catch (error) {
     await session.abortTransaction();
     res.status(400).json({ message: error.message });
