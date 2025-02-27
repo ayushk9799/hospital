@@ -46,9 +46,7 @@ const paymentMethods = [
   { name: "Card" },
   { name: "Insurance" },
 ];
-const allLabTests = labCategories.flatMap((category) =>
-  category.types.map((type) => ({ name: type }))
-);
+
 export default function LabRegDialog({ open, onOpenChange }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
@@ -58,11 +56,13 @@ export default function LabRegDialog({ open, onOpenChange }) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchedPatient, setSearchedPatient] = useState(null);
   const { createRegistrationStatus, error } = useSelector((state) => state.lab);
+  const readymadeTests = labCategories.flatMap((category) => category.types);
+  console.log(readymadeTests);
   const labtestsTemplate = useSelector(
     (state) => state.templates.labTestsTemplate
   );
-  const allLabTests = labtestsTemplate?.map((test) => ({
-    name: test.name,
+  const allLabTests = [...labtestsTemplate, ...readymadeTests]?.map((test) => ({
+    name: test.name || test,
     rate: test.rate,
   }));
   const doctors = useSelector((state) => state.staff.doctors);
@@ -84,7 +84,7 @@ export default function LabRegDialog({ open, onOpenChange }) {
       totalAmount: 0,
       amountPaid: 0,
       paymentMethod: [],
-      additionalDiscount: 0,
+      additionalDiscount: "",
     },
     upgradegenReg: false,
     labTests: [],
@@ -132,6 +132,37 @@ export default function LabRegDialog({ open, onOpenChange }) {
         ),
       },
     }));
+  };
+  const [disountPercentage, setDiscountPercentage] = useState(0);
+  const handleDiscountChange = (e) => {
+    const value = e.target.value;
+
+    // Check if the input contains a percentage symbol
+    if (value.includes("%")) {
+      const percentageValue = parseFloat(value.replace("%", ""));
+      setDiscountPercentage(percentageValue);
+      if (!isNaN(percentageValue)) {
+        const discountAmount =
+          (formData.paymentInfo.totalAmount * percentageValue) / 100;
+        setFormData((prev) => ({
+          ...prev,
+          paymentInfo: {
+            ...prev.paymentInfo,
+            additionalDiscount: discountAmount,
+          },
+        }));
+      }
+    } else {
+      setDiscountPercentage(0);
+      // Handle normal numerical input
+      handleInputChange(e);
+    }
+  };
+
+  const calculateTotalPayable = () => {
+    const totalAmount = formData.paymentInfo.totalAmount;
+    const discount = parseFloat(formData.paymentInfo.additionalDiscount) || 0;
+    return Math.max(0, totalAmount - discount);
   };
 
   useEffect(() => {
@@ -591,9 +622,9 @@ export default function LabRegDialog({ open, onOpenChange }) {
               {/* Third Column - Payment Information */}
               <div className="space-y-4">
                 <div className="space-y-2"></div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <MemoizedInput
-                    label="Total Amount (₹)"
+                    label="Amount (₹)"
                     id="paymentInfo.totalAmount"
                     value={formData.paymentInfo.totalAmount.toLocaleString(
                       "en-IN"
@@ -601,12 +632,23 @@ export default function LabRegDialog({ open, onOpenChange }) {
                     disabled
                     className="bg-gray-50"
                   />
+
                   <MemoizedInput
-                    label="Discount (₹)"
+                    label="Discount"
                     id="paymentInfo.additionalDiscount"
-                    value={formData.paymentInfo.additionalDiscount}
-                    onChange={handleInputChange}
+                    value={
+                      disountPercentage
+                        ? `${disountPercentage}%`
+                        : formData.paymentInfo.additionalDiscount
+                    }
+                    onChange={handleDiscountChange}
                     error={errors.discount}
+                  />
+                  <MemoizedInput
+                    label="Payable (₹)"
+                    value={calculateTotalPayable().toLocaleString("en-IN")}
+                    disabled
+                    className="bg-gray-50"
                   />
                 </div>
 

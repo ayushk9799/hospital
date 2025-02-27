@@ -52,6 +52,7 @@ import {
   X,
   ListFilter,
   ChartNoAxesColumnDecreasingIcon,
+  ArrowLeft,
 } from "lucide-react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { DateRangePicker } from "../assets/Data";
@@ -455,11 +456,21 @@ const Billings = () => {
     <Card className="w-full mx-auto border-0 shadow-none">
       <CardHeader className="px-4 pb-2">
         <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Billing List</CardTitle>
-            <CardDescription>
-              Manage and view services billing information
-            </CardDescription>
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="hover:bg-slate-100"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <div>
+              <CardTitle>Billing List</CardTitle>
+              <CardDescription>
+                Manage and view services billing information
+              </CardDescription>
+            </div>
           </div>
           {isSmallScreen && (
             <Button

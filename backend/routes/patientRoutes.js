@@ -63,7 +63,8 @@ router.get("/admittedpatients", verifyToken, async (req, res) => {
         populate: {
           path: "payments",
         },
-      }).populate({
+      })
+      .populate({
         path: "assignedDoctor",
         select: "name",
       });
@@ -129,7 +130,7 @@ router.post("/admittedpatientsSearch", verifyToken, async (req, res) => {
   try {
     const { searchQuery } = req.body;
     const admittedPatients = await IPDAdmission.find({
-      registrationNumber: { $regex: new RegExp(searchQuery, 'i') },
+      registrationNumber: { $regex: new RegExp(searchQuery, "i") },
     })
       .populate({
         path: "assignedRoom",
@@ -349,10 +350,10 @@ router.post(
               let payments = new Payment({
                 amount: pm.amount,
                 paymentMethod: pm.method,
-                associatedInvoiceOrId:bill.invoiceNumber,
+                associatedInvoiceOrId: bill.invoiceNumber,
                 paymentType: { name: "Services", id: bill._id },
                 type: "Income",
-                createdByName:user?.name,
+                createdByName: user?.name,
                 createdBy: user._id,
               });
               await payments.save({ session });
@@ -474,10 +475,10 @@ router.post(
                 let payments = new Payment({
                   amount: pm.amount,
                   paymentMethod: pm.method,
-                  associatedInvoiceOrId:bill.invoiceNumber,
+                  associatedInvoiceOrId: bill.invoiceNumber,
                   paymentType: { name: "Services", id: bill._id },
                   type: "Income",
-                  createdByName:user?.name,
+                  createdByName: user?.name,
                   createdBy: user._id,
                 });
                 await payments.save({ session });
@@ -639,7 +640,7 @@ router.post("/details", verifyToken, async (req, res) => {
       registrationNumber: admission.registrationNumber,
       ipdNumber: admission.ipdNumber,
       bookingDate: admission.bookingDate,
-      bookingTime : admission.bookingTime,
+      bookingTime: admission.bookingTime,
       department: admission.department,
       doctor: admission.assignedDoctor,
       assignedRoom: admission.assignedRoom,
@@ -817,16 +818,20 @@ router.get("/:id", verifyToken, async (req, res) => {
 router.put("/:id", verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
-  
+
   try {
     const { visitID, type, ...patientData } = req.body;
-    
+
     // Update patient data
-    const patient = await Patient.findByIdAndUpdate(req.params.id, patientData, {
-      new: true,
-      runValidators: true,
-      session
-    });
+    const patient = await Patient.findByIdAndUpdate(
+      req.params.id,
+      patientData,
+      {
+        new: true,
+        runValidators: true,
+        session,
+      }
+    );
 
     if (!patient) {
       throw new Error("Patient not found");
@@ -840,43 +845,44 @@ router.put("/:id", verifyToken, async (req, res) => {
         patientName: patient.name,
         contactNumber: patient.contactNumber,
         guardianName: patientData?.guardianName,
-        relation: patientData?.relation
+        relation: patientData?.relation,
       };
 
-      updatedVisit = await Model.findByIdAndUpdate(
-        visitID,
-        visitData,
-        {
-          new: true,
-          runValidators: true,
-          session
-        }
-      );
+      updatedVisit = await Model.findByIdAndUpdate(visitID, visitData, {
+        new: true,
+        runValidators: true,
+        session,
+      });
 
       if (!updatedVisit) {
         throw new Error(`${type} record not found`);
       }
 
-      await ServicesBill.findByIdAndUpdate(updatedVisit.bills.services[0],
+      await ServicesBill.findByIdAndUpdate(
+        updatedVisit.bills.services[0],
         {
           patientInfo: {
             name: patientData?.name,
             phone: patientData.contactNumber,
             age: patientData?.age,
             address: patientData?.address,
-            gender: patientData?.gender
-          }
-        }, {
+            gender: patientData?.gender,
+          },
+        },
+        {
           new: true,
           runValidators: true,
-          session
+          session,
         }
       );
     }
 
     await session.commitTransaction();
-    res.json({...patient.toObject(), guardianName: updatedVisit?.guardianName, relation: updatedVisit?.relation});
-
+    res.json({
+      ...patient.toObject(),
+      guardianName: updatedVisit?.guardianName,
+      relation: updatedVisit?.relation,
+    });
   } catch (error) {
     if (session.inTransaction()) {
       await session.abortTransaction();
@@ -1075,10 +1081,10 @@ router.post(
           let payment = new Payment({
             amount: pm.amount,
             paymentMethod: pm.method,
-            associatedInvoiceOrId:bill.invoiceNumber,
+            associatedInvoiceOrId: bill.invoiceNumber,
             paymentType: { name: "Services", id: bill._id },
             type: "Income",
-            createdByName:user?.name,
+            createdByName: user?.name,
             createdBy: user._id,
           });
           payments.push(payment);
@@ -1473,12 +1479,14 @@ router.post(
         contactNumber: patient.contactNumber,
         registrationNumber: patient.registrationNumber || null,
         bookingDate: admission.bookingDate || new Date(),
-        bookingTime : admission.bookingTime || new Date().toLocaleTimeString('en-IN', {
-          timeZone: 'Asia/Kolkata',
-          hour12: false,
-          hour: '2-digit',
-          minute: '2-digit'
-        }),
+        bookingTime:
+          admission.bookingTime ||
+          new Date().toLocaleTimeString("en-IN", {
+            timeZone: "Asia/Kolkata",
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
         reasonForAdmission: admission.reasonForAdmission || "Not specified",
         assignedDoctor: admission.assignedDoctor || null,
         ipdNumber: admission.ipdNumber || null,
@@ -1491,8 +1499,8 @@ router.post(
         vitals: admission.vitals || null,
         comorbidities: admission.comorbidities || [],
         operationName: admission.operationName || null,
-        guardianName : admission.guardianName || null,
-        relation : admission.relation || null
+        guardianName: admission.guardianName || null,
+        relation: admission.relation || null,
       });
 
       let bill;
@@ -1546,8 +1554,8 @@ router.post(
           totalAmount: Number(paymentInfo.totalAmount),
           subtotal: services.reduce((sum, service) => sum + service.rate, 0)
             ? services.reduce((sum, service) => sum + service.rate, 0) +
-          roomCharge
-          : Number(paymentInfo.totalAmount),
+              roomCharge
+            : Number(paymentInfo.totalAmount),
           additionalDiscount: paymentInfo.additionalDiscount || 0,
           amountPaid: Number(paymentInfo.amountPaid) || 0,
           patientType: "IPD",
@@ -1563,10 +1571,10 @@ router.post(
               let payments = new Payment({
                 amount: pm.amount,
                 paymentMethod: pm.method,
-                associatedInvoiceOrId:bill.invoiceNumber,
+                associatedInvoiceOrId: bill.invoiceNumber,
                 paymentType: { name: "Services", id: bill._id },
                 type: "Income",
-                createdByName:user?.name,
+                createdByName: user?.name,
                 createdBy: user._id,
               });
               await payments.save({ session });
@@ -1833,5 +1841,99 @@ router.post("/registration-details", verifyToken, async (req, res) => {
 });
 
 // Update the admitted-patients route
+
+// Add this new route after other routes
+router.post("/discharged-by-date", verifyToken, async (req, res) => {
+  try {
+    const { dischargeDate } = req.body;
+
+    // Create date range for the selected date
+    const startDate = new Date(dischargeDate);
+    const endDate = new Date(dischargeDate);
+    endDate.setDate(endDate.getDate() + 1);
+
+    const dischargedPatients = await IPDAdmission.find({
+      dateDischarged: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    })
+      .populate({
+        path: "assignedRoom",
+        model: "Room",
+      })
+      .populate({
+        path: "patient",
+        model: "Patient",
+      })
+      .populate({
+        path: "bills.services",
+        populate: {
+          path: "payments",
+        },
+      })
+      .populate({
+        path: "bills.pharmacy",
+        populate: {
+          path: "payments",
+        },
+      });
+
+    // Calculate financial details for each patient
+    const patientsWithBillDetails = dischargedPatients.map((admission) => {
+      let totalAmount = 0;
+      let amountPaid = 0;
+
+      // Calculate from service bills
+      if (admission.bills && admission.bills.services) {
+        admission.bills.services.forEach((bill) => {
+          totalAmount += bill.totalAmount || 0;
+          amountPaid += bill.payments.reduce(
+            (sum, payment) => sum + (payment.amount || 0),
+            0
+          );
+        });
+      }
+
+      // Calculate from pharmacy bills
+      if (admission.bills && admission.bills.pharmacy) {
+        admission.bills.pharmacy.forEach((bill) => {
+          totalAmount += bill.totalAmount || 0;
+          amountPaid += bill.payments.reduce(
+            (sum, payment) => sum + (payment.amount || 0),
+            0
+          );
+        });
+      }
+
+      const plainAdmission = admission.toObject();
+
+      return {
+        ...plainAdmission,
+        _id: admission._id,
+        patient: {
+          name: admission.patientName,
+          registrationNumber: admission.registrationNumber,
+          ipdNumber: admission.ipdNumber,
+          ...plainAdmission.patient,
+        },
+        admissionDate: admission.bookingDate,
+        operationName: admission.operationName,
+        totalAmount,
+        amountPaid,
+        amountDue: totalAmount - amountPaid,
+        status: admission.status,
+        bills: {
+          services: admission.bills?.services || [],
+          pharmacy: admission.bills?.pharmacy || [],
+        },
+      };
+    });
+
+    res.json(patientsWithBillDetails);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;

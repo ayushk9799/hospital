@@ -25,8 +25,9 @@ export const fetchPatients = createLoadingAsyncThunk(
 
       const data = await response.json();
       // Check if startDate is today
-      const isToday = dateRange?.startDate ? 
-        new Date(dateRange.startDate).toDateString() === new Date().toDateString() 
+      const isToday = dateRange?.startDate
+        ? new Date(dateRange.startDate).toDateString() ===
+          new Date().toDateString()
         : false;
 
       return { data, isToday };
@@ -65,7 +66,7 @@ export const registerPatient = createLoadingAsyncThunk(
 
 export const editPatient = createLoadingAsyncThunk(
   "patients/editPatient",
-  async ({patientData, patientID}, { rejectWithValue }) => {
+  async ({ patientData, patientID }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${Backend_URL}/api/patients/${patientID}`, {
         method: "PUT",
@@ -199,7 +200,7 @@ export const addLabReport = createLoadingAsyncThunk(
         credentials: "include",
         body: JSON.stringify({
           _id,
-          labReport,  
+          labReport,
           component,
         }),
       });
@@ -395,12 +396,15 @@ export const fetchAdmittedPatientsSearch = createLoadingAsyncThunk(
   "patients/fetchAdmittedPatientsSearch",
   async (searchQuery, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/patients/admittedpatientsSearch`, { 
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ searchQuery: searchQuery }),
-      });
+      const response = await fetch(
+        `${Backend_URL}/api/patients/admittedpatientsSearch`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ searchQuery: searchQuery }),
+        }
+      );
 
       if (!response.ok) {
         const errorData = await response.json();
@@ -439,12 +443,40 @@ export const fetchRegistrationAndIPDNumbers = createLoadingAsyncThunk(
   }
 );
 
+// Add this new thunk after other thunks
+export const fetchDischargedPatientsByDate = createLoadingAsyncThunk(
+  "patients/fetchDischargedPatientsByDate",
+  async (dischargeDate, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/patients/discharged-by-date`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ dischargeDate }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
   selectedPatient: null,
   status: "idle",
-  todaysPatientList:[],
+  todaysPatientList: [],
   prescriptionUpdateStatus: "idle",
   registerPatientStatus: "idle",
   patientDetails: null,
@@ -463,7 +495,7 @@ const initialState = {
   registrationNumber: null,
   ipdNumber: null,
   numbersStatus: "idle",
-  editPatientStatus : 'idle'
+  editPatientStatus: "idle",
 };
 
 const patientSlice = createSlice({
@@ -487,7 +519,7 @@ const patientSlice = createSlice({
       .addCase(fetchPatients.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.patientlist = action.payload.data;
-        
+
         // If the date range is for today, also update todaysPatientList
         if (action.payload.isToday) {
           state.todaysPatientList = action.payload.data;
@@ -702,41 +734,48 @@ const patientSlice = createSlice({
       .addCase(fetchRegistrationAndIPDNumbers.rejected, (state, action) => {
         state.numbersStatus = "failed";
         state.error = action.payload;
-      }).addCase(editPatient.pending, (state) => {
-        state.editPatientStatus = 'loading'
-      }).addCase(editPatient.fulfilled, (state, action) => {
-        state.editPatientStatus = 'succeeded';
+      })
+      .addCase(editPatient.pending, (state) => {
+        state.editPatientStatus = "loading";
+      })
+      .addCase(editPatient.fulfilled, (state, action) => {
+        state.editPatientStatus = "succeeded";
         const updatedPatient = action.payload;
-        
+
         // Update in patientlist
         const index = state.patientlist.findIndex(
-          (item) => item.registrationNumber === updatedPatient.registrationNumber
+          (item) =>
+            item.registrationNumber === updatedPatient.registrationNumber
         );
         if (index !== -1) {
           state.patientlist[index] = {
             ...state.patientlist[index],
-            guardianName : updatedPatient?.guardianName,
-            relation : updatedPatient?.relation,
+            guardianName: updatedPatient?.guardianName,
+            relation: updatedPatient?.relation,
             patient: {
               ...state.patientlist[index].patient,
-              ...updatedPatient
-            }
+              ...updatedPatient,
+            },
           };
         }
 
         // Update selectedPatient if it matches
-        if (state.selectedPatient?.registrationNumber === updatedPatient.registrationNumber) {
+        if (
+          state.selectedPatient?.registrationNumber ===
+          updatedPatient.registrationNumber
+        ) {
           state.selectedPatient = {
             ...state.selectedPatient,
             patient: {
               ...state.selectedPatient.patient,
-              ...updatedPatient
-            }
+              ...updatedPatient,
+            },
           };
         }
-      }).addCase(editPatient.rejected, (state) => {
-        state.editPatientStatus = 'failed'
       })
+      .addCase(editPatient.rejected, (state) => {
+        state.editPatientStatus = "failed";
+      });
   },
 });
 

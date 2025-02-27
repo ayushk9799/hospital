@@ -8,6 +8,7 @@ import {
   Phone,
   Clock,
   AlertCircle,
+  ChevronLeft,
 } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import {
@@ -67,8 +68,17 @@ export default function Reports() {
       (filterRole === "All" || staff.roles.includes(filterRole.toLowerCase()))
   );
 
-  const checkPermissionAndNavigate = (path, action, requiredPermission, staff = null) => {
-    if (action === "view staff details" && staff && userData._id === staff._id) {
+  const checkPermissionAndNavigate = (
+    path,
+    action,
+    requiredPermission,
+    staff = null
+  ) => {
+    if (
+      action === "view staff details" &&
+      staff &&
+      userData._id === staff._id
+    ) {
       return true;
     }
 
@@ -84,7 +94,14 @@ export default function Reports() {
   };
 
   const handleStaffClick = (staff) => {
-    if (checkPermissionAndNavigate(`/staff/${staff._id}`, "view staff details", "view_staff", staff)) {
+    if (
+      checkPermissionAndNavigate(
+        `/staff/${staff._id}`,
+        "view staff details",
+        "view_staff",
+        staff
+      )
+    ) {
       navigate(`/staff/${staff._id}`, { state: { staffData: staff } });
     }
   };
@@ -96,13 +113,22 @@ export default function Reports() {
   };
 
   const handleViewStaff = (staff) => {
-    if (checkPermissionAndNavigate(`/staff/${staff._id}`, "view staff details", "view_staff", staff)) {
+    if (
+      checkPermissionAndNavigate(
+        `/staff/${staff._id}`,
+        "view staff details",
+        "view_staff",
+        staff
+      )
+    ) {
       navigate(`/staff/${staff._id}`, { state: { staffData: staff } });
     }
   };
 
   const handleAddStaff = () => {
-    if (checkPermissionAndNavigate("/addstaff", "add new staff", "create_staff")) {
+    if (
+      checkPermissionAndNavigate("/addstaff", "add new staff", "create_staff")
+    ) {
       navigate("/addstaff");
     }
   };
@@ -110,13 +136,29 @@ export default function Reports() {
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="w-full mx-auto p-0">
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle>Staff List</CardTitle>
-            <CardDescription>Manage and view staff information</CardDescription>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleBack}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <CardTitle>Staff List</CardTitle>
+              <CardDescription>
+                Manage and view staff information
+              </CardDescription>
+            </div>
           </div>
           {isSmallScreen && (
             <Button size="icon" onClick={handleAddStaff}>

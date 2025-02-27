@@ -6,6 +6,7 @@ import {
   Plus,
   AlertCircle,
   Filter,
+  ChevronLeft,
 } from "lucide-react";
 import {
   Card,
@@ -86,7 +87,7 @@ export default function RoomManagementDashboard() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead >Bed Number</TableHead>
+                <TableHead>Bed Number</TableHead>
                 <TableHead>Status</TableHead>
                 {!isSmallScreen && <TableHead>Patient</TableHead>}
               </TableRow>
@@ -110,7 +111,9 @@ export default function RoomManagementDashboard() {
                       {bed.status}
                     </Badge>
                   </TableCell>
-                  {!isSmallScreen && <TableCell>{bed.currentPatient?.name || "-"}</TableCell>}
+                  {!isSmallScreen && (
+                    <TableCell>{bed.currentPatient?.name || "-"}</TableCell>
+                  )}
                 </TableRow>
               ))}
             </TableBody>
@@ -147,20 +150,40 @@ export default function RoomManagementDashboard() {
         </div>
         <div className="grid grid-cols-2 gap-2 mt-4">
           <p className="text-sm text-muted-foreground">Beds: {room.capacity}</p>
-          <p className="text-sm text-muted-foreground">Daily Rate: ₹{room?.ratePerDay || 'N/A'}</p>
-          <p className="text-sm text-muted-foreground">Current Occupancy: {room.currentOccupancy}</p>
+          <p className="text-sm text-muted-foreground">
+            Daily Rate: ₹{room?.ratePerDay || "N/A"}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Current Occupancy: {room.currentOccupancy}
+          </p>
         </div>
       </CardContent>
     </Card>
   );
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="w-full mx-auto p-0">
       <Card className="border-0 shadow-none">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div>
-            <CardTitle>Room List</CardTitle>
-            <CardDescription>Manage and view room information</CardDescription>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleBack}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <CardTitle>Room List</CardTitle>
+              <CardDescription>
+                Manage and view room information
+              </CardDescription>
+            </div>
           </div>
           {isSmallScreen && (
             <Button
@@ -206,7 +229,10 @@ export default function RoomManagementDashboard() {
                       className="overflow-hidden w-full"
                     >
                       <div className="pt-2 space-y-2">
-                        <Select onValueChange={setFilterType} defaultValue="All">
+                        <Select
+                          onValueChange={setFilterType}
+                          defaultValue="All"
+                        >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Room Type" />
                           </SelectTrigger>
@@ -214,21 +240,32 @@ export default function RoomManagementDashboard() {
                             <SelectItem value="All">All Types</SelectItem>
                             <SelectItem value="General">General</SelectItem>
                             <SelectItem value="ICU">ICU</SelectItem>
-                            <SelectItem value="Operation Theater">Operation Theater</SelectItem>
-                            <SelectItem value="Semi-Private">Semi-Private</SelectItem>
+                            <SelectItem value="Operation Theater">
+                              Operation Theater
+                            </SelectItem>
+                            <SelectItem value="Semi-Private">
+                              Semi-Private
+                            </SelectItem>
                             <SelectItem value="Private">Private</SelectItem>
                           </SelectContent>
                         </Select>
-                        <Select onValueChange={setFilterStatus} defaultValue="All">
+                        <Select
+                          onValueChange={setFilterStatus}
+                          defaultValue="All"
+                        >
                           <SelectTrigger className="w-full">
                             <SelectValue placeholder="Room Status" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="All">All Statuses</SelectItem>
                             <SelectItem value="Occupied">Occupied</SelectItem>
-                            <SelectItem value="Partially Available">Partially Available</SelectItem>
+                            <SelectItem value="Partially Available">
+                              Partially Available
+                            </SelectItem>
                             <SelectItem value="Available">Available</SelectItem>
-                            <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
+                            <SelectItem value="Under Maintenance">
+                              Under Maintenance
+                            </SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -245,7 +282,9 @@ export default function RoomManagementDashboard() {
                       <SelectItem value="All">All Types</SelectItem>
                       <SelectItem value="General">General</SelectItem>
                       <SelectItem value="ICU">ICU</SelectItem>
-                      <SelectItem value="Operation Theater">Operation Theater</SelectItem>
+                      <SelectItem value="Operation Theater">
+                        Operation Theater
+                      </SelectItem>
                       <SelectItem value="Semi-Private">Semi-Private</SelectItem>
                       <SelectItem value="Private">Private</SelectItem>
                     </SelectContent>
@@ -257,9 +296,13 @@ export default function RoomManagementDashboard() {
                     <SelectContent>
                       <SelectItem value="All">All Statuses</SelectItem>
                       <SelectItem value="Occupied">Occupied</SelectItem>
-                      <SelectItem value="Partially Available">Partially Available</SelectItem>
+                      <SelectItem value="Partially Available">
+                        Partially Available
+                      </SelectItem>
                       <SelectItem value="Available">Available</SelectItem>
-                      <SelectItem value="Under Maintenance">Under Maintenance</SelectItem>
+                      <SelectItem value="Under Maintenance">
+                        Under Maintenance
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </>
@@ -267,7 +310,10 @@ export default function RoomManagementDashboard() {
             </div>
             {!isSmallScreen && (
               <div className="flex justify-end">
-                <Button variant="outline" onClick={() => navigate("/create-room")}>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/create-room")}
+                >
                   <Plus className="mr-2 h-4 w-4" /> Add Room
                 </Button>
               </div>
@@ -292,7 +338,9 @@ export default function RoomManagementDashboard() {
                         <>
                           <TableHead className="w-[15%]">Beds</TableHead>
                           <TableHead className="w-[15%]">Daily Rate</TableHead>
-                          <TableHead className="w-[15%]">Current Occupancy</TableHead>
+                          <TableHead className="w-[15%]">
+                            Current Occupancy
+                          </TableHead>
                         </>
                       )}
                       <TableHead className="text-right">Actions</TableHead>
@@ -301,7 +349,9 @@ export default function RoomManagementDashboard() {
                   <TableBody>
                     {filteredRooms.map((room) => (
                       <TableRow key={room._id}>
-                        <TableCell className="font-medium">{room.roomNumber}</TableCell>
+                        <TableCell className="font-medium">
+                          {room.roomNumber}
+                        </TableCell>
                         <TableCell>{room.type}</TableCell>
                         <TableCell>
                           <Badge
@@ -321,7 +371,7 @@ export default function RoomManagementDashboard() {
                         {!isMediumScreen && (
                           <>
                             <TableCell>{room.capacity}</TableCell>
-                            <TableCell>₹{room?.ratePerDay || 'N/A'}</TableCell>
+                            <TableCell>₹{room?.ratePerDay || "N/A"}</TableCell>
                             <TableCell>{room.currentOccupancy}</TableCell>
                           </>
                         )}
@@ -338,7 +388,9 @@ export default function RoomManagementDashboard() {
             <div className="flex flex-col items-center justify-center py-10 text-center">
               <AlertCircle className="h-10 w-10 text-muted-foreground mb-4" />
               <p className="text-lg font-medium">No rooms found</p>
-              <p className="text-sm text-muted-foreground mt-1">Try adjusting your search or filter criteria</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Try adjusting your search or filter criteria
+              </p>
             </div>
           )}
         </CardContent>

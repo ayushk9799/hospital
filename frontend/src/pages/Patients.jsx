@@ -44,6 +44,7 @@ import {
   User,
   MoreVertical,
   MapPin,
+  ChevronLeft,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
@@ -471,15 +472,29 @@ export default function Patients() {
     );
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <Card className="w-full border-none shadow-none">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Patient List</CardTitle>
-            <CardDescription>
-              Manage and view patient information
-            </CardDescription>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleBack}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <CardTitle>Patient List</CardTitle>
+              <CardDescription>
+                Manage and view patient information
+              </CardDescription>
+            </div>
           </div>
           {isSmallScreen && (
             <DropdownMenu>

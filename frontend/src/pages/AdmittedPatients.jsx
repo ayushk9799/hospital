@@ -1,16 +1,49 @@
 import React, { useEffect, useState } from "react";
-import { FileText, ArrowLeft, Plus, Search, Pencil, Baby, AlertCircle, Loader2} from "lucide-react";
+import {
+  FileText,
+  ArrowLeft,
+  Plus,
+  Search,
+  Pencil,
+  Baby,
+  AlertCircle,
+  Loader2,
+} from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../hooks/use-toast";
-import { fetchAdmittedPatients, fetchAdmittedPatientsSearch} from "../redux/slices/patientSlice";
-import { Card, CardContent, CardHeader, CardTitle} from "../components/ui/card";
+import {
+  fetchAdmittedPatients,
+  fetchAdmittedPatientsSearch,
+  fetchDischargedPatientsByDate,
+} from "../redux/slices/patientSlice";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { Button } from "../components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "../components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
 import { format } from "date-fns";
 import CreateServiceBill from "./CreateServiceBill";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Input } from "../components/ui/input";
+import { Calendar } from "../components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "../components/ui/popover";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { cn } from "../lib/utils";
 
 export default function AdmittedPatients() {
   const { toast } = useToast();
@@ -22,6 +55,8 @@ export default function AdmittedPatients() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [showBilling, setShowBilling] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [date, setDate] = useState(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchAdmittedPatients())
@@ -105,9 +140,35 @@ export default function AdmittedPatients() {
         setAdmittedPatients(res);
       });
   };
-  
+
   const handleInputChangeSearch = (event) => {
     setSearchQuery(event.target.value);
+  };
+
+  const handleDateSearch = () => {
+    if (!date) {
+      toast({
+        title: "Error",
+        description: "Please select a date",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    dispatch(fetchDischargedPatientsByDate(date))
+      .unwrap()
+      .then((res) => {
+        setAdmittedPatients(res);
+        setCalendarOpen(false);
+      })
+      .catch((error) => {
+        toast({
+          title: "Error",
+          description: "getting server error",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {});
   };
 
   return (
@@ -117,10 +178,15 @@ export default function AdmittedPatients() {
           <CardHeader className="bg-primary text-primary-foreground">
             <div className="flex flex-row justify-between items-center gap-2">
               <div className="flex items-center gap-2">
-                <Button variant='ghost' size='sm' onClick={()=> navigate(-1)} className='h-6 w-6'>
-                <ArrowLeft  className="h-4 w-4"  />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate(-1)}
+                  className="h-6 w-6"
+                >
+                  <ArrowLeft className="h-4 w-4" />
                 </Button>
-                
+
                 <CardTitle className="text-xl font-bold">
                   Admitted Patients
                 </CardTitle>
@@ -134,7 +200,7 @@ export default function AdmittedPatients() {
                       placeholder="Search by UHID..."
                       value={searchQuery}
                       onChange={handleInputChangeSearch}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
                       className="bg-white/90 border-0 pr-8 text-black w-72"
                     />
                     <Search
@@ -158,10 +224,44 @@ export default function AdmittedPatients() {
                     />
                   </div>
                 </div>
+
+                {/* Date Picker */}
+                <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "bg-white text-black hover:bg-white/75 w-[240px] justify-start text-left font-normal",
+                        !date && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {date ? (
+                        format(date, "PPP")
+                      ) : (
+                        <span>Date wise discharged</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={date}
+                      onSelect={setDate}
+                      initialFocus
+                    />
+                    <div className="p-2 border-t">
+                      <Button className="w-full" onClick={handleDateSearch}>
+                        Search
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+
                 <Button
                   onClick={() => navigate("/patients/discharge")}
                   variant="secondary"
-                  className="bg-white/90 text-black hover:bg-white/75"
+                  className="bg-white text-black hover:bg-white"
                 >
                   <Pencil className="h-4 w-4 sm:hidden" />
                   <span className="hidden sm:block">Create Discharge</span>
@@ -174,7 +274,9 @@ export default function AdmittedPatients() {
               {admittedPatientsStatus === "loading" ? (
                 <div className="flex flex-col items-center justify-center h-[calc(100vh-12rem)]">
                   <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
-                  <span className="text-muted-foreground">Loading patients...</span>
+                  <span className="text-muted-foreground">
+                    Loading patients...
+                  </span>
                 </div>
               ) : (
                 <>
@@ -185,7 +287,9 @@ export default function AdmittedPatients() {
                           <TableHead className="w-[140px]">UHID No.</TableHead>
                           <TableHead className="w-[120px]">IPD No.</TableHead>
                           <TableHead className="w-[200px]">Name</TableHead>
-                          <TableHead className="w-[150px]">Operation Name</TableHead>
+                          <TableHead className="w-[150px]">
+                            Operation Name
+                          </TableHead>
                           <TableHead className="w-[120px]">
                             Admission Date
                           </TableHead>
@@ -227,8 +331,11 @@ export default function AdmittedPatients() {
                               </TableCell>
                               <TableCell>{patient.patient.name}</TableCell>
                               <TableCell>
-                                {patient?.operationName?.length > 20 
-                                  ? `${patient.operationName.substring(0, 20)}...` 
+                                {patient?.operationName?.length > 20
+                                  ? `${patient.operationName.substring(
+                                      0,
+                                      20
+                                    )}...`
                                   : patient?.operationName}
                               </TableCell>
                               <TableCell>
@@ -248,7 +355,7 @@ export default function AdmittedPatients() {
                               </TableCell>
                               <TableCell className="text-center">
                                 <div className="flex gap-2 justify-end pr-4">
-                                {patient.department
+                                  {patient.department
                                     ?.toLowerCase()
                                     .includes("obstetric") &&
                                     patient?.patient?.gender?.toLowerCase() ===
@@ -258,7 +365,17 @@ export default function AdmittedPatients() {
                                           onClick={() =>
                                             navigate(
                                               `/patients/${patient._id}/babies`,
-                                              {state : {motherData : {...patient.patient, bookingDate : patient.bookingDate, bookingTime : patient.bookingTime},}}
+                                              {
+                                                state: {
+                                                  motherData: {
+                                                    ...patient.patient,
+                                                    bookingDate:
+                                                      patient.bookingDate,
+                                                    bookingTime:
+                                                      patient.bookingTime,
+                                                  },
+                                                },
+                                              }
                                             )
                                           }
                                           variant="outline"
@@ -269,24 +386,24 @@ export default function AdmittedPatients() {
                                         </Button>
                                       </>
                                     )}
-                                <Button
-                                  onClick={() => handleOpenBill(patient)}
-                                  variant="outline"
-                                  size="sm"
-                                  className="inline-flex items-center"
-                                >
-                                  <FileText className="h-4 w-4" />
-                                  Bills
-                                </Button>
-                                <Button
-                                  onClick={() => handleAddServices(patient)}
-                                  variant="outline"
-                                  size="sm"
-                                  className="inline-flex items-center"
-                                >
-                                  <Plus className="h-4 w-4" />
-                                  Services
-                                </Button>
+                                  <Button
+                                    onClick={() => handleOpenBill(patient)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="inline-flex items-center"
+                                  >
+                                    <FileText className="h-4 w-4" />
+                                    Bills
+                                  </Button>
+                                  <Button
+                                    onClick={() => handleAddServices(patient)}
+                                    variant="outline"
+                                    size="sm"
+                                    className="inline-flex items-center"
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                    Services
+                                  </Button>
                                   <Button
                                     onClick={() =>
                                       handleDischarge(patient._id, patient)
@@ -299,7 +416,6 @@ export default function AdmittedPatients() {
                                       ? "View/Edit Discharge Summary"
                                       : "Discharge"}
                                   </Button>
-                                  
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -328,7 +444,8 @@ export default function AdmittedPatients() {
                                 </h3>
                                 <div className="text-xs text-muted-foreground space-y-0.5">
                                   <div>
-                                    UHID No: {patient.patient.registrationNumber}
+                                    UHID No:{" "}
+                                    {patient.patient.registrationNumber}
                                   </div>
                                   <div>IPD No: {patient.ipdNumber || "-"}</div>
                                 </div>
@@ -356,13 +473,17 @@ export default function AdmittedPatients() {
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Paid:</span>
+                                  <span className="text-muted-foreground">
+                                    Paid:
+                                  </span>
                                   <span className="font-medium text-green-600">
                                     ₹{patient.amountPaid.toFixed(2)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
-                                  <span className="text-muted-foreground">Due:</span>
+                                  <span className="text-muted-foreground">
+                                    Due:
+                                  </span>
                                   <span className="font-medium text-red-600">
                                     ₹{patient.amountDue.toFixed(2)}
                                   </span>
@@ -372,25 +493,35 @@ export default function AdmittedPatients() {
                               {/* Actions */}
                               <div className="flex gap-2 pt-1.5">
                                 {patient.department
-                                    ?.toLowerCase()
-                                    .includes("obstetric") &&
-                                    patient?.patient?.gender?.toLowerCase() ===
-                                      "female" && (
-                                      <Button
-                                        onClick={() =>
-                                          navigate(
-                                            `/patients/${patient._id}/babies`,
-                                            {state : {motherData : {...patient.patient, bookingDate : patient?.bookingDate, bookingTime : patient?.bookingTime},}}
-                                          )
-                                        }
-                                        variant="outline"
-                                        size="sm"
-                                        className="flex-1 h-8 text-xs border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center justify-center gap-1"
-                                      >
-                                        <Baby className="h-3 w-3 text-pink-500" />
-                                        Babies
-                                      </Button>
-                                )}
+                                  ?.toLowerCase()
+                                  .includes("obstetric") &&
+                                  patient?.patient?.gender?.toLowerCase() ===
+                                    "female" && (
+                                    <Button
+                                      onClick={() =>
+                                        navigate(
+                                          `/patients/${patient._id}/babies`,
+                                          {
+                                            state: {
+                                              motherData: {
+                                                ...patient.patient,
+                                                bookingDate:
+                                                  patient?.bookingDate,
+                                                bookingTime:
+                                                  patient?.bookingTime,
+                                              },
+                                            },
+                                          }
+                                        )
+                                      }
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex-1 h-8 text-xs border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center justify-center gap-1"
+                                    >
+                                      <Baby className="h-3 w-3 text-pink-500" />
+                                      Babies
+                                    </Button>
+                                  )}
 
                                 <Button
                                   onClick={() => handleOpenBill(patient)}

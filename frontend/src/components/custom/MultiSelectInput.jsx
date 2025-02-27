@@ -22,7 +22,7 @@ const MultiSelectInput = forwardRef(
     const [inputValue, setInputValue] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const parentRef = useRef(null);
-
+console.log(filteredSuggestions)
     useEffect(() => {
       const filtered = suggestions.filter((suggestion) =>
         suggestion?.name?.toLowerCase().includes(inputValue.toLowerCase())
@@ -124,9 +124,9 @@ const MultiSelectInput = forwardRef(
 
     const renderSelectedTags = () => (
       <div className="flex flex-wrap gap-1 mb-1">
-        {selectedValues?.map((value) => (
+        {selectedValues?.map(([value,index]) => (
           <span
-            key={value.name}
+            key= {`${value.name} ${index}`}
             className="inline-flex items-center px-2 py-1 rounded-md text-sm bg-primary/10"
           >
             {value.name}
@@ -185,7 +185,7 @@ const MultiSelectInput = forwardRef(
               <ul>
                 {filteredSuggestions.map((suggestion, index) => (
                   <li
-                    key={suggestion.name}
+                       key= {`${suggestion.name} ${index}`}
                     onClick={() => handleSuggestionClick(suggestion)}
                     className={`px-4 py-2 cursor-pointer hover:bg-accent hover:text-accent-foreground flex justify-between items-center
                       ${

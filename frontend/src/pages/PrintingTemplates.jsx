@@ -1,13 +1,28 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/button";
+import { ChevronLeft } from "lucide-react";
 
 export default function PrintingTemplates() {
   const navigate = useNavigate();
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="p-4 sm:p-6">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4">Printing Templates</h1>
+      <div className="flex items-center gap-2 mb-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleBack}
+          className="h-8 w-8 p-0"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-xl sm:text-2xl font-bold">Printing Templates</h1>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
         <Button
           onClick={() =>

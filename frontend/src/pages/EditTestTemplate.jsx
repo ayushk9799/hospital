@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { editTemplate, deleteTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { X, Plus } from "lucide-react";
+import { X, Plus, ChevronLeft } from "lucide-react";
 
 export default function EditTestTemplate() {
   const { templateName } = useParams();
@@ -135,10 +135,24 @@ export default function EditTestTemplate() {
     }
   };
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Edit Template: {templateName}</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleBack}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">Edit Template: {templateName}</h1>
+        </div>
         <Button variant="destructive" onClick={handleDelete}>
           Delete Template
         </Button>

@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { Backend_URL } from "../../assets/Data";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
+import { ChartNoAxesColumnDecreasing } from "lucide-react";
 
 // Async thunks
 export const fetchLabRegistrations = createLoadingAsyncThunk(
@@ -102,8 +103,7 @@ export const addLabPayment = createLoadingAsyncThunk(
         return rejectWithValue("Failed to add payment");
       }
       const data = await response.json();
-
-      return data;
+      return data.labRegistration;
     } catch (error) {
       return rejectWithValue(error.message);
     }

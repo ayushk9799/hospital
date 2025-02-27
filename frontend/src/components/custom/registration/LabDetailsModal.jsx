@@ -314,7 +314,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                           ₹
                           {labData?.labTests
                             ?.reduce((sum, test) => sum + (test.price || 0), 0)
-                            .toFixed(2)}
+                            ?.toFixed(2)}
                         </TableCell>
                         
                       </TableRow>
@@ -330,13 +330,13 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                         <div className="flex justify-between">
                           <span>Total Amount:</span>
                           <span>
-                            ₹{labData.paymentInfo.totalAmount.toFixed(2)}
+                            ₹{labData.paymentInfo.totalAmount?.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between text-gray-600">
                           <span>Discount:</span>
                           <span>
-                            ₹{labData.paymentInfo.additionalDiscount.toFixed(2)}
+                            ₹{labData.paymentInfo.additionalDiscount?.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between font-medium border-t pt-2">
@@ -346,19 +346,19 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                             {(
                               labData.paymentInfo.totalAmount -
                               labData.paymentInfo.additionalDiscount
-                            ).toFixed(2)}
+                            )?.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between text-green-600">
                           <span>Amount Paid:</span>
                           <span>
-                            ₹{labData.paymentInfo.amountPaid.toFixed(2)}
+                            ₹{labData.paymentInfo.amountPaid?.toFixed(2)}
                           </span>
                         </div>
                         <div className="flex justify-between text-red-600 font-medium border-t pt-2">
                           <span>Balance Due:</span>
                           <span>
-                            ₹{labData.paymentInfo.balanceDue.toFixed(2)}
+                            ₹{labData.paymentInfo.balanceDue?.toFixed(2)}
                           </span>
                         </div>
                       </div>
@@ -414,7 +414,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                                 </TableCell>
                               )}
                               <TableCell>
-                                ₹{payment.amount.toFixed(2)}
+                                ₹{payment.amount?.toFixed(2)}
                               </TableCell>
                               <TableCell>{payment.method}</TableCell>
                               <TableCell className="no-print">

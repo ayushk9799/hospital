@@ -6,9 +6,14 @@ import { Button } from "../components/ui/button";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import HospitalHeader from "../utils/print/HospitalHeader";
 import { headerTemplateString } from "../templates/headertemplate";
+import { ChevronLeft } from "lucide-react";
 
 export default function Settings() {
   const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
 
   const handleAddStaff = () => {
     navigate("/addstaff");
@@ -48,7 +53,17 @@ export default function Settings() {
 
   return (
     <div className="p-4 sm:p-6">
-      <h1 className="text-xl sm:text-2xl font-bold mb-4">Settings</h1>
+      <div className="flex items-center gap-2 mb-4">
+        <Button
+          onClick={handleBack}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-0"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
+      </div>
       <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
         <Button onClick={handleAddStaff} className="w-full sm:w-auto">
           Add Staff

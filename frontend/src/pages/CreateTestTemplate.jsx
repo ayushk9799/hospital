@@ -6,8 +6,9 @@ import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Checkbox } from "../components/ui/checkbox";
 import { labCategories, labReportFields } from "../assets/Data";
-import { Settings, Search } from "lucide-react";
+import { Settings, Search, ChevronLeft } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -19,6 +20,7 @@ import {
 export default function CreateTestTemplate() {
   const { toast } = useToast();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [selectedTests, setSelectedTests] = useState({});
   const [selectedFields, setSelectedFields] = useState({});
   const [templateName, setTemplateName] = useState("");
@@ -65,6 +67,31 @@ export default function CreateTestTemplate() {
         return newFields;
       });
     }
+  };
+
+  const handleSelectAllFields = (category, test) => {
+    const formattedCategory = formatKey(category);
+    const fields = labReportFields[formattedCategory]?.[test] || [];
+
+    const updatedFields = {};
+    fields.forEach((field) => {
+      updatedFields[field.name] = {
+        label: field.label,
+        value: field.value,
+        unit: field.unit || "",
+        normalRange: field.normalRange || "",
+        options: field.options || "",
+        isSelected: true,
+      };
+    });
+
+    setSelectedFields((prev) => ({
+      ...prev,
+      [formattedCategory]: {
+        ...prev[formattedCategory],
+        [test]: updatedFields,
+      },
+    }));
   };
 
   const handleFieldSelection = (category, test, field) => {
@@ -152,7 +179,6 @@ export default function CreateTestTemplate() {
                 "Label is required";
               hasErrors = true;
             }
-          
           }
         });
       });
@@ -353,10 +379,50 @@ export default function CreateTestTemplate() {
     }, 100); // Small delay to ensure the parameter section is rendered
   };
 
+  // Add useEffect to update template name based on selection
+  useEffect(() => {
+    // Count selected tests
+    let selectedTestCount = 0;
+    let lastSelectedTest = null;
+    let lastSelectedCategory = null;
+
+    Object.entries(selectedTests).forEach(([category, tests]) => {
+      Object.entries(tests).forEach(([test, isSelected]) => {
+        if (isSelected) {
+          selectedTestCount++;
+          lastSelectedTest = test;
+          lastSelectedCategory = categoryNameMap[category];
+        }
+      });
+    });
+
+    // Update template name only if exactly one test is selected
+    if (selectedTestCount === 1) {
+      setTemplateName(`${lastSelectedTest}`);
+    } else if (selectedTestCount > 1) {
+      // Clear template name if multiple tests are selected
+      setTemplateName("");
+    }
+  }, [selectedTests, categoryNameMap]);
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Create Test Template</h1>
+        <div className="flex items-center gap-2">
+          <Button
+            onClick={handleBack}
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <h1 className="text-2xl font-bold">Create Test Template</h1>
+        </div>
         <Button onClick={() => setShowCreationModal(true)}>
           Create Template
         </Button>
@@ -497,6 +563,18 @@ export default function CreateTestTemplate() {
                 const fields = labReportFields[formattedCategory]?.[test] || [];
                 return (
                   <div key={`${formattedCategory}-${test}`}>
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-semibold">{test}</h4>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          handleSelectAllFields(category.name, test)
+                        }
+                      >
+                        Select All Fields
+                      </Button>
+                    </div>
                     <div className="space-y-2 grid grid-cols-2">
                       {fields.map((field) => {
                         const fieldId = `${formattedCategory}-${test}-${field.name}`;

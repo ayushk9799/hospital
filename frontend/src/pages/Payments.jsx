@@ -41,7 +41,7 @@ import {
   FileX,
   Printer,
   ListFilter,
-  ChartNoAxesColumnDecreasing,
+  ChevronLeft,
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPayments } from "../redux/slices/paymentSlice";
@@ -51,6 +51,7 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { motion, AnimatePresence } from "framer-motion";
 import { useReactToPrint } from "react-to-print";
 import { fetchStaffMembers } from "../redux/slices/staffSlice";
+import { useNavigate } from "react-router-dom";
 
 const Payments = () => {
   const dispatch = useDispatch();
@@ -70,6 +71,7 @@ const Payments = () => {
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const componentRef = useRef();
+  const navigate = useNavigate();
 
   const getDateRange = () => {
     const today = new Date();
@@ -295,13 +297,27 @@ const Payments = () => {
     `,
   });
 
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   return (
     <Card className="w-full border-none shadow-none">
       <CardHeader>
         <div className="flex justify-between items-center">
-          <div>
-            <CardTitle>Payments List</CardTitle>
-            <CardDescription>View and manage all payments</CardDescription>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleBack}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div>
+              <CardTitle>Payments List</CardTitle>
+              <CardDescription>View and manage all payments</CardDescription>
+            </div>
           </div>
           <Button
             onClick={handlePrint}

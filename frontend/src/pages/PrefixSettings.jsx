@@ -2,11 +2,20 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Backend_URL } from "../../src/assets/Data";
 import { useToast } from "../hooks/use-toast.js";
+import { ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 export default function PrefixSettings() {
   const [prefix, setPrefix] = useState("");
   const [useYearSuffix, setUseYearSuffix] = useState(true);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleBack = () => {
+    navigate(-1);
+  };
+
   useEffect(() => {
     // Fetch current settings
     const fetchSettings = async () => {
@@ -64,9 +73,19 @@ export default function PrefixSettings() {
 
   return (
     <div className="p-4 sm:p-6">
-      <h1 className="text-xl sm:text-2xl font-bold mb-6">
-        Registration Number Prefix Settings
-      </h1>
+      <div className="flex items-center gap-2 mb-4">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleBack}
+          className="h-8 w-8 p-0"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h1 className="text-xl sm:text-2xl font-bold">
+          Registration Number Prefix Settings
+        </h1>
+      </div>
 
       <form onSubmit={handleSubmit} className="max-w-md space-y-4">
         <div>

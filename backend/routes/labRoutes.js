@@ -100,7 +100,7 @@ router.post("/register", verifyToken, async (req, res) => {
       await Promise.all(
         paymentInfo.paymentMethod.map(async (pm) => {
           const payment = new Payment({
-            amount: pm.amount,
+            amount: pm.amount||0,
             paymentMethod: pm.method,
             paymentType: { name: "Laboratory", id: bill._id },
             type: "Income",

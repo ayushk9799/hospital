@@ -5,6 +5,7 @@ import { Label } from "../components/ui/label";
 import { Textarea } from "../components/ui/textarea";
 import { useToast } from "../hooks/use-toast";
 import { s3Domain } from "../assets/Data";
+import { useNavigate } from "react-router-dom";
 import { Backend_URL } from "../assets/Data";
 import {
   Card,
@@ -24,13 +25,14 @@ import {
   fetchHospitalInfo,
   updateHospitalInfo,
 } from "../redux/slices/HospitalSlice";
-import { X, Plus, Upload } from "lucide-react";
+import { X, Plus, Upload, ChevronLeft } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { ScrollArea } from "../components/ui/scroll-area";
 
 const HospitalInfo = () => {
   const { toast } = useToast();
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { hospitalInfo, hospitalInfoStatus, updateStatus } = useSelector(
     (state) => state.hospital
   );
@@ -344,13 +346,23 @@ const HospitalInfo = () => {
     <Card className="w-full">
       <CardHeader className="border-b pb-3">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
-          <div className="mb-4 sm:mb-0">
-            <CardTitle className="text-xl sm:text-2xl font-bold">
-              Hospital Information Management
-            </CardTitle>
-            <CardDescription className="text-gray-500">
-              Manage your hospital's details
-            </CardDescription>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => navigate(-1)}
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
+            <div className="mb-4 sm:mb-0">
+              <CardTitle className="text-xl sm:text-2xl font-bold">
+                Hospital Information Management
+              </CardTitle>
+              <CardDescription className="text-gray-500">
+                Manage your hospital's details
+              </CardDescription>
+            </div>
           </div>
           <Button
             onClick={handleSubmit}

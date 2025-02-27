@@ -18,6 +18,7 @@ import TemplateLabReport from "./TemplateLabReport";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Checkbox } from "../components/ui/checkbox";
+import { labReportFields } from "../assets/Data";
 import MergedLabReportPDF from "../components/custom/reports/MergedLabReportPDF";
 import { useReactToPrint } from "react-to-print";
 
@@ -28,8 +29,9 @@ const Lab = () => {
   const { labTestsTemplate, status, error } = useSelector(
     (state) => state.templates
   );
+
   const navigate = useNavigate();
-  const  hospital  = useSelector((state) => state.hospital.hospitalInfo);
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [patientData, setPatientData] = useState(null);
@@ -60,11 +62,20 @@ const Lab = () => {
     }
   }, [location.state]);
 
-  const filteredCategories = labCategories.filter((category) =>
-    category.types.some((type) =>
-      type.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-  );
+  const filteredCategories = React.useMemo(() => {
+    // Convert labReportFields object into array structure similar to labCategories
+    return Object.entries(labReportFields)
+      .map(([categoryName, tests]) => ({
+        name: categoryName.charAt(0).toUpperCase() + categoryName.slice(1), // Capitalize first letter
+        description: `${categoryName} related tests`,
+        types: Object.keys(tests),
+      }))
+      .filter((category) =>
+        category.types.some((type) =>
+          type.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
+  }, [searchTerm]);
 
   const highlightMatch = (text, term) => {
     if (!term) return text;
@@ -80,9 +91,30 @@ const Lab = () => {
     );
   };
 
-  const handleTestSelection = (category, type, completeType) => {
+  const handleTestSelection = (category, type) => {
     setSelectedTemplate(null);
-    setSelectedTest({ category, type, completeType });
+    // Convert category name to match labReportFields key format
+    const categoryKey = category.toLowerCase().replace(/\s+/g, "-");
+
+    // Get the fields for this test from labReportFields
+    const testFields = labReportFields[categoryKey][type];
+
+    // Create a template object in the format expected by TemplateLabReport
+    const template = {
+      name: type,
+      fields: testFields.reduce((acc, field) => {
+        acc[field.name] = {
+          label: field.label,
+          unit: field.unit,
+          normalRange: field.normalRange,
+          options: field.options,
+        };
+        return acc;
+      }, {}),
+    };
+
+    setSelectedTemplate(template);
+    setSelectedTest(null);
   };
 
   const handleTemplateSelection = (template) => {
@@ -101,23 +133,50 @@ const Lab = () => {
     });
   };
 
- 
-
   const sortedLabTestsTemplate = React.useMemo(() => {
-    if (!labTestsTemplate || !patientData?.labTests) return labTestsTemplate;
+    // Convert labReportFields into template format
+    const readyMadeTemplates = Object.entries(labReportFields).flatMap(
+      ([category, tests]) =>
+        Object.entries(tests).map(([testName, fields]) => ({
+          name: testName,
+          fields: fields.reduce((acc, field) => {
+            acc[field.name] = {
+              label: field.label,
+              unit: field.unit,
+              normalRange: field.normalRange,
+              options: field.options,
+            };
+            return acc;
+          }, {}),
+          category: category,
+        }))
+    );
 
-    return [...labTestsTemplate].sort((a, b) => {
-      const aMatches = patientData.labTests.some(
-        (test) => test.name.toLowerCase() === a.name.toLowerCase()
-      );
-      const bMatches = patientData.labTests.some(
-        (test) => test.name.toLowerCase() === b.name.toLowerCase()
-      );
+    // If no patient data or lab tests, return all templates
+    if (!patientData?.labTests) return [...(labTestsTemplate || [])];
 
-      if (aMatches && !bMatches) return -1;
-      if (!aMatches && bMatches) return 1;
-      return 0;
-    });
+    // Filter readyMadeTemplates to only include tests that match patient's lab tests
+    const filteredReadyMadeTemplates = readyMadeTemplates.filter((template) =>
+      patientData.labTests.some(
+        (test) => test.name.toLowerCase() === template.name.toLowerCase()
+      )
+    );
+
+    // Combine and sort templates
+    return [...(labTestsTemplate || []), ...filteredReadyMadeTemplates].sort(
+      (a, b) => {
+        const aMatches = patientData.labTests.some(
+          (test) => test.name.toLowerCase() === a.name.toLowerCase()
+        );
+        const bMatches = patientData.labTests.some(
+          (test) => test.name.toLowerCase() === b.name.toLowerCase()
+        );
+
+        if (aMatches && !bMatches) return -1;
+        if (!aMatches && bMatches) return 1;
+        return 0;
+      }
+    );
   }, [labTestsTemplate, patientData]);
 
   const getReportStatusColor = (status) => {
@@ -199,11 +258,15 @@ const Lab = () => {
                         <Button
                           variant="outline"
                           onClick={() => setMerging(!merging)}
+                          className="text-[13px] p-1 h-auto"
                         >
                           {merging ? "Cancel Merge" : "Select Reports"}
                         </Button>
                         {merging && (
-                          <Button onClick={handlePrint}>
+                          <Button
+                            onClick={handlePrint}
+                            className="text-[13px] p-1 h-auto"
+                          >
                             Merge & Print
                           </Button>
                         )}
@@ -236,7 +299,7 @@ const Lab = () => {
                               : ""
                           }`}
                         >
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 ">
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 text-[14px]">
                             <CardTitle>{`${template.name.toUpperCase()} (Fields: ${
                               Object.keys(template.fields).length
                             })`}</CardTitle>
@@ -257,7 +320,7 @@ const Lab = () => {
                           </CardHeader>
                           <CardContent>
                             <Button
-                              className="mt-1 p-1"
+                              className="mt-1 p-1 text-[12px] h-auto"
                               onClick={() => handleTemplateSelection(template)}
                             >
                               {hasReport ? "View Report" : "Create Report"}
@@ -288,11 +351,7 @@ const Lab = () => {
                           key={type}
                           className="cursor-pointer hover:text-blue-500 transition-colors"
                           onClick={() =>
-                            handleTestSelection(
-                              category.name.toLowerCase(),
-                              type,
-                              type
-                            )
+                            handleTestSelection(category.name, type)
                           }
                         >
                           {highlightMatch(type, searchTerm)}
@@ -310,20 +369,11 @@ const Lab = () => {
         <div className="w-full md:w-2/3 h-full">
           <ScrollArea className="h-full">
             <div className="pr-4">
-              { selectedTemplate ? (
+              {selectedTemplate ? (
                 <TemplateLabReport
                   template={selectedTemplate}
                   patientData={patientData}
                   onClose={() => setSelectedTemplate(null)}
-                  searchWhere={patientData?.type?.toLowerCase()}
-                />
-              ) : selectedTest ? (
-                <CreateLabReport
-                  category={selectedTest.category.replace(" ", "-")}
-                  type={selectedTest.type}
-                  completeType={selectedTest.completeType}
-                  patientData={patientData}
-                  onClose={() => setSelectedTest(null)}
                   searchWhere={patientData?.type?.toLowerCase()}
                 />
               ) : (
@@ -338,14 +388,14 @@ const Lab = () => {
         </div>
       </div>
       <div className="max-w-[210mm] hidden mx-auto bg-white shadow-lg print:shadow-none print:block print:mx-0">
-                    <div ref={componentRef}>
-                      <MergedLabReportPDF
-                        reportsData={selectedReports}
-                        patientData={patientData}
-                        hospital={hospital}
-                      />
-                    </div>
-                  </div>
+        <div ref={componentRef}>
+          <MergedLabReportPDF
+            reportsData={selectedReports}
+            patientData={patientData}
+            hospital={hospital}
+          />
+        </div>
+      </div>
     </div>
   );
 };

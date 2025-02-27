@@ -7,6 +7,7 @@ import { SearchSuggestion } from "../components/custom/registration/CustomSearch
 import { Label } from "../components/ui/label";
 import { createRoom } from "../redux/slices/roomSlice";
 import { useToast } from "../hooks/use-toast";
+import { ChevronLeft } from "lucide-react";
 
 const ROOM_TYPES = [
   { name: "General" },
@@ -132,7 +133,17 @@ const CreateRoom = () => {
 
   return (
     <div className="max-w-2xl mx-auto md:mt-8 p-6 bg-white rounded-lg shadow-md">
-      <h2 className="text-2xl font-bold mb-6 text-center">Create New Room</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <Button
+          onClick={() => navigate(-1)}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-0"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h2 className="text-2xl font-bold">Create New Room</h2>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-wrap gap-4">
           {renderFormField("roomNumber", "Room Number/Name", "text", true)}

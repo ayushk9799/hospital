@@ -12,7 +12,7 @@ import {
 import { permissionGroups } from "../assets/Data";
 import { Textarea } from "../components/ui/textarea";
 import { Checkbox } from "../components/ui/checkbox";
-import { Plus, X } from "lucide-react";
+import { Plus, X, ChevronLeft } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
@@ -671,9 +671,19 @@ export default function AddStaff() {
 
   return (
     <div className="max-w-[1200px] mx-auto p-4">
-      <h2 className="text-xl font-bold mb-0">
-        {editMode ? "Edit" : "Add New"} Staff Member
-      </h2>
+      <div className="flex items-center gap-2 mb-4">
+        <Button
+          onClick={() => navigate(-1)}
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 p-0"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h2 className="text-xl font-bold">
+          {editMode ? "Edit" : "Add New"} Staff Member
+        </h2>
+      </div>
       <p className="text-gray-600 mb-4">
         Fill in the details of the {editMode ? "existing" : "new"} staff member
       </p>

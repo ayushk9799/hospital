@@ -3,12 +3,19 @@ import { useDispatch, useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../components/ui/card";
 import { fetchTemplates, updateTemplate } from "../redux/slices/templatesSlice";
-import { X, Plus } from "lucide-react";
+import { X, Plus, ChevronLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function Customization() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const [newDiagnosis, setNewDiagnosis] = useState("");
   const [newComorbidity, setNewComorbidity] = useState("");
   const [newMedicine, setNewMedicine] = useState("");
@@ -17,18 +24,29 @@ export default function Customization() {
   const [selectedComorbidities, setSelectedComorbidities] = useState([]);
   const [selectedMedicines, setSelectedMedicines] = useState([]);
 
-  const { diagnosisTemplate = [], comorbidities = [], medicinelist = [] } = useSelector((state) => state.templates);
+  const {
+    diagnosisTemplate = [],
+    comorbidities = [],
+    medicinelist = [],
+  } = useSelector((state) => state.templates);
   useEffect(() => {
     dispatch(fetchTemplates());
   }, [dispatch]);
 
   useEffect(() => {
-    if (selectedDiagnoses !== diagnosisTemplate) setSelectedDiagnoses(diagnosisTemplate);
-    if (selectedComorbidities !== comorbidities) setSelectedComorbidities(comorbidities);
+    if (selectedDiagnoses !== diagnosisTemplate)
+      setSelectedDiagnoses(diagnosisTemplate);
+    if (selectedComorbidities !== comorbidities)
+      setSelectedComorbidities(comorbidities);
     if (selectedMedicines !== medicinelist) setSelectedMedicines(medicinelist);
   }, [diagnosisTemplate]);
-  
-  const handleAddItem = (newItem, setNewItem, selectedItems, setSelectedItems) => {
+
+  const handleAddItem = (
+    newItem,
+    setNewItem,
+    selectedItems,
+    setSelectedItems
+  ) => {
     if (newItem.trim()) {
       setSelectedItems([...selectedItems, ...newItem.trim().split(",")]);
       setNewItem("");
@@ -48,7 +66,18 @@ export default function Customization() {
     );
   };
 
-  const renderSection = (title, placeholder, newItem, setNewItem, selectedItems, setSelectedItems) => (
+  const handleBack = () => {
+    navigate(-1);
+  };
+
+  const renderSection = (
+    title,
+    placeholder,
+    newItem,
+    setNewItem,
+    selectedItems,
+    setSelectedItems
+  ) => (
     <div className="mb-6">
       <h2 className="text-lg sm:text-xl font-semibold mb-2">{title}</h2>
       <div className="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2 mb-4">
@@ -56,11 +85,16 @@ export default function Customization() {
           placeholder={placeholder}
           value={newItem}
           onChange={(e) => setNewItem(e.target.value)}
-          onKeyPress={(e) => e.key === "Enter" && handleAddItem(newItem, setNewItem, selectedItems, setSelectedItems)}
+          onKeyPress={(e) =>
+            e.key === "Enter" &&
+            handleAddItem(newItem, setNewItem, selectedItems, setSelectedItems)
+          }
           className="w-full sm:flex-grow"
         />
         <Button
-          onClick={() => handleAddItem(newItem, setNewItem, selectedItems, setSelectedItems)}
+          onClick={() =>
+            handleAddItem(newItem, setNewItem, selectedItems, setSelectedItems)
+          }
           className="w-full sm:w-auto whitespace-nowrap"
         >
           <Plus className="h-4 w-4 mr-2" />
@@ -79,7 +113,9 @@ export default function Customization() {
               >
                 <span className="mr-1 sm:mr-2">{item}</span>
                 <button
-                  onClick={() => handleRemoveItem(item, selectedItems, setSelectedItems)}
+                  onClick={() =>
+                    handleRemoveItem(item, selectedItems, setSelectedItems)
+                  }
                   className="text-gray-500 hover:text-gray-700 focus:outline-none"
                 >
                   <X className="h-3 w-3 sm:h-4 sm:w-4" />
@@ -95,7 +131,19 @@ export default function Customization() {
   return (
     <div className="h-full flex flex-col p-2 sm:p-4">
       <Card className="flex-grow flex flex-col overflow-hidden">
-        
+        <CardHeader className="flex flex-row items-center gap-2 p-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleBack}
+            className="h-8 w-8 p-0"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <CardTitle className="text-xl">Customization</CardTitle>
+          </div>
+        </CardHeader>
         <CardContent className="flex-grow flex flex-col p-2 sm:p-4 border-2">
           {renderSection(
             "Diagnosis Customization",
