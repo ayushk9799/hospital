@@ -299,11 +299,11 @@ const TemplateLabReport = ({
   };
 
   return (
-    <div className="container mx-auto p-4 max-w-6xl">
-      <h1 className="text-3xl font-bold mb-6 text-center">
+    <div className="container px-0 max-w-6xl">
+      <h1 className="text-2xl font-bold mb-2 text-center">
         Create {template.name} Report
       </h1>
-      <Card className="p-6">
+      <Card className="p-6  w-full">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex justify-between items-center mb-4">
             <Popover>
@@ -355,7 +355,6 @@ const TemplateLabReport = ({
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          {...provided.dragHandleProps}
                           className={`${
                             field.label.toLowerCase() === "findings" ||
                             field.label.toLowerCase() === "impression" ||
@@ -369,7 +368,6 @@ const TemplateLabReport = ({
                           }`}
                           style={{
                             ...provided.draggableProps.style,
-                            cursor: "grab",
                           }}
                         >
                           {field.label.toLowerCase() === "findings" ||
@@ -386,11 +384,19 @@ const TemplateLabReport = ({
                                   handleInputChange(e, field.name)
                                 }
                                 className="h-32 w-full"
+                                tabIndex={0}
                               />
                             </div>
                           ) : (
                             <>
-                              <div className="font-medium">
+                              <div className="font-medium flex items-center gap-2">
+                                <span
+                                  {...provided.dragHandleProps}
+                                  className="cursor-grab"
+                                  tabIndex={-1}
+                                >
+                                  ⋮⋮
+                                </span>
                                 <Input
                                   value={field.label}
                                   onChange={(e) =>
@@ -419,6 +425,7 @@ const TemplateLabReport = ({
                                     onSuggestionSelect={(suggestion) =>
                                       handleOptionSelect(field.name, suggestion)
                                     }
+                                    tabIndex={0}
                                   />
                                 ) : (
                                   <Input
@@ -438,6 +445,7 @@ const TemplateLabReport = ({
                                         patientData?.gender
                                       ),
                                     }}
+                                    tabIndex={0}
                                   />
                                 )}
                               </div>

@@ -117,6 +117,7 @@ const Lab = () => {
     setSelectedTest(null);
   };
 
+  
   const handleTemplateSelection = (template) => {
     setSelectedTemplate(template);
     setSelectedTest(null);
@@ -193,7 +194,7 @@ const Lab = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 flex h-screen">
+    <div className="container mx-auto p-4 flex h-screen" >
       <div className="flex flex-col md:flex-row gap-8 w-full h-full">
         <div className="w-full md:w-1/3 flex flex-col h-full">
           <div className="flex items-center gap-1 mb-3">
@@ -247,7 +248,7 @@ const Lab = () => {
 
           {/* Lab Tests List */}
           <ScrollArea className="flex-grow">
-            <div className="pr-4 space-y-4">
+            <div className="pr-4 space-y-4" >
               {/* Display labTestsTemplate */}
               {status === "succeeded" && sortedLabTestsTemplate && (
                 <div className="mb-4">
