@@ -22,6 +22,7 @@ import {
   Plus,
   Search,
   ArrowLeft,
+  ChartNoAxesColumnDecreasingIcon,
 } from "lucide-react";
 import TemplateLabReport from "./TemplateLabReport";
 import {
@@ -845,7 +846,6 @@ export default function DischargeSummary() {
     ignoreList,
     formConfig,
   ]);
-
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
@@ -1142,7 +1142,7 @@ export default function DischargeSummary() {
           }
         : inv
     );
-
+   
     // If the investigation doesn't exist, add it to the list
     if (
       !updatedInvestigations.some(
@@ -1380,35 +1380,7 @@ export default function DischargeSummary() {
   );
 
   // Add this function to handle registration search
-  const handleRegistrationSearch = async () => {
-    if (!patientInfo.registrationNumber) {
-      toast({
-        title: "Error",
-        description: "Please enter a registration number",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const result = await dispatch(
-        fetchRegistrationDetails({
-          registrationNumber: patientInfo.registrationNumber,
-          type: "IPD",
-        })
-      ).unwrap();
-
-      if (result) {
-        setPatient(result);
-      }
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to fetch patient details",
-        variant: "destructive",
-      });
-    }
-  };
+ 
 
   // Add this function near your other handler functions
   const handleBack = () => {

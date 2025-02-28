@@ -84,6 +84,18 @@ export default function PrintingTemplates() {
 
         <Button
           onClick={() =>
+            navigate("/settings/printing-templates/lab-billing-preview")
+          }
+          className="w-full p-6 h-auto flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"
+        >
+          <span className="text-lg">Lab Billing Template</span>
+          <span className="text-sm text-gray-200">
+            Preview and customize lab billing template
+          </span>
+        </Button>
+
+        <Button
+          onClick={() =>
             navigate("/settings/printing-templates/merge-template-preview")
           }
           className="w-full p-6 h-auto flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"

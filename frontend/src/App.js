@@ -74,6 +74,7 @@ import Payments from "./pages/Payments";
 import LabTemplatesManager from "./pages/LabTemplatesManager";
 import EditTestTemplate from "./pages/EditTestTemplate";
 import LabTemplatePreview from "./pages/LabTemplatePreview";
+import LabBillingTemplatePreview from "./pages/LabBillingTemplatePreview";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -248,6 +249,10 @@ const AppContent = () => {
                   <Route
                     path="/settings/printing-templates/header-preview"
                     element={<HeaderTemplatePreview />}
+                  />
+                  <Route
+                  path="/settings/printing-templates/lab-billing-preview"
+                  element={<LabBillingTemplatePreview/>}
                   />
                   <Route
                     path="/settings/printing-templates/opd-preview"

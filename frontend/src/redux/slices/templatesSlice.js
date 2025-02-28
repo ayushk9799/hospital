@@ -135,21 +135,21 @@ export const deleteTemplate = createLoadingAsyncThunk(
 );
 
 const initialState = {
-    birthCertificateTemplate : '',
+  birthCertificateTemplate: "",
   labTestsTemplate: [],
   headerTemplateArray: [],
   diagnosisTemplate: [],
-  mergeTemplate:"",
+  mergeTemplate: "",
   dischargeSummaryTemplateArray: [],
   opdPrescriptionTemplateArray: [],
   opdRxTemplateArray: [],
-  consentFormTemplateArray : [],
+  consentFormTemplateArray: [],
   status: "idle",
   error: null,
   serviceBillCollections: [],
   dischargeFormTemplates: null,
-  updateTempleteStatus : 'idle',
-
+  updateTempleteStatus: "idle",
+  labBillingTemplate: "",
 };
 
 const templatesSlice = createSlice({
@@ -180,19 +180,21 @@ const templatesSlice = createSlice({
         state.serviceBillCollections = action.payload.service_collections;
         state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
         state.consentFormTemplateArray = action.payload.consentFormArray;
-        state.birthCertificateTemplate = action.payload.birthCertificateTemplate;
+        state.birthCertificateTemplate =
+          action.payload.birthCertificateTemplate;
         state.labReportUiTemplate = action.payload.labReportUiTemplate;
-
+        state.labBillingTemplate = action.payload.labBillingTemplate || "";
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload.message || "Failed to fetch templates";
-      }).addCase(updateTemplate.pending, (state)=> {
-        state.updateTempleteStatus = 'loading'
+      })
+      .addCase(updateTemplate.pending, (state) => {
+        state.updateTempleteStatus = "loading";
       })
       .addCase(updateTemplate.fulfilled, (state, action) => {
         // Update both diagnosis and lab test templates based on the response
-        state.updateTempleteStatus ='succeeded';
+        state.updateTempleteStatus = "succeeded";
         if (action.payload.diagnosisTemplate) {
           state.diagnosisTemplate = action.payload.diagnosisTemplate;
         }
@@ -216,9 +218,11 @@ const templatesSlice = createSlice({
         if (action.payload.dischargeFormTemplates) {
           state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
         }
-      }).addCase(updateTemplate.rejected, (state, action)=> {
-        state.updateTempleteStatus = 'failed'
-      }).addCase(updateServiceBillCollections.fulfilled, (state, action) => {
+      })
+      .addCase(updateTemplate.rejected, (state, action) => {
+        state.updateTempleteStatus = "failed";
+      })
+      .addCase(updateServiceBillCollections.fulfilled, (state, action) => {
         state.serviceBillCollections = action.payload;
       })
       .addCase(editTemplate.fulfilled, (state, action) => {

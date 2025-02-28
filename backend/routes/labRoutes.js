@@ -60,7 +60,7 @@ router.post("/register", verifyToken, async (req, res) => {
         paymentMethod: paymentInfo.paymentMethod,
         additionalDiscount: paymentInfo.additionalDiscount,
       },
-      referredBy,
+      referredBy: referredBy?._id,
       department,
       notes,
       lastVisitType: lastVisitType,
@@ -100,7 +100,7 @@ router.post("/register", verifyToken, async (req, res) => {
       await Promise.all(
         paymentInfo.paymentMethod.map(async (pm) => {
           const payment = new Payment({
-            amount: pm.amount||0,
+            amount: pm.amount || 0,
             paymentMethod: pm.method,
             paymentType: { name: "Laboratory", id: bill._id },
             type: "Income",
@@ -118,11 +118,17 @@ router.post("/register", verifyToken, async (req, res) => {
     await bill.save({ session });
     await labRegistration.save({ session });
 
+    // Convert Mongoose document to plain object and modify referredBy
+    const modifiedLabRegistration = {
+      ...labRegistration.toObject(),
+      referredBy: referredBy,
+    };
+
     await session.commitTransaction();
 
     res.status(201).json({
       success: true,
-      labRegistration,
+      labRegistration: modifiedLabRegistration,
       bill,
       message: "Lab registration completed successfully",
     });

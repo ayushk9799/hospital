@@ -56,6 +56,7 @@ const templateSchema = new mongoose.Schema({
     default: null,
   },
   birthCertificateTemplate: String,
+  labBillingTemplate: String,
 });
 
 templateSchema.plugin(hospitalPlugin);

@@ -166,6 +166,9 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     if (req.body.labReportUiTemplate) {
       template.labReportUiTemplate = req.body.labReportUiTemplate;
     }
+    if (req.body.labBillingTemplate) {
+      template.labBillingTemplate = req.body.labBillingTemplate;
+    }
 
     await template.save({ session });
 

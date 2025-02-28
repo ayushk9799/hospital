@@ -57,7 +57,6 @@ export default function LabRegDialog({ open, onOpenChange }) {
   const [searchedPatient, setSearchedPatient] = useState(null);
   const { createRegistrationStatus, error } = useSelector((state) => state.lab);
   const readymadeTests = labCategories.flatMap((category) => category.types);
-  console.log(readymadeTests);
   const labtestsTemplate = useSelector(
     (state) => state.templates.labTestsTemplate
   );
@@ -88,7 +87,7 @@ export default function LabRegDialog({ open, onOpenChange }) {
     },
     upgradegenReg: false,
     labTests: [],
-    referredBy: "",
+    referredBy: {},
     department: departments.length === 1 ? departments[0].name : "",
     notes: "",
     bookingDate: new Date()
@@ -104,7 +103,6 @@ export default function LabRegDialog({ open, onOpenChange }) {
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState({});
-
   const handleInputChange = (e) => {
     const { id, value } = e.target;
     setFormData((prev) => {
@@ -570,15 +568,24 @@ export default function LabRegDialog({ open, onOpenChange }) {
                 />
                 <Select
                   id="referredBy"
-                  value={formData.referredBy}
-                  onValueChange={(value) =>
-                    handleInputChange({
-                      target: { id: "referredBy", value },
-                    })
-                  }
+                  value={formData.referredBy?._id}
+                  onValueChange={(value) => {
+                    const selectedDoctor = doctors.find(
+                      (doc) => doc._id === value
+                    );
+                    setFormData((prev) => ({
+                      ...prev,
+                      referredBy: {
+                        _id: selectedDoctor._id,
+                        name: selectedDoctor.name,
+                      },
+                    }));
+                  }}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Referred By" />
+                    <SelectValue placeholder="Referred By">
+                      {formData.referredBy?.name || "Referred By"}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {doctors.map((doctor) => (
@@ -684,7 +691,7 @@ export default function LabRegDialog({ open, onOpenChange }) {
                         key={pm.method}
                         id={`payment.${pm.method}`}
                         label={`${pm.method} Amount`}
-                        value={pm.amount.toLocaleString("en-IN")}
+                        value={pm.amount}
                         onChange={(e) => {
                           handleAmountPaidChange(pm.method, e.target.value);
                         }}

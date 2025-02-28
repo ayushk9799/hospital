@@ -105,6 +105,7 @@ const TemplateLabReport = ({
   const [fields, setFields] = useState([]);
   const [reportDate, setReportDate] = useState(new Date());
   const [allReports, setAllReports] = useState([]);
+
   const [generatedDate, setGeneratedDate] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
@@ -114,14 +115,18 @@ const TemplateLabReport = ({
 
   useEffect(() => {
     if (template && template.fields) {
-      const relevantReports = patientData?.labReports.filter(
-        (report) => report.name.toLowerCase() === template.name.toLowerCase()
-      );
+      const relevantReports =
+        patientData?.labReports.filter(
+          (report) => report.name.toLowerCase() === template.name.toLowerCase()
+        ) || [];
       const latestDate =
         relevantReports?.length > 0
           ? new Date(
               Math.max(
-                ...relevantReports.map((report) => new Date(report.date))
+                ...relevantReports.map((report) => {
+                  const date = report.date ? new Date(report.date) : new Date();
+                  return date;
+                })
               )
             )
           : new Date();
@@ -164,7 +169,10 @@ const TemplateLabReport = ({
         unit: field.unit,
         normalRange: field.normalRange,
         options: field.options,
-        value: report.report[name]?.value || "",
+        value:
+          template.name.toLowerCase() === report.name.toLowerCase()
+            ? report.report?.[name]?.value
+            : "",
       }))
     );
   };
@@ -254,14 +262,17 @@ const TemplateLabReport = ({
           variant: "success",
         });
 
-        // Trigger print after successful save
-        handlePrint();
+        // Update local state through onSave callback
         if (onSave) {
-          onSave(labReportData);
+          const updatedData =
+            resultAction.payload.visit || resultAction.payload.registration;
+          onSave(labReportData, updatedData);
         }
-        // if (onClose) {
-        //   onClose(labReportData);
-        // }
+
+        handlePrint();
+
+        // Don't close immediately to allow state updates to propagate
+       
       } else {
         throw new Error("Failed to add lab report");
       }
@@ -297,7 +308,6 @@ const TemplateLabReport = ({
       [undefined, "", null, "N/A", "-"].includes(normalRange)
     );
   };
-
   return (
     <div className="container px-0 max-w-6xl">
       <h1 className="text-2xl font-bold mb-2 text-center">

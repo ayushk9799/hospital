@@ -22,7 +22,6 @@ const MultiSelectInput = forwardRef(
     const [inputValue, setInputValue] = useState("");
     const [highlightedIndex, setHighlightedIndex] = useState(-1);
     const parentRef = useRef(null);
-console.log(filteredSuggestions)
     useEffect(() => {
       const filtered = suggestions.filter((suggestion) =>
         suggestion?.name?.toLowerCase().includes(inputValue.toLowerCase())
