@@ -1,4 +1,4 @@
-import React, { useRef, useState ,useEffect} from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import {
   Dialog,
@@ -9,7 +9,7 @@ import {
 import { Button } from "../../ui/button";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { Label } from "../../ui/label";
-import {headerTemplateString as headerTemplateStringDefault} from "../../../templates/headertemplate";
+import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { useSelector } from "react-redux";
 import {
   Table,
@@ -26,10 +26,16 @@ import HospitalHeader from "../../../utils/print/HospitalHeader";
 import { ScrollArea } from "../../ui/scroll-area";
 import PaymentReceipt from "../print/PaymentReceipt";
 
-const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completedBill }) => {
+const BillModal = ({
+  isOpen,
+  setShowBillModal,
+  billData,
+  hospitalInfo,
+  completedBill,
+}) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
-  
+
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
@@ -98,14 +104,16 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
   };
   const bill = completedBill?.bill || billData;
   const patient = completedBill?.patient || billData?.patientInfo;
-   const headerTemplateStrings = useSelector(
+  const headerTemplateStrings = useSelector(
     (state) => state.templates.headerTemplateArray
   );
   const headerTemplateString =
     headerTemplateStrings?.length > 0
       ? headerTemplateStrings[0].value
       : headerTemplateStringDefault;
-  const HospitalHeader = createDynamicComponentFromString(headerTemplateString||headerTemplateStringDefault);
+  const HospitalHeader = createDynamicComponentFromString(
+    headerTemplateString || headerTemplateStringDefault
+  );
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-visible rounded-lg">
@@ -129,16 +137,22 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                   </div>
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Age/Gender:</Label>
-                    <p>{patient?.age || "N/A"}/{patient?.gender || "N/A"}</p>
+                    <p>
+                      {patient?.age || "N/A"}/{patient?.gender || "N/A"}
+                    </p>
                   </div>
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">UHID No:</Label>
                     <p>{patient?.registrationNumber || "N/A"}</p>
                   </div>
-                 
+
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">IPD No:</Label>
-                    <p>{completedBill?.admissionRecord?.ipdNumber || completedBill?.admission?.ipdNumber || "N/A"}</p>
+                    <p>
+                      {completedBill?.admissionRecord?.ipdNumber ||
+                        completedBill?.admission?.ipdNumber ||
+                        "N/A"}
+                    </p>
                   </div>
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Contact:</Label>
@@ -149,7 +163,9 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                     <p>{patient?.address || "N/A"}</p>
                   </div>
                   <div className="flex items-center">
-                    <Label className="font-semibold mr-2">Invoice Number:</Label>
+                    <Label className="font-semibold mr-2">
+                      Invoice Number:
+                    </Label>
                     <p>{bill?.invoiceNumber || "N/A"}</p>
                   </div>
                   <div className="flex items-center">
@@ -162,9 +178,10 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                   </div>
                 </div>
                 <div className="flex items-center">
-                <Label className="font-semibold mr-2">Operation:</Label>
+                  <Label className="font-semibold mr-2">Operation:</Label>
 
-                  {completedBill.admissionRecord?.operationName || completedBill.admission?.operationName}
+                  {completedBill.admissionRecord?.operationName ||
+                    completedBill.admission?.operationName}
                 </div>
                 <div className="mx-auto w-full max-w-md">
                   <div className="border-2 p-6 rounded-lg shadow-sm">
@@ -172,26 +189,41 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                       <h3 className="text-xl font-semibold">Payment Receipt</h3>
                       <p className="text-sm text-gray-600">
                         {bill?.createdAt
-                          ? format(new Date(bill.createdAt), "dd/MM/yyyy hh:mm a")
+                          ? format(
+                              new Date(bill.createdAt),
+                              "dd/MM/yyyy hh:mm a"
+                            )
                           : "N/A"}
                       </p>
                     </div>
 
                     <div>
                       <div className="flex justify-between items-center text-base">
-                        <span className="text-gray-700 font-medium">Sub Total:</span>
-                        <span className="font-medium">₹{(bill?.subtotal || 0).toFixed(2)}</span>
+                        <span className="text-gray-700 font-medium">
+                          Sub Total:
+                        </span>
+                        <span className="font-medium">
+                          ₹{(bill?.subtotal || 0).toFixed(2)}
+                        </span>
                       </div>
 
                       <div className="flex justify-between items-center text-base">
-                        <span className="text-gray-700 font-medium">Discount:</span>
-                        <span className="font-medium">₹{(bill?.additionalDiscount || 0).toFixed(2)}</span>
+                        <span className="text-gray-700 font-medium">
+                          Discount:
+                        </span>
+                        <span className="font-medium">
+                          ₹{(bill?.additionalDiscount || 0).toFixed(2)}
+                        </span>
                       </div>
 
                       <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2">
                         <span className="font-semibold">Net Total:</span>
                         <span className="font-semibold">
-                          ₹{((bill?.subtotal || 0) - (bill?.additionalDiscount || 0)).toFixed(2)}
+                          ₹
+                          {(
+                            (bill?.subtotal || 0) -
+                            (bill?.additionalDiscount || 0)
+                          ).toFixed(2)}
                         </span>
                       </div>
 
@@ -205,14 +237,23 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                       <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2">
                         <span className="font-semibold">Balance:</span>
                         <span className="text-red-600 font-semibold">
-                          ₹{((bill?.totalAmount || 0) - (bill?.amountPaid || 0)).toFixed(2)}
+                          ₹
+                          {(
+                            (bill?.totalAmount || 0) - (bill?.amountPaid || 0)
+                          ).toFixed(2)}
                         </span>
                       </div>
 
                       <div className="text-center mt-4 pt-2 border-t-2 border-gray-200">
                         <div className="font-medium text-base">
                           <span>Status: </span>
-                          <span className={getBillStatus(bill) === "Paid" ? "text-green-600" : "text-red-600"}>
+                          <span
+                            className={
+                              getBillStatus(bill) === "Paid"
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }
+                          >
                             {getBillStatus(bill)}
                           </span>
                         </div>
@@ -228,25 +269,41 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                   </div>
                 </div>
 
-                {(bill?.payments || completedBill?.payment) && (
-                  <div className="mt-1">
-                    <h3 className="text-lg font-semibold mb-1">Payment History</h3>
-                    {(bill?.payments?.length > 0 || completedBill?.payment?.length > 0) ? (
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead className="w-[80px]">Date</TableHead>
-                            <TableHead className="w-[80px]">Time</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead>Method</TableHead>
-                            <TableHead className="no-print">Receipt</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {(completedBill?.payment || bill?.payments)?.map((payment, index) => (
+                <div className="mt-4">
+                  <div className="flex flex-row items-center mb-2 w-auto">
+                    <h3 className="text-lg font-semibold ">Payment History</h3>
+                    {completedBill?.payment?.length > 0 && (
+                      <PaymentReceipt
+                        payments={completedBill.payment}
+                        billData={{
+                          ...completedBill?.bill,
+                          patient: completedBill?.patient,
+                        }}
+                        styleData={true}
+                      />
+                    )}
+                  </div>
+                  {bill?.payments?.length > 0 ||
+                  completedBill?.payment?.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[80px]">Date</TableHead>
+                          <TableHead className="w-[80px]">Time</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Method</TableHead>
+                          <TableHead className="no-print">Receipt</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(completedBill?.payment || bill?.payments)?.map(
+                          (payment, index) => (
                             <TableRow key={index}>
                               <TableCell className="text-xs">
-                                {format(new Date(payment.createdAt), "dd/MM/yyyy")}
+                                {format(
+                                  new Date(payment.createdAt),
+                                  "dd/MM/yyyy"
+                                )}
                               </TableCell>
                               <TableCell className="text-xs">
                                 {format(new Date(payment.createdAt), "hh:mm a")}
@@ -258,20 +315,26 @@ const BillModal = ({ isOpen, setShowBillModal, billData, hospitalInfo, completed
                                 {payment.paymentMethod || "N/A"}
                               </TableCell>
                               <TableCell className="no-print">
-                                <PaymentReceipt payment={completedBill?.payment?.[0]}  billData={{...completedBill?.bill, patient : completedBill?.patient}} />
+                                <PaymentReceipt
+                                  payment={completedBill?.payment?.[0]}
+                                  billData={{
+                                    ...completedBill?.bill,
+                                    patient: completedBill?.patient,
+                                  }}
+                                />
                               </TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    ) : (
-                      <div className="flex items-center justify-center space-x-2 text-gray-500 py-4">
-                        <AlertCircle size={18} />
-                        <span>No payment history found</span>
-                      </div>
-                    )}
-                  </div>
-                )}
+                          )
+                        )}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <div className="flex items-center justify-center space-x-2 text-gray-500 py-4">
+                      <AlertCircle size={18} />
+                      <span>No payment history found</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

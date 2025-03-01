@@ -249,8 +249,8 @@ const LabPaymentDialog = ({ isOpen, setIsOpen, labData }) => {
 
         <div className="space-y-0">
           <h4 className="text-sm font-semibold">Recent Payments</h4>
-          {labData?.paymentInfo?.paymentMethod &&
-          labData?.paymentInfo?.paymentMethod.length > 0 ? (
+          {labData?.payments &&
+          labData?.payments?.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -260,7 +260,7 @@ const LabPaymentDialog = ({ isOpen, setIsOpen, labData }) => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {labData.paymentInfo.paymentMethod.map((payment, index) => (
+                  {labData.payments?.map((payment, index) => (
                     <TableRow key={index}>
                       <TableCell className="text-xs font-medium">
                         ₹
@@ -270,7 +270,7 @@ const LabPaymentDialog = ({ isOpen, setIsOpen, labData }) => {
                         })}
                       </TableCell>
                       <TableCell className="text-xs">
-                        {payment.method}
+                        {payment.paymentMethod}
                       </TableCell>
                     </TableRow>
                   ))}

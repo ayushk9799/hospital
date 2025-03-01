@@ -189,89 +189,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                     )}
                   </div>
 
-                  {/* <div className="mx-auto w-full max-w-md">
-                    <div className="border-2 p-6 rounded-lg shadow-sm">
-                      <div className="text-center mb-4">
-                        <h3 className="text-xl font-semibold">
-                          Lab Registration Receipt
-                        </h3>
-                        <p className="text-sm text-gray-600">
-                          {labData.createdAt
-                            ? format(
-                                new Date(labData.createdAt),
-                                "dd/MM/yyyy hh:mm a"
-                              )
-                            : "N/A"}
-                        </p>
-                      </div>
-
-                      <div>
-                        <div className="flex justify-between items-center text-base">
-                          <span className="text-gray-700 font-medium">
-                            Sub Total:
-                          </span>
-                          <span className="font-medium">
-                            ₹{labData.paymentInfo.totalAmount.toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-base">
-                          <span className="text-gray-700 font-medium">
-                            Discount:
-                          </span>
-                          <span className="font-medium">
-                            ₹{labData.paymentInfo.additionalDiscount.toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2">
-                          <span className="font-semibold">Net Total:</span>
-                          <span className="font-semibold">
-                            ₹
-                            {(
-                              labData.paymentInfo.totalAmount -
-                              labData.paymentInfo.additionalDiscount
-                            ).toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-base">
-                          <span className="text-gray-700 font-medium">Paid:</span>
-                          <span className="text-green-600 font-medium">
-                            ₹{labData.paymentInfo.amountPaid.toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2">
-                          <span className="font-semibold">Balance:</span>
-                          <span className="text-red-600 font-semibold">
-                            ₹{labData.paymentInfo.balanceDue.toFixed(2)}
-                          </span>
-                        </div>
-
-                        <div className="text-center mt-4 pt-2 border-t-2 border-gray-200">
-                          <div className="font-medium text-base">
-                            <span>Status: </span>
-                            <Badge
-                              variant={getStatusBadgeVariant(labData.status)}
-                            >
-                              {labData.status}
-                            </Badge>
-                          </div>
-
-                          <div className="mt-4 text-sm text-gray-600">
-                            <p>Amount in words:</p>
-                            <p className="font-medium">
-                              {numberToWords(labData.paymentInfo.totalAmount)}{" "}
-                              Rupees Only
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div> */}
-
-                  {/* Lab Tests Section */}
+                
                   <div className="mt-4">
                     <h3 className="text-lg font-semibold mb-2">Lab Tests</h3>
                     <Table className="border-2 border-gray-200">
@@ -390,10 +308,17 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                         </Label>
                       </div>
                     </div>
-                    <h3 className="text-lg font-semibold mb-2">
-                      Payment History
-                    </h3>
-                    {labData?.paymentInfo?.paymentMethod?.length > 0 ? (
+                    <div className="flex justify-between items-center mb-2">
+                      <h3 className="text-lg font-semibold">Payment History</h3>
+                      {labData?.payments?.length > 0 && (
+                        <PaymentReceipt
+                          payments={labData.payments}
+                          billData={labData}
+                          styleData={true}
+                        />
+                      )}
+                    </div>
+                    {labData?.payments?.length > 0 ? (
                       <Table>
                         <TableHeader>
                           <TableRow>
@@ -405,19 +330,19 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {labData.paymentInfo.paymentMethod.map(
+                          {labData.payments?.map(
                             (payment, index) => (
                               <TableRow key={index}>
                                 <TableCell>
                                   {format(
-                                    new Date(labData.createdAt),
+                                    new Date(payment.createdAt),
                                     "dd/MM/yyyy"
                                   )}
                                 </TableCell>
                                 {!isMobile && (
                                   <TableCell>
                                     {format(
-                                      new Date(labData.createdAt),
+                                      new Date(payment.createdAt),
                                       "hh:mm a"
                                     )}
                                   </TableCell>
@@ -425,7 +350,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                                 <TableCell>
                                   ₹{payment.amount?.toFixed(2)}
                                 </TableCell>
-                                <TableCell>{payment.method}</TableCell>
+                                <TableCell>{payment.paymentMethod}</TableCell>
                                 <TableCell className="no-print">
                                   <PaymentReceipt
                                     payment={payment}

@@ -61,17 +61,13 @@ const labRegistrationSchema = new mongoose.Schema(
     lastVisitType: { type: String, enum: ["OPD", "IPD"] },
     lastVisit: { type: Date, default: Date.now },
     lastVisitId: { type: mongoose.Schema.Types.ObjectId },
+    payments:[{type: mongoose.Schema.Types.ObjectId,ref:"Payment"}],
 
     // Payment Information
     paymentInfo: {
       totalAmount: { type: Number, required: true },
       amountPaid: { type: Number, default: 0 },
-      paymentMethod: [
-        {
-          method: { type: String },
-          amount: { type: Number },
-        },
-      ],
+     
       additionalDiscount: { type: Number, default: 0 },
       balanceDue: { type: Number },
     },

@@ -195,6 +195,7 @@ export const labCategories = [
       "Reticulocyte Count",
       "Coagulation Profile",
       "Hemoglobin Electrophoresis",
+      "Arterial Blood Gas (ABG)",
     ],
   },
   {
@@ -207,6 +208,7 @@ export const labCategories = [
       "Electrolytes",
       "Calcium Profile",
       "Iron Studies",
+      "Cardiac Markers",
     ],
   },
   {
@@ -217,6 +219,7 @@ export const labCategories = [
       "Diabetes Tests",
       "Reproductive Hormones",
       "Cortisol",
+      "Vitamin Tests",
     ],
   },
   {
@@ -229,6 +232,7 @@ export const labCategories = [
       "Hepatitis Markers",
       "HIV",
       "VDRL",
+      "Allergy Tests",
     ],
   },
   {
@@ -244,7 +248,12 @@ export const labCategories = [
   {
     name: "Immunology",
     description: "Tests related to the immune system",
-    types: ["Antinuclear Antibodies (ANA)", "Anti-dsDNA", "Complement Levels"],
+    types: [
+      "Antinuclear Antibodies (ANA)",
+      "Anti-dsDNA",
+      "Complement Levels",
+      "Immunoglobulins (IgG, IgM)",
+    ],
   },
   {
     name: "Tumor Markers",
@@ -550,6 +559,30 @@ export const labReportFields = {
         unit: "seconds",
         normalRange: "4-10",
       },
+      {
+        name: "factor_viii",
+        label: "Factor VIII Activity",
+        unit: "%",
+        normalRange: "50-150",
+      },
+      {
+        name: "von_willebrand",
+        label: "von Willebrand Factor",
+        unit: "%",
+        normalRange: "50-160",
+      },
+      {
+        name: "protein_c_activity",
+        label: "Protein C Activity",
+        unit: "%",
+        normalRange: "70-140",
+      },
+      {
+        name: "protein_s_activity",
+        label: "Protein S Activity",
+        unit: "%",
+        normalRange: "65-140",
+      },
     ],
     "Hemoglobin Electrophoresis": [
       { name: "hb_a", label: "Hemoglobin A", unit: "%", normalRange: "95-98" },
@@ -560,6 +593,80 @@ export const labReportFields = {
         normalRange: "1.5-3.5",
       },
       { name: "hb_f", label: "Hemoglobin F", unit: "%", normalRange: "<2" },
+    ],
+    "Arterial Blood Gas (ABG)": [
+      {
+        name: "ph",
+        label: "pH",
+        unit: "",
+        normalRange: "7.35-7.45",
+      },
+      {
+        name: "paco2",
+        label: "PaCO2 (Partial Pressure of CO2)",
+        unit: "mmHg",
+        normalRange: "35-45",
+      },
+      {
+        name: "pao2",
+        label: "PaO2 (Partial Pressure of O2)",
+        unit: "mmHg",
+        normalRange: "80-100",
+      },
+      {
+        name: "hco3",
+        label: "HCO3 (Bicarbonate)",
+        unit: "mEq/L",
+        normalRange: "22-26",
+      },
+      {
+        name: "base_excess",
+        label: "Base Excess/Deficit",
+        unit: "mEq/L",
+        normalRange: "-2 to +2",
+      },
+      {
+        name: "sao2",
+        label: "SaO2 (Oxygen Saturation)",
+        unit: "%",
+        normalRange: "95-100",
+      },
+      {
+        name: "lactate",
+        label: "Lactate",
+        unit: "mmol/L",
+        normalRange: "0.5-1.6",
+      },
+      {
+        name: "fio2",
+        label: "FiO2 (Fraction of Inspired Oxygen)",
+        unit: "%",
+        normalRange: "21",
+      },
+      {
+        name: "pf_ratio",
+        label: "P/F Ratio (PaO2/FiO2)",
+        unit: "",
+        normalRange: ">400",
+      },
+      {
+        name: "a_a_gradient",
+        label: "A-a Gradient",
+        unit: "mmHg",
+        normalRange: "<15",
+      },
+      {
+        name: "anion_gap",
+        label: "Anion Gap",
+        unit: "mEq/L",
+        normalRange: "8-16",
+      },
+      {
+        name: "temperature",
+        label: "Temperature",
+        unit: "°C",
+        normalRange: "36.5-37.5",
+      },
     ],
   },
   biochemistry: {
@@ -645,6 +752,24 @@ export const labReportFields = {
         label: "A/G Ratio",
         unit: "",
         normalRange: "1.2-2.2",
+      },
+      {
+        name: "ggt",
+        label: "Gamma GT",
+        unit: "U/L",
+        normalRange: "9-48",
+      },
+      {
+        name: "ldh",
+        label: "Lactate Dehydrogenase (LDH)",
+        unit: "U/L",
+        normalRange: "140-280",
+      },
+      {
+        name: "pt_inr",
+        label: "Prothrombin Time/INR",
+        unit: "seconds",
+        normalRange: "11-13.5",
       },
     ],
     "Kidney Function Tests": [
@@ -818,11 +943,49 @@ export const labReportFields = {
         normalRange: "20-250",
       },
     ],
+    "Cardiac Markers": [
+      {
+        name: "troponin_i",
+        label: "Troponin I",
+        unit: "ng/mL",
+        normalRange: "<0.04",
+      },
+      {
+        name: "troponin_t",
+        label: "Troponin T",
+        unit: "ng/mL",
+        normalRange: "<0.01",
+      },
+      {
+        name: "ck_mb",
+        label: "CK-MB",
+        unit: "ng/mL",
+        normalRange: "<5.0",
+      },
+      {
+        name: "bnp",
+        label: "BNP",
+        unit: "pg/mL",
+        normalRange: "<100",
+      },
+    ],
   },
   endocrinology: {
     "Thyroid Function Tests": [
-      { name: "t3", label: "T3", unit: "ng/dL", normalRange: "80-200" },
-      { name: "t4", label: "T4", unit: "µg/dL", normalRange: "5.1-14.1" },
+      { name: "t3", label: "Total T3", unit: "ng/dL", normalRange: "80-200" },
+      { name: "t4", label: "Total T4", unit: "µg/dL", normalRange: "5.1-14.1" },
+      {
+        name: "free_t3",
+        label: "Free T3",
+        unit: "pg/mL",
+        normalRange: "2.3-4.2",
+      },
+      {
+        name: "free_t4",
+        label: "Free T4",
+        unit: "ng/dL",
+        normalRange: "0.8-1.8",
+      },
       { name: "tsh", label: "TSH", unit: "µIU/mL", normalRange: "0.4-4.0" },
     ],
     "Diabetes Tests": [
@@ -844,6 +1007,24 @@ export const labReportFields = {
         label: "Blood Sugar",
         unit: "mg/dL",
         normalRange: "100-125",
+      },
+      {
+        name: "c_peptide",
+        label: "C-Peptide",
+        unit: "ng/mL",
+        normalRange: "0.8-3.9",
+      },
+      {
+        name: "insulin",
+        label: "Fasting Insulin",
+        unit: "µIU/mL",
+        normalRange: "3-25",
+      },
+      {
+        name: "homa_ir",
+        label: "HOMA-IR",
+        unit: "",
+        normalRange: "<2.5",
       },
     ],
     "Reproductive Hormones": [
@@ -878,6 +1059,26 @@ export const labReportFields = {
         label: "Morning Cortisol",
         unit: "µg/dL",
         normalRange: "6-23",
+      },
+    ],
+    "Vitamin Tests": [
+      {
+        name: "vitamin_d",
+        label: "Vitamin D (25-OH)",
+        unit: "ng/mL",
+        normalRange: "30-100",
+      },
+      {
+        name: "vitamin_b12",
+        label: "Vitamin B12",
+        unit: "pg/mL",
+        normalRange: "200-900",
+      },
+      {
+        name: "folate",
+        label: "Folate",
+        unit: "ng/mL",
+        normalRange: "2.7-17.0",
       },
     ],
   },
@@ -952,6 +1153,30 @@ export const labReportFields = {
         unit: "",
         normalRange: "Non-reactive",
         options: ["Non-reactive", "Reactive"],
+      },
+    ],
+
+    "Allergy Tests": [
+      {
+        name: "total_ige",
+        label: "Total IgE",
+        unit: "IU/mL",
+        normalRange: "<100",
+      },
+      {
+        name: "specific_ige",
+        label: "Specific IgE Panel",
+        unit: "kUA/L",
+        normalRange: "<0.35",
+        options: [
+          "Class 0",
+          "Class 1",
+          "Class 2",
+          "Class 3",
+          "Class 4",
+          "Class 5",
+          "Class 6",
+        ],
       },
     ],
   },
@@ -1074,6 +1299,44 @@ export const labReportFields = {
         label: "Complement C4",
         unit: "mg/dL",
         normalRange: "10-40",
+      },
+    ],
+    "Immunoglobulins (IgG, IgM)": [
+      {
+        name: "igg",
+        label: "Immunoglobulin G (IgG)",
+        unit: "mg/dL",
+        normalRange: "700-1600",
+      },
+      {
+        name: "igm",
+        label: "Immunoglobulin M (IgM)",
+        unit: "mg/dL",
+        normalRange: "40-230",
+      },
+      {
+        name: "igg_subclass_1",
+        label: "IgG Subclass 1",
+        unit: "mg/dL",
+        normalRange: "382-929",
+      },
+      {
+        name: "igg_subclass_2",
+        label: "IgG Subclass 2",
+        unit: "mg/dL",
+        normalRange: "242-700",
+      },
+      {
+        name: "igg_subclass_3",
+        label: "IgG Subclass 3",
+        unit: "mg/dL",
+        normalRange: "22-178",
+      },
+      {
+        name: "igg_subclass_4",
+        label: "IgG Subclass 4",
+        unit: "mg/dL",
+        normalRange: "4-86",
       },
     ],
   },
@@ -1539,10 +1802,6 @@ export const labReportFields = {
       { name: "impression", label: "Impression", unit: "", normalRange: "N/A" },
     ],
   },
-  // ... existing code ...
-
-  // ... other existing fields ...
-
   histopathology: {
     "FNAC (Fine Needle Aspiration Cytology)": [
       {

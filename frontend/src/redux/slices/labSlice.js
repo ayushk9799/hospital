@@ -103,7 +103,7 @@ export const addLabPayment = createLoadingAsyncThunk(
         return rejectWithValue("Failed to add payment");
       }
       const data = await response.json();
-      return data.labRegistration;
+      return data;
     } catch (error) {
       return rejectWithValue(error.message);
     }
@@ -214,10 +214,12 @@ const labSlice = createSlice({
       .addCase(addLabPayment.fulfilled, (state, action) => {
         state.updateTestStatus = "succeeded";
         const index = state.registrations.findIndex(
-          (reg) => reg._id === action.payload._id
+          (reg) => reg._id === action.payload.labRegistration._id
         );
         if (index !== -1) {
-          state.registrations[index] = action.payload;
+          let dataadd={...action.payload.labRegistration,payments:[...state.registrations[index].payments,action.payload.payment]};
+          console.log(dataadd)
+          state.registrations[index] = dataadd;
         }
       })
       .addCase(addLabPayment.rejected, (state, action) => {

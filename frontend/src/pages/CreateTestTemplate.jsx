@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Checkbox } from "../components/ui/checkbox";
 import { labCategories, labReportFields } from "../assets/Data";
-import { Settings, Search, ChevronLeft } from "lucide-react";
+import { Settings, Search, ChevronLeft, Plus, X } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import {
@@ -33,6 +33,7 @@ export default function CreateTestTemplate() {
   const [highlightedField, setHighlightedField] = useState(null);
   const leftScrollAreaRef = useRef(null);
   const rightScrollAreaRef = useRef(null);
+  const [customFields, setCustomFields] = useState({});
 
   const formatKey = (str) => {
     return str.toLowerCase().replace(/[()]/g, "").replace(/\s+/g, "-");
@@ -153,11 +154,12 @@ export default function CreateTestTemplate() {
     }
 
     // Validate if any fields are selected
-    const hasSelectedFields = Object.values(selectedFields).some((tests) =>
-      Object.values(tests).some((fields) =>
-        Object.values(fields).some((field) => field.isSelected)
-      )
-    );
+    const hasSelectedFields =
+      Object.values(selectedFields).some((tests) =>
+        Object.values(tests).some((fields) =>
+          Object.values(fields).some((field) => field.isSelected)
+        )
+      ) || Object.values(customFields).some((field) => field.isSelected);
 
     if (!hasSelectedFields) {
       toast({
@@ -193,8 +195,29 @@ export default function CreateTestTemplate() {
     const template = {
       name: templateName,
       rate: Number(rate) || 0,
-      fields: Object.entries(selectedFields).reduce(
-        (acc, [category, tests]) => {
+      fields: {
+        ...Object.entries(customFields)
+          .filter(([_, field]) => field.isSelected)
+          .reduce(
+            (acc, [fieldId, field]) => ({
+              ...acc,
+              [fieldId]: {
+                label: field.label,
+                value: field.value,
+                unit: field.unit,
+                normalRange: field.normalRange,
+                ...(field.options &&
+                  field.options.length > 0 && {
+                    options: field.options
+                      .split(",")
+                      .map((opt) => opt.trim())
+                      .filter((opt) => opt !== ""),
+                  }),
+              },
+            }),
+            {}
+          ),
+        ...Object.entries(selectedFields).reduce((acc, [category, tests]) => {
           Object.entries(tests).forEach(([test, fields]) => {
             Object.entries(fields)
               .filter(([_, field]) => field.isSelected)
@@ -218,9 +241,8 @@ export default function CreateTestTemplate() {
               });
           });
           return acc;
-        },
-        {}
-      ),
+        }, {}),
+      },
     };
 
     try {
@@ -409,6 +431,60 @@ export default function CreateTestTemplate() {
     navigate(-1);
   };
 
+  const handleAddCustomField = (category, test) => {
+    const formattedCategory = formatKey(category);
+    const newFieldId = `custom-field-${Date.now()}`;
+
+    setSelectedFields((prev) => ({
+      ...prev,
+      [formattedCategory]: {
+        ...prev[formattedCategory],
+        [test]: {
+          ...prev[formattedCategory]?.[test],
+          [newFieldId]: {
+            name: newFieldId,
+            label: "New Field",
+            value: "",
+            unit: "",
+            normalRange: "",
+            options: "",
+            isSelected: true,
+            isCustom: true,
+          },
+        },
+      },
+    }));
+
+    // Automatically expand the new field's settings
+    setExpandedFields((prev) => ({
+      ...prev,
+      [`${formattedCategory}-${test}-${newFieldId}`]: true,
+    }));
+  };
+
+  const handleAddStandaloneCustomField = () => {
+    const newFieldId = `custom-field-${Date.now()}`;
+    setCustomFields((prev) => ({
+      ...prev,
+      [newFieldId]: {
+        name: newFieldId,
+        label: "New Field",
+        value: "",
+        unit: "",
+        normalRange: "",
+        options: "",
+        isSelected: true,
+        isCustom: true,
+      },
+    }));
+
+    // Automatically expand the new field's settings
+    setExpandedFields((prev) => ({
+      ...prev,
+      [newFieldId]: true,
+    }));
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -555,6 +631,121 @@ export default function CreateTestTemplate() {
             className="w-2/3 border rounded-lg p-4"
             ref={rightScrollAreaRef}
           >
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-3">
+                <h3 className="font-semibold text-lg">Custom Fields</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddStandaloneCustomField}
+                >
+                  <Plus className="h-4 w-4 mr-1" /> Add Field
+                </Button>
+              </div>
+              <div className="space-y-2 grid grid-cols-2 gap-2">
+                {Object.entries(customFields).map(([fieldId, field]) => (
+                  <div key={fieldId} className="border rounded p-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          checked={field.isSelected}
+                          onCheckedChange={(checked) => {
+                            setCustomFields((prev) => ({
+                              ...prev,
+                              [fieldId]: {
+                                ...prev[fieldId],
+                                isSelected: checked,
+                              },
+                            }));
+                          }}
+                        />
+                        <label className="font-medium">{field.label}</label>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleFieldSettings(fieldId)}
+                        >
+                          <Settings className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-500 hover:text-red-700"
+                          onClick={() => {
+                            setCustomFields((prev) => {
+                              const updated = { ...prev };
+                              delete updated[fieldId];
+                              return updated;
+                            });
+                          }}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {expandedFields[fieldId] && (
+                      <div className="mt-2 space-y-2">
+                        <Input
+                          placeholder="Label"
+                          value={field.label}
+                          onChange={(e) => {
+                            setCustomFields((prev) => ({
+                              ...prev,
+                              [fieldId]: {
+                                ...prev[fieldId],
+                                label: e.target.value,
+                              },
+                            }));
+                          }}
+                        />
+                        <Input
+                          placeholder="Unit"
+                          value={field.unit}
+                          onChange={(e) => {
+                            setCustomFields((prev) => ({
+                              ...prev,
+                              [fieldId]: {
+                                ...prev[fieldId],
+                                unit: e.target.value,
+                              },
+                            }));
+                          }}
+                        />
+                        <Input
+                          placeholder="Normal Range"
+                          value={field.normalRange}
+                          onChange={(e) => {
+                            setCustomFields((prev) => ({
+                              ...prev,
+                              [fieldId]: {
+                                ...prev[fieldId],
+                                normalRange: e.target.value,
+                              },
+                            }));
+                          }}
+                        />
+                        <Input
+                          placeholder="Options (comma separated)"
+                          value={field.options}
+                          onChange={(e) => {
+                            setCustomFields((prev) => ({
+                              ...prev,
+                              [fieldId]: {
+                                ...prev[fieldId],
+                                options: e.target.value,
+                              },
+                            }));
+                          }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
             {labCategories.map((category) => {
               const formattedCategory = formatKey(category.name);
               return category.types.map((test) => {
@@ -565,18 +756,34 @@ export default function CreateTestTemplate() {
                   <div key={`${formattedCategory}-${test}`}>
                     <div className="flex justify-between items-center mb-2">
                       <h4 className="font-semibold">{test}</h4>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                          handleSelectAllFields(category.name, test)
-                        }
-                      >
-                        Select All Fields
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleSelectAllFields(category.name, test)
+                          }
+                        >
+                          Select All Fields
+                        </Button>
+                      </div>
                     </div>
                     <div className="space-y-2 grid grid-cols-2">
-                      {fields.map((field) => {
+                      {[
+                        ...fields,
+                        ...Object.entries(
+                          selectedFields[formattedCategory]?.[test] || {}
+                        )
+                          .filter(([_, field]) => field.isCustom)
+                          .map(([fieldId, field]) => ({
+                            name: fieldId,
+                            label: field.label,
+                            unit: field.unit,
+                            normalRange: field.normalRange,
+                            options: field.options,
+                            isCustom: true,
+                          })),
+                      ].map((field) => {
                         const fieldId = `${formattedCategory}-${test}-${field.name}`;
                         const selectedField =
                           selectedFields[formattedCategory]?.[test]?.[
@@ -609,17 +816,39 @@ export default function CreateTestTemplate() {
                                   }
                                 />
                                 <label className="font-medium">
-                                  {field.label}
+                                  {field.isCustom
+                                    ? selectedField?.label
+                                    : field.label}
                                 </label>
                               </div>
                               {selectedField?.isSelected && (
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => toggleFieldSettings(fieldId)}
-                                >
-                                  <Settings className="h-4 w-4" />
-                                </Button>
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => toggleFieldSettings(fieldId)}
+                                  >
+                                    <Settings className="h-4 w-4" />
+                                  </Button>
+                                  {field.isCustom && (
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-red-500 hover:text-red-700"
+                                      onClick={() => {
+                                        setSelectedFields((prev) => {
+                                          const updated = { ...prev };
+                                          delete updated[formattedCategory][
+                                            test
+                                          ][field.name];
+                                          return updated;
+                                        });
+                                      }}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  )}
+                                </div>
                               )}
                             </div>
                             {expandedFields[fieldId] &&

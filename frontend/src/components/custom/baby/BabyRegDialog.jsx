@@ -122,7 +122,7 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[90vh]  overflow-visible">
         <DialogHeader className="">
           <DialogTitle className="flex items-center gap-2">
             <Baby className="h-6 w-6 text-pink-500" />
@@ -130,7 +130,7 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-1">
+        <ScrollArea className=" px-1 max-h-[80vh]">
           <div className="space-y-4">
             {/* Mother Info & Admission Details */}
             <div className="grid grid-cols-2 gap-2 p-4 bg-gradient-to-r from-pink-50 to-blue-50 rounded-xl border-2 border-pink-100">
@@ -210,7 +210,7 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
             </div>
 
             {/* Basic Details */}
-            <div className="grid grid-cols-2 gap-4 p-2">
+            <div className="grid grid-cols-4 gap-2 p-1">
               <div className="space-y-1">
                 <Label>Gender</Label>
                 <Select
@@ -347,9 +347,7 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
               </div>
             </div>
           </div>
-        </ScrollArea>
-
-        <div className="flex justify-end gap-2 pt-4">
+          <div className="flex justify-end gap-2 pt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
@@ -361,6 +359,9 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
             {createBabyStatus === 'loading' ? 'Registering...' : 'Register Baby'}
           </Button>
         </div>
+        </ScrollArea>
+
+        
       </DialogContent>
     </Dialog>
   );

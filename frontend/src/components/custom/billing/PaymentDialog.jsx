@@ -234,7 +234,16 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
         <Separator />
 
         <div className="space-y-0">
-          <h4 className="text-sm font-semibold">Recent Payments</h4>
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="text-sm font-semibold">Recent Payments</h4>
+            {billData?.payments?.length > 0 && (
+              <PaymentReceipt
+                payments={billData.payments}
+                billData={billData}
+                styleData={true}
+              />
+            )}
+          </div>
           {billData?.payments && billData?.payments?.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
@@ -253,7 +262,9 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                   {billData.payments.map((payment, index) => (
                     <TableRow key={index}>
                       <TableCell className="text-xs">
-                        {new Date(payment.createdAt).toLocaleDateString("en-IN")}
+                        {new Date(payment.createdAt).toLocaleDateString(
+                          "en-IN"
+                        )}
                       </TableCell>
                       {!isMobile && (
                         <TableCell className="text-xs">

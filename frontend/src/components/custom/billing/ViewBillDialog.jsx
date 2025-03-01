@@ -27,7 +27,7 @@ import { AlertCircle } from "lucide-react";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Checkbox } from "../../ui/checkbox";
-import {headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
+import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { X } from "lucide-react";
 import PaymentReceipt from "../print/PaymentReceipt";
 
@@ -37,12 +37,16 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [selectedServices, setSelectedServices] = useState([]);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
-  const headerTemplateStrings = useSelector((state) => state.templates.headerTemplateArray);
+  const headerTemplateStrings = useSelector(
+    (state) => state.templates.headerTemplateArray
+  );
   const headerTemplateString =
     headerTemplateStrings?.length > 0
       ? headerTemplateStrings[0].value
       : headerTemplateStringDefault;
-  const HeaderComponent = createDynamicComponentFromString(headerTemplateString||headerTemplateStringDefault);
+  const HeaderComponent = createDynamicComponentFromString(
+    headerTemplateString || headerTemplateStringDefault
+  );
   const [printPaymentHistory, setPrintPaymentHistory] = useState(true);
 
   React.useEffect(() => {
@@ -50,13 +54,11 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
       setSelectedServices(billData.services.map((_, index) => index));
     }
   }, [billData]);
-React.useEffect(()=>
-{
-  return ()=>
-  {
-    document.body.style="";
-  }
-},[])
+  React.useEffect(() => {
+    return () => {
+      document.body.style = "";
+    };
+  }, []);
   const toggleAllServices = (checked) => {
     if (checked) {
       setSelectedServices(services.map((_, index) => index));
@@ -153,7 +155,8 @@ React.useEffect(()=>
                     <Label className="font-semibold mr-2">Name:</Label>
                     <p>{billData.patientInfo?.name || "N/A"}</p>
                   </div>
-                  {billData.patientInfo?.registrationNumber || billData.patient?.registrationNumber ? (
+                  {billData.patientInfo?.registrationNumber ||
+                  billData.patient?.registrationNumber ? (
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">UHID No:</Label>
                       <p>
@@ -162,7 +165,8 @@ React.useEffect(()=>
                       </p>
                     </div>
                   ) : null}
-                  {billData.patientInfo?.contactNumber || billData.patientInfo?.phone ? (
+                  {billData.patientInfo?.contactNumber ||
+                  billData.patientInfo?.phone ? (
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Contact:</Label>
                       <p>
@@ -181,23 +185,27 @@ React.useEffect(()=>
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Age/Gender:</Label>
                       <p>{`${
-                        billData.patientInfo?.age ||
-                        billData.patient?.age
+                        billData.patientInfo?.age || billData.patient?.age
                       } yrs/${
-                        billData.patientInfo?.gender ||
-                        billData.patient?.gender
+                        billData.patientInfo?.gender || billData.patient?.gender
                       }`}</p>
                     </div>
                   ) : null}
-                  {billData.patientInfo?.address || billData.patient?.address ? (
+                  {billData.patientInfo?.address ||
+                  billData.patient?.address ? (
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Address:</Label>
-                      <p>{billData.patientInfo?.address || billData.patient?.address}</p>
+                      <p>
+                        {billData.patientInfo?.address ||
+                          billData.patient?.address}
+                      </p>
                     </div>
                   ) : null}
                   {billData.invoiceNumber ? (
                     <div className="flex items-center">
-                      <Label className="font-semibold mr-2">Invoice Number:</Label>
+                      <Label className="font-semibold mr-2">
+                        Invoice Number:
+                      </Label>
                       <p>{billData.invoiceNumber}</p>
                     </div>
                   ) : null}
@@ -209,16 +217,16 @@ React.useEffect(()=>
                       </p>
                     </div>
                   ) : null}
-                  
                 </div>
-                <div> {billData.operationName ? (
+                <div>
+                  {" "}
+                  {billData.operationName ? (
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Operation:</Label>
-                      <p>
-                       {billData.operationName}
-                      </p>
+                      <p>{billData.operationName}</p>
                     </div>
-                  ) : null}</div>
+                  ) : null}
+                </div>
                 {services.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     <div className="w-full">
@@ -464,22 +472,23 @@ React.useEffect(()=>
                 )}
                 <p>Invoice generated By: {billData?.createdBy?.name}</p>
                 <div className="mt-1">
-                  
-                  
-                  <div className={`${!printPaymentHistory ? 'no-print' : ''}`}>
-                    <div className="flex gap-2 items-center">
-                      <div className="flex items-center gap-2 mb-2 no-print">
-                        <Checkbox
-                          id="printPaymentHistory"
-                          checked={printPaymentHistory}
-                          onCheckedChange={setPrintPaymentHistory}
+                  <div className={`${!printPaymentHistory ? "no-print" : ""}`}>
+                    <div className="flex flex-row items-center mb-2 w-auto gap-2">
+                      <Checkbox
+                        id="printPaymentHistory"
+                        checked={printPaymentHistory}
+                        onCheckedChange={setPrintPaymentHistory}
+                      />
+                      <h3 className="text-lg font-semibold">Payment History</h3>
+                      {billData?.payments?.length > 0 && (
+                        <PaymentReceipt
+                          payments={billData?.payments}
+                          billData={billData}
+                          styleData={true}
                         />
-                      </div>
-                      <h3 className="text-lg font-semibold mb-1">
-                        Payment History
-                      </h3>
+                      )}
                     </div>
-                    
+
                     {billData?.payments && billData?.payments?.length > 0 ? (
                       <div className="overflow-x-auto">
                         <Table>
@@ -492,7 +501,9 @@ React.useEffect(()=>
                               <TableHead>Amount</TableHead>
                               <TableHead>Method</TableHead>
                               <TableHead>Collected By</TableHead>
-                              <TableHead className="no-print">Receipt</TableHead>
+                              <TableHead className="no-print">
+                                Receipt
+                              </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -525,10 +536,13 @@ React.useEffect(()=>
                                   {payment.paymentMethod}
                                 </TableCell>
                                 <TableCell className="text-xs">
-                                  {payment.createdByName||"--"}
+                                  {payment.createdByName || "--"}
                                 </TableCell>
                                 <TableCell className="text-xs no-print">
-                                  <PaymentReceipt payment={payment} billData={billData} />
+                                  <PaymentReceipt
+                                    payment={payment}
+                                    billData={billData}
+                                  />
                                 </TableCell>
                               </TableRow>
                             ))}

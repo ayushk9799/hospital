@@ -68,6 +68,7 @@ import { Badge } from "../components/ui/badge";
 import OPDPrescriptionPrint from "../components/custom/print/OPDPrescriptionPrint";
 import ConsentFormPrint from "../components/custom/print/ConsentFormPrint";
 import EditPatientDialog from "../components/custom/patients/EditPatientDialog";
+import LabRegDialog from "../components/custom/registration/LabRegDialog";
 
 export default function Patients() {
   const dispatch = useDispatch();
@@ -82,6 +83,7 @@ export default function Patients() {
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [isLabDialogOpen, setIsLabDialogOpen] = useState(false);
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
@@ -170,6 +172,11 @@ export default function Patients() {
   const handleEditPatient = (patient) => {
     setSelectedPatient(patient);
     setIsEditDialogOpen(true);
+  };
+
+  const handleLabRegistration = (patient) => {
+    setSelectedPatient(patient);
+    setIsLabDialogOpen(true);
   };
 
   const PatientTable = ({ patients, type }) => {
@@ -329,6 +336,9 @@ export default function Patients() {
                           : "Discharge Patient"}
                       </DropdownMenuItem>
                     )}
+                    <DropdownMenuItem onClick={() => handleLabRegistration(patient)}>
+                      Register Lab
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -418,6 +428,9 @@ export default function Patients() {
                           : "Discharge Patient"}
                       </DropdownMenuItem>
                     )}
+                    <DropdownMenuItem onClick={() => handleLabRegistration(patient)}>
+                      Register Lab
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -532,6 +545,11 @@ export default function Patients() {
             guardianName: selectedPatient?.guardianName,
             relation: selectedPatient?.relation,
           }}
+        />
+        <LabRegDialog 
+          open={isLabDialogOpen} 
+          onOpenChange={setIsLabDialogOpen}
+          patientData={selectedPatient}
         />
         <Tabs
           defaultValue="OPD"

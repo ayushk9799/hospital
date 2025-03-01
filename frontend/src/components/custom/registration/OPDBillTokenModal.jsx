@@ -408,7 +408,7 @@ const OPDBillTokenModal = ({
             Close
           </Button>
           <div className="">
-            <PaymentReceipt payment={payment?.[0]} billData={{...patientData.bill, patient : patientData.patient}} styleData={true} /> 
+            <PaymentReceipt payments={payment} billData={{...patientData.bill, patient : patientData.patient}} styleData={true} /> 
           </div>
           <Button className="w-full sm:w-auto" onClick={handlePrint}>
             <PrinterIcon className="mr-2 h-4 w-4" />

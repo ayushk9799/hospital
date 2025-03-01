@@ -57,7 +57,7 @@ router.post("/register", verifyToken, async (req, res) => {
       paymentInfo: {
         totalAmount: paymentInfo.totalAmount,
         amountPaid: paymentInfo.amountPaid,
-        paymentMethod: paymentInfo.paymentMethod,
+       
         additionalDiscount: paymentInfo.additionalDiscount,
       },
       referredBy: referredBy?._id,
@@ -94,7 +94,7 @@ router.post("/register", verifyToken, async (req, res) => {
       },
       createdBy: user._id,
     });
-
+let payments=[];
     // Create payment records if payment is made
     if (paymentInfo.paymentMethod?.length > 0 && paymentInfo.amountPaid > 0) {
       await Promise.all(
@@ -107,7 +107,9 @@ router.post("/register", verifyToken, async (req, res) => {
             createdBy: user._id,
           });
           await payment.save({ session });
+          labRegistration.payments.push(payment._id)
           bill.payments.push(payment._id);
+          payments.push(payment);
         })
       );
     }
@@ -122,6 +124,8 @@ router.post("/register", verifyToken, async (req, res) => {
     const modifiedLabRegistration = {
       ...labRegistration.toObject(),
       referredBy: referredBy,
+      payments:payments
+      
     };
 
     await session.commitTransaction();
@@ -160,6 +164,7 @@ router.get("/registrations", verifyToken, async (req, res) => {
     const registrations = await LabRegistration.find(query)
       .sort({ bookingDate: -1 })
       .populate("referredBy", "name")
+      .populate("payments")
       .populate("patient", "name age gender contactNumber address");
 
     res.json({
@@ -526,7 +531,7 @@ router.post("/:id/payment", verifyToken, async (req, res) => {
     const { method, amount } = req.body;
     const user = req.user;
 
-    const labRegistration = await LabRegistration.findById(id).session(session);
+    const labRegistration = await LabRegistration.findById(id).populate("referredBy","name").session(session);
     if (!labRegistration) {
       throw new Error("Lab registration not found");
     }
@@ -544,10 +549,7 @@ router.post("/:id/payment", verifyToken, async (req, res) => {
     await payment.save({ session });
 
     // Update lab registration payment info
-    labRegistration.paymentInfo.paymentMethod.push({
-      method,
-      amount: parseFloat(amount),
-    });
+    labRegistration.payments.push(payment._id)
 
     labRegistration.paymentInfo.amountPaid =
       (labRegistration.paymentInfo.amountPaid || 0) + parseFloat(amount);

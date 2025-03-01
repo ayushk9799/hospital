@@ -47,7 +47,7 @@ const paymentMethods = [
   { name: "Insurance" },
 ];
 
-export default function LabRegDialog({ open, onOpenChange }) {
+export default function LabRegDialog({ open, onOpenChange, patientData }) {
   const dispatch = useDispatch();
   const { toast } = useToast();
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -450,6 +450,29 @@ export default function LabRegDialog({ open, onOpenChange }) {
       dispatch(setCreateRegistrationStatusIdle());
     }
   }, [createRegistrationStatus, error, dispatch, toast, onOpenChange]);
+
+  useEffect(() => {
+    if (patientData) {
+      setFormData((prev) => ({
+        ...prev,
+        name: patientData.patient.name,
+        registrationNumber: patientData.registrationNumber,
+        age: patientData.patient.age,
+        gender: patientData.patient.gender,
+        contactNumber: patientData.patient.contactNumber,
+        address: patientData.patient.address,
+        // Pre-fill other relevant fields from patientData
+        lastVisitType: patientData.type,
+        lastVisit: patientData.bookingDate,
+        lastVisitId: patientData._id,
+      }));
+      setSearchedPatient({
+        ...patientData.patient,
+        lastVisit: patientData.bookingDate,
+        lastVisitType: patientData.type,
+      });
+    }
+  }, [patientData]);
 
   return (
     <>
