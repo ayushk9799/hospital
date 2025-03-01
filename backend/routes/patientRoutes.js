@@ -1077,7 +1077,7 @@ router.post(
         visit.paymentMethod !== "Due" &&
         amountPaid > 0
       ) {
-        visit.paymentMethod.map(async (pm) => {
+     await Promise.all(visit.paymentMethod.map(async (pm) => {
           let payment = new Payment({
             amount: pm.amount,
             paymentMethod: pm.method,
@@ -1090,7 +1090,7 @@ router.post(
           payments.push(payment);
           await payment.save({ session });
           bill.payments.push(payment._id);
-        });
+        }));
       }
 
       await bill.save({ session });
