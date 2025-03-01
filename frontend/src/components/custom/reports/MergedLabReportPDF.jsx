@@ -2,7 +2,7 @@ import React, { forwardRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplate } from "../../../templates/headertemplate";
-import { mergedLabReportTemplateStringExperiment } from "../../../templatesExperiments/labtemplateExperiment";
+import { mergedLabReportTemplateStringExperiment2 } from "../../../templatesExperiments/labtemplateExperiment";
 import { mergedLabReportTemplateStringDefault } from "../../../templates/labReportTemplate";
 
 // Styles specific to the merged report
@@ -54,7 +54,7 @@ const MergedLabReportPDF = forwardRef((props, ref) => {
   const headerTemplateString =
     headerTemplates?.length > 0 ? headerTemplates[0].value : headerTemplate;
 
-  const mergeTemplateString = mergeTemplate||mergedLabReportTemplateStringDefault;
+  const mergeTemplateString =mergeTemplate||mergedLabReportTemplateStringDefault;
 
   // Add general print styles to the document
   

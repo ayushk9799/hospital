@@ -5,8 +5,8 @@ import { useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import { useToast } from "../hooks/use-toast";
 import MergedLabReportPDF from "../components/custom/reports/MergedLabReportPDF";
-import { mergedLabReportTemplateStringExperiment } from "../../src/templatesExperiments/labtemplateExperiment";
-import { mergedLabReportTemplateStringDefault } from "../../src/templates/labReportTemplate";
+import { mergedLabReportTemplateStringExperiment, mergedLabReportTemplateStringExperiment2 } from "../templatesExperiments/labtemplateExperiment";
+import { mergedLabReportTemplateStringDefault } from "../templates/labReportTemplate";
 
 export default function MergeTemplatePreview() {
   const dispatch = useDispatch();
@@ -191,28 +191,28 @@ export default function MergeTemplatePreview() {
     }
   ]);
 
-//   const handleSaveTemplate = () => {
-//     dispatch(
-//       updateTemplate({
-//         mergeTemplate: mergedLabReportTemplateStringExperiment,
-//       })
-//     )
-//       .then(() => {
-//         toast({
-//           title: "Success",
-//           description: "Merge template saved successfully",
-//           variant:"success"
-//         });
-//       })
-//       .catch((error) => {
-//         console.error("Error saving template:", error);
-//         toast({
-//           title: "Error",
-//           description: "Failed to save template",
-//           variant: "destructive",
-//         });
-//       });
-//   };
+  // const handleSaveTemplate = () => {
+  //   dispatch(
+  //     updateTemplate({
+  //       mergeTemplate: mergedLabReportTemplateStringExperiment2,
+  //     })
+  //   )
+  //     .then(() => {
+  //       toast({
+  //         title: "Success",
+  //         description: "Merge template saved successfully",
+  //         variant:"success"
+  //       });
+  //     })
+  //     .catch((error) => {
+  //       console.error("Error saving template:", error);
+  //       toast({
+  //         title: "Error",
+  //         description: "Failed to save template",
+  //         variant: "destructive",
+  //       });
+  //     });
+  // };
 
   return (
     <div className="p-4 sm:p-6">

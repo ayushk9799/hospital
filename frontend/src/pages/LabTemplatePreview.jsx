@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { useDispatch } from "react-redux";
  import { labReportTemplateStringDefault } from "../templates/labReportTemplate";
 import { updateTemplate } from "../redux/slices/templatesSlice";
-import { labReportTemplateStringExperiment, mergedLabReportTemplateStringExperiment } from "../templatesExperiments/labtemplateExperiment";
+import { labReportTemplateStringExperiment, labReportTemplateStringExperiment2, mergedLabReportTemplateStringExperiment } from "../templatesExperiments/labtemplateExperiment";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 import { Input } from "../components/ui/input";
 import { cn } from "../lib/utils";
@@ -47,6 +47,7 @@ export default function LabTemplatePreview() {
         unit: "lakh/cumm",
         normalRange: "1.5-3.5",
       },
+      
       "HCT(PCV)": { value: "26.70", unit: "%", normalRange: "36-45" },
       MCV: { value: "63.27", unit: "fl", normalRange: "80-100" },
       MCH: { value: "21.09", unit: "pg", normalRange: "27-32" },
@@ -57,7 +58,7 @@ export default function LabTemplatePreview() {
   // const handleSaveTemplate = () => {
   //   dispatch(
   //     updateTemplate({
-  //       labReportUiTemplate: labReportTemplateStringExperiment,
+  //       labReportUiTemplate: labReportTemplateStringExperiment2,
   //     })
   //   );
   // };

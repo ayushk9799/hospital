@@ -1,7 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
-import { labReportTemplateStringExperiment } from "../../../templatesExperiments/labtemplateExperiment";
+import { labReportTemplateStringExperiment2 } from "../../../templatesExperiments/labtemplateExperiment";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { labReportTemplateStringDefault } from "../../../templates/labReportTemplate";
@@ -192,6 +192,8 @@ const styles = {
 
 const LabReportPDF = React.forwardRef(
   ({ reportData, patientData, hospital }, ref) => {
+
+    console.log(patientData)
     const headerTemplateStrings = useSelector(
       (state) => state.templates.headerTemplateArray
     );
