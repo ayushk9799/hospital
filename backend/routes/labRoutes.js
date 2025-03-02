@@ -247,7 +247,7 @@ router.post("/addLabReport", verifyToken, async (req, res) => {
     // Handle regular Lab Registration case
     const registration = await LabRegistration.findOne({
       _id: req.body._id,
-    }).session(session);
+    }).populate("referredBy","name").session(session);
 
     if (!registration) {
       throw new Error("Lab registration not found");
