@@ -44,6 +44,7 @@ import {
   startOfWeek,
   endOfWeek,
   startOfMonth,
+  addDays,
   endOfMonth,
   isWithinInterval,
   format,
@@ -54,7 +55,6 @@ import {
 import { Pill } from "lucide-react";
 import { PieChart, Pie, Cell, Label } from "recharts";
 import { useMediaQuery } from "../hooks/use-media-query";
-
 
 const hasFinancialViewPermission = (userData) => {
   return userData?.permissions?.includes("view_financial") || false;
@@ -109,15 +109,15 @@ const Dashboard = () => {
       if (!selectedDateRange.from || !selectedDateRange.to) {
         return { currentValue: [], previousValue: [] };
       }
-      
+
       const startDate = startOfDay(selectedDateRange.from);
       const endDate = endOfDay(selectedDateRange.to);
-      
+
       const currentValue = dataArray.filter((item) => {
         const itemDate = new Date(item.date);
         return isWithinInterval(itemDate, { start: startDate, end: endDate });
       });
-      
+
       return { currentValue, previousValue: [] };
     }
 
@@ -161,13 +161,12 @@ const Dashboard = () => {
   }, [dashboardData, dateFilter, selectedDateRange]);
 
   const dashboardTotals = useMemo(() => {
-    //
-
     if (!Array.isArray(filteredData.currentValue)) {
       return {
         totalRevenue: 0,
         totalPatients: 0,
         totalAppointments: 0,
+        totalExpense: 0,
         paymentMethods: {},
       };
     }
@@ -177,6 +176,12 @@ const Dashboard = () => {
         acc.totalRevenue += curr.revenue || 0;
         acc.totalPatients += curr.visitCount || 0;
         acc.totalAppointments += curr.ipdCount || 0;
+
+        // Calculate total expense from expenseTypeWise
+        acc.totalExpense += Object.values(curr.expenseTypeWise || {}).reduce(
+          (sum, { total }) => sum + (total || 0),
+          0
+        );
 
         // Combine payment methods from services and pharmacy
         const allPaymentMethods = [
@@ -197,6 +202,7 @@ const Dashboard = () => {
         totalRevenue: 0,
         totalPatients: 0,
         totalAppointments: 0,
+        totalExpense: 0,
         paymentMethods: {},
       }
     );
@@ -248,15 +254,14 @@ const Dashboard = () => {
   );
 
   useEffect(() => {
-      fetchData("Last 7 Days");
-    
+    fetchData("Today");
   }, []);
 
-  useEffect(() => {
-    if (dateFilter !== "Custom") {
-      fetchData(dateFilter);
-    }
-  }, [dateFilter]);
+  // useEffect(() => {
+  //   if (dateFilter !== "Custom") {
+  //     fetchData(dateFilter);
+  //   }
+  // }, [dateFilter]);
 
   const fetchData = (filter) => {
     let startDate, endDate;
@@ -265,7 +270,13 @@ const Dashboard = () => {
 
     switch (filter) {
       case "Today":
+        startDate = startOfDay(today);
+        endDate = endOfDay(today);
+        break;
       case "Yesterday":
+        startDate = startOfDay(subDays(today, 1));
+        endDate = endOfDay(subDays(today, 1));
+        break;
       case "Last 7 Days":
         startDate = startOfDay(subDays(today, 6));
         endDate = endOfDay(today);
@@ -303,7 +314,6 @@ const Dashboard = () => {
       console.warn("Invalid date range");
       return;
     }
-
     const ISO_time = {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
@@ -386,36 +396,71 @@ const Dashboard = () => {
     fetchData("Today");
   };
 
-  // Add this new function to calculate service and pharmacy collections
+  // Update the calculateCollections function
   const calculateCollections = useMemo(() => {
     if (!Array.isArray(filteredData.currentValue)) {
-      return { serviceCollection: 0, pharmacyCollection: 0 };
+      return {
+        ipdCollection: 0,
+        opdCollection: 0,
+        opdprocedureCollection: 0,
+        pharmacyCollection: 0,
+        laboratoryCollection: 0,
+      };
     }
 
     return filteredData.currentValue.reduce(
       (acc, curr) => {
-        acc.serviceCollection += curr.services?.revenue || 0;
+        acc.ipdCollection += curr.ipd?.revenue || 0;
+        acc.opdCollection += curr.opd?.revenue || 0;
+        acc.opdprocedureCollection += curr.opdProcedures?.revenue || 0;
         acc.pharmacyCollection += curr.pharmacy?.revenue || 0;
+        acc.laboratoryCollection += curr.laboratory?.revenue || 0;
         return acc;
       },
-      { serviceCollection: 0, pharmacyCollection: 0 }
+      {
+        ipdCollection: 0,
+        opdCollection: 0,
+        opdprocedureCollection: 0,
+        pharmacyCollection: 0,
+        laboratoryCollection: 0,
+      }
     );
   }, [filteredData]);
 
-  // Add this new function to calculate service and pharmacy payment methods
+  // Update the calculatePaymentMethods function
   const calculatePaymentMethods = useMemo(() => {
     if (!Array.isArray(filteredData.currentValue)) {
-      return { servicePayments: [], pharmacyPayments: [] };
+      return {
+        ipdPayments: [],
+        opdPayments: [],
+        opdprocedurePayments: [],
+        pharmacyPayments: [],
+        laboratoryPayments: [],
+      };
     }
 
     const payments = filteredData.currentValue.reduce(
       (acc, curr) => {
-        // Service payments
-        (curr.services?.paymentMethod || []).forEach((method) => {
+        // IPD payments
+        (curr.ipd?.paymentMethod || []).forEach((method) => {
           const methodName = method.method || "Others";
-          if (!acc.servicePayments[methodName])
-            acc.servicePayments[methodName] = 0;
-          acc.servicePayments[methodName] += method.revenue || 0;
+          if (!acc.ipdPayments[methodName]) acc.ipdPayments[methodName] = 0;
+          acc.ipdPayments[methodName] += method.revenue || 0;
+        });
+
+        // OPD payments
+        (curr.opd?.paymentMethod || []).forEach((method) => {
+          const methodName = method.method || "Others";
+          if (!acc.opdPayments[methodName]) acc.opdPayments[methodName] = 0;
+          acc.opdPayments[methodName] += method.revenue || 0;
+        });
+
+        // OPD Procedure payments
+        (curr.opdProcedures?.paymentMethod || []).forEach((method) => {
+          const methodName = method.method || "Others";
+          if (!acc.opdprocedurePayments[methodName])
+            acc.opdprocedurePayments[methodName] = 0;
+          acc.opdprocedurePayments[methodName] += method.revenue || 0;
         });
 
         // Pharmacy payments
@@ -426,9 +471,23 @@ const Dashboard = () => {
           acc.pharmacyPayments[methodName] += method.revenue || 0;
         });
 
+        // Laboratory payments
+        (curr.laboratory?.paymentMethod || []).forEach((method) => {
+          const methodName = method.method || "Others";
+          if (!acc.laboratoryPayments[methodName])
+            acc.laboratoryPayments[methodName] = 0;
+          acc.laboratoryPayments[methodName] += method.revenue || 0;
+        });
+
         return acc;
       },
-      { servicePayments: {}, pharmacyPayments: {} }
+      {
+        ipdPayments: {},
+        opdPayments: {},
+        opdprocedurePayments: {},
+        pharmacyPayments: {},
+        laboratoryPayments: {},
+      }
     );
 
     const chartColors = {
@@ -439,7 +498,21 @@ const Dashboard = () => {
     };
 
     return {
-      servicePayments: Object.entries(payments.servicePayments).map(
+      ipdPayments: Object.entries(payments.ipdPayments).map(
+        ([method, value]) => ({
+          method,
+          value,
+          fill: chartColors[method] || "hsl(var(--chart-4))",
+        })
+      ),
+      opdPayments: Object.entries(payments.opdPayments).map(
+        ([method, value]) => ({
+          method,
+          value,
+          fill: chartColors[method] || "hsl(var(--chart-4))",
+        })
+      ),
+      opdprocedurePayments: Object.entries(payments.opdprocedurePayments).map(
         ([method, value]) => ({
           method,
           value,
@@ -453,8 +526,34 @@ const Dashboard = () => {
           fill: chartColors[method] || "hsl(var(--chart-4))",
         })
       ),
+      laboratoryPayments: Object.entries(payments.laboratoryPayments).map(
+        ([method, value]) => ({
+          method,
+          value,
+          fill: chartColors[method] || "hsl(var(--chart-4))",
+        })
+      ),
     };
   }, [filteredData]);
+
+  // First, add a new function to calculate total payment methods
+  const calculateTotalPaymentMethods = useMemo(() => {
+    const totalsByMethod = {};
+
+    ["ipd", "opd", "opdprocedure", "pharmacy", "laboratory"].forEach((type) => {
+      calculatePaymentMethods?.[`${type}Payments`]?.forEach((payment) => {
+        if (!totalsByMethod[payment.method]) {
+          totalsByMethod[payment.method] = 0;
+        }
+        totalsByMethod[payment.method] += payment.value || 0;
+      });
+    });
+
+    return Object.entries(totalsByMethod).map(([method, value]) => ({
+      method,
+      value,
+    }));
+  }, [calculatePaymentMethods]);
 
   // Add this function to get the appropriate header text
   const getStatsHeaderText = () => {
@@ -477,10 +576,11 @@ const Dashboard = () => {
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center my-2 flex-wrap mx-2 md:mx-0">
-        <h2 className="font-bold text-xl text-gray-800 mb-2 md:mb-0">Dashboard</h2>
-        <div className="flex items-center space-x-4 flex-wrap">
+    <div className="container mx-auto p-4">
+      {/* Header Section - More compact */}
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="font-bold text-xl text-gray-800">Dashboard</h2>
+        <div className="flex items-center gap-2">
           {dateFilter === "Custom" && (
             <DateRangePicker
               from={tempDateRange?.from}
@@ -533,463 +633,280 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-4">
-        {/* Stats summary */}
-        <div className="bg-white p-4 rounded-xl shadow w-full md:w-1/2">
-          <h2 className="font-bold text-xl text-violet-950 mb-2">
-            {getStatsHeaderText()}
-          </h2>
-          <p className="text-gray-600 mb-2 text-sm">Patients summary</p>
-          <section className="grid gap-4 grid-cols-2 md:grid-cols-3">
-            <Card className="bg-pink-100 transition-all hover:shadow-lg col-span-1">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <UserIcon className="w-8 h-8 md:w-10 md:h-10 text-pink-600" />
-                    <p className="text-xl md:text-2xl font-bold text-pink-600">
-                      {dashboardTotals.totalPatients}
-                    </p>
-                    <p className="text-xs md:text-sm text-gray-600">OPD Patients</p>
-                    {calculatePercentageChanges.totalPatients !== null &&
-                      dateFilter !== "Custom" &&
-                      dateFilter !== "All" && (
-                        <p className={`text-xs ${
+      {/* Main Stats Grid - More efficient layout */}
+      <div className="grid gap-4">
+        {/* Patient Stats Row */}
+        <div className="grid grid-cols-10 gap-4">
+          <Card className="bg-pink-50 shadow-sm col-span-2">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3">
+                <UserIcon className="w-8 h-8 text-pink-600" />
+                <div>
+                  <p className="text-2xl font-bold text-pink-600">
+                    {dashboardTotals.totalPatients}
+                  </p>
+                  <p className="text-sm text-gray-600">OPD Patients</p>
+                  {calculatePercentageChanges.totalPatients !== null &&
+                    dateFilter !== "Custom" &&
+                    dateFilter !== "All" && (
+                      <p
+                        className={`text-xs ${
                           calculatePercentageChanges.totalPatients >= 0
                             ? "text-green-600"
                             : "text-red-600"
-                          } mt-1`}>
-                          {calculatePercentageChanges.totalPatients >= 0 ? "+" : ""}
-                          {calculatePercentageChanges.totalPatients}% {getComparisonText()}
-                        </p>
-                      )}
-                  </div>
+                        }`}
+                      >
+                        {calculatePercentageChanges.totalPatients >= 0
+                          ? "+"
+                          : ""}
+                        {calculatePercentageChanges.totalPatients}%{" "}
+                        {getComparisonText()}
+                      </p>
+                    )}
                 </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-orange-100 transition-all hover:shadow-lg col-span-1">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Calendar className="w-8 h-8 md:w-10 md:h-10 text-orange-600" />
-                    <p className="text-xl md:text-2xl font-bold text-orange-600">
-                      {dashboardTotals.totalAppointments}
-                    </p>
-                    <p className="text-xs md:text-sm text-gray-600">IPD Patients</p>
-                    {calculatePercentageChanges.totalAppointments !== null &&
-                      dateFilter !== "Custom" &&
-                      dateFilter !== "All" && (
-                        <p className={`text-xs ${
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-orange-50 shadow-sm col-span-2">
+            <CardContent className="p-3">
+              <div className="flex items-center gap-3">
+                <Calendar className="w-8 h-8 text-orange-600" />
+                <div>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {dashboardTotals.totalAppointments}
+                  </p>
+                  <p className="text-sm text-gray-600">IPD Patients</p>
+                  {calculatePercentageChanges.totalAppointments !== null &&
+                    dateFilter !== "Custom" &&
+                    dateFilter !== "All" && (
+                      <p
+                        className={`text-xs ${
                           calculatePercentageChanges.totalAppointments >= 0
                             ? "text-green-600"
                             : "text-red-600"
-                          } mt-1`}>
-                          {calculatePercentageChanges.totalAppointments >= 0 ? "+" : ""}
-                          {calculatePercentageChanges.totalAppointments}% {getComparisonText()}
-                        </p>
-                      )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-purple-100 transition-all hover:shadow-lg col-span-2 md:col-span-1">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <ChartLine className="w-8 h-8 md:w-10 md:h-10 text-purple-600" />
-                    <p className={`text-xl md:text-2xl font-bold text-purple-600 ${
-                      !hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""
-                    }`}>
-                      {hasFinancialViewPermission(userData) 
-                        ? `₹${parseInt(dashboardTotals.totalRevenue).toLocaleString()}`
-                        : "₹XXXXX"}
-                    </p>
-                    <p className="text-xs md:text-sm text-gray-600">Total Revenue</p>
-                    {calculatePercentageChanges.totalRevenue !== null &&
-                      dateFilter !== "Custom" &&
-                      dateFilter !== "All" && (
-                        <p className={`text-xs ${
-                          calculatePercentageChanges.totalRevenue >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                          } mt-1 ${!hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""}`}>
-                          {hasFinancialViewPermission(userData) ? (
-                            <>
-                              {calculatePercentageChanges.totalRevenue >= 0 ? "+" : ""}
-                              {calculatePercentageChanges.totalRevenue}% {getComparisonText()}
-                            </>
-                          ) : "XX%"}
-                        </p>
-                      )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-          {/* Add new cards for Service and Pharmacy Collections */}
-          <section className="grid gap-4 grid-cols-2 mt-4">
-            <Card className="bg-blue-100 transition-all hover:shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Activity className="w-8 h-8 md:w-10 md:h-10 text-blue-600" />
-                    <p className={`text-xl md:text-2xl font-bold text-blue-600 ${
-                      !hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""
-                    }`}>
-                      {hasFinancialViewPermission(userData)
-                        ? `₹${parseInt(calculateCollections.serviceCollection).toLocaleString()}`
-                        : "₹XXXXX"}
-                    </p>
-                    <p className="text-xs md:text-sm text-gray-600">Service Collection</p>
-                    {calculatePercentageChanges.serviceCollection !== null &&
-                      dateFilter !== "Custom" &&
-                      dateFilter !== "All" && (
-                        <p className={`text-xs ${
-                          calculatePercentageChanges.serviceCollection >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                          } mt-1 ${!hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""}`}>
-                          {hasFinancialViewPermission(userData) ? (
-                            <>
-                              {calculatePercentageChanges.serviceCollection >= 0 ? "+" : ""}
-                              {calculatePercentageChanges.serviceCollection}% {getComparisonText()}
-                            </>
-                          ) : "XX%"}
-                        </p>
-                      )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-green-100 transition-all hover:shadow-lg">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Pill className="w-8 h-8 md:w-10 md:h-10 text-green-600" />
-                    <p className={`text-xl md:text-2xl font-bold text-green-600 ${
-                      !hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""
-                    }`}>
-                      {hasFinancialViewPermission(userData)
-                        ? `₹${parseInt(calculateCollections.pharmacyCollection).toLocaleString()}`
-                        : "₹XXXXX"}
-                    </p>
-                    <p className="text-xs md:text-sm text-gray-600">Pharmacy Collection</p>
-                    {calculatePercentageChanges.pharmacyCollection !== null &&
-                      dateFilter !== "Custom" &&
-                      dateFilter !== "All" && (
-                        <p className={`text-xs ${
-                          calculatePercentageChanges.pharmacyCollection >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                          } mt-1 ${!hasFinancialViewPermission(userData) ? "blur-sm select-none" : ""}`}>
-                          {hasFinancialViewPermission(userData) ? (
-                            <>
-                              {calculatePercentageChanges.pharmacyCollection >= 0 ? "+" : ""}
-                              {calculatePercentageChanges.pharmacyCollection}% {getComparisonText()}
-                            </>
-                          ) : "XX%"}
-                        </p>
-                      )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-        </div>
-
-        {/* Weekly Performance Graph */}
-        <div className="w-full md:w-1/2">
-          <Card className="border border-gray-200 rounded-lg shadow-sm">
-            <CardHeader>
-              <CardTitle>Weekly Performance</CardTitle>
-              <CardDescription>
-                Patient visits{hasFinancialViewPermission(userData) && " and Revenue"} for this week
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {hasWeeklyData ? (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={weeklyPerformanceData}>
-                    <XAxis dataKey="formattedDate" />
-                    <YAxis yAxisId="left" orientation="left" stroke="#2563eb" />
-                    {hasFinancialViewPermission(userData) && (
-                      <YAxis
-                        yAxisId="right"
-                        orientation="right"
-                        stroke="#60a5fa"
-                      />
-                    )}
-                    <Tooltip 
-                      formatter={(value, name) => {
-                        if (!hasFinancialViewPermission(userData) && name === "Revenue") {
-                          return ["Hidden", "Revenue"];
-                        }
-                        return name === "Revenue" ? [`₹${value}`, name] : [value, name];
-                      }}
-                    />
-                    <Legend />
-                    <Bar
-                      yAxisId="left"
-                      dataKey="patients"
-                      fill="#2563eb"
-                      name="Patients"
-                    />
-                    {hasFinancialViewPermission(userData) && (
-                      <Bar
-                        yAxisId="right"
-                        dataKey="revenue"
-                        fill="#60a5fa"
-                        name="Revenue (₹)"
-                      />
-                    )}
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[300px] text-gray-500">
-                  <AlertCircle className="w-12 h-12 mb-2" />
-                  <p className="text-lg font-semibold">
-                    No data available for this week
-                  </p>
-                  <p className="text-sm">Check back later for updates</p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* New row for Payment Method Distribution */}
-      <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          {/* Recent Patients */}
-          <Card className="h-full">
-            <CardHeader>
-              <CardTitle>Recent Patients</CardTitle>
-              <CardDescription>Latest registered patients</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {recentPatients.length > 0 ? (
-                <div className="space-y-5">
-                  {recentPatients.map((patient, index) => (
-                    <div key={patient._id} className="flex items-center">
-                      <p className="font-semibold mr-5 text-xl">{index + 1}</p>
-                      <Avatar className="h-9 w-9">
-                        <AvatarFallback>{patient.avatar}</AvatarFallback>
-                      </Avatar>
-                      <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">
-                          {patient.name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {patient.time}
-                        </p>
-                      </div>
-                      <Badge
-                        className={`ml-auto ${
-                          patient.type === "IPD"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
                         }`}
                       >
-                        {patient.type}
-                      </Badge>
+                        {calculatePercentageChanges.totalAppointments >= 0
+                          ? "+"
+                          : ""}
+                        {calculatePercentageChanges.totalAppointments}%{" "}
+                        {getComparisonText()}
+                      </p>
+                    )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-purple-50 shadow-sm col-span-3">
+            <CardContent className="p-3">
+              <div className="flex gap-3">
+                <ChartLine className="w-8 h-8 text-purple-600 shrink-0" />
+                <div className="w-full">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p
+                        className={`text-2xl font-bold text-purple-600 ${
+                          !hasFinancialViewPermission(userData)
+                            ? "blur-sm select-none"
+                            : ""
+                        }`}
+                      >
+                        {hasFinancialViewPermission(userData)
+                          ? `₹${parseInt(
+                              dashboardTotals.totalRevenue
+                            ).toLocaleString()}`
+                          : "₹XXXXX"}
+                      </p>
+                      <p className="text-sm text-gray-600">Total Revenue</p>
+                      {calculatePercentageChanges.totalRevenue !== null &&
+                        dateFilter !== "Custom" &&
+                        dateFilter !== "All" && (
+                          <p
+                            className={`text-xs ${
+                              calculatePercentageChanges.totalRevenue >= 0
+                                ? "text-green-600"
+                                : "text-red-600"
+                            }`}
+                          >
+                            {calculatePercentageChanges.totalRevenue >= 0
+                              ? "+"
+                              : ""}
+                            {calculatePercentageChanges.totalRevenue}%{" "}
+                            {getComparisonText()}
+                          </p>
+                        )}
                     </div>
-                  ))}
+
+                    {hasFinancialViewPermission(userData) && (
+                      <div className="flex gap-2 flex-wrap justify-end">
+                        {calculateTotalPaymentMethods.map((payment) => (
+                          <div
+                            key={payment.method}
+                            className={`bg-gray-100 px-2 py-1 rounded-md`}
+                          >
+                            <p className="text-xs font-medium text-gray-600">
+                              {payment.method}
+                            </p>
+                            <p className="text-sm font-bold text-gray-700">
+                              ₹{parseInt(payment.value).toLocaleString()}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center h-[200px] text-gray-500">
-                  <AlertCircle className="w-12 h-12 mb-2" />
-                  <p className="text-lg font-semibold">No recent patients</p>
-                  <p className="text-sm">New patients will appear here</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="bg-blue-50 shadow-sm col-span-3">
+            <CardContent className="p-3">
+              <div className="flex gap-3">
+                <ChartLine className="w-8 h-8 text-blue-600 shrink-0" />
+                <div className="w-full">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p
+                        className={`text-2xl font-bold text-blue-600 ${
+                          !hasFinancialViewPermission(userData)
+                            ? "blur-sm select-none"
+                            : ""
+                        }`}
+                      >
+                        {hasFinancialViewPermission(userData)
+                          ? `₹${parseInt(
+                              dashboardTotals.totalExpense
+                            ).toLocaleString()}`
+                          : "₹XXXXX"}
+                      </p>
+                      <p className="text-sm text-gray-600">Total Expense</p>
+                    </div>
+
+                    {hasFinancialViewPermission(userData) && (
+                      <div className="flex gap-2 flex-wrap justify-end">
+                        {Object.entries(
+                          filteredData.currentValue[0]?.expenseTypeWise || {}
+                        ).map(
+                          ([method, details]) =>
+                            details.total > 0 && (
+                              <div
+                                key={method}
+                                className="bg-gray-100 px-2 py-1 rounded-md"
+                              >
+                                <p className="text-xs font-medium text-gray-600">
+                                  {method.charAt(0).toUpperCase() +
+                                    method.slice(1)}
+                                </p>
+                                <p className="text-sm font-bold text-gray-700">
+                                  ₹{parseInt(details.total).toLocaleString()}
+                                </p>
+                              </div>
+                            )
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
         </div>
-        {/* Service Payment Methods */}
-        <Card>
-          <CardHeader className="pb-0">
-            <CardTitle>Service Payment Methods</CardTitle>
-            <CardDescription>
-              Distribution of payment methods for services
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!hasFinancialViewPermission(userData) ? (
-              <div className="h-[230px] flex flex-col items-center justify-center text-gray-500">
-                <AlertCircle className="w-12 h-12 mb-2" />
-                <p className="text-sm">You don't have permission to view financial data</p>
-              </div>
-            ) : calculatePaymentMethods.servicePayments.length > 0 ? (
-              <>
-                <div className="h-[230px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={calculatePaymentMethods.servicePayments}
-                        dataKey="value"
-                        nameKey="method"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={95}
-                        paddingAngle={1}
-                      >
-                        {calculatePaymentMethods.servicePayments.map(
-                          (entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          )
-                        )}
-                        <Label
-                          content={({ viewBox }) => {
-                            const { cx, cy } = viewBox;
-                            const total =
-                              calculatePaymentMethods.servicePayments.reduce(
-                                (sum, entry) => sum + entry.value,
-                                0
-                              );
-                            return (
-                              <text
-                                x={cx}
-                                y={cy}
-                                textAnchor="middle"
-                                dominantBaseline="central"
-                              >
-                                <tspan
-                                  x={cx}
-                                  y={cy}
-                                  className="text-xl font-bold"
-                                >
-                                  ₹{parseInt(total).toLocaleString()}
-                                </tspan>
-                                <tspan x={cx} y={cy + 15} className="text-xs">
-                                  Total
-                                </tspan>
-                              </text>
-                            );
-                          }}
-                        />
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="mt-0 flex justify-center space-x-4">
-                  {calculatePaymentMethods.servicePayments.map(
-                    (entry, index) => (
-                      <div key={index} className="flex items-center">
-                        <div
-                          className="w-3 h-3 mr-1"
-                          style={{ backgroundColor: entry.fill }}
-                        ></div>
-                        <span className="text-xs font-bold">{`${entry.method} ₹(${entry.value})`}</span>
-                      </div>
-                    )
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className="h-[230px] flex flex-col items-center justify-center text-gray-500">
-                <AlertCircle className="w-12 h-12 mb-2" />
-                <p className="text-sm">No payment data available</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
 
-        {/* Pharmacy Payment Methods */}
-        <Card>
-          <CardHeader className="pb-0">
-            <CardTitle>Pharmacy Payment Methods</CardTitle>
-            <CardDescription>
-              Distribution of payment methods for pharmacy
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {!hasFinancialViewPermission(userData) ? (
-              <div className="h-[230px] flex flex-col items-center justify-center text-gray-500">
-                <AlertCircle className="w-12 h-12 mb-2" />
-                <p className="text-sm">You don't have permission to view financial data</p>
-              </div>
-            ) : calculatePaymentMethods.pharmacyPayments.length > 0 ? (
-              <>
-                <div className="h-[230px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={calculatePaymentMethods.pharmacyPayments}
-                        dataKey="value"
-                        nameKey="method"
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={50}
-                        outerRadius={95}
-                        paddingAngle={1}
+        {/* Collections Stats Row */}
+        <div className="grid grid-cols-5 gap-4">
+          {["IPD", "OPD", "OPD Procedure", "Pharmacy", "Laboratory"].map(
+            (type, index) => (
+              <Card
+                key={type}
+                className={`bg-${getBackgroundColor(index)}-50 shadow-sm`}
+              >
+                <CardContent className="p-3">
+                  <div className="flex items-center gap-2">
+                    <Activity
+                      className={`w-6 h-6 text-${getBackgroundColor(
+                        index
+                      )}-600`}
+                    />
+                    <div>
+                      <p
+                        className={`text-xl font-bold text-${getBackgroundColor(
+                          index
+                        )}-600 ${
+                          !hasFinancialViewPermission(userData)
+                            ? "blur-sm select-none"
+                            : ""
+                        }`}
                       >
-                        {calculatePaymentMethods.pharmacyPayments.map(
-                          (entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.fill} />
-                          )
-                        )}
-                        <Label
-                          content={({ viewBox }) => {
-                            const { cx, cy } = viewBox;
-                            const total =
-                              calculatePaymentMethods.pharmacyPayments.reduce(
-                                (sum, entry) => sum + entry.value,
-                                0
-                              );
-                            return (
-                              <text
-                                x={cx}
-                                y={cy}
-                                textAnchor="middle"
-                                dominantBaseline="central"
-                              >
-                                <tspan
-                                  x={cx}
-                                  y={cy}
-                                  className="text-xl font-bold"
-                                >
-                                  ₹{parseInt(total).toLocaleString()}
-                                </tspan>
-                                <tspan x={cx} y={cy + 15} className="text-xs">
-                                  Total
-                                </tspan>
-                              </text>
-                            );
-                          }}
-                        />
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-                <div className="mt-0 flex justify-center space-x-4">
-                  {calculatePaymentMethods.pharmacyPayments.map(
-                    (entry, index) => (
-                      <div key={index} className="flex items-center">
+                        {hasFinancialViewPermission(userData)
+                          ? `₹${parseInt(
+                              calculateCollections[
+                                `${type
+                                  ?.replace(" ", "")
+                                  ?.toLowerCase()}Collection`
+                              ]
+                            ).toLocaleString()}`
+                          : "₹XXXXX"}
+                      </p>
+                      <p className="text-xs text-gray-600">{type} Collection</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          )}
+        </div>
+
+        {/* Payment Methods Grid - More compact and efficient */}
+        <div className="grid grid-cols-5 gap-4">
+          {["IPD", "OPD", "OPD Procedure", "Pharmacy", "Laboratory"].map(
+            (type) => (
+              <Card key={type} className="shadow-sm">
+                <CardHeader className="py-2 px-3">
+                  <CardTitle className="text-sm">{type} Payments</CardTitle>
+                </CardHeader>
+                <CardContent className="p-3">
+                  {!hasFinancialViewPermission(userData) ? (
+                    <div className="flex flex-col items-center justify-center h-24 text-gray-500">
+                      <AlertCircle className="w-8 h-8 mb-1" />
+                      <p className="text-xs text-center">No permission</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {calculatePaymentMethods?.[
+                        `${type?.replace(" ", "")?.toLowerCase()}Payments`
+                      ]?.map((method) => (
                         <div
-                          className="w-3 h-3 mr-1"
-                          style={{ backgroundColor: entry.fill }}
-                        ></div>
-                        <span className="text-xs">{entry.method}</span>
-                      </div>
-                    )
+                          key={method.method}
+                          className="bg-gray-50 p-2 rounded"
+                        >
+                          <div className="flex justify-between items-center">
+                            <span className="text-xs font-medium">
+                              {method.method}
+                            </span>
+                            <span className="text-sm font-bold">
+                              ₹{parseInt(method.value).toLocaleString()}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   )}
-                </div>
-              </>
-            ) : (
-              <div className="h-[230px] flex flex-col items-center justify-center text-gray-500">
-                <AlertCircle className="w-12 h-12 mb-2" />
-                <p className="text-sm">No payment data available</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                </CardContent>
+              </Card>
+            )
+          )}
+        </div>
+
+        {/* Expense Breakdown Section */}
       </div>
     </div>
   );
+};
+
+// Helper function for background colors
+const getBackgroundColor = (index) => {
+  const colors = ["blue", "green", "purple", "yellow", "indigo"];
+  return colors[index];
 };
 
 export default Dashboard;

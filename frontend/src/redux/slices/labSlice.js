@@ -218,7 +218,6 @@ const labSlice = createSlice({
         );
         if (index !== -1) {
           let dataadd={...action.payload.labRegistration,payments:[...state.registrations[index].payments,action.payload.payment]};
-          console.log(dataadd)
           state.registrations[index] = dataadd;
         }
       })

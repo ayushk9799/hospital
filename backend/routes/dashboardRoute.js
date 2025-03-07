@@ -41,7 +41,6 @@ router.get("/daily-stats", async (req, res) => {
             $gte: new Date(start),
             $lte: new Date(end),
           },
-          type: "Income",
         },
       },
       {
@@ -56,6 +55,7 @@ router.get("/daily-stats", async (req, res) => {
           paymentType: "$paymentType.name",
           paymentMethod: 1,
           amount: 1,
+          type: 1,
         },
       },
       {
@@ -64,22 +64,41 @@ router.get("/daily-stats", async (req, res) => {
             date: "$localDate",
             paymentType: "$paymentType",
             paymentMethod: "$paymentMethod",
+            type: "$type",
           },
           count: { $sum: 1 },
-          revenue: { $sum: "$amount" },
+          amount: { $sum: "$amount" },
         },
       },
       {
         $group: {
           _id: "$_id.date",
           totalCount: { $sum: "$count" },
-          totalRevenue: { $sum: "$revenue" },
+          totalRevenue: {
+            $sum: {
+              $cond: [
+                { $eq: ["$_id.type", "Income"] },
+                "$amount",
+                0
+              ]
+            }
+          },
+          totalExpense: {
+            $sum: {
+              $cond: [
+                { $eq: ["$_id.type", "Expense"] },
+                "$amount",
+                0
+              ]
+            }
+          },
           details: {
             $push: {
               paymentType: "$_id.paymentType",
               paymentMethod: "$_id.paymentMethod",
+              type: "$_id.type",
               count: "$count",
-              revenue: "$revenue",
+              amount: "$amount",
             },
           },
         },
@@ -89,13 +108,15 @@ router.get("/daily-stats", async (req, res) => {
           _id: 0,
           date: "$_id",
           revenue: "$totalRevenue",
+          expense: "$totalExpense",
           count: "$totalCount",
-          services: {
+          
+          ipd: {
             $reduce: {
               input: {
                 $filter: {
                   input: "$details",
-                  cond: { $eq: ["$$this.paymentType", "Services"] },
+                  cond: { $eq: ["$$this.paymentType", "IPD"] },
                 },
               },
               initialValue: { revenue: 0, count: 0, paymentMethod: [] },
@@ -109,7 +130,88 @@ router.get("/daily-stats", async (req, res) => {
                       {
                         method: "$$this.paymentMethod",
                         count: "$$this.count",
-                        revenue: "$$this.revenue",
+                        revenue: "$$this.amount",
+                      },
+                    ],
+                  ],
+                },
+              },
+            },
+          },
+          opd: {
+            $reduce: {
+              input: {
+                $filter: {
+                  input: "$details",
+                  cond: { $eq: ["$$this.paymentType", "OPD"] },
+                },
+              },
+              initialValue: { revenue: 0, count: 0, paymentMethod: [] },
+              in: {
+                revenue: { $add: ["$$value.revenue", "$$this.amount"] },
+                count: { $add: ["$$value.count", "$$this.count"] },
+                paymentMethod: {
+                  $concatArrays: [
+                    "$$value.paymentMethod",
+                    [
+                      {
+                        method: "$$this.paymentMethod",
+                        count: "$$this.count",
+                        revenue: "$$this.amount",
+                      },
+                    ],
+                  ],
+                },
+              },
+            },
+          },
+          opdProcedures: {
+            $reduce: {
+              input: {
+                $filter: {
+                  input: "$details",
+                  cond: { $eq: ["$$this.paymentType", "OPDProcedure"] },
+                },
+              },
+              initialValue: { revenue: 0, count: 0, paymentMethod: [] },
+              in: {
+                revenue: { $add: ["$$value.revenue", "$$this.amount"] },
+                count: { $add: ["$$value.count", "$$this.count"] },
+                paymentMethod: {
+                  $concatArrays: [
+                    "$$value.paymentMethod",
+                    [
+                      {
+                        method: "$$this.paymentMethod",
+                        count: "$$this.count",
+                        revenue: "$$this.amount",
+                      },
+                    ],
+                  ],
+                },
+              },
+            },
+          },
+          laboratory: {
+            $reduce: {
+              input: {
+                $filter: {
+                  input: "$details",
+                  cond: { $eq: ["$$this.paymentType", "Laboratory"] },
+                },
+              },
+              initialValue: { revenue: 0, count: 0, paymentMethod: [] },
+              in: {
+                revenue: { $add: ["$$value.revenue", "$$this.amount"] },
+                count: { $add: ["$$value.count", "$$this.count"] },
+                paymentMethod: {
+                  $concatArrays: [
+                    "$$value.paymentMethod",
+                    [
+                      {
+                        method: "$$this.paymentMethod",
+                        count: "$$this.count",
+                        revenue: "$$this.amount",
                       },
                     ],
                   ],
@@ -122,12 +224,12 @@ router.get("/daily-stats", async (req, res) => {
               input: {
                 $filter: {
                   input: "$details",
-                  cond: { $eq: ["$$this.paymentType", "Pharmacy"] },
+                  cond: { $eq: ["$$this.type", "Pharmacy"] },
                 },
               },
               initialValue: { revenue: 0, count: 0, paymentMethod: [] },
               in: {
-                revenue: { $add: ["$$value.revenue", "$$this.revenue"] },
+                revenue: { $add: ["$$value.revenue", "$$this.amount"] },
                 count: { $add: ["$$value.count", "$$this.count"] },
                 paymentMethod: {
                   $concatArrays: [
@@ -136,13 +238,104 @@ router.get("/daily-stats", async (req, res) => {
                       {
                         method: "$$this.paymentMethod",
                         count: "$$this.count",
-                        revenue: "$$this.revenue",
+                        revenue: "$$this.amount",
                       },
                     ],
                   ],
                 },
               },
             },
+          },
+          expenseTypeWise: {
+            $reduce: {
+              input: {
+                $filter: {
+                  input: "$details",
+                  cond: { $eq: ["$$this.type", "Expense"] }
+                },
+              },
+              initialValue: {
+                cash: { total: 0, count: 0 },
+                upi: { total: 0, count: 0 },
+                card: { total: 0, count: 0 },
+                cheque: { total: 0, count: 0 },
+                bankTransfer: { total: 0, count: 0 },
+                other: { total: 0, count: 0 },
+                due: { total: 0, count: 0 }
+              },
+              in: {
+                cash: {
+                  $cond: [
+                    { $eq: ["$$this.paymentMethod", "Cash"] },
+                    {
+                      total: { $add: ["$$value.cash.total", "$$this.amount"] },
+                      count: { $add: ["$$value.cash.count", "$$this.count"] }
+                    },
+                    "$$value.cash"
+                  ]
+                },
+                upi: {
+                  $cond: [
+                    { $eq: ["$$this.paymentMethod", "UPI"] },
+                    {
+                      total: { $add: ["$$value.upi.total", "$$this.amount"] },
+                      count: { $add: ["$$value.upi.count", "$$this.count"] }
+                    },
+                    "$$value.upi"
+                  ]
+                },
+                card: {
+                  $cond: [
+                    { $eq: ["$$this.paymentMethod", "Card"] },
+                    {
+                      total: { $add: ["$$value.card.total", "$$this.amount"] },
+                      count: { $add: ["$$value.card.count", "$$this.count"] }
+                    },
+                    "$$value.card"
+                  ]
+                },
+                cheque: {
+                  $cond: [
+                    { $eq: ["$$this.paymentMethod", "Cheque"] },
+                    {
+                      total: { $add: ["$$value.cheque.total", "$$this.amount"] },
+                      count: { $add: ["$$value.cheque.count", "$$this.count"] }
+                    },
+                    "$$value.cheque"
+                  ]
+                },
+                bankTransfer: {
+                  $cond: [
+                    { $eq: ["$$this.paymentMethod", "Bank Transfer"] },
+                    {
+                      total: { $add: ["$$value.bankTransfer.total", "$$this.amount"] },
+                      count: { $add: ["$$value.bankTransfer.count", "$$this.count"] }
+                    },
+                    "$$value.bankTransfer"
+                  ]
+                },
+                other: {
+                  $cond: [
+                    { $eq: ["$$this.paymentMethod", "Other"] },
+                    {
+                      total: { $add: ["$$value.other.total", "$$this.amount"] },
+                      count: { $add: ["$$value.other.count", "$$this.count"] }
+                    },
+                    "$$value.other"
+                  ]
+                },
+                due: {
+                  $cond: [
+                    { $eq: ["$$this.paymentMethod", "Due"] },
+                    {
+                      total: { $add: ["$$value.due.total", "$$this.amount"] },
+                      count: { $add: ["$$value.due.count", "$$this.count"] }
+                    },
+                    "$$value.due"
+                  ]
+                }
+              }
+            }
           },
         },
       },
@@ -233,9 +426,22 @@ router.get("/daily-stats", async (req, res) => {
       const payStat = paymentStats.find((stat) => stat.date === date) || {
         date,
         revenue: 0,
+        expense: 0,
         count: 0,
-        services: { revenue: 0, count: 0, paymentMethod: [] },
+        ipd: { revenue: 0, count: 0, paymentMethod: [] },
+        opd: { revenue: 0, count: 0, paymentMethod: [] },
+        opdProcedures: { revenue: 0, count: 0, paymentMethod: [] },
+        laboratory: { revenue: 0, count: 0, paymentMethod: [] },
         pharmacy: { revenue: 0, count: 0, paymentMethod: [] },
+        expenseTypeWise: {
+          cash: { total: 0, count: 0 },
+          upi: { total: 0, count: 0 },
+          card: { total: 0, count: 0 },
+          cheque: { total: 0, count: 0 },
+          bankTransfer: { total: 0, count: 0 },
+          other: { total: 0, count: 0 },
+          due: { total: 0, count: 0 }
+        }
       };
       const appStat = mergedAppointmentStats.find(
         (stat) => stat._id === date
@@ -279,12 +485,11 @@ router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
 
-
     const patients = await Patient.find({
       $or: [
-        { name: { $regex: `^${q}`, $options: 'i' }  },
+        { name: { $regex: `^${q}`, $options: "i" } },
         { contactNumber: q },
-        { registrationNumber: { $regex: `^${q}$`, $options: 'i' } },
+        { registrationNumber: { $regex: `^${q}$`, $options: "i" } },
       ],
     })
       .populate("visits", "bookingDate guardianName relation")
@@ -302,28 +507,31 @@ router.get("/patient-data-next-visit/:UHID", async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
-    const {UHID} = req.params;
-    const patient = await Patient.findOne({registrationNumber : UHID})
-      .populate('visits', "bookingDate guardianName relation bills createdAt")
-      .populate('admissionDetails', "bookingDate guardianName relation bills createdAt")
+    const { UHID } = req.params;
+    const patient = await Patient.findOne({ registrationNumber: UHID })
+      .populate("visits", "bookingDate guardianName relation bills createdAt")
+      .populate(
+        "admissionDetails",
+        "bookingDate guardianName relation bills createdAt"
+      )
       .session(session);
-      
-    if(!patient) {
-      throw Error('Patient not found');
+
+    if (!patient) {
+      throw Error("Patient not found");
     }
 
     // Combine both visits and admissions and sort by date
     const allVisits = [
-      ...(patient.visits || []).map(visit => ({
+      ...(patient.visits || []).map((visit) => ({
         ...visit.toObject(),
-        type: 'OPD',
-        date: visit.bookingDate
+        type: "OPD",
+        date: visit.bookingDate,
       })),
-      ...(patient.admissionDetails || []).map(admission => ({
+      ...(patient.admissionDetails || []).map((admission) => ({
         ...admission.toObject(),
-        type: 'IPD',
-        date: admission.bookingDate
-      }))
+        type: "IPD",
+        date: admission.bookingDate,
+      })),
     ].sort((a, b) => b.date - a.date);
 
     // Get the most recent visit
@@ -331,15 +539,13 @@ router.get("/patient-data-next-visit/:UHID", async (req, res) => {
 
     await session.commitTransaction();
     session.endSession();
-    
+
     res.status(200).json({ lastVisit });
-    
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     res.status(500).json({ error: error.message });
   }
 });
-
 
 export default router;

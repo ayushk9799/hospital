@@ -68,6 +68,7 @@ router.post("/", verifyToken, async (req, res) => {
           quantity: 1,
           rate: totalAmount,
           category: "OPDProcedure",
+          date:new Date()
         },
       ],
       totalAmount: totalAmount,
@@ -109,7 +110,7 @@ router.post("/", verifyToken, async (req, res) => {
         paymentMethod: payment.method,
         associatedInvoiceOrId:servicesBill.invoiceNumber,
         paymentType: {
-          name: "Services",
+          name: "OPDProcedure",
           id: servicesBill._id.toString(),
         },
         type: "Income",

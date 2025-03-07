@@ -323,6 +323,7 @@ router.post(
               quantity: 1,
               rate: totalFee,
               category: "Consultation",
+              date:new Date()
             },
           ],
           patient: patient._id,
@@ -351,7 +352,7 @@ router.post(
                 amount: pm.amount,
                 paymentMethod: pm.method,
                 associatedInvoiceOrId: bill.invoiceNumber,
-                paymentType: { name: "Services", id: bill._id },
+                paymentType: { name: "OPD", id: bill._id },
                 type: "Income",
                 createdByName: user?.name,
                 createdBy: user._id,
@@ -413,7 +414,7 @@ router.post(
         // Handle initial services bill if any
         if (paymentInfo?.includeServices) {
           const services = await Service.find({
-            _id: { $in: paymentInfo.services },
+            _id: { $in: paymentInfo.services.map((s) => s.id) },
           }).session(session);
 
           // Get room rate if room is assigned
@@ -430,12 +431,18 @@ router.post(
           bill = new ServicesBill({
             invoiceNumber: invoiceNumber || null,
             services: [
-              ...services.map((service) => ({
-                name: service.name,
-                quantity: 1,
-                rate: service.rate,
-                category: service?.category || "Other",
-              })),
+              ...services.map((service) => {
+                const serviceInfo = paymentInfo.services.find(
+                  (s) => s.id === service._id.toString()
+                );
+                return {
+                  name: service.name,
+                  quantity: 1,
+                  rate: serviceInfo?.rate || 0,
+                  category: service?.category || "Other",
+                  date:new Date()
+                };
+              }),
               // Add room charge if room is assigned
               ...(roomCharge > 0
                 ? [
@@ -476,7 +483,7 @@ router.post(
                   amount: pm.amount,
                   paymentMethod: pm.method,
                   associatedInvoiceOrId: bill.invoiceNumber,
-                  paymentType: { name: "Services", id: bill._id },
+                  paymentType: { name: "IPD", id: bill._id },
                   type: "Income",
                   createdByName: user?.name,
                   createdBy: user._id,
@@ -1055,6 +1062,7 @@ router.post(
             quantity: 1,
             rate: totalFee,
             category: "Consultation",
+            date:new Date()
           },
         ],
         patient: patient._id,
@@ -1077,20 +1085,22 @@ router.post(
         visit.paymentMethod !== "Due" &&
         amountPaid > 0
       ) {
-     await Promise.all(visit.paymentMethod.map(async (pm) => {
-          let payment = new Payment({
-            amount: pm.amount,
-            paymentMethod: pm.method,
-            associatedInvoiceOrId: bill.invoiceNumber,
-            paymentType: { name: "Services", id: bill._id },
-            type: "Income",
-            createdByName: user?.name,
-            createdBy: user._id,
-          });
-          payments.push(payment);
-          await payment.save({ session });
-          bill.payments.push(payment._id);
-        }));
+        await Promise.all(
+          visit.paymentMethod.map(async (pm) => {
+            let payment = new Payment({
+              amount: pm.amount,
+              paymentMethod: pm.method,
+              associatedInvoiceOrId: bill.invoiceNumber,
+              paymentType: { name: "OPD", id: bill._id },
+              type: "Income",
+              createdByName: user?.name,
+              createdBy: user._id,
+            });
+            payments.push(payment);
+            await payment.save({ session });
+            bill.payments.push(payment._id);
+          })
+        );
       }
 
       await bill.save({ session });
@@ -1509,7 +1519,7 @@ router.post(
       // Handle initial services bill if any
       if (paymentInfo?.includeServices) {
         const services = await Service.find({
-          _id: { $in: paymentInfo.services },
+          _id: { $in: paymentInfo.services.map((s) => s.id) },
         }).session(session);
 
         // Get room rate if room is assigned
@@ -1526,12 +1536,18 @@ router.post(
         bill = new ServicesBill({
           invoiceNumber: invoiceNumber || null,
           services: [
-            ...services.map((service) => ({
-              name: service.name,
-              quantity: 1,
-              rate: service.rate,
-              category: service?.category || "Other",
-            })),
+            ...services.map((service) => {
+              const serviceInfo = paymentInfo.services.find(
+                (s) => s.id === service._id.toString()
+              );
+              return {
+                name: service.name,
+                quantity: 1,
+                rate: serviceInfo?.rate || 0,
+                category: service?.category || "Other",
+                date:new Date()
+              };
+            }),
             // Add room charge if room is assigned
             ...(roomCharge > 0
               ? [
@@ -1572,7 +1588,7 @@ router.post(
                 amount: pm.amount,
                 paymentMethod: pm.method,
                 associatedInvoiceOrId: bill.invoiceNumber,
-                paymentType: { name: "Services", id: bill._id },
+                paymentType: { name: "IPD", id: bill._id },
                 type: "Income",
                 createdByName: user?.name,
                 createdBy: user._id,
@@ -1935,5 +1951,22 @@ router.post("/discharged-by-date", verifyToken, async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
+// Define service rates
+const SERVICE_RATES = {
+  Surgery: {
+    "Basic Surgery": 10000,
+    "Major Surgery": 25000,
+    "Minor Surgery": 5000,
+    // Add other surgery types and rates
+  },
+  "Room Rent": {
+    General: 500,
+    Private: 2000,
+    "Semi-Private": 1000,
+    // Add other room types and rates
+  },
+  // Add other service categories and their rates
+};
 
 export default router;

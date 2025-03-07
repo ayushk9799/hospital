@@ -193,7 +193,6 @@ const styles = {
 const LabReportPDF = React.forwardRef(
   ({ reportData, patientData, hospital }, ref) => {
 
-    console.log(patientData)
     const headerTemplateStrings = useSelector(
       (state) => state.templates.headerTemplateArray
     );

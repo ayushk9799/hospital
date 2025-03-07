@@ -71,14 +71,25 @@ router.post("/update-bill/:id", async (req, res) => {
     const { id } = req.params;
     const { services, totals } = req.body;
 
-    const bill = await ServicesBill.findById(id).populate("payments").session(session);
+    const bill = await ServicesBill.findById(id)
+      .populate("payments")
+      .session(session);
     if (!bill) {
       throw new Error("Bill not found");
     }
-
-    // Update services array
+    // Create a map of existing services with their dates
+    const existingServiceDates = new Map(
+      bill.services.map((service) => [service._id.toString(), service.date])
+    );
+    // Update services array while preserving dates for existing services
     if (services && Array.isArray(services)) {
-      bill.services = services;
+      bill.services = services.map((service) => ({
+        ...service,
+        // If service exists in old bill, use its date, otherwise use current date
+        date: service.isExisting
+          ? existingServiceDates.get(service._id)
+          : new Date(),
+      }));
     }
 
     // Update other bill fields
@@ -87,11 +98,8 @@ router.post("/update-bill/:id", async (req, res) => {
       bill.subtotal = totals.subtotal;
       bill.additionalDiscount = totals.additionalDiscount;
     }
-   
 
     await bill.save({ session });
-
-  
 
     await session.commitTransaction();
     res.status(200).json(bill);
@@ -113,7 +121,7 @@ router.get("/get-bills", async (req, res) => {
     if (startDate && endDate) {
       query.updatedAt = {
         $gte: startDate,
-        $lte: endDate
+        $lte: endDate,
       };
     }
     const bills = await ServicesBill.find(query)
@@ -266,9 +274,15 @@ router.post("/:id/payments", verifyToken, async (req, res) => {
       amount: paymentAmount,
       paymentMethod,
       associatedInvoiceOrId: bill.invoiceNumber,
-      paymentType: { name: "Services", id: bill._id },
+      paymentType: {
+        name:
+          bill.patientType === "Lab"
+            ? "Laboratory"
+            : bill.patientType || "Services",
+        id: bill._id,
+      },
       type: "Income",
-      createdByName:user.name,
+      createdByName: user.name,
       createdBy: user._id,
     });
     await payment.save({ session });
@@ -339,7 +353,7 @@ router.get("/get-bill/:id", verifyToken, async (req, res) => {
       .populate("patient")
       .populate("visit")
       .populate("payments")
-      .populate("createdBy");
+      .populate("createdBy", "name");
 
     if (!bill) {
       return res.status(404).json({ message: "Bill not found" });
@@ -355,24 +369,24 @@ router.get("/get-bill/:id", verifyToken, async (req, res) => {
 router.post("/search-invoice", async (req, res) => {
   try {
     const { invoiceNumber } = req.body;
-    if(invoiceNumber)
-    {
-      const bill = await ServicesBill.findOne( {invoiceNumber:invoiceNumber} )
-      .populate("patient", "name phone registrationNumber age gender address")
-      .populate("createdBy", "name")
-      .populate("opdProcedure", "procedureName")
-      .populate("payments");
-    if (!bill) {
-      throw new Error("Bill not found")
-    }
-    res.status(200).json([bill]);
-    }
-    else{
-      throw new Error("No invoice Number")
+    if (invoiceNumber) {
+      const bill = await ServicesBill.findOne({ invoiceNumber: invoiceNumber })
+        .populate("patient", "name phone registrationNumber age gender address")
+        .populate("createdBy", "name")
+        .populate("opdProcedure", "procedureName")
+        .populate("payments");
+      if (!bill) {
+        throw new Error("Bill not found");
+      }
+      res.status(200).json([bill]);
+    } else {
+      throw new Error("No invoice Number");
     }
     // Return as array to match get-bills format
   } catch (error) {
-    res.status(500).json({ message: "Error searching bill", error: error.message });
+    res
+      .status(500)
+      .json({ message: "Error searching bill", error: error.message });
   }
 });
 

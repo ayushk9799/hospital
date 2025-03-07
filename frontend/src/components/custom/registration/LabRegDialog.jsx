@@ -146,7 +146,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
           ...prev,
           paymentInfo: {
             ...prev.paymentInfo,
-            additionalDiscount: discountAmount,
+            additionalDiscount: Number(discountAmount),
           },
         }));
       }

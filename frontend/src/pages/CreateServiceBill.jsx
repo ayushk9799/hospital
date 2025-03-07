@@ -73,7 +73,40 @@ const CreateServiceBill = ({
   const [newlyAddedServices, setNewlyAddedServices] = useState([]);
   const [isViewFromUpdate, setIsViewFromUpdate] = useState(false);
 
+  const [billPatientDetails, setBillPatientDetails] = useState(null);
+
+  const patientDetails = billPatientDetails;
+  const { services, servicesStatus } = useSelector((state) => state.services);
+  const createBillStatus = useSelector((state) => state.bills.createBillStatus);
+  const updateBillStatus = useSelector((state) => state.bills.updateBillStatus);
+  const [addedServices, setAddedServices] = useState([]);
+  const [newService, setNewService] = useState({
+    serviceName: "",
+    quantity: "",
+    rate: "",
+    total: "",
+    category: "",
+  });
+  const [serviceName, setServiceName] = useState("");
+  const [additionalDiscount, setAdditionalDiscount] = useState("");
+  const [additionalDiscountType, setAdditionalDiscountType] =
+    useState("amount");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
+  const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
+  const [selectedServices, setSelectedServices] = useState([]);
+  const [breakTotalMode, setBreakTotalMode] = useState(true);
+  const [targetTotal, setTargetTotal] = useState("");
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isInitialSetupDone, setIsInitialSetupDone] = useState(false);
+  const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
+  const [pendingModeChange, setPendingModeChange] = useState(null);
+
   const [initialBillData, setInitialBillData] = useState(initialBillDatas);
+  const [billData, setBillData] = useState(initialBillData || {});
+
+  // First, add a new state to track manual subtotal edits
+  const [manualSubtotal, setManualSubtotal] = useState(null);
 
   // Use either the prop billId or URL billId
   const billId = initialBillId || urlBillId;
@@ -89,14 +122,15 @@ const CreateServiceBill = ({
             id: `${billIndex}-${serviceIndex}`, // Create unique ID combining bill and service index
             service: service.name,
             category: service.category,
+            type: service.type,
             quantity: service.quantity,
+            date: service.date,
             rate: service.rate,
             total: service.rate * service.quantity,
             isExisting: true,
             billId: bill._id,
           }))
       );
-
       setAddedServices(formattedServices);
       setSelectedServices(formattedServices.map((service) => service.id));
       const totalAdditionalDiscount =
@@ -143,6 +177,8 @@ const CreateServiceBill = ({
                   name: service.name,
                   category: service.category,
                   quantity: service.quantity,
+                  type: service.type,
+                  date: service.date,
                   rate:
                     service.category === "Surgery"
                       ? service.rate - billData.additionalDiscount
@@ -173,6 +209,9 @@ const CreateServiceBill = ({
             return {
               id: index + 1,
               service: service.name,
+              _id: service._id,
+              date: service.date,
+              type: service.type,
               category: service.category,
               quantity: service.quantity,
               rate: discountedRate,
@@ -187,13 +226,18 @@ const CreateServiceBill = ({
           setBillPatientDetails({
             _id: billData.patient?._id || billData.patientInfo?._id,
             name: billData.patientInfo?.name || billData.patient?.name,
-            contactNumber: billData.patientInfo?.phone || billData.patient?.phone,
-            registrationNumber: billData.patient?.registrationNumber || billData.patientInfo?.registrationNumber,
+            contactNumber:
+              billData.patientInfo?.phone || billData.patient?.phone,
+            registrationNumber:
+              billData.patient?.registrationNumber ||
+              billData.patientInfo?.registrationNumber,
             age: billData.patient?.age || billData.patientInfo?.age,
             gender: billData.patient?.gender || billData.patientInfo?.gender,
             address: billData.patient?.address || billData.patientInfo?.address,
-            bloodGroup: billData.patient?.bloodGroup || billData.patientInfo?.bloodGroup,
-            ipdNumber: billData.patientInfo?.ipdNumber || billData.patient?.ipdNumber,
+            bloodGroup:
+              billData.patient?.bloodGroup || billData.patientInfo?.bloodGroup,
+            ipdNumber:
+              billData.patientInfo?.ipdNumber || billData.patient?.ipdNumber,
             type: billData.patientType || billData.patientInfo?.type,
             bookingDate:
               billData.patient?.bookingDate || billData.createdAt || null,
@@ -215,73 +259,27 @@ const CreateServiceBill = ({
   }, []);
 
   // Modify navigation behavior based on isEmbedded
-  const handleAfterSuccess = () => {
-    if (isEmbedded) {
-      // Just show toast and refresh data if needed
-      toast({
-        variant: "success",
-        title: "Bill updated successfully",
-        description: "The bill has been successfully updated.",
-      });
-    } else {
-      // Navigate away if not embedded
-      navigate("/billings");
-    }
-  };
-
-  const [billPatientDetails, setBillPatientDetails] = useState(null);
-
-  const patientDetails = billPatientDetails;
-  const { services, servicesStatus } = useSelector((state) => state.services);
-  const createBillStatus = useSelector((state) => state.bills.createBillStatus);
-  const updateBillStatus = useSelector((state) => state.bills.updateBillStatus);
-  const [addedServices, setAddedServices] = useState([]);
-  const [newService, setNewService] = useState({
-    serviceName: "",
-    quantity: "",
-    rate: "",
-    total: "",
-    category: "",
-  });
-  const [serviceName, setServiceName] = useState("");
-  const [additionalDiscount, setAdditionalDiscount] = useState("");
-  const [additionalDiscountType, setAdditionalDiscountType] =
-    useState("amount");
-  const [isEditing, setIsEditing] = useState(false);
-  const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
-  const [billData, setBillData] = useState(initialBillData || {});
-  const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
-  const [selectedServices, setSelectedServices] = useState([]);
-  const [breakTotalMode, setBreakTotalMode] = useState(true);
-  const [targetTotal, setTargetTotal] = useState("");
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [isInitialSetupDone, setIsInitialSetupDone] = useState(false);
-  const [isWarningDialogOpen, setIsWarningDialogOpen] = useState(false);
-  const [pendingModeChange, setPendingModeChange] = useState(null);
 
   const calculateTotals = useMemo(() => {
-    // Get the original subtotal from billData
     const originalSubtotal =
       billData?.subtotal || billData?.services?.[0]?.subtotal || 0;
     const originalServices = billData?.services?.[0]?.services || [];
 
-    // Calculate total of original services that are still in addedServices
-    const originalServicesTotal = originalServices.reduce(
-      (sum, service) => sum + service.rate * service.quantity,
+    // Calculate totals based on mode
+    const relevantServices = breakTotalMode
+      ? addedServices.filter((service) => service.type === "breakup")
+      : addedServices.filter((service) => service.type !== "breakup");
+
+    const currentServicesTotal = relevantServices.reduce(
+      (sum, service) => sum + service.total,
       0
     );
 
     // Calculate the base amount (portion of original subtotal that wasn't from services)
-    const baseAmount = Math.max(0, originalSubtotal - originalServicesTotal);
+    const baseAmount = Math.max(0, originalSubtotal - currentServicesTotal);
 
     // If in break total mode, use target total as the main total
     if (breakTotalMode && targetTotal) {
-      const currentServicesTotal = addedServices.reduce(
-        (sum, service) => sum + service.total,
-        0
-      );
-
-      // In break total mode, we use the target total directly
       const targetTotalValue = parseFloat(targetTotal);
 
       let discountValue = 0;
@@ -296,7 +294,7 @@ const CreateServiceBill = ({
 
       // Ensure discount doesn't exceed target total
       discountValue = Math.min(discountValue, targetTotalValue);
-   
+
       return {
         subtotal: originalSubtotal, // Adjust subtotal to match target total after discount
         additionalDiscount: discountValue.toFixed(2),
@@ -309,12 +307,12 @@ const CreateServiceBill = ({
     }
 
     // Normal mode calculation
-    const currentServicesTotal = addedServices.reduce(
-      (sum, service) => sum + service.total,
-      0
-    );
+    // Use manualSubtotal if it exists, otherwise calculate from services
+    const subtotal =
+      manualSubtotal !== null
+        ? parseFloat(manualSubtotal)
+        : currentServicesTotal + baseAmount;
 
-    const subtotal = currentServicesTotal + baseAmount;
     let discountValue = 0;
     if (additionalDiscount !== "") {
       if (additionalDiscountType === "amount") {
@@ -328,7 +326,7 @@ const CreateServiceBill = ({
     discountValue = Math.min(discountValue, subtotal);
 
     return {
-      subtotal,
+      subtotal: subtotal,
       additionalDiscount: discountValue.toFixed(2),
       totalAmount: subtotal - discountValue,
       currentServicesSubtotal: currentServicesTotal,
@@ -343,6 +341,7 @@ const CreateServiceBill = ({
     billData,
     breakTotalMode,
     targetTotal,
+    manualSubtotal, // Add manualSubtotal to dependencies
   ]);
   useEffect(() => {
     if (servicesStatus === "idle") dispatch(fetchServices());
@@ -441,28 +440,32 @@ const CreateServiceBill = ({
 
   const handleBreakTotalModeChange = (e) => {
     const isChecked = e.target.checked;
+
+    // If there are newly added services, show warning
     if (newlyAddedServices.length > 0) {
       setPendingModeChange(isChecked);
       setIsWarningDialogOpen(true);
-    } else {
-      applyModeChange(isChecked);
+      return;
     }
+
+    applyModeChange(isChecked);
   };
 
   const applyModeChange = (isChecked) => {
     setBreakTotalMode(isChecked);
-    if (isChecked && calculateTotals.totalAmount) {
-      setTargetTotal(calculateTotals.totalAmount.toString());
-    } else {
-      setTargetTotal("");
-    }
-    // Clear only newly added services when mode changes
+
+    // Keep existing services but update their types if needed
+
+    // Only clear newly added services
     const existingServices = addedServices.filter(
-      (service) => service.isExisting
+      (service) =>
+        service.isExisting &&
+        (isChecked ? (service.type === "breakup" ? true : false) : true)
     );
-    setAddedServices(existingServices);
     setNewlyAddedServices([]);
     setSelectedServices(existingServices.map((service) => service.id));
+
+    // Update target total based on existing services
   };
 
   useEffect(() => {
@@ -478,10 +481,11 @@ const CreateServiceBill = ({
 
     if (breakTotalMode && targetTotal) {
       // Check if adding this service would exceed target total
-      const currentTotal = addedServices
-        .filter((ser) => ser.category !== "Surgery")
+      const currentBreakupTotal = addedServices
+        .filter((ser) => ser.type === "breakup")
         .reduce((sum, service) => sum + service.total, 0);
-      if (currentTotal + totalValue > parseFloat(targetTotal)) {
+
+      if (currentBreakupTotal + totalValue > parseFloat(targetTotal)) {
         toast({
           title: "Exceeds Target Total",
           description: "This service would exceed the target total amount.",
@@ -492,13 +496,15 @@ const CreateServiceBill = ({
     }
 
     const newServiceWithoutDiscount = {
-      id: Date.now(), // Use timestamp for unique ID
+      id: Date.now(),
       service: newService.serviceName,
       category: newService.category || "Not specified",
       quantity: quantityValue,
       rate: totalValue / quantityValue,
       total: totalValue,
-      isExisting: false, // Add this flag
+      isExisting: false,
+      date: new Date().toISOString(),
+      type: breakTotalMode ? "breakup" : "additional", // Add service type based on mode
     };
 
     setAddedServices((prev) => [...prev, newServiceWithoutDiscount]);
@@ -573,7 +579,6 @@ const CreateServiceBill = ({
       quantity: 1,
     }));
   };
-
   // Create bill data sending to backend
   const handleCreate = () => {
     if (addedServices.length === 0) {
@@ -592,18 +597,17 @@ const CreateServiceBill = ({
       additionalDiscountAmount =
         (additionalDiscountAmount / 100) * calculateTotals.subtotal;
     }
-
     const billData = {
-      services: addedServices
-        .filter((ser) => ser.category !== "Surgery")
-        .map((service) => ({
-          name: service.service,
-          quantity: service.quantity,
-          rate: service.rate,
-          discount: service.discAmt,
-          category: service.category,
-          isExisting: service.isExisting || false,
-        })),
+      services: addedServices.map((service) => ({
+        name: service.service,
+        quantity: service.quantity,
+        rate: service.rate,
+        _id: service._id,
+        discount: service.discAmt,
+        category: service.category,
+        isExisting: service.isExisting || false,
+        type: service.type, // Include the service type
+      })),
       patient: patientDetails._id,
       patientType: patientDetails.type,
       patientInfo: {
@@ -782,7 +786,7 @@ const CreateServiceBill = ({
   const remainingAmount = useMemo(() => {
     if (!breakTotalMode || !targetTotal) return 0;
     const currentTotal = addedServices
-      .filter((ser) => ser.category !== "Surgery")
+      .filter((ser) => ser.type === "breakup")
       .reduce((sum, service) => sum + service.total, 0);
     return parseFloat(targetTotal) - currentTotal;
   }, [breakTotalMode, targetTotal, addedServices]);
@@ -878,13 +882,15 @@ const CreateServiceBill = ({
     setIsPaymentDialogOpen(true);
   };
 
-  useEffect(() => {
-    // Only run if initial setup hasn't been done and we have a valid total amount
-    if (!isInitialSetupDone && calculateTotals.totalAmount > 0) {
-      handleBreakTotalModeChange({ target: { checked: true } });
-      setIsInitialSetupDone(true); // Prevent this from running again
-    }
-  }, [calculateTotals.totalAmount, isInitialSetupDone]);
+  // Modify the subtotal input handler
+  const handleSubtotalChange = (e) => {
+    const value = e.target.value;
+    setManualSubtotal(value === "" ? null : parseFloat(value));
+    setBillData((prev) => ({
+      ...prev,
+      subtotal: value,
+    }));
+  };
 
   return (
     <div className="w-full  max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
@@ -1061,40 +1067,44 @@ const CreateServiceBill = ({
           </form>
           <Separator className="my-2" />
           <div className="sm:hidden space-y-1">
-            {addedServices
-              .filter((ser) => ser.category !== "Surgery")
-              .map((service) => (
-                <Card key={service.id} className="mb-1">
-                  <CardContent className="p-2">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="font-semibold">{service.service}</span>
-                      <div>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0 mr-2"
-                          onClick={() => handleEditService(service.id)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-8 w-8 p-0"
-                          onClick={() => handleRemoveService(service.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+            {addedServices.map((service) => (
+              <Card key={service.id} className="mb-1">
+                <CardContent className="p-2">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-semibold">{service.service}</span>
+                    <div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0 mr-2"
+                        onClick={() => handleEditService(service.id)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-8 w-8 p-0"
+                        onClick={() => handleRemoveService(service.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>Quantity: {service.quantity}</div>
-                      <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
-                      <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      Date:{" "}
+                      {service.date
+                        ? format(new Date(service.date), "dd/MM/yyyy  HH:MM:SS")
+                        : "-"}
                     </div>
-                  </CardContent>
-                </Card>
-              ))}
+                    <div>Quantity: {service.quantity}</div>
+                    <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
+                    <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
           <div className="hidden sm:block">
             <ScrollArea className="h-[250px] w-full">
@@ -1112,6 +1122,7 @@ const CreateServiceBill = ({
                       />
                     </TableHead>
                     <TableHead>Service</TableHead>
+                    <TableHead>Date</TableHead>
                     <TableHead>Quantity</TableHead>
                     <TableHead>Rate</TableHead>
                     <TableHead>Total</TableHead>
@@ -1120,7 +1131,11 @@ const CreateServiceBill = ({
                 </TableHeader>
                 <TableBody>
                   {addedServices
-                    .filter((ser) => ser.category !== "Surgery")
+                    .filter((service) =>
+                      breakTotalMode
+                        ? service.type === "breakup"
+                        : service.type !== "breakup"
+                    )
                     .map((service) => (
                       <TableRow key={service.id}>
                         <TableCell>
@@ -1132,6 +1147,14 @@ const CreateServiceBill = ({
                           />
                         </TableCell>
                         <TableCell>{service.service}</TableCell>
+                        <TableCell>
+                          {service.date
+                            ? format(
+                                new Date(service.date),
+                                "dd/MM/yyyy hh:mm:ss a"
+                              )
+                            : "-"}
+                        </TableCell>
                         <TableCell>{service.quantity}</TableCell>
                         <TableCell>
                           {service.rate.toLocaleString("en-IN")}
@@ -1178,12 +1201,7 @@ const CreateServiceBill = ({
                 <span className="mr-1">₹</span>
                 <Input
                   value={parseFloat(calculateTotals.subtotal || 0).toFixed(2)}
-                  onChange={(e) => {
-                    setBillData((prev) => ({
-                      ...prev,
-                      subtotal: e.target.value,
-                    }));
-                  }}
+                  onChange={handleSubtotalChange}
                   className="w-20 h-7 text-right font-medium border-0 p-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
                   placeholder="0.00"
                 />

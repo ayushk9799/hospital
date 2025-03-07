@@ -26,10 +26,7 @@ import {
   fetchRegistrationAndIPDNumbers,
 } from "../../../redux/slices/patientSlice";
 import { fetchRooms } from "../../../redux/slices/roomSlice";
-import {
-  validateForm,
-  formatSubmissionData,
-} from "./ipdRegHelpers";
+import { validateForm, formatSubmissionData } from "./ipdRegHelpers";
 import { useToast } from "../../../hooks/use-toast";
 import { Loader2, Search } from "lucide-react";
 import MemoizedInput from "./MemoizedInput";
@@ -55,7 +52,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const departments = useSelector((state) => state.departments.departments);
   const rooms = useSelector((state) => state.rooms.rooms);
   const doctors = useSelector((state) => state.staff.doctors);
-   const initialFormData = {
+  const initialFormData = {
     name: "",
     registrationNumber: "",
     dateOfBirth: "",
@@ -77,10 +74,10 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     upgradegenReg: false,
     upgradegenIpd: false,
     admission: {
-      department:departments.length===1?departments[0]._id:"",
-          assignedDoctor:doctors.length===1?doctors[0]._id:"",
-      operationName:"",
-  
+      department: departments.length === 1 ? departments[0]._id : "",
+      assignedDoctor: doctors.length === 1 ? doctors[0]._id : "",
+      operationName: "",
+
       assignedRoom: "",
       assignedBed: "",
       diagnosis: "",
@@ -110,11 +107,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         .split("/")
         .reverse()
         .join("-"),
-        bookingTime: new Date().toLocaleTimeString('en-US', { 
-          hour12: false, 
-          hour: '2-digit', 
-          minute: '2-digit'
-        }),
+      bookingTime: new Date().toLocaleTimeString("en-US", {
+        hour12: false,
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
       timeSlot: {
         start: "",
         end: "",
@@ -123,34 +120,33 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         provider: "",
         policyNumber: "",
       },
-      guardianName:"",
-      relation:""
+      guardianName: "",
+      relation: "",
     },
   };
-  
+
   const dispatch = useDispatch();
   const { toast } = useToast();
   const registerPatientStatus = useSelector(
     (state) => state.patients.registerPatientStatus
   );
 
- 
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const hospitalInfoStatus = useSelector(
     (state) => state.hospital.hospitalInfoStatus
   );
 
   const [formData, setFormData] = useState(initialFormData);
-  useEffect(()=>{
-setFormData((prev)=>({
-  ...prev,
-  admission:{
-    ...prev.admission,
-    department:departments.length===1?departments[0].name:"",
-    assignedDoctor:doctors.length===1?doctors[0]._id:"",
-  }
-}))
-  },[departments,doctors,open])
+  useEffect(() => {
+    setFormData((prev) => ({
+      ...prev,
+      admission: {
+        ...prev.admission,
+        department: departments.length === 1 ? departments[0].name : "",
+        assignedDoctor: doctors.length === 1 ? doctors[0]._id : "",
+      },
+    }));
+  }, [departments, doctors, open]);
   const [errors, setErrors] = useState({});
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [isSelectServicesDialogOpen, setIsSelectServicesDialogOpen] =
@@ -195,9 +191,10 @@ setFormData((prev)=>({
 
   useEffect(() => {
     // Calculate total using services plus room charge
-    const servicesTotal = services
-      .filter((service) => formData.paymentInfo.services.includes(service._id))
-      .reduce((sum, service) => sum + (service.rate || 0), 0);
+    const servicesTotal = formData.paymentInfo.services.reduce(
+      (sum, service) => sum + (service.rate || 0),
+      0
+    );
 
     const totalWithRoom = servicesTotal + roomCharge;
 
@@ -231,8 +228,14 @@ setFormData((prev)=>({
   useEffect(() => {
     if (patientData || searchedPatient) {
       const sourceData = searchedPatient || patientData;
-      const tempGuardianName = sourceData?.visits[0]?.guardianName || sourceData?.admissionDetails[0]?.guardianName || "";
-      const tempRelation = sourceData?.visits[0]?.relation || sourceData?.admissionDetails[0]?.relation || "";
+      const tempGuardianName =
+        sourceData?.visits[0]?.guardianName ||
+        sourceData?.admissionDetails[0]?.guardianName ||
+        "";
+      const tempRelation =
+        sourceData?.visits[0]?.relation ||
+        sourceData?.admissionDetails[0]?.relation ||
+        "";
 
       setFormData((prev) => ({
         ...prev,
@@ -249,12 +252,12 @@ setFormData((prev)=>({
         // Keep existing admission and payment info
         admission: {
           ...prev.admission,
-          guardianName : tempGuardianName,
-          relation : tempRelation,
-          bookingTime: new Date().toLocaleTimeString('en-US', { 
-            hour12: false, 
-            hour: '2-digit', 
-            minute: '2-digit'
+          guardianName: tempGuardianName,
+          relation: tempRelation,
+          bookingTime: new Date().toLocaleTimeString("en-US", {
+            hour12: false,
+            hour: "2-digit",
+            minute: "2-digit",
           }),
         },
         paymentInfo: {
@@ -282,7 +285,6 @@ setFormData((prev)=>({
       dispatch(fetchRegistrationAndIPDNumbers())
         .unwrap()
         .then((numbers) => {
-          
           setGeneratedNumbers({
             registrationNumber: numbers.registrationNumber,
             ipdNumber: numbers.ipdNumber,
@@ -381,13 +383,15 @@ setFormData((prev)=>({
               description: "The patient has been admitted.",
               variant: "success",
             });
-            dispatch(fetchPatients({
-              startDate: new Date()
-                .toLocaleDateString("en-IN")
-                .split("/")
-                .reverse()
-                .join("-"),
-            }));
+            dispatch(
+              fetchPatients({
+                startDate: new Date()
+                  .toLocaleDateString("en-IN")
+                  .split("/")
+                  .reverse()
+                  .join("-"),
+              })
+            );
             dispatch(fetchRooms());
             dispatch(fetchBills());
             setBillData(result.bill);
@@ -417,13 +421,15 @@ setFormData((prev)=>({
               variant: "success",
             });
             onOpenChange(false);
-            dispatch(fetchPatients({
-              startDate: new Date()
-                .toLocaleDateString("en-IN")
-                .split("/")
-                .reverse()
-                .join("-"),
-            }));
+            dispatch(
+              fetchPatients({
+                startDate: new Date()
+                  .toLocaleDateString("en-IN")
+                  .split("/")
+                  .reverse()
+                  .join("-"),
+              })
+            );
             dispatch(fetchRooms());
             dispatch(fetchBills());
             setBillData(result.bill);
@@ -470,10 +476,9 @@ setFormData((prev)=>({
     }));
   }, [formData.paymentInfo.paymentMethod]);
   const handleDialogClose = () => {
-    setTimeout(()=>
-    {
-      document.body.style="";
-    },500)
+    setTimeout(() => {
+      document.body.style = "";
+    }, 500);
     onOpenChange(false);
     resetFormData();
   };
@@ -500,7 +505,7 @@ setFormData((prev)=>({
 
   const handleServicesChange = (selectedServices) => {
     const actualServices = selectedServices.filter(
-      (id) => id !== "room-charge"
+      (service) => service.id !== "room-charge"
     );
 
     setFormData((prevData) => ({
@@ -510,7 +515,8 @@ setFormData((prev)=>({
         operationName: services
           .filter(
             (ser) =>
-              ser.category === "Surgery" && actualServices.includes(ser._id)
+              ser.category === "Surgery" &&
+              actualServices.some((s) => s.id === ser._id)
           )
           .map((ser) => ser.name)
           .join(","),
@@ -521,7 +527,6 @@ setFormData((prev)=>({
       },
     }));
   };
-
   // Add this function to get all services including room for display
   const getDisplayServices = useCallback(() => {
     // Get the selected room service if any
@@ -704,45 +709,44 @@ setFormData((prev)=>({
                             </p>
                           )}
                         </div>
-                        
                       </>
                     ) : (
-                      <><div className="grid grid-cols-2 gap-1">
-                         
-                     <div className="relative">
+                      <>
+                        <div className="grid grid-cols-2 gap-1">
+                          <div className="relative">
+                            <MemoizedInput
+                              id="registrationNumber"
+                              label="UHID Number"
+                              tabIndex={-1}
+                              value={formData.registrationNumber}
+                              onChange={handleInputChange}
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleSearch}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                            >
+                              <Search className="h-5 w-5" />
+                            </button>
+                          </div>
                           <MemoizedInput
-                            id="registrationNumber"
-                            label="UHID Number"
+                            id="ipdNumber"
                             tabIndex={-1}
-                            value={formData.registrationNumber}
-                            onChange={handleInputChange}
-                            className="pr-10"
+                            label="IPD Number"
+                            value={formData.admission.ipdNumber}
+                            onChange={(e) =>
+                              handleInputChange({
+                                target: {
+                                  id: "admission.ipdNumber",
+                                  value: e.target.value,
+                                },
+                              })
+                            }
+                            error={errors.ipdNumber}
                           />
-                          <button
-                            type="button"
-                            onClick={handleSearch}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-                          >
-                            <Search className="h-5 w-5" />
-                          </button>
                         </div>
-                        <MemoizedInput
-                      id="ipdNumber"
-                      tabIndex={-1}
-                      label="IPD Number"
-                      value={formData.admission.ipdNumber}
-                      onChange={(e) =>
-                        handleInputChange({
-                          target: {
-                            id: "admission.ipdNumber",
-                            value: e.target.value,
-                          },
-                        })
-                      }
-                      error={errors.ipdNumber}
-                    />
-                      </div>
-                       
+
                         <div className="flex items-end gap-4">
                           <div className="w-30 relative">
                             <MemoizedInput
@@ -803,13 +807,17 @@ setFormData((prev)=>({
                           onChange={handleInputChange}
                           tabIndex={-1}
                           className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
-                            errors["admission.bookingDate"] ? "border-red-500" : "border-gray-300"
+                            errors["admission.bookingDate"]
+                              ? "border-red-500"
+                              : "border-gray-300"
                           }`}
                         />
                         <Label
                           htmlFor="admission.bookingDate"
                           className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
-                            errors["admission.bookingDate"] ? "text-red-500" : "text-gray-500"
+                            errors["admission.bookingDate"]
+                              ? "text-red-500"
+                              : "text-gray-500"
                           }`}
                         >
                           Booking Date
@@ -827,13 +835,17 @@ setFormData((prev)=>({
                           onChange={handleInputChange}
                           tabIndex={-1}
                           className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
-                            errors["admission.bookingTime"] ? "border-red-500" : "border-gray-300"
+                            errors["admission.bookingTime"]
+                              ? "border-red-500"
+                              : "border-gray-300"
                           }`}
                         />
                         <Label
                           htmlFor="admission.bookingTime"
                           className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
-                            errors["admission.bookingTime"] ? "text-red-500" : "text-gray-500"
+                            errors["admission.bookingTime"]
+                              ? "text-red-500"
+                              : "text-gray-500"
                           }`}
                         >
                           Booking Time
@@ -846,38 +858,41 @@ setFormData((prev)=>({
                   </div>
 
                   <div className="space-y-4">
-                  <div className="grid grid-cols-[1fr_2fr] gap-2">
-                  <Select
-                            id="admisison.relation"
-                            value={formData.admission.relation}
-                            onValueChange={(value) =>
-                              handleInputChange({
-                                target: { id: "admission.relation", value },
-                              })
-                            }
-                          >
-                            <SelectTrigger
-                              className={errors.gender ? "border-red-500" : ""}
-                            >
-                              <SelectValue placeholder="Relation" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="Father">Father</SelectItem>
-                              <SelectItem value="Husband">Husband</SelectItem>
-                              <SelectItem value="Mother">Mother</SelectItem>
-                              <SelectItem value="Wife">Wife</SelectItem>
-                              <SelectItem value="Guardian">Guardian</SelectItem>
-                            </SelectContent>
-                          </Select>
-      <MemoizedInput
-      id="admission.guardianName"
-      value={formData.admission.guardianName}
-      onChange={handleInputChange}
-      label={`${formData.admission.relation?formData.admission.relation+"'s Name":"Guradian's Name"}`}
-      />
-     
-      </div>
-                   
+                    <div className="grid grid-cols-[1fr_2fr] gap-2">
+                      <Select
+                        id="admisison.relation"
+                        value={formData.admission.relation}
+                        onValueChange={(value) =>
+                          handleInputChange({
+                            target: { id: "admission.relation", value },
+                          })
+                        }
+                      >
+                        <SelectTrigger
+                          className={errors.gender ? "border-red-500" : ""}
+                        >
+                          <SelectValue placeholder="Relation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Father">Father</SelectItem>
+                          <SelectItem value="Husband">Husband</SelectItem>
+                          <SelectItem value="Mother">Mother</SelectItem>
+                          <SelectItem value="Wife">Wife</SelectItem>
+                          <SelectItem value="Guardian">Guardian</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <MemoizedInput
+                        id="admission.guardianName"
+                        value={formData.admission.guardianName}
+                        onChange={handleInputChange}
+                        label={`${
+                          formData.admission.relation
+                            ? formData.admission.relation + "'s Name"
+                            : "Guradian's Name"
+                        }`}
+                      />
+                    </div>
+
                     <div>
                       <MemoizedInput
                         id="contactNumber"
@@ -974,14 +989,15 @@ setFormData((prev)=>({
                                 target: { id: "admission.department", value },
                               })
                             }
-                            
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder={
-                              departments.length === 1
-                                ? departments[0].name
-                                : "Department"
-                            } />
+                              <SelectValue
+                                placeholder={
+                                  departments.length === 1
+                                    ? departments[0].name
+                                    : "Department"
+                                }
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {departments.map((dept) => (
@@ -1004,11 +1020,13 @@ setFormData((prev)=>({
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder={
-                              doctors.length === 1
-                                ? `${doctors[0].name}`
-                                : "Select Doctor"
-                            } />
+                              <SelectValue
+                                placeholder={
+                                  doctors.length === 1
+                                    ? `${doctors[0].name}`
+                                    : "Select Doctor"
+                                }
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               {doctors.map((doctor) => (
@@ -1031,11 +1049,13 @@ setFormData((prev)=>({
                           }
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder={
-                              departments.length === 1
-                                ? departments[0].name
-                                : "Department"
-                            } />
+                            <SelectValue
+                              placeholder={
+                                departments.length === 1
+                                  ? departments[0].name
+                                  : "Department"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {departments.map((dept) => (
@@ -1055,11 +1075,13 @@ setFormData((prev)=>({
                           }
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder={
-                              doctors.length === 1
-                                ? `${doctors[0].name}`
-                                : "Select Doctor"
-                            } />
+                            <SelectValue
+                              placeholder={
+                                doctors.length === 1
+                                  ? `${doctors[0].name}`
+                                  : "Select Doctor"
+                              }
+                            />
                           </SelectTrigger>
                           <SelectContent>
                             {doctors.map((doctor) => (
@@ -1129,8 +1151,9 @@ setFormData((prev)=>({
                           )}
                           onChange={(e) => {
                             const value = Number(
-                              e.target.value.replace(/,/g, ""))
-                          
+                              e.target.value.replace(/,/g, "")
+                            );
+
                             if (!isNaN(value)) {
                               const servicesTotal = services
                                 .filter((service) =>
@@ -1145,17 +1168,66 @@ setFormData((prev)=>({
 
                               const totalWithRoom = servicesTotal + roomCharge;
 
-                              setFormData((prev) => ({
-                                ...prev,
-                                paymentInfo: {
-                                  ...prev.paymentInfo,
-                                  totalAmount: value,
-                                  additionalDiscount: Math.max(
-                                    0,
-                                    totalWithRoom - value
-                                  ),
-                                },
-                              }));
+                              // If new total is higher than current total, adjust operation service amount in form
+                              if (value > totalWithRoom) {
+                                const difference = value - totalWithRoom;
+                                // Find the first operation service
+                                const operationService = services.find(
+                                  (service) =>
+                                    service.category === "Surgery" &&
+                                    formData.paymentInfo.services.includes(
+                                      service._id
+                                    )
+                                );
+
+                                if (operationService) {
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    paymentInfo: {
+                                      ...prev.paymentInfo,
+                                      totalAmount: value,
+                                      additionalDiscount: 0,
+                                      services: prev.paymentInfo.services.map(
+                                        (serviceId) => {
+                                          if (
+                                            serviceId === operationService._id
+                                          ) {
+                                            return {
+                                              ...operationService,
+                                              rate:
+                                                (operationService.rate || 0) +
+                                                difference,
+                                            };
+                                          }
+                                          return serviceId;
+                                        }
+                                      ),
+                                    },
+                                  }));
+                                } else {
+                                  setFormData((prev) => ({
+                                    ...prev,
+                                    paymentInfo: {
+                                      ...prev.paymentInfo,
+                                      totalAmount: value,
+                                      additionalDiscount: 0,
+                                    },
+                                  }));
+                                }
+                              } else {
+                                // Handle discount case when total is reduced
+                                setFormData((prev) => ({
+                                  ...prev,
+                                  paymentInfo: {
+                                    ...prev.paymentInfo,
+                                    totalAmount: value,
+                                    additionalDiscount: Math.max(
+                                      0,
+                                      totalWithRoom - value
+                                    ),
+                                  },
+                                }));
+                              }
                             }
                           }}
                         />
@@ -1175,20 +1247,22 @@ setFormData((prev)=>({
                           variant="outline"
                           className={`
                                  ${
-                                        errors["admission.operationName"]
-                                  ? "border-red-500 text-red-500 hover:bg-red-50 "
-                               : "border-primary text-primary"
+                                   errors["admission.operationName"]
+                                     ? "border-red-500 text-red-500 hover:bg-red-50 "
+                                     : "border-primary text-primary"
                                  }
                                `}
                           onClick={handleInfoClick}
                           size="sm"
                         >
-                          {formData.admission?.operationName 
-  ? (formData.admission?.operationName.length > 15 
-     ? `${formData.admission?.operationName.slice(0, 15)}...` 
-     : formData.admission?.operationName)
-  : "Select Operations"
-}
+                          {formData.admission?.operationName
+                            ? formData.admission?.operationName.length > 15
+                              ? `${formData.admission?.operationName.slice(
+                                  0,
+                                  15
+                                )}...`
+                              : formData.admission?.operationName
+                            : "Select Operations"}
                         </Button>
                       </div>
                       {formData.paymentInfo.additionalDiscount > 0 && (
@@ -1247,7 +1321,7 @@ setFormData((prev)=>({
                         )}
                         setSelectedValues={handlePaymentMethodChange}
                       />
-                      {formData.paymentInfo.paymentMethod.length > 0 ?
+                      {formData.paymentInfo.paymentMethod.length > 0 ? (
                         formData.paymentInfo.paymentMethod.map((pm) => (
                           <MemoizedInput
                             key={pm.method}
@@ -1259,14 +1333,16 @@ setFormData((prev)=>({
                             }}
                             className="bg-gray-50"
                           />
-                        )):<MemoizedInput
-                        key="Ayush"
-                        id={`hallelujah`}
-                        label={`Amount Paid`}
-                       
-                        disabled
-                        className="bg-gray-50 "
-                      />}
+                        ))
+                      ) : (
+                        <MemoizedInput
+                          key="Ayush"
+                          id={`hallelujah`}
+                          label={`Amount Paid`}
+                          disabled
+                          className="bg-gray-50 "
+                        />
+                      )}
                     </div>
                   </div>
                 </div>

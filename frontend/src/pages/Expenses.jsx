@@ -326,6 +326,7 @@ const Expenses = () => {
                   <TableHead className="font-semibold hidden md:table-cell">Category</TableHead>
                   <TableHead className="font-semibold">Amount</TableHead>
                   <TableHead className="font-semibold md:hidden">Date</TableHead>
+                  <TableHead className="font-semibold  md:table-cell">Methods</TableHead>
                   <TableHead className="font-semibold hidden md:table-cell">Date</TableHead>
                   <TableHead className="font-semibold hidden md:table-cell">Status</TableHead>
                   <TableHead className="font-semibold hidden md:table-cell">Created By</TableHead>
@@ -340,6 +341,7 @@ const Expenses = () => {
                     <TableCell className="hidden md:table-cell">{expense.category}</TableCell>
                     <TableCell>₹{expense.amount?.toLocaleString('en-IN')}</TableCell>
                     <TableCell className="md:hidden">{format(new Date(expense.date), 'dd MMM')}</TableCell>
+                    <TableCell className="hidden md:table-cell">{expense.payments?.map(method => method.paymentMethod).join(', ')}</TableCell>
                     <TableCell className="hidden md:table-cell">{formatDate(expense.date)}</TableCell>
                     <TableCell className="hidden md:table-cell">
                       <Badge variant={getBadgeVariant(expense.amount, expense.amountPaid)}>

@@ -123,7 +123,7 @@ labRegistrationSchema.pre("save", async function (next) {
 
   if (this.paymentInfo) {
     this.paymentInfo.balanceDue =
-      (this.paymentInfo.totalAmount || 0) - (this.paymentInfo.amountPaid || 0);
+      (this.paymentInfo.totalAmount-this.paymentInfo.additionalDiscount || 0) - (this.paymentInfo.amountPaid || 0);
   }
 
   next();

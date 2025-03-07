@@ -78,9 +78,10 @@ router.post("/register", verifyToken, async (req, res) => {
         quantity: 1,
         rate: test.price,
         category: "Laboratory",
+        date:new Date()
       })),
-      totalAmount: paymentInfo.totalAmount,
-      subtotal: paymentInfo.totalAmount + (paymentInfo.additionalDiscount || 0),
+      totalAmount: paymentInfo.totalAmount-Number(paymentInfo.additionalDiscount || 0),
+      subtotal: paymentInfo.totalAmount ,
       additionalDiscount: paymentInfo.additionalDiscount || 0,
       amountPaid: paymentInfo.amountPaid || 0,
       patientType: "Lab",
