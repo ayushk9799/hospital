@@ -637,12 +637,15 @@ const Dashboard = () => {
       <div className="grid gap-4">
         {/* Patient Stats Row */}
         <div className="grid grid-cols-10 gap-4">
-          <Card className="bg-pink-50 shadow-sm col-span-2">
+          <Card
+            className="bg-pink-100 shadow-sm col-span-2 transition-all duration-200 
+            hover:shadow-lg hover:scale-[1.02] hover:bg-pink-200 cursor-pointer"
+          >
             <CardContent className="p-3">
               <div className="flex items-center gap-3">
-                <UserIcon className="w-8 h-8 text-pink-600" />
+                <UserIcon className="w-8 h-8 text-pink-700" />
                 <div>
-                  <p className="text-2xl font-bold text-pink-600">
+                  <p className="text-2xl font-bold text-pink-700">
                     {dashboardTotals.totalPatients}
                   </p>
                   <p className="text-sm text-gray-600">OPD Patients</p>
@@ -667,12 +670,15 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-orange-50 shadow-sm col-span-2">
+          <Card
+            className="bg-orange-100 shadow-sm col-span-2 transition-all duration-200 
+            hover:shadow-lg hover:scale-[1.02] hover:bg-orange-200 cursor-pointer"
+          >
             <CardContent className="p-3">
               <div className="flex items-center gap-3">
-                <Calendar className="w-8 h-8 text-orange-600" />
+                <Calendar className="w-8 h-8 text-orange-700" />
                 <div>
-                  <p className="text-2xl font-bold text-orange-600">
+                  <p className="text-2xl font-bold text-orange-700">
                     {dashboardTotals.totalAppointments}
                   </p>
                   <p className="text-sm text-gray-600">IPD Patients</p>
@@ -697,15 +703,18 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-purple-50 shadow-sm col-span-3">
+          <Card
+            className="bg-purple-100 shadow-sm col-span-3 transition-all duration-200 
+            hover:shadow-lg hover:scale-[1.02] hover:bg-purple-200 cursor-pointer"
+          >
             <CardContent className="p-3">
               <div className="flex gap-3">
-                <ChartLine className="w-8 h-8 text-purple-600 shrink-0" />
+                <ChartLine className="w-8 h-8 text-purple-700 shrink-0" />
                 <div className="w-full">
                   <div className="flex justify-between items-start">
                     <div>
                       <p
-                        className={`text-2xl font-bold text-purple-600 ${
+                        className={`text-2xl font-bold text-purple-700 ${
                           !hasFinancialViewPermission(userData)
                             ? "blur-sm select-none"
                             : ""
@@ -742,7 +751,8 @@ const Dashboard = () => {
                         {calculateTotalPaymentMethods.map((payment) => (
                           <div
                             key={payment.method}
-                            className={`bg-gray-100 px-2 py-1 rounded-md`}
+                            className="bg-purple-50 px-2 py-1 rounded-md transition-colors 
+                              duration-200 hover:bg-purple-100"
                           >
                             <p className="text-xs font-medium text-gray-600">
                               {payment.method}
@@ -759,15 +769,18 @@ const Dashboard = () => {
               </div>
             </CardContent>
           </Card>
-          <Card className="bg-blue-50 shadow-sm col-span-3">
+          <Card
+            className="bg-blue-100 shadow-sm col-span-3 transition-all duration-200 
+            hover:shadow-lg hover:scale-[1.02] hover:bg-blue-200 cursor-pointer"
+          >
             <CardContent className="p-3">
               <div className="flex gap-3">
-                <ChartLine className="w-8 h-8 text-blue-600 shrink-0" />
+                <ChartLine className="w-8 h-8 text-blue-700 shrink-0" />
                 <div className="w-full">
                   <div className="flex justify-between items-start">
                     <div>
                       <p
-                        className={`text-2xl font-bold text-blue-600 ${
+                        className={`text-2xl font-bold text-blue-700 ${
                           !hasFinancialViewPermission(userData)
                             ? "blur-sm select-none"
                             : ""
@@ -791,7 +804,8 @@ const Dashboard = () => {
                             details.total > 0 && (
                               <div
                                 key={method}
-                                className="bg-gray-100 px-2 py-1 rounded-md"
+                                className="bg-blue-50 px-2 py-1 rounded-md transition-colors 
+                                duration-200 hover:bg-blue-100"
                               >
                                 <p className="text-xs font-medium text-gray-600">
                                   {method.charAt(0).toUpperCase() +
@@ -818,20 +832,22 @@ const Dashboard = () => {
             (type, index) => (
               <Card
                 key={type}
-                className={`bg-${getBackgroundColor(index)}-50 shadow-sm`}
+                className={`bg-${getBackgroundColor(index)}-100 shadow-sm 
+                  transition-all duration-200 hover:shadow-lg hover:scale-[1.02] 
+                  hover:bg-${getBackgroundColor(index)}-200 cursor-pointer`}
               >
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2">
                     <Activity
                       className={`w-6 h-6 text-${getBackgroundColor(
                         index
-                      )}-600`}
+                      )}-700`}
                     />
                     <div>
                       <p
                         className={`text-xl font-bold text-${getBackgroundColor(
                           index
-                        )}-600 ${
+                        )}-700 ${
                           !hasFinancialViewPermission(userData)
                             ? "blur-sm select-none"
                             : ""
@@ -841,8 +857,8 @@ const Dashboard = () => {
                           ? `₹${parseInt(
                               calculateCollections[
                                 `${type
-                                  ?.replace(" ", "")
-                                  ?.toLowerCase()}Collection`
+                                  .toLowerCase()
+                                  .replace(/\s+/g, "")}Collection`
                               ]
                             ).toLocaleString()}`
                           : "₹XXXXX"}
@@ -860,7 +876,11 @@ const Dashboard = () => {
         <div className="grid grid-cols-5 gap-4">
           {["IPD", "OPD", "OPD Procedure", "Pharmacy", "Laboratory"].map(
             (type) => (
-              <Card key={type} className="shadow-sm">
+              <Card
+                key={type}
+                className="shadow-sm transition-all duration-200 
+                  hover:shadow-lg hover:scale-[1.02] hover:bg-gray-50"
+              >
                 <CardHeader className="py-2 px-3">
                   <CardTitle className="text-sm">{type} Payments</CardTitle>
                 </CardHeader>
@@ -877,7 +897,8 @@ const Dashboard = () => {
                       ]?.map((method) => (
                         <div
                           key={method.method}
-                          className="bg-gray-50 p-2 rounded"
+                          className="bg-gray-50 p-2 rounded transition-colors 
+                            duration-200 hover:bg-gray-100"
                         >
                           <div className="flex justify-between items-center">
                             <span className="text-xs font-medium">
@@ -905,7 +926,7 @@ const Dashboard = () => {
 
 // Helper function for background colors
 const getBackgroundColor = (index) => {
-  const colors = ["blue", "green", "purple", "yellow", "indigo"];
+  const colors = ["blue", "green", "purple", "orange", "pink"];
   return colors[index];
 };
 

@@ -121,7 +121,7 @@ router.get("/daily-stats", async (req, res) => {
               },
               initialValue: { revenue: 0, count: 0, paymentMethod: [] },
               in: {
-                revenue: { $add: ["$$value.revenue", "$$this.revenue"] },
+                revenue: { $add: ["$$value.revenue", "$$this.amount"] },
                 count: { $add: ["$$value.count", "$$this.count"] },
                 paymentMethod: {
                   $concatArrays: [
