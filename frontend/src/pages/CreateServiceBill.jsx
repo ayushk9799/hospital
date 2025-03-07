@@ -459,8 +459,8 @@ const CreateServiceBill = ({
     // Only clear newly added services
     const existingServices = addedServices.filter(
       (service) =>
-        service.isExisting &&
-        (isChecked ? (service.type === "breakup" ? true : false) : true)
+        ((service.isExisting &&
+        (isChecked ? (service.type === "breakup" ? true : false) : true))||service.category==="Room Rent")
     );
     setNewlyAddedServices([]);
     setSelectedServices(existingServices.map((service) => service.id));
@@ -786,7 +786,7 @@ const CreateServiceBill = ({
   const remainingAmount = useMemo(() => {
     if (!breakTotalMode || !targetTotal) return 0;
     const currentTotal = addedServices
-      .filter((ser) => ser.type === "breakup")
+      .filter((ser) => ser.type === "breakup"||ser.category==="Room Rent")
       .reduce((sum, service) => sum + service.total, 0);
     return parseFloat(targetTotal) - currentTotal;
   }, [breakTotalMode, targetTotal, addedServices]);
@@ -1132,9 +1132,9 @@ const CreateServiceBill = ({
                 <TableBody>
                   {addedServices
                     .filter((service) =>
-                      breakTotalMode
+                      ((breakTotalMode
                         ? service.type === "breakup"
-                        : service.type !== "breakup"
+                        : service.type !== "breakup")|| service.category==="Room Rent")
                     )
                     .map((service) => (
                       <TableRow key={service.id}>
