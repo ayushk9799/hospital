@@ -31,6 +31,7 @@ import {
 import { Separator } from "../../ui/separator";
 import { AlertCircle, CreditCard } from "lucide-react";
 import { useMediaQuery } from "../../../hooks/use-media-query";
+import PaymentReceipt from "../print/PaymentReceipt";
 
 const LabPaymentDialog = ({ isOpen, setIsOpen, labData }) => {
   const dispatch = useDispatch();
@@ -248,20 +249,45 @@ const LabPaymentDialog = ({ isOpen, setIsOpen, labData }) => {
         <Separator />
 
         <div className="space-y-0">
-          <h4 className="text-sm font-semibold">Recent Payments</h4>
+          <div className="flex justify-between items-center mb-2">
+            <h4 className="text-sm font-semibold">Recent Payments</h4>
+            {labData?.payments && labData?.payments?.length > 0 && (
+              <PaymentReceipt
+                payments={labData.payments}
+                billData={labData}
+                styleData={true}
+              />
+            )}
+          </div>
           {labData?.payments &&
           labData?.payments?.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead className="w-[80px]">Date</TableHead>
+                    {!isMobile && (
+                      <TableHead className="w-[80px]">Time</TableHead>
+                    )}
                     <TableHead>Amount</TableHead>
                     <TableHead>Method</TableHead>
+                    <TableHead>Receipt</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {labData.payments?.map((payment, index) => (
                     <TableRow key={index}>
+                      <TableCell className="text-xs">
+                        {new Date(payment.createdAt).toLocaleDateString("en-IN")}
+                      </TableCell>
+                      {!isMobile && (
+                        <TableCell className="text-xs">
+                          {new Date(payment.createdAt).toLocaleTimeString(
+                            "en-IN",
+                            { hour: "numeric", minute: "numeric", hour12: true }
+                          )}
+                        </TableCell>
+                      )}
                       <TableCell className="text-xs font-medium">
                         ₹
                         {payment?.amount?.toLocaleString("en-IN", {
@@ -271,6 +297,12 @@ const LabPaymentDialog = ({ isOpen, setIsOpen, labData }) => {
                       </TableCell>
                       <TableCell className="text-xs">
                         {payment.paymentMethod}
+                      </TableCell>
+                      <TableCell className="text-xs">
+                        <PaymentReceipt 
+                          payment={payment} 
+                          billData={labData} 
+                        />
                       </TableCell>
                     </TableRow>
                   ))}

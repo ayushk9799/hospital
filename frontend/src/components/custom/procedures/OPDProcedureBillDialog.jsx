@@ -26,6 +26,7 @@ import HospitalHeader from "../../../utils/print/HospitalHeader";
 import { AlertCircle } from "lucide-react";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import { ScrollArea } from "../../ui/scroll-area";
+import PaymentReceipt from "../print/PaymentReceipt";
 
 const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
   const componentRef = useRef();
@@ -239,7 +240,20 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
 
                 {/* Payment History */}
                 <div className="mt-1">
-                  <h3 className="text-lg font-semibold mb-1">Payment History</h3>
+                  <div className="flex flex-row items-center mb-2 w-auto gap-2">
+                    <h3 className="text-lg font-semibold">Payment History</h3>
+                    {payments && payments.length > 0 && (
+                      <PaymentReceipt
+                        payments={payments}
+                        billData={{
+                          patientInfo: opdProcedure,
+                          ...servicesBill
+                        }}
+                        styleData={true}
+                      />
+                    )}
+                  </div>
+                  
                   {payments && payments.length > 0 ? (
                     <div className="overflow-x-auto">
                       <Table>
@@ -251,6 +265,7 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
                             )}
                             <TableHead>Amount</TableHead>
                             <TableHead>Method</TableHead>
+                            <TableHead className="no-print">Receipt</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -280,6 +295,15 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
                               </TableCell>
                               <TableCell className="text-xs">
                                 {payment.paymentMethod}
+                              </TableCell>
+                              <TableCell className="text-xs no-print">
+                                <PaymentReceipt
+                                  payment={payment}
+                                  billData={{
+                                    patientInfo: opdProcedure,
+                                    ...servicesBill
+                                  }}
+                                />
                               </TableCell>
                             </TableRow>
                           ))}

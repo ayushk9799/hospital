@@ -15,7 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-  DialogClose
+  DialogClose,
 } from "../ui/dialog";
 import { useToast } from "../../hooks/use-toast";
 import { Textarea } from "../ui/textarea";
@@ -24,11 +24,17 @@ import { Card } from "../ui/card";
 import { FIELD_TYPES } from "./FormCustomizer";
 import { useSelector } from "react-redux";
 
-const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setShowFieldSettings }) => {
+const FieldSettingDialog = ({
+  field,
+  customConfig,
+  onSave,
+  handleEditField,
+  setShowFieldSettings,
+}) => {
   const { toast } = useToast();
   const [newTemplate, setNewTemplate] = useState({ name: "", content: "" });
-  const {updateTempleteStatus} = useSelector(state=>state.templates);
-
+  const { updateTempleteStatus } = useSelector((state) => state.templates);
+  const [localField, setLocalField] = useState({ ...field });
 
   const isIdTaken = (id) => {
     if (id === field.id) return false;
@@ -63,14 +69,14 @@ const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setS
   };
 
   const handleFieldChange = (key, value) => {
-    handleEditField(field.sectionId, field.id, {
-      ...field,
+    setLocalField((prevField) => ({
+      ...prevField,
       [key]: value,
-    });
+    }));
   };
 
-  const handleSave = () => {
-    if (isIdTaken(field.id)) {
+  const handleSaveDialog = () => {
+    if (isIdTaken(localField.id)) {
       toast({
         title: "Error",
         description: "Field ID must be unique",
@@ -78,6 +84,7 @@ const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setS
       });
       return;
     }
+    handleEditField(field.sectionId, field.id, localField);
     onSave();
     setShowFieldSettings(false);
   };
@@ -87,7 +94,7 @@ const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setS
       <DialogHeader className="px-6 py-4 border-b">
         <DialogTitle>Field Settings: {field.label}</DialogTitle>
       </DialogHeader>
-      
+
       <ScrollArea className=" p-4 h-[90vh]">
         <div className="space-y-4">
           <Card className="p-4">
@@ -95,7 +102,7 @@ const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setS
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Field ID</Label>
                 <Input
-                  value={field.id}
+                  value={localField.id}
                   onChange={(e) => handleFieldChange("id", e.target.value)}
                   placeholder="Unique field identifier"
                   className="h-9"
@@ -104,7 +111,7 @@ const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setS
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Field Label</Label>
                 <Input
-                  value={field.label}
+                  value={localField.label}
                   onChange={(e) => handleFieldChange("label", e.target.value)}
                   placeholder="Field label"
                   className="h-9"
@@ -113,7 +120,7 @@ const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setS
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Field Type</Label>
                 <Select
-                  value={field.type}
+                  value={localField.type}
                   onValueChange={(value) => handleFieldChange("type", value)}
                 >
                   <SelectTrigger className="h-9">
@@ -163,7 +170,9 @@ const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setS
                   ))}
 
                   <div className="space-y-3 border-t pt-4">
-                    <Label className="text-sm font-medium">Add New Template</Label>
+                    <Label className="text-sm font-medium">
+                      Add New Template
+                    </Label>
                     <div className="space-y-3">
                       <Input
                         placeholder="Template Name"
@@ -208,13 +217,14 @@ const FieldSettingDialog = ({ field, customConfig, onSave, handleEditField, setS
       <DialogFooter className="px-6 py-4 border-t">
         <div className="flex justify-end gap-2">
           <DialogClose asChild>
-            <Button variant="outline" >
-              Cancel
-            </Button>
+            <Button variant="outline">Cancel</Button>
           </DialogClose>
-          <Button disabled={updateTempleteStatus === 'loading'} onClick={handleSave}>
-            {updateTempleteStatus === 'loading' ? 'Saving ' : 'Save Settings'}
-        </Button>
+          <Button
+            disabled={updateTempleteStatus === "loading"}
+            onClick={handleSaveDialog}
+          >
+            {updateTempleteStatus === "loading" ? "Saving " : "Save Settings"}
+          </Button>
         </div>
       </DialogFooter>
     </DialogContent>

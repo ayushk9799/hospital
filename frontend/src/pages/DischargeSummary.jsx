@@ -231,9 +231,12 @@ const FormField = ({
         </div>
       );
     case "time": {
-      const timeValue = value ? value.split(" ")[0] : "";
-      const meridiem = value ? value.split(" ")[1] || "AM" : "AM";
-
+      let x=value.split(" ")
+      const timeValue = value ? x[0] : "";
+      let meridiem = value ? x[1] || "AM" : "AM";
+      if(x.length===1){
+        meridiem=convertTo12Hour(timeValue).split(" ")[1]
+      }
       // Convert from 12-hour format to 24-hour format for input value
       const time24 = timeValue;
 
@@ -247,7 +250,7 @@ const FormField = ({
               id={field.id}
               name={field.id}
               type="time"
-              value={time24}
+              value={convertTo12Hour(time24).split(" ")[0]}
               onChange={(e) => {
                 const newTime24 = e.target.value;
                 if (newTime24) {
@@ -620,9 +623,10 @@ export default function DischargeSummary() {
   const dischargeSummaryTemplates = useSelector(
     (state) => state.templates.dischargeSummaryTemplateArray
   );
-  const [selectedTemplateDischargeSummary, setSelectedTemplateDischargeSummary] = useState(
-    dischargeSummaryTemplates[0] || { name: "", value: "" }
-  );
+  const [
+    selectedTemplateDischargeSummary,
+    setSelectedTemplateDischargeSummary,
+  ] = useState(dischargeSummaryTemplates[0] || { name: "", value: "" });
   const savedConfig = useSelector(
     (state) => state.templates.dischargeFormTemplates
   );
@@ -660,6 +664,8 @@ export default function DischargeSummary() {
   const initialFormData = {
     admissionDate: "",
     dateDischarged: "",
+    bookingTime: "",
+    timeDischarged: "",
     diagnosis: "",
     clinicalSummary: "",
     treatment: "",
@@ -712,6 +718,8 @@ export default function DischargeSummary() {
     const standardFields = [
       "admissionDate",
       "dateDischarged",
+      "bookingTime",
+      "timeDischarged",
       "diagnosis",
       "clinicalSummary",
       "treatment",
@@ -798,14 +806,14 @@ export default function DischargeSummary() {
           console.error("Error fetching patient details:", error);
         }
       } else if (dischargeData) {
+       
         setPatient(dischargeData);
 
         if (dischargeData.formConfig || formConfig) {
           const mergedData = mergeDataWithFormFields(
-            dischargeData.dischargeData,
+            dischargeData.dischargeData || dischargeData,
             dischargeData.formConfig || formConfig
           );
-
           setFormData(mergedData);
         }
 
@@ -882,7 +890,9 @@ export default function DischargeSummary() {
         admissionDate: patient.bookingDate
           ? new Date(patient.bookingDate).toISOString().split("T")[0]
           : "",
-        dateDischarged: patient.dateDischarged || "",
+        dateDischarged: patient.dateDischarged
+          ? new Date(patient.dateDischarged).toISOString().split("T")[0]
+          : "",
         diagnosis: Array.isArray(patient.diagnosis)
           ? patient.diagnosis.join(", ")
           : patient.diagnosis || "",
@@ -947,10 +957,8 @@ export default function DischargeSummary() {
   };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
-
   const handleDateChange = (field, date) => {
     setFormData((prev) => ({ ...prev, [field]: date }));
   };
@@ -1142,7 +1150,7 @@ export default function DischargeSummary() {
           }
         : inv
     );
-   
+
     // If the investigation doesn't exist, add it to the list
     if (
       !updatedInvestigations.some(
@@ -1380,7 +1388,6 @@ export default function DischargeSummary() {
   );
 
   // Add this function to handle registration search
- 
 
   // Add this function near your other handler functions
   const handleBack = () => {
@@ -1657,9 +1664,13 @@ export default function DischargeSummary() {
                 field.id === "admissionDate" ||
                 field.id === "dateDischarged" ||
                 field.id === "timeDischarged" ||
-                field.id === "admittedTime"
+                field.id === "admittedTime"||
+                field.id==="bookingTime"
               ) {
-                value = formData[field.id] || "";
+                value =
+                  formData[
+                    field.id === "admittedTime" ? "bookingTime" : field.id
+                  ] || "";
                 onChange = handleInputChange;
               } else {
                 value =
@@ -1669,11 +1680,8 @@ export default function DischargeSummary() {
                   "";
                 if (!patientInfo?.[field.id]) {
                   label = patientInfo?.relation;
-
                 }
                 onChange = handlePatientInfoChange;
-
-               
               }
             } else {
               value = field.id.includes(".")
@@ -1915,7 +1923,6 @@ export default function DischargeSummary() {
           patient={patientInfo}
           hospital={hospital}
           templateString={selectedTemplateDischargeSummary?.value}
-
         />
       </div>
 

@@ -106,13 +106,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
     const amount = e.target.value;
     setPaymentAmount(amount);
 
-    if (parseFloat(amount) > dueAmount) {
-      setAmountError(
-        `Amount cannot exceed the due amount of ₹${dueAmount.toFixed(2)}`
-      );
-    } else {
-      setAmountError("");
-    }
+   
   };
 
   const isPaymentValid =
@@ -120,7 +114,6 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
     paymentMethod &&
     !amountError &&
     parseFloat(paymentAmount) > 0;
-
   if (!billData) return null;
 
   // Add payment method options
@@ -192,7 +185,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                 onChange={handlePaymentAmountChange}
                 placeholder="Enter amount"
                 className={`pr-10 ${amountError ? "border-red-500" : ""}`}
-                disabled={isFullyPaid}
+                // disabled={isFullyPaid}
               />
               <Button
                 variant="ghost"
@@ -200,7 +193,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                 className="absolute right-1 top-1/2 -translate-y-1/2"
                 onClick={handleSetDueAmount}
                 title="Set Due Amount"
-                disabled={isFullyPaid}
+                // disabled={isFullyPaid}
               >
                 <CreditCard className="h-4 w-4" />
               </Button>
@@ -215,7 +208,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
             <Select
               onValueChange={setPaymentMethod}
               value={paymentMethod}
-              disabled={isFullyPaid}
+              //disabled={isFullyPaid}
             >
               <SelectTrigger id="paymentMethod">
                 <SelectValue placeholder="Select method" />
@@ -309,14 +302,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
           >
             Close
           </Button>
-          {isFullyPaid ? (
-            <Button
-              disabled
-              className="w-full sm:w-auto bg-green-500 hover:bg-green-600"
-            >
-              Fully Paid
-            </Button>
-          ) : (
+          {
             <Button
               onClick={handleAddPayment}
               disabled={isLoading || !isPaymentValid}
@@ -324,7 +310,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
             >
               {isLoading ? "Processing..." : "Add Payment"}
             </Button>
-          )}
+          }
         </DialogFooter>
       </DialogContent>
     </Dialog>

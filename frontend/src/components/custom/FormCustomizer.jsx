@@ -21,10 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import {
-  Dialog,
-  DialogTrigger,
-} from "../ui/dialog";
+import { Dialog, DialogTrigger } from "../ui/dialog";
 import { useToast } from "../../hooks/use-toast";
 import FieldSettingDialog from "./FieldSettingDialog";
 
@@ -58,7 +55,6 @@ const SPECIAL_FIELDS = {
 };
 
 const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
-
   const [customConfig, setCustomConfig] = useState(() => {
     const mergeConfigs = (defaultConfig, enabledConfig) => {
       const mergedSections = defaultConfig.sections.map((defaultSection) => {
@@ -325,10 +321,12 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
   return (
     <Card className="w-full max-w-2xl mx-auto flex flex-col h-[600px] min-h-[400px] max-h-[90vh]">
       <CardHeader className="border-b py-3">
-       <div className="flex justify-between items-center">
-        <CardTitle>Customize Form Fields</CardTitle>
-        <Button variant='ghost' size='sm'><X className="h-4 w-4" onClick={onCancel}/></Button>
-       </div>
+        <div className="flex justify-between items-center">
+          <CardTitle>Customize Form Fields</CardTitle>
+          <Button variant="ghost" size="sm">
+            <X className="h-4 w-4" onClick={onCancel} />
+          </Button>
+        </div>
       </CardHeader>
       <ScrollArea className="flex-1">
         <CardContent className="p-4">
@@ -387,7 +385,7 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                                       }
                                       className="h-7 text-sm"
                                       autoFocus
-                                      onBlur={() => setEditingField(null)}
+                                      //onBlur={() => setEditingField(null)}
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter") {
                                           setEditingField(null);
@@ -423,7 +421,9 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                                         customConfig={customConfig}
                                         onSave={handleSave}
                                         handleEditField={handleEditField}
-                                        setShowFieldSettings={setShowFieldSettings}
+                                        setShowFieldSettings={
+                                          setShowFieldSettings
+                                        }
                                       />
                                     </Dialog>
                                     <Button
