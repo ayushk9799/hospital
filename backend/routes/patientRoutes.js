@@ -323,7 +323,8 @@ router.post(
               quantity: 1,
               rate: totalFee,
               category: "Consultation",
-              date:new Date()
+              date:new Date(),
+              type:"additional"
             },
           ],
           patient: patient._id,
@@ -440,7 +441,8 @@ router.post(
                   quantity: 1,
                   rate: serviceInfo?.rate || 0,
                   category: service?.category || "Other",
-                  date:new Date()
+                  date:new Date(),
+                  type:"additional"
                 };
               }),
               // Add room charge if room is assigned
@@ -451,6 +453,8 @@ router.post(
                       quantity: 1,
                       rate: roomCharge,
                       category: "Room Rent",
+                      date:new Date(),
+                    
                     },
                   ]
                 : []),
@@ -1062,7 +1066,8 @@ router.post(
             quantity: 1,
             rate: totalFee,
             category: "Consultation",
-            date:new Date()
+            date:new Date(),
+            type:"additional"
           },
         ],
         patient: patient._id,
@@ -1545,7 +1550,8 @@ router.post(
                 quantity: 1,
                 rate: serviceInfo?.rate || 0,
                 category: service?.category || "Other",
-                date:new Date()
+                date:new Date(),
+                type:"additional"
               };
             }),
             // Add room charge if room is assigned
@@ -1556,6 +1562,7 @@ router.post(
                     quantity: 1,
                     rate: roomCharge,
                     category: "Room Rent",
+                    date:new Date()
                   },
                 ]
               : []),
@@ -1953,20 +1960,6 @@ router.post("/discharged-by-date", verifyToken, async (req, res) => {
 });
 
 // Define service rates
-const SERVICE_RATES = {
-  Surgery: {
-    "Basic Surgery": 10000,
-    "Major Surgery": 25000,
-    "Minor Surgery": 5000,
-    // Add other surgery types and rates
-  },
-  "Room Rent": {
-    General: 500,
-    Private: 2000,
-    "Semi-Private": 1000,
-    // Add other room types and rates
-  },
-  // Add other service categories and their rates
-};
+
 
 export default router;

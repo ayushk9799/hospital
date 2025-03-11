@@ -96,6 +96,7 @@ const Billings = () => {
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [searchResults, setSearchResults] = useState(null);
+  const [printType, setPrintType] = useState("broken");
 
   useEffect(() => {
     if (billsStatus === "idle") {
@@ -275,8 +276,53 @@ const Billings = () => {
     dispatch(fetchBills({ dateRange: dateRangeParams }));
   };
 
-  const handleViewBill = (bill) => {
-    setSelectedBill(bill);
+  const getAvailablePrintTypes = (bill) => {
+    if (!bill.services || bill.services.length === 0) return ["simple"];
+
+    const hasBreakup = bill.services.some(
+      (service) => service.type === "breakup"
+    );
+    const hasAdditional = bill.services.some(
+      (service) => service.type === "additional" || service.type !== "breakup"
+    );
+
+    if (hasBreakup && hasAdditional) {
+      return ["broken", "simple"];
+    } else if (hasBreakup) {
+      return ["simple"];
+    } else if (hasAdditional) {
+      return ["simple"];
+    } else {
+      return ["simple"];
+    }
+  };
+
+  const handleViewBill = (bill, type = "simple") => {
+    const filteredServices = bill.services?.filter((service) => {
+      const isRoomRent = service.category?.toLowerCase().includes("room rent");
+
+      if (type === "broken") {
+        return service.type === "breakup" || isRoomRent;
+      } else {
+        if (service.type === "additional" || service.type !== "breakup") {
+          return true;
+        }
+        return service.type === "additional";
+      }
+    });
+
+    // Find operation name from services
+    const operationService = bill.services?.find((service) =>
+      service.category?.toLowerCase().includes("surgery")
+    );
+    const operationName = operationService?.name || "";
+
+    setSelectedBill({
+      ...bill,
+      services: filteredServices,
+      printType: type,
+      operationName: operationName, // Add operation name to selected bill
+    });
     setIsViewDialogOpen(true);
     setOpenDropdownId(null);
   };
@@ -360,6 +406,30 @@ const Billings = () => {
     }
   };
 
+  const renderPrintOptions = (bill) => {
+    const printTypes = getAvailablePrintTypes(bill);
+
+    if (printTypes.length === 1) {
+      return (
+        <DropdownMenuItem onClick={() => handleViewBill(bill, "simple")}>
+          Print Bill
+        </DropdownMenuItem>
+      );
+    }
+
+    return (
+      <>
+        {/* <DropdownMenuLabel>Print Options</DropdownMenuLabel> */}
+        <DropdownMenuItem onClick={() => handleViewBill(bill, "broken")}>
+          Print BreakUp Bill
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => handleViewBill(bill, "simple")}>
+          Print Services Bill
+        </DropdownMenuItem>
+      </>
+    );
+  };
+
   const BillCard = ({ bill }) => (
     <Card
       className="mb-4 hover:bg-blue-50 transition-colors duration-200 cursor-pointer"
@@ -421,9 +491,7 @@ const Billings = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" data-prevent-view>
-                  <DropdownMenuItem onClick={() => handleViewBill(bill)}>
-                    Print Bill
-                  </DropdownMenuItem>
+                  {renderPrintOptions(bill)}
                   {bill.patientType !== "OPDProcedure" && (
                     <DropdownMenuItem onClick={() => handleEditBill(bill)}>
                       Edit Bill
@@ -432,13 +500,6 @@ const Billings = () => {
                   <DropdownMenuItem onClick={() => handlePayments(bill)}>
                     Payments
                   </DropdownMenuItem>
-                  {/* <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    className="text-red-600"
-                    onClick={() => handleDeleteBill(bill)}
-                  >
-                    Delete Bill
-                  </DropdownMenuItem> */}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -621,11 +682,6 @@ const Billings = () => {
                           >
                             This Week
                           </DropdownMenuItem>
-                          {/* <DropdownMenuItem
-                            onSelect={() => setDateFilter("All")}
-                          >
-                            All Time
-                          </DropdownMenuItem> */}
                           <DropdownMenuItem
                             onSelect={() => setDateFilter("Custom")}
                           >
@@ -728,9 +784,6 @@ const Billings = () => {
                     >
                       This Week
                     </DropdownMenuItem>
-                    {/* <DropdownMenuItem onSelect={() => setDateFilter("All")}>
-                      All Time
-                    </DropdownMenuItem> */}
                     <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>
                       Custom Range
                     </DropdownMenuItem>
@@ -869,11 +922,7 @@ const Billings = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" data-prevent-view>
-                            <DropdownMenuItem
-                              onClick={() => handleViewBill(bill)}
-                            >
-                              Print Bill
-                            </DropdownMenuItem>
+                            {renderPrintOptions(bill)}
                             {bill.patientType !== "OPDProcedure" && (
                               <DropdownMenuItem
                                 onClick={() => handleEditBill(bill)}
@@ -886,13 +935,6 @@ const Billings = () => {
                             >
                               Payments
                             </DropdownMenuItem>
-                            {/* <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                              className="text-red-600"
-                              onClick={() => handleDeleteBill(bill)}
-                            >
-                              Delete Bill
-                            </DropdownMenuItem> */}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>

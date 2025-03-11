@@ -32,6 +32,7 @@ import { X } from "lucide-react";
 import PaymentReceipt from "../print/PaymentReceipt";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
+  console.log(billData);
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -133,6 +134,31 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
     return {
       subTotal: (billData.subtotal || 0) - deselectedTotal,
     };
+  };
+
+  const renderServices = () => {
+    if (!billData?.showServiceBreakup) {
+      // Return simplified total without service breakup
+      return (
+        <tr>
+          <td colSpan="2">Total Services</td>
+          <td className="text-right">
+            ₹{billData?.totalAmount.toLocaleString("en-IN")}
+          </td>
+        </tr>
+      );
+    }
+
+    // Return detailed service breakup
+    return billData?.services?.map((service, index) => (
+      <tr key={index}>
+        <td>{service.name}</td>
+        <td>{service.quantity}</td>
+        <td className="text-right">
+          ₹{service.amount.toLocaleString("en-IN")}
+        </td>
+      </tr>
+    ));
   };
 
   return (
@@ -279,7 +305,8 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                               </TableCell>
                               <TableCell className="border-r border-gray-200 hidden print:table-cell">
                                 {selectedServices.includes(index)
-                                  ? selectedServices.indexOf(index) + 1
+                                  ? selectedServices.filter((i) => i <= index)
+                                      .length
                                   : ""}
                               </TableCell>
                               <TableCell className="border-r border-gray-200">

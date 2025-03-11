@@ -403,7 +403,7 @@ const CreateServiceBill = ({
     if (updateBillStatus === "succeeded") {
       toast({
         variant: "success",
-        title: "Bill updated successfully",
+        title: "Bill updated succesuhusfully",
         description: "The bill has been successfully updated.",
       });
       dispatch(setCreateBillStatusIdle());
@@ -460,8 +460,9 @@ const CreateServiceBill = ({
     const existingServices = addedServices.filter(
       (service) =>
         ((service.isExisting &&
-        (isChecked ? (service.type === "breakup" ? true : false) : true))||service.category==="Room Rent")
+        (isChecked ? (service.type === "breakup" ? true : false) : (service.type!=="breakup"?true:false)))||service.category==="Room Rent")
     );
+    console.log(existingServices);
     setNewlyAddedServices([]);
     setSelectedServices(existingServices.map((service) => service.id));
 
@@ -655,9 +656,9 @@ const CreateServiceBill = ({
     // Filter services based on selection
     const selectedServicesList = addedServices.filter(
       (service) =>
-        selectedServices.includes(service.id) && service.category !== "Surgery"
+        selectedServices.includes(service.id) && (breakTotalMode ? (service.type!=="additional"&&(service.type||service.category==="Room Rent")):true)
     );
-
+console.log(selectedServicesList);
     // Calculate totals for selected services only
     const selectedServicesTotal = selectedServicesList.reduce(
       (sum, service) => sum + service.total,
