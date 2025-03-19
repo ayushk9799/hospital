@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import ConsentDynamicForm from "./ConsentDynamicForm";
+import {consentFormTemplateStringExperimentation }from "../../../templatesExperiments/consentFromExperimentation";
 import { Printer } from "lucide-react";
 import {
   DropdownMenuSub,
@@ -11,7 +12,7 @@ import {
   DropdownMenuItem,
 } from "../../ui/dropdown-menu";
 
-const consentFormTemplateStringDefault = `(patient, hospitalInfo, ref) => {
+export const consentFormTemplateStringDefault = `(patient, hospitalInfo, ref) => {
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -182,7 +183,7 @@ const ConsentFormPrint = ({ patient }) => {
           Consent Form
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent sideOffset={2} alignOffset={-5}>
-          {consentFormTemplates?.map((template) => (
+          {consentFormTemplates.map((template) => (
             <DropdownMenuItem
               key={template.name}
               onSelect={(e) => {

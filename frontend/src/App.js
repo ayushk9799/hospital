@@ -9,6 +9,7 @@ import {
 import { ScrollArea } from "./components/ui/scroll-area";
 import { Provider } from "react-redux";
 import { store } from "./redux/store";
+import ConsentTemplatePreview from "./pages/ConsentTemplatePreview";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPatients } from "./redux/slices/patientSlice";
 import { fetchStaffMembers } from "./redux/slices/staffSlice";
@@ -270,6 +271,7 @@ const AppContent = () => {
                     path="/settings/printing-templates/merge-template-preview"
                     element={<MergeTemplatePreview />}
                   />
+                  <Route path="/settings/printing-templates/consent-preview" element={<ConsentTemplatePreview />} />
                   <Route
                     path="/settings/prefix-settings"
                     element={<PrefixSettings />}

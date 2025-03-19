@@ -3,6 +3,7 @@
 # dependencies
 /backend/node_modules
 /frontend/node_modules
+/frontend/src/ignoredfiles
 /backend/config
 /backend/load-test.yml
 /frontend/.pnp

@@ -42,7 +42,6 @@ app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 app.use(express.static(path.join(__dirname, "../frontend/build")));
 app.options("*", cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
-// Connect to MongoDB
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {})

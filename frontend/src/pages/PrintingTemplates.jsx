@@ -105,6 +105,18 @@ export default function PrintingTemplates() {
             Preview and customize merge template report
           </span>
         </Button>
+
+        <Button
+          onClick={() =>
+            navigate("/settings/printing-templates/consent-preview")
+          }
+          className="w-full p-6 h-auto flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"
+        >
+          <span className="text-lg">Consent Form Template</span>
+          <span className="text-sm text-gray-200">
+            Preview and customize consent form template
+          </span>
+        </Button>
       </div>
     </div>
   );
