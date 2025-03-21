@@ -7,6 +7,7 @@ import {
   AlertCircle,
   Filter,
   ChevronLeft,
+  Trash2,
 } from "lucide-react";
 import {
   Card,
@@ -44,8 +45,11 @@ import {
 import { ScrollArea } from "../components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { useMediaQuery } from "../hooks/useMediaQuery";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
+import { emptyBeds } from "../redux/slices/roomSlice";
+import { Checkbox } from "../components/ui/checkbox";
+import { useToast } from "../hooks/use-toast";
 
 export default function RoomManagementDashboard() {
   const { rooms } = useSelector((state) => state.rooms);
@@ -56,6 +60,7 @@ export default function RoomManagementDashboard() {
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const { toast } = useToast();
 
   const filteredRooms = rooms.filter(
     (room) =>
@@ -69,59 +74,214 @@ export default function RoomManagementDashboard() {
       (filterStatus === "All" || room.status === filterStatus)
   );
 
-  const BedDetailsDialog = ({ room }) => (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Info className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px] max-w-[90vw] rounded-lg">
-        <DialogHeader>
-          <DialogTitle>Bed Details - Room {room.roomNumber}</DialogTitle>
-          <DialogDescription>
-            Information about beds in Room {room.roomNumber}
-          </DialogDescription>
-        </DialogHeader>
-        <ScrollArea className="max-h-[70vh]">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Bed Number</TableHead>
-                <TableHead>Status</TableHead>
-                {!isSmallScreen && <TableHead>Patient</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {room.beds.map((bed) => (
-                <TableRow key={bed.bedNumber}>
-                  <TableCell className="font-medium">{bed.bedNumber}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        bed.status === "Occupied"
-                          ? "default"
-                          : bed.status === "Available"
-                          ? "secondary"
-                          : bed.status === "Under Maintenance"
-                          ? "destructive"
-                          : "outline"
-                      }
-                    >
-                      {bed.status}
-                    </Badge>
-                  </TableCell>
-                  {!isSmallScreen && (
-                    <TableCell>{bed.currentPatient?.name || "-"}</TableCell>
-                  )}
+  const dispatch = useDispatch();
+  const [selectedBeds, setSelectedBeds] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+
+  const handleSelectAll = (checked) => {
+    setSelectAll(checked);
+    if (checked) {
+      setSelectedBeds(rooms.map((room) => room._id));
+    } else {
+      setSelectedBeds([]);
+    }
+  };
+
+  const handleBedSelect = (roomId) => {
+    setSelectedBeds((prev) => {
+      if (prev.includes(roomId)) {
+        const newSelection = prev.filter((id) => id !== roomId);
+        setSelectAll(false);
+        return newSelection;
+      } else {
+        const newSelection = [...prev, roomId];
+        if (newSelection.length === rooms.length) {
+          setSelectAll(true);
+        }
+        return newSelection;
+      }
+    });
+  };
+
+  const handleEmptyBeds = async () => {
+    if (selectedBeds.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Please select at least one room to empty",
+      });
+      return;
+    }
+
+    try {
+      const result = await dispatch(
+        emptyBeds({
+          roomIds: selectedBeds,
+        })
+      ).unwrap();
+
+      toast({
+        title: "Success",
+        description: "Selected rooms emptied successfully",
+      });
+      setSelectedBeds([]);
+      setSelectAll(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to empty rooms",
+      });
+    }
+  };
+
+  const handleEmptyAllBeds = async () => {
+    try {
+      const result = await dispatch(
+        emptyBeds({
+          roomIds: rooms.map((room) => room._id),
+        })
+      ).unwrap();
+
+      toast({
+        title: "Success",
+        description: "All rooms emptied successfully",
+      });
+      setSelectedBeds([]);
+      setSelectAll(false);
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message || "Failed to empty rooms",
+      });
+    }
+  };
+
+  const BedDetailsDialog = ({ room }) => {
+    const dispatch = useDispatch();
+    const { toast } = useToast();
+
+    const handleEmptyBed = async (bedId) => {
+      try {
+        const result = await dispatch(
+          emptyBeds({
+            roomIds: [room._id],
+            bedIds: { [room._id]: [bedId] },
+          })
+        ).unwrap();
+
+        toast({
+          title: "Success",
+          description: "Bed emptied successfully",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to empty bed",
+        });
+      }
+    };
+
+    const handleEmptyAllBeds = async () => {
+      try {
+        const result = await dispatch(
+          emptyBeds({
+            roomIds: [room._id],
+          })
+        ).unwrap();
+
+        toast({
+          title: "Success",
+          description: "All beds emptied successfully",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to empty beds",
+        });
+      }
+    };
+
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <Info className="h-4 w-4" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px] max-w-[90vw] rounded-lg">
+          <DialogHeader>
+            <DialogTitle>Bed Details - Room {room.roomNumber}</DialogTitle>
+            <DialogDescription>
+              Information about beds in Room {room.roomNumber}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className="max-h-[70vh]">
+            <div className="flex justify-end mb-4 px-4">
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={handleEmptyAllBeds}
+              >
+                Empty All Beds
+              </Button>
+            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Bed Number</TableHead>
+                  <TableHead>Status</TableHead>
+                  {!isSmallScreen && <TableHead>Patient</TableHead>}
+                  <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
-  );
+              </TableHeader>
+              <TableBody>
+                {room.beds.map((bed) => (
+                  <TableRow key={bed.bedNumber}>
+                    <TableCell className="font-medium">
+                      {bed.bedNumber}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          bed.status === "Occupied"
+                            ? "destructive"
+                            : bed.status === "Available"
+                            ? "success"
+                            : bed.status === "Under Maintenance"
+                            ? "destructive"
+                            : "outline"
+                        }
+                      >
+                        {bed.status}
+                      </Badge>
+                    </TableCell>
+                    {!isSmallScreen && (
+                      <TableCell>{bed.currentPatient?.name || "-"}</TableCell>
+                    )}
+                    <TableCell>
+                      {bed.status === "Occupied" && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEmptyBed(bed._id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   const RoomCard = ({ room }) => (
     <Card className="mb-4">
@@ -135,12 +295,12 @@ export default function RoomManagementDashboard() {
             <Badge
               variant={
                 room.status === "Occupied"
-                  ? "default"
+                  ? "destructive"
                   : room.status === "Partially Available"
                   ? "warning"
                   : room.status === "Under Maintenance"
                   ? "destructive"
-                  : "secondary"
+                  : "success"
               }
             >
               {room.status}
@@ -334,15 +494,11 @@ export default function RoomManagementDashboard() {
                       <TableHead className="w-[15%]">Room Number</TableHead>
                       <TableHead className="w-[20%]">Type</TableHead>
                       <TableHead className="w-[20%]">Status</TableHead>
-                      {!isMediumScreen && (
-                        <>
-                          <TableHead className="w-[15%]">Beds</TableHead>
-                          <TableHead className="w-[15%]">Daily Rate</TableHead>
-                          <TableHead className="w-[15%]">
-                            Current Occupancy
-                          </TableHead>
-                        </>
-                      )}
+                      <TableHead className="w-[15%]">Daily Rate(₹)</TableHead>
+                      <TableHead className="w-[15%]">Beds</TableHead>
+                      <TableHead className="w-[15%]">
+                        Current Occupancy
+                      </TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -357,24 +513,20 @@ export default function RoomManagementDashboard() {
                           <Badge
                             variant={
                               room.status === "Occupied"
-                                ? "default"
+                                ? "destructive"
                                 : room.status === "Partially Available"
                                 ? "warning"
                                 : room.status === "Under Maintenance"
                                 ? "destructive"
-                                : "secondary"
+                                : "success"
                             }
                           >
                             {room.status}
                           </Badge>
                         </TableCell>
-                        {!isMediumScreen && (
-                          <>
-                            <TableCell>{room.capacity}</TableCell>
-                            <TableCell>₹{room?.ratePerDay || "N/A"}</TableCell>
-                            <TableCell>{room.currentOccupancy}</TableCell>
-                          </>
-                        )}
+                        <TableCell className="font-bold">{room?.ratePerDay || "N/A"}</TableCell>
+                        <TableCell>{room.capacity}</TableCell>
+                        <TableCell>{room.currentOccupancy}</TableCell>
                         <TableCell className="text-right">
                           <BedDetailsDialog room={room} />
                         </TableCell>

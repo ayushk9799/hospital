@@ -156,7 +156,7 @@ const OPDBillTokenModal = ({
 
   if (!patientData) return null;
 
-  const { patient, bill, payment, admissionRecord } = patientData;
+  const { patient, bill, payment, admissionRecord ,visit} = patientData;
   const BillCopy = ({ title }) => (
     <div className="w-full lg:w-1/2 p-1 lg:p-2 border-b lg:border-b-0 lg:border-r border-dashed">
       <div className="mb-0.5 sm:mb-1">
@@ -213,7 +213,7 @@ const OPDBillTokenModal = ({
           <span className="font-bold text-[16px] print:text-[12px]">Slot No :</span>
           <span className="font-bold text-[16px] print:text-[12px]">
             {" "}
-            {admissionRecord?.bookingNumber}
+            {admissionRecord?.bookingNumber||visit?.bookingNumber}
           </span>
         </div>
         <div>

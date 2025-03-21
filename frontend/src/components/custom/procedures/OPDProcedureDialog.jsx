@@ -137,6 +137,7 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
           });
           setResponseData(res);
           setShowBill(true);
+          setFormData(initialFormData);
           onOpenChange(false);
         })
         .catch((err) => {

@@ -389,10 +389,10 @@ router.post(
           doctor: admission.doctor || null,
           department: admission.department || null,
         });
-
+   let room;
         // Handle room assignment if provided
         if (admission.assignedRoom) {
-          const room = await Room.findById(admission.assignedRoom).session(
+           room = await Room.findById(admission.assignedRoom).session(
             session
           );
           if (!room) {
@@ -421,12 +421,9 @@ router.post(
           // Get room rate if room is assigned
           let roomCharge = 0;
           if (admission.assignedRoom) {
-            const room = await Room.findById(admission.assignedRoom).session(
-              session
-            );
-            if (room) {
+           
               roomCharge = room.ratePerDay || 0;
-            }
+            
           }
           let invoiceNumber = await BillCounter.getNextBillNumber(session);
           bill = new ServicesBill({
@@ -1383,8 +1380,11 @@ router.post("/discharge/:id", verifyToken, async (req, res) => {
         );
         if (bedIndex !== -1) {
           room.beds[bedIndex].status = "Available";
+         
+          if(room.beds[bedIndex].currentPatient?.toString()===admission.patient?.toString()){
+            room.currentOccupancy -= 1;
+          }
           room.beds[bedIndex].currentPatient = null;
-          room.currentOccupancy -= 1;
           await room.save({ session });
         }
       }

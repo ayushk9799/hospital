@@ -196,6 +196,8 @@ export const labCategories = [
       "Coagulation Profile",
       "Hemoglobin Electrophoresis",
       "Arterial Blood Gas (ABG)",
+      "MP (OPTIMAL)",
+      "MP (SLIDE)",
     ],
   },
   {
@@ -209,6 +211,8 @@ export const labCategories = [
       "Calcium Profile",
       "Iron Studies",
       "Cardiac Markers",
+      "AMYLASE",
+      "LIPASE",
     ],
   },
   {
@@ -227,12 +231,21 @@ export const labCategories = [
     description: "Tests related to the immune system",
     types: [
       "C-Reactive Protein (CRP)",
+      "CRP (SLIDE)",
+      "CRP (TURBI/LATEX)",
       "Rheumatoid Factor (RF)",
       "Anti-Streptolysin O (ASO)",
+      "ASO TITRE (SLIDE)",
+      "ASO TITRE (TURBI)",
+      "WIDAL (SLIDE)",
+      "WIDAL (RAPID)",
+      "MOUNTOUX",
       "Hepatitis Markers",
       "HIV",
       "VDRL",
       "Allergy Tests",
+      "DENGUE (IgE/IgG/IgM)",
+      "CHIKENGUNYA",
     ],
   },
   {
@@ -268,7 +281,14 @@ export const labCategories = [
   {
     name: "Urine Analysis",
     description: "Analysis of urine samples",
-    types: ["Routine Urine"],
+    types: [
+      "Routine Urine",
+      "URINE R/E",
+      "URINE (BS,BP,URO)",
+      "URINE C/S",
+      "URINE HCG",
+      "URINE CHYLE",
+    ],
   },
   {
     name: "Stool Analysis",
@@ -308,9 +328,6 @@ export const labCategories = [
       "Kidney Biopsy",
       "Bone Marrow Biopsy",
       "Lymph Node Biopsy",
-      "Endometrial Biopsy",
-      "Muscle Biopsy",
-      "Nerve Biopsy",
       "Frozen Section",
       "Pap Smear",
       "Immunohistochemistry",
@@ -668,6 +685,22 @@ export const labReportFields = {
         normalRange: "36.5-37.5",
       },
     ],
+    "MP (OPTIMAL)": [
+      {
+        name: "mp_optimal",
+        label: "Malarial Parasite (Optimal)",
+        unit: "",
+        normalRange: "Negative",
+      },
+    ],
+    "MP (SLIDE)": [
+      {
+        name: "mp_slide",
+        label: "Malarial Parasite (Slide)",
+        unit: "",
+        normalRange: "Negative",
+      },
+    ],
   },
   biochemistry: {
     "Lipid Profile": [
@@ -969,6 +1002,22 @@ export const labReportFields = {
         normalRange: "<100",
       },
     ],
+    AMYLASE: [
+      {
+        name: "amylase",
+        label: "Serum Amylase",
+        unit: "U/L",
+        normalRange: "28-100",
+      },
+    ],
+    LIPASE: [
+      {
+        name: "lipase",
+        label: "Serum Lipase",
+        unit: "U/L",
+        normalRange: "13-60",
+      },
+    ],
   },
   endocrinology: {
     "Thyroid Function Tests": [
@@ -1177,6 +1226,124 @@ export const labReportFields = {
           "Class 5",
           "Class 6",
         ],
+      },
+    ],
+    "WIDAL (SLIDE)": [
+      {
+        name: "s_typhi_o",
+        label: "S. typhi O",
+        unit: "",
+        normalRange: "<1:80",
+        options: ["<1:20", "1:20", "1:40", "1:80", "1:160", "1:320"],
+      },
+      {
+        name: "s_typhi_h",
+        label: "S. typhi H",
+        unit: "",
+        normalRange: "<1:80",
+        options: ["<1:20", "1:20", "1:40", "1:80", "1:160", "1:320"],
+      },
+      {
+        name: "s_paratyphi_ah",
+        label: "S. paratyphi AH",
+        unit: "",
+        normalRange: "<1:80",
+        options: ["<1:20", "1:20", "1:40", "1:80", "1:160", "1:320"],
+      },
+      {
+        name: "s_paratyphi_bh",
+        label: "S. paratyphi BH",
+        unit: "",
+        normalRange: "<1:80",
+        options: ["<1:20", "1:20", "1:40", "1:80", "1:160", "1:320"],
+      },
+    ],
+    "WIDAL (RAPID)": [
+      {
+        name: "s_typhi_o_rapid",
+        label: "S. typhi O",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Positive"],
+      },
+      {
+        name: "s_typhi_h_rapid",
+        label: "S. typhi H",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Positive"],
+      },
+      {
+        name: "s_paratyphi_ah_rapid",
+        label: "S. paratyphi AH",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Positive"],
+      },
+      {
+        name: "s_paratyphi_bh_rapid",
+        label: "S. paratyphi BH",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Positive"],
+      },
+    ],
+    MOUNTOUX: [
+      {
+        name: "mountoux",
+        label: "Mantoux Test",
+        unit: "mm",
+        normalRange: "<10mm",
+      },
+    ],
+    "CRP (SLIDE)": [
+      {
+        name: "crp_slide",
+        label: "C-Reactive Protein (Slide)",
+        unit: "mg/L",
+        normalRange: "<6",
+      },
+    ],
+    "CRP (TURBI/LATEX)": [
+      {
+        name: "crp_turbi",
+        label: "C-Reactive Protein (Turbidimetry)",
+        unit: "mg/L",
+        normalRange: "<6",
+      },
+    ],
+    "ASO TITRE (SLIDE)": [
+      {
+        name: "aso_slide",
+        label: "Anti-Streptolysin O Titre (Slide)",
+        unit: "IU/mL",
+        normalRange: "<200",
+      },
+    ],
+    "ASO TITRE (TURBI)": [
+      {
+        name: "aso_turbi",
+        label: "Anti-Streptolysin O Titre (Turbidimetry)",
+        unit: "IU/mL",
+        normalRange: "<200",
+      },
+    ],
+    "DENGUE (IgE/IgG/IgM)": [
+      {
+        name: "dengue_serology",
+        label: "Dengue Serology",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Positive", "Negative"],
+      },
+    ],
+    CHIKENGUNYA: [
+      {
+        name: "chikungunya",
+        label: "Chikungunya Test",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Positive", "Negative"],
       },
     ],
   },
@@ -1419,6 +1586,77 @@ export const labReportFields = {
         options: ["Negative", "Trace", "Small", "Moderate", "Large"],
       },
       {
+        name: "bilirubin",
+        label: "Bilirubin",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Trace", "1+", "2+", "3+"],
+      },
+      {
+        name: "rbc_urine",
+        label: "RBC",
+        unit: "/HPF",
+        normalRange: "0-2",
+        options: ["0-2", "2-4", "4-6", "6-8", "8-10", ">10", "Plenty"],
+      },
+      {
+        name: "pus_cells",
+        label: "Pus Cells",
+        unit: "/HPF",
+        normalRange: "0-5",
+        options: ["0-5", "5-10", "10-15", "15-20", "20-25", ">25", "Plenty"],
+      },
+      {
+        name: "epithelial_cells",
+        label: "Epithelial Cells",
+        unit: "/HPF",
+        normalRange: "Few",
+        options: ["Nil", "Occasional", "Few", "Moderate", "Plenty"],
+      },
+      {
+        name: "casts",
+        label: "Casts",
+        unit: "",
+        normalRange: "Negative",
+        options: [
+          "Negative",
+          "Hyaline",
+          "Granular",
+          "RBC",
+          "WBC",
+          "Waxy",
+          "Fatty",
+        ],
+      },
+      {
+        name: "crystals",
+        label: "Crystals",
+        unit: "",
+        normalRange: "Negative",
+        options: [
+          "Negative",
+          "Calcium Oxalate",
+          "Uric Acid",
+          "Triple Phosphate",
+          "Amorphous Phosphate",
+          "Amorphous Urate",
+        ],
+      },
+      {
+        name: "bacteria",
+        label: "Bacteria",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Few", "Moderate", "Plenty"],
+      },
+      {
+        name: "yeast_cells",
+        label: "Yeast Cells",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Negative", "Present"],
+      },
+      {
         name: "blood",
         label: "Blood",
         unit: "",
@@ -1438,6 +1676,69 @@ export const labReportFields = {
         unit: "",
         normalRange: "Negative",
         options: ["Negative", "Positive"],
+      },
+    ],
+    "URINE R/E": [
+      {
+        name: "urine_routine",
+        label: "Urine Routine Examination",
+        unit: "",
+        normalRange: "Normal",
+      },
+    ],
+    "URINE (BS,BP,URO)": [
+      {
+        name: "urine_bs",
+        label: "Urine Bile Salts",
+        unit: "",
+        normalRange: "Negative",
+      },
+      {
+        name: "urine_bp",
+        label: "Urine Bile Pigments",
+        unit: "",
+        normalRange: "Negative",
+      },
+      {
+        name: "urine_uro",
+        label: "Urine Urobilinogen",
+        unit: "",
+        normalRange: "Normal",
+      },
+    ],
+    "URINE C/S": [
+      {
+        name: "urine_culture",
+        label: "Urine Culture & Sensitivity",
+        unit: "",
+        normalRange: "No Growth",
+        options: ["No Growth", "Growth Present"],
+      },
+    ],
+    "URINE HCG": [
+      {
+        name: "urine_hcg_qualitative",
+        label: "Urine HCG (Qualitative)",
+        unit: "",
+        normalRange: "Negative",
+        options: ["Positive", "Negative"],
+        description: "Detects pregnancy at levels >25 mIU/mL",
+      },
+      {
+        name: "urine_hcg_quantitative",
+        label: "Urine HCG (Quantitative)",
+        unit: "mIU/mL",
+        normalRange: "<25",
+        description:
+          "Non-pregnant: <25, Pregnancy detection threshold: >25 mIU/mL. Urine levels are typically 1.5-2 times lower than serum values",
+      },
+    ],
+    "URINE CHYLE": [
+      {
+        name: "urine_chyle",
+        label: "Urine Chyle",
+        unit: "",
+        normalRange: "Negative",
       },
     ],
   },

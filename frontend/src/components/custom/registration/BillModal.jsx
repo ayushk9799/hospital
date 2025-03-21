@@ -278,6 +278,7 @@ const BillModal = ({
                         billData={{
                           ...completedBill?.bill,
                           patient: completedBill?.patient,
+                          operationName: completedBill?.admissionRecord?.operationName || completedBill?.admission?.operationName,
                         }}
                         styleData={true}
                       />

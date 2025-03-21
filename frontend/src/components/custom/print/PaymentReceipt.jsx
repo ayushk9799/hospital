@@ -9,7 +9,8 @@ import { format } from "date-fns";
 import { numberToWords } from "../../../assets/Data";
 
 const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
- 
+  console.log(billData);
+
   const { hospitalInfo } = useSelector((state) => state.hospital);
   const headerTemplateStrings = useSelector(
     (state) => state.templates.headerTemplateArray
@@ -76,32 +77,55 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
             <div className="hidden print:block ">
               <HospitalHeader hospitalInfo={hospitalInfo} />
             </div>
-            <div className="border-black border-b-[1px] text-center text-2xl font-semibold uppercase">
-              Receipt
+            <div className="border-black border-b-[1px] text-center text-2xl font-semibold uppercase flex justify-between px-4">
+              <div className="w-1/3"></div>
+              <div className="w-1/3">Receipt</div>
+              <div className="w-1/3 text-right text-base pt-2">
+                <span className="font-semibold">Invoice No: </span>
+                {billData?.invoiceNumber ||
+                  billData.billDetails?.invoiceNumber ||
+                  ""}
+              </div>
             </div>
             <div className="grid grid-cols-2 py-2 px-4 border-black border-b-[1px]">
               <div className="grid grid-cols-3">
                 <p className="font-semibold">Patient Name:</p>
                 <p className="col-span-2 capitalize">
-                  {billData?.patient?.name || billData?.patientName||billData.patientInfo?.name}
+                  {billData?.patient?.name ||
+                    billData?.patientName ||
+                    billData.patientInfo?.name}
                 </p>
               </div>
-              {
-                ((billData?.patient?.registrationNumber || billData.patientInfo?.registrationNumber||billData?.registrationNumber) && (
-                  <div className="grid grid-cols-3">
-                    <p className="font-semibold">UHID No:</p>
-                    <p className="col-span-2 capitalize">
-                      {billData?.patient?.registrationNumber || billData.patientInfo?.registrationNumber||billData?.registrationNumber|| ""}
-                    </p>
-                  </div>
-                ))}
+              {(billData?.patient?.registrationNumber ||
+                billData.patientInfo?.registrationNumber ||
+                billData?.registrationNumber) && (
+                <div className="grid grid-cols-3">
+                  <p className="font-semibold">UHID No:</p>
+                  <p className="col-span-2 capitalize">
+                    {billData?.patient?.registrationNumber ||
+                      billData.patientInfo?.registrationNumber ||
+                      billData?.registrationNumber ||
+                      ""}
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-3">
                 <p className="font-semibold">Age/Gender:</p>
                 <p className="col-span-2 capitalize">
-                  {(billData?.patient?.age || billData?.age|| billData?.patientInfo?.age)
-                    ? `${billData?.patient?.age || billData?.age ||billData?.patientInfo?.age} Years`
+                  {billData?.patient?.age ||
+                  billData?.age ||
+                  billData?.patientInfo?.age
+                    ? `${
+                        billData?.patient?.age ||
+                        billData?.age ||
+                        billData?.patientInfo?.age
+                      } Years`
                     : ""}{" "}
-                  / {billData?.patient?.gender || billData?.gender || billData?.patientInfo?.gender||""}
+                  /{" "}
+                  {billData?.patient?.gender ||
+                    billData?.gender ||
+                    billData?.patientInfo?.gender ||
+                    ""}
                 </p>
               </div>
               <div className="grid grid-cols-3">
@@ -115,14 +139,16 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
                   )}
                 </p>
               </div>
-              <div className="grid grid-cols-3">
-                <p className="font-semibold">Invoice No:</p>
-                <p className="col-span-2 capitalize">
-                  {billData?.invoiceNumber ||
-                    billData.billDetails?.invoiceNumber ||
-                    ""}
-                </p>
-              </div>
+              {(billData?.procedureName || billData?.operationName) && (
+                <div className="grid grid-cols-3">
+                  <p className="font-semibold">
+                    {billData?.procedureName ? "Procedure" : "Operation"}
+                  </p>
+                  <p className="col-span-2 capitalize">
+                    {billData?.procedureName || billData?.operationName || ""}
+                  </p>
+                </div>
+              )}
               {billData?.patientInfo?.ipdNumber && (
                 <div className="grid grid-cols-3">
                   <p className="font-semibold">OPD/IPD No:</p>
@@ -132,12 +158,12 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
                 </div>
               )}
               {billData.labNumber && (
-                 <div className="grid grid-cols-3">
-                 <p className="font-semibold">Lab No:</p>
-                 <p className="col-span-2 capitalize">
-                   {billData.labNumber || ""}
-                 </p>
-               </div>
+                <div className="grid grid-cols-3">
+                  <p className="font-semibold">Lab No:</p>
+                  <p className="col-span-2 capitalize">
+                    {billData.labNumber || ""}
+                  </p>
+                </div>
               )}
             </div>
             <div className="grid grid-cols-12 pb-2 px-4 font-semibold border-black border-b-[1px] ">
@@ -146,16 +172,32 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
               <div className="col-span-2 text-right">Amount</div>
             </div>
             {paymentsToRender.map((paymentItem, paymentIndex) => (
-              <div key={paymentIndex} className="grid grid-cols-12 pb-2 px-4 border-black border-b-[1px]">
+              <div
+                key={paymentIndex}
+                className="grid grid-cols-12 pb-2 px-4 border-black border-b-[1px]"
+              >
                 <div className="col-span-2">{paymentIndex + 1}</div>
-                <div className="col-span-8">Deposit</div>
+                <div className="col-span-8">
+                  {billData?.procedureName || billData?.operationName
+                    ? `Payment for ${
+                        billData?.procedureName || billData?.operationName
+                      }`
+                    : "Deposit"}
+                </div>
                 <div className="col-span-2 text-right">
                   {formatAmount(paymentItem?.amount)}
                 </div>
               </div>
             ))}
             <div className="border-black border-b-[1px] px-4 py-2">
-              Amount(In Words) : {numberToWords(paymentsToRender.reduce((total, payment) => total + (payment?.amount || 0), 0))} Only.
+              Amount(In Words) :{" "}
+              {numberToWords(
+                paymentsToRender.reduce(
+                  (total, payment) => total + (payment?.amount || 0),
+                  0
+                )
+              )}{" "}
+              Only.
             </div>
             <div className="px-4 py-2 border-black border-b-[1px] flex flex-row gap-2">
               {paymentsToRender.map((paymentItem, paymentIndex) => (
@@ -164,7 +206,11 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
                     Payment {paymentIndex + 1} Method :{" "}
                     {paymentItem?.paymentMethod || paymentItem?.method || "N/A"}
                   </p>
-                  {paymentItem?.utr && <p>UTR No. {paymentIndex + 1} : {paymentItem?.utr}</p>}
+                  {paymentItem?.utr && (
+                    <p>
+                      UTR No. {paymentIndex + 1} : {paymentItem?.utr}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
