@@ -141,9 +141,13 @@ export default function Patients() {
   // Add this effect to refetch patients when the status changes
   useEffect(() => {
     // Get date range based on filter
-
-    const dateRangeParams = getDateRange();
-    dispatch(fetchPatients(dateRangeParams));
+    if (
+      dateFilter !== "Custom" ||
+      (dateFilter === "Custom" && dateRange.from && dateRange.to)
+    ) {
+      const dateRangeParams = getDateRange();
+      dispatch(fetchPatients(dateRangeParams));
+    }
   }, [dateFilter, dateRange, dispatch]);
 
   const filteredPatients = patients.filter((patient) => {
@@ -336,7 +340,9 @@ export default function Patients() {
                           : "Discharge Patient"}
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={() => handleLabRegistration(patient)}>
+                    <DropdownMenuItem
+                      onClick={() => handleLabRegistration(patient)}
+                    >
                       Register Lab
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -428,7 +434,9 @@ export default function Patients() {
                           : "Discharge Patient"}
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem onClick={() => handleLabRegistration(patient)}>
+                    <DropdownMenuItem
+                      onClick={() => handleLabRegistration(patient)}
+                    >
                       Register Lab
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -546,8 +554,8 @@ export default function Patients() {
             relation: selectedPatient?.relation,
           }}
         />
-        <LabRegDialog 
-          open={isLabDialogOpen} 
+        <LabRegDialog
+          open={isLabDialogOpen}
           onOpenChange={setIsLabDialogOpen}
           patientData={selectedPatient}
         />

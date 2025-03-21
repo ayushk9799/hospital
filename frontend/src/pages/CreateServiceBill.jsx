@@ -462,7 +462,6 @@ const CreateServiceBill = ({
         ((service.isExisting &&
         (isChecked ? (service.type === "breakup" ? true : false) : (service.type!=="breakup"?true:false)))||service.category==="Room Rent")
     );
-    console.log(existingServices);
     setNewlyAddedServices([]);
     setSelectedServices(existingServices.map((service) => service.id));
 
@@ -658,7 +657,6 @@ const CreateServiceBill = ({
       (service) =>
         selectedServices.includes(service.id) && (breakTotalMode ? (service.type!=="additional"&&(service.type||service.category==="Room Rent")):true)
     );
-console.log(selectedServicesList);
     // Calculate totals for selected services only
     const selectedServicesTotal = selectedServicesList.reduce(
       (sum, service) => sum + service.total,

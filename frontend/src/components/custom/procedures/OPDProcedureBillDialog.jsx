@@ -72,7 +72,6 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
 
   if (!procedureData) return null;
   const { opdProcedure, servicesBill, payments } = procedureData;
-console.log(opdProcedure);
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-visible rounded-lg">

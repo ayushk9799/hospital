@@ -32,7 +32,6 @@ import { X } from "lucide-react";
 import PaymentReceipt from "../print/PaymentReceipt";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
-  console.log(billData);
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");

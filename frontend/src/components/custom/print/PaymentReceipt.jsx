@@ -9,7 +9,6 @@ import { format } from "date-fns";
 import { numberToWords } from "../../../assets/Data";
 
 const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
-  console.log(billData);
 
   const { hospitalInfo } = useSelector((state) => state.hospital);
   const headerTemplateStrings = useSelector(

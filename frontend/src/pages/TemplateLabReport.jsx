@@ -165,9 +165,9 @@ const TemplateLabReport = ({
     setFields(
       Object.entries(template.fields).map(([name, field]) => ({
         name,
-        label: field.label,
-        unit: field.unit,
-        normalRange: field.normalRange,
+        label: template.name.toLowerCase() === report.name.toLowerCase() ? report.report?.[name]?.label : field.label,
+        unit: template.name.toLowerCase() === report.name.toLowerCase() ? report.report?.[name]?.unit : field.unit,
+        normalRange: template.name.toLowerCase() === report.name.toLowerCase() ? report.report?.[name]?.normalRange : field.normalRange,
         options: field.options,
         value:
           template.name.toLowerCase() === report.name.toLowerCase()
