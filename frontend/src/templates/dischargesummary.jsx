@@ -1,9 +1,9 @@
 export const dischargeSummaryTemplateStringDefault = `
 (formData, patient, hospital,formConfig, ref) => {
-  const hasComorbidities = formData.comorbidities && formData.comorbidities.some((c) => c.name);
+  const hasComorbidities = formData.comorbidities && (Array.isArray(formData.comorbidities)?formData.comorbidities.some((c) => c.name):true);
   const hasMedicineAdvice = formData.medicineAdvice && formData.medicineAdvice.some((m) => m.name);
   const hasInvestigations = formData.investigations && formData.investigations.some((i) => i.name || i.category);
-  const comorbiditiesString = formData.comorbidities?.filter((c) => c.name).map((c) => c.name).join(", ");
+  const comorbiditiesString = Array.isArray(formData.comorbidities)?formData.comorbidities?.filter((c) => c.name).map((c) => c.name).join(", "):formData.comorbidities;
 
   const appendComorbidities = (content, type) => {
     if (!hasComorbidities || formData.comorbidityHandling === "separate") {

@@ -671,6 +671,7 @@ export default function DischargeSummary() {
     treatment: "",
     conditionOnAdmission: "",
     conditionOnDischarge: "",
+    comorbidityHandling:"separate",
     vitals: {
       admission: {
         bloodPressure: "",
