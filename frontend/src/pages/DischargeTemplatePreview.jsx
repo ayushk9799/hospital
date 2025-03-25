@@ -77,7 +77,7 @@ export default function DischargeTemplatePreview() {
           <h1 className="text-xl sm:text-2xl font-bold">
             Discharge Template Preview
           </h1>
-          <Button onClick={handleSaveTemplate}>Save Template</Button>
+          {/* <Button onClick={handleSaveTemplate}>Save Template</Button> */}
         </div>
 
         <div className="flex flex-wrap gap-3">

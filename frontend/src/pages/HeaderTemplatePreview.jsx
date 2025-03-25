@@ -65,7 +65,7 @@ export default function HeaderTemplatePreview() {
   return (
     <div className="p-4 sm:p-6">
       <div className="flex flex-col gap-6 mb-6">
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <h1 className="text-xl sm:text-2xl font-bold">
             Hospital Header Preview
           </h1>
@@ -85,7 +85,7 @@ export default function HeaderTemplatePreview() {
           >
             Save Template
           </Button>
-        </div>
+        </div> */}
 
         <div className="flex flex-wrap gap-3">
           {availableTemplates.map((template, index) => (
