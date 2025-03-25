@@ -153,18 +153,18 @@ const Lab = () => {
     );
 
     // If no patient data or lab tests, return all templates
-    if (!patientData?.labTests) return [...(labTestsTemplate || [])];
+    let templates = [...(labTestsTemplate || []), ...readyMadeTemplates];
 
-    // Filter readyMadeTemplates to only include tests that match patient's lab tests
-    const filteredReadyMadeTemplates = readyMadeTemplates.filter((template) =>
-      patientData.labTests.some(
-        (test) => test.name.toLowerCase() === template.name.toLowerCase()
-      )
-    );
+    // Filter templates based on search term
+    if (searchTerm) {
+      templates = templates.filter((template) =>
+        template.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
 
-    // Combine and sort templates
-    return [...(labTestsTemplate || []), ...filteredReadyMadeTemplates].sort(
-      (a, b) => {
+    // If there's patient data, sort templates with matching tests first
+    if (patientData?.labTests) {
+      return templates.sort((a, b) => {
         const aMatches = patientData.labTests.some(
           (test) => test.name.toLowerCase() === a.name.toLowerCase()
         );
@@ -175,9 +175,11 @@ const Lab = () => {
         if (aMatches && !bMatches) return -1;
         if (!aMatches && bMatches) return 1;
         return 0;
-      }
-    );
-  }, [labTestsTemplate, patientData]);
+      });
+    }
+
+    return templates;
+  }, [labTestsTemplate, patientData, searchTerm]);
 
   const getReportStatusColor = (status) => {
     switch (status) {
@@ -224,34 +226,32 @@ const Lab = () => {
     <div className="container mx-auto p-4 flex h-screen">
       <div className="flex flex-col md:flex-row gap-8 w-full h-full">
         <div className="w-full md:w-1/3 flex flex-col h-full">
-          <div className="flex items-center gap-1 mb-3">
+          <div className="flex items-center gap-1 mb-1">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <div className="text-xl font-bold">Laboratory Reports</div>
+            <div className="text-sm font-bold">Laboratory Reports</div>
           </div>
 
           {/* Patient Info */}
           {patientData && (
             <div className="mb-4 p-2 bg-white rounded-lg shadow">
-              <div className="flex items-baseline ">
-                <div className="text-xl font-semibold">
+              <div className="flex items-baseline text-sm justify-between">
+                <div className=" font-semibold">
                   Name: {patientData.patientName}
                 </div>
-                <div className="text-gray-600">
+                <div className="text-gray-600 font-semibold">
                   Lab No: {patientData.labNumber}
                 </div>
               </div>
 
-              <div className="mt-2">
-                <h3 className="font-medium mb-1">Ordered Tests:</h3>
+              <div className="mt-2 text-sm font-bold">
+                <h3 className=" mb-1">Ordered Tests:</h3>
                 <ul className="list-disc list-inside">
                   {patientData.labTests.map((test, index) => (
                     <li
                       key={index}
-                      className={`${getReportStatusColor(
-                        test.reportStatus
-                      )} font-medium`}
+                      className={`${getReportStatusColor(test.reportStatus)} `}
                     >
                       {test.name}
                       <span className="text-gray-500 text-sm ml-2">
@@ -301,7 +301,7 @@ const Lab = () => {
                       </div>
                     )}
                   </div>
-                  <div className="space-y-4">
+                  <div className="space-y-2">
                     {sortedLabTestsTemplate.map((template) => {
                       const isSelected = selectedReports.some(
                         (report) =>
@@ -327,33 +327,46 @@ const Lab = () => {
                               : ""
                           }`}
                         >
-                          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 text-[14px]">
-                            <CardTitle>{`${template.name.toUpperCase()} (Fields: ${
-                              Object.keys(template.fields).length
-                            })`}</CardTitle>
-                            {hasReport && merging && (
-                              <Checkbox
-                                checked={isSelected}
-                                onCheckedChange={() =>
-                                  handleReportSelection(
-                                    patientData.labReports.find(
-                                      (report) =>
-                                        report?.name?.toLowerCase() ===
-                                        template?.name?.toLowerCase()
+                          <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3">
+                            <div className="flex items-center gap-2">
+                              <CardTitle className="text-[14px]">
+                                {template.name.toUpperCase()}
+                              </CardTitle>
+                              <span className="text-gray-500 text-xs">
+                                ({Object.keys(template.fields).length} fields)
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {!merging && (
+                                <Button
+                                  className={`p-1 text-[12px] h-auto ${
+                                    hasReport
+                                      ? "bg-green-600 hover:bg-green-700"
+                                      : ""
+                                  }`}
+                                  onClick={() =>
+                                    handleTemplateSelection(template)
+                                  }
+                                >
+                                  {hasReport ? "View Report" : "Create Report"}
+                                </Button>
+                              )}
+                              {hasReport && merging && (
+                                <Checkbox
+                                  checked={isSelected}
+                                  onCheckedChange={() =>
+                                    handleReportSelection(
+                                      patientData.labReports.find(
+                                        (report) =>
+                                          report?.name?.toLowerCase() ===
+                                          template?.name?.toLowerCase()
+                                      )
                                     )
-                                  )
-                                }
-                              />
-                            )}
+                                  }
+                                />
+                              )}
+                            </div>
                           </CardHeader>
-                          <CardContent>
-                            <Button
-                              className="mt-1 p-1 text-[12px] h-auto"
-                              onClick={() => handleTemplateSelection(template)}
-                            >
-                              {hasReport ? "View Report" : "Create Report"}
-                            </Button>
-                          </CardContent>
                         </Card>
                       );
                     })}

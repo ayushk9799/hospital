@@ -50,6 +50,55 @@ export const createRoom = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Async thunk for updating a room
+export const updateRoom = createLoadingAsyncThunk(
+  "rooms/updateRoom",
+  async ({ id, room }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/rooms/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(room),
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      return response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+// Async thunk for deleting a room
+export const deleteRoom = createLoadingAsyncThunk(
+  "rooms/deleteRoom",
+  async (id, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/rooms/${id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      return response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 // Async thunk for emptying beds
 export const emptyBeds = createLoadingAsyncThunk(
   "rooms/emptyBeds",
@@ -81,6 +130,8 @@ const roomSlice = createSlice({
     rooms: [],
     status: "idle",
     createRoomStatus: "idle",
+    updateRoomStatus: "idle",
+    deleteRoomStatus: "idle",
     emptyBedsStatus: "idle",
     error: null,
   },
@@ -107,6 +158,35 @@ const roomSlice = createSlice({
       })
       .addCase(createRoom.rejected, (state, action) => {
         state.createRoomStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(updateRoom.pending, (state) => {
+        state.updateRoomStatus = "loading";
+      })
+      .addCase(updateRoom.fulfilled, (state, action) => {
+        state.updateRoomStatus = "succeeded";
+        const index = state.rooms.findIndex(
+          (room) => room._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.rooms[index] = action.payload;
+        }
+      })
+      .addCase(updateRoom.rejected, (state, action) => {
+        state.updateRoomStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(deleteRoom.pending, (state) => {
+        state.deleteRoomStatus = "loading";
+      })
+      .addCase(deleteRoom.fulfilled, (state, action) => {
+        state.deleteRoomStatus = "succeeded";
+        state.rooms = state.rooms.filter(
+          (room) => room._id !== action.payload.room._id
+        );
+      })
+      .addCase(deleteRoom.rejected, (state, action) => {
+        state.deleteRoomStatus = "failed";
         state.error = action.payload;
       })
       .addCase(emptyBeds.pending, (state) => {

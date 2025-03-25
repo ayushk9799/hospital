@@ -139,7 +139,7 @@ router.post("/template/create", identifyHospital, async (req, res) => {
       template.headerTemplateArray.push(req.body.headerTemplate);
     }
     if (req.body.diagnosisTemplate) {
-      template.diagnosisTemplate.push(req.body.diagnosisTemplate);
+      template.diagnosisTemplate=req.body.diagnosisTemplate;
     }
     if (req.body.opdRxTemplate) {
       template.opdRxTemplateArray.push(req.body.opdRxTemplate);

@@ -3,7 +3,7 @@ import { Button } from "../components/ui/button";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
-import { headerTemplateString4 } from "../templatesExperiments/HospitalHeaderTemplate";
+import { headerTemplateString4 ,headerTemplateStringnew} from "../templatesExperiments/HospitalHeaderTemplate";
 import { headerTemplateString } from "../templates/headertemplate";
 import {headerTemplateString2} from "../templatesExperiments/HospitalHeaderTemplate"
 import { headerTemplateString3 as headerTemplateStringExperimental, headerTemplateString as headerTemplateStringGolpathar } from "../templatesExperiments/HospitalHeaderTemplate";
@@ -69,7 +69,7 @@ export default function HeaderTemplatePreview() {
           <h1 className="text-xl sm:text-2xl font-bold">
             Hospital Header Preview
           </h1>
-          {/* <Button
+          <Button
             onClick={() => {
               if (selectedTemplate) {
                 dispatch(
@@ -84,7 +84,7 @@ export default function HeaderTemplatePreview() {
             }}
           >
             Save Template
-          </Button> */}
+          </Button>
         </div>
 
         <div className="flex flex-wrap gap-3">

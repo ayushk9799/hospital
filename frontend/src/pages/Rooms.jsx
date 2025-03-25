@@ -8,6 +8,8 @@ import {
   Filter,
   ChevronLeft,
   Trash2,
+  MoreVertical,
+  Edit,
 } from "lucide-react";
 import {
   Card,
@@ -47,9 +49,15 @@ import { useNavigate } from "react-router-dom";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { emptyBeds } from "../redux/slices/roomSlice";
+import { emptyBeds, deleteRoom } from "../redux/slices/roomSlice";
 import { Checkbox } from "../components/ui/checkbox";
 import { useToast } from "../hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 
 export default function RoomManagementDashboard() {
   const { rooms } = useSelector((state) => state.rooms);
@@ -161,6 +169,7 @@ export default function RoomManagementDashboard() {
   const BedDetailsDialog = ({ room }) => {
     const dispatch = useDispatch();
     const { toast } = useToast();
+    const navigate = useNavigate();
 
     const handleEmptyBed = async (bedId) => {
       try {
@@ -205,13 +214,54 @@ export default function RoomManagementDashboard() {
       }
     };
 
+    const handleEdit = () => {
+      navigate(`/create-room?edit=${room._id}`);
+    };
+
+    const handleDelete = async () => {
+      try {
+        await dispatch(deleteRoom(room._id)).unwrap();
+        toast({
+          title: "Success",
+          description: "Room deleted successfully",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message || "Failed to delete room",
+        });
+      }
+    };
+
     return (
       <Dialog>
-        <DialogTrigger asChild>
-          <Button variant="ghost" size="sm">
-            <Info className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DialogTrigger asChild>
+              <DropdownMenuItem>
+                <Info className="h-4 w-4 mr-2" />
+                View Details
+              </DropdownMenuItem>
+            </DialogTrigger>
+            <DropdownMenuItem onClick={handleEdit}>
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Room
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={handleDelete}
+              className="text-destructive"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Delete Room
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
         <DialogContent className="sm:max-w-[425px] max-w-[90vw] rounded-lg">
           <DialogHeader>
             <DialogTitle>Bed Details - Room {room.roomNumber}</DialogTitle>
@@ -524,7 +574,9 @@ export default function RoomManagementDashboard() {
                             {room.status}
                           </Badge>
                         </TableCell>
-                        <TableCell className="font-bold">{room?.ratePerDay || "N/A"}</TableCell>
+                        <TableCell className="font-bold">
+                          {room?.ratePerDay || "N/A"}
+                        </TableCell>
                         <TableCell>{room.capacity}</TableCell>
                         <TableCell>{room.currentOccupancy}</TableCell>
                         <TableCell className="text-right">

@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
 import { Label } from "../components/ui/label";
-import { createRoom } from "../redux/slices/roomSlice";
+import { createRoom, updateRoom } from "../redux/slices/roomSlice";
 import { useToast } from "../hooks/use-toast";
 import { ChevronLeft } from "lucide-react";
 
@@ -14,6 +14,7 @@ const ROOM_TYPES = [
   { name: "Semi-Private" },
   { name: "Private" },
   { name: "ICU" },
+  { name: "Deluxe AC" },
   { name: "Operation Theater" },
   { name: "Emergency" },
 ];
@@ -21,8 +22,15 @@ const ROOM_TYPES = [
 const CreateRoom = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const createRoomStatus = useSelector((state) => state.rooms.createRoomStatus);
+  const { rooms } = useSelector((state) => state.rooms);
+
+  // Get room ID from URL if in edit mode
+  const searchParams = new URLSearchParams(location.search);
+  const editRoomId = searchParams.get("edit");
+  const isEditMode = Boolean(editRoomId);
 
   const [room, setRoom] = useState({
     roomNumber: "",
@@ -32,6 +40,19 @@ const CreateRoom = () => {
     ratePerDay: "",
     beds: [],
   });
+
+  // Load room data if in edit mode
+  useEffect(() => {
+    if (isEditMode) {
+      const roomToEdit = rooms.find((r) => r._id === editRoomId);
+      if (roomToEdit) {
+        setRoom({
+          ...roomToEdit,
+          beds: roomToEdit.beds.map((bed) => bed.bedNumber),
+        });
+      }
+    }
+  }, [isEditMode, editRoomId, rooms]);
 
   const handleChange = (name, value) => {
     setRoom((prevRoom) => {
@@ -111,21 +132,30 @@ const CreateRoom = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(createRoom(room))
+    const action = isEditMode
+      ? updateRoom({ id: editRoomId, room })
+      : createRoom(room);
+
+    dispatch(action)
       .unwrap()
       .then(() => {
         toast({
-          title: "Room created successfully",
-          description: "The new room has been added to the system.",
+          title: `Room ${isEditMode ? "updated" : "created"} successfully`,
+          description: `The room has been ${
+            isEditMode ? "updated" : "added"
+          } in the system.`,
           variant: "success",
         });
-        // Navigate to the rooms page
         navigate("/rooms");
       })
       .catch((error) => {
         toast({
-          title: "Failed to create room",
-          description: error.message || "There was an error creating the room. Please try again.",
+          title: `Failed to ${isEditMode ? "update" : "create"} room`,
+          description:
+            error.message ||
+            `There was an error ${
+              isEditMode ? "updating" : "creating"
+            } the room. Please try again.`,
           variant: "destructive",
         });
       });
@@ -142,7 +172,9 @@ const CreateRoom = () => {
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
-        <h2 className="text-2xl font-bold">Create New Room</h2>
+        <h2 className="text-2xl font-bold">
+          {isEditMode ? "Edit" : "Create New"} Room
+        </h2>
       </div>
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="flex flex-wrap gap-4">
@@ -174,12 +206,18 @@ const CreateRoom = () => {
 
         {renderBedInputs()}
 
-        <Button 
-          type="submit" 
+        <Button
+          type="submit"
           className="w-full text-white"
           disabled={createRoomStatus === "loading"}
         >
-          {createRoomStatus === "loading" ? "Creating..." : "Create Room"}
+          {createRoomStatus === "loading"
+            ? isEditMode
+              ? "Updating..."
+              : "Creating..."
+            : isEditMode
+            ? "Update Room"
+            : "Create Room"}
         </Button>
       </form>
     </div>

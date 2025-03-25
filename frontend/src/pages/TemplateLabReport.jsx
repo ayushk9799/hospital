@@ -366,8 +366,8 @@ const TemplateLabReport = ({
                           ref={provided.innerRef}
                           {...provided.draggableProps}
                           className={`${
-                            field.label.toLowerCase() === "findings" ||
-                            field.label.toLowerCase() === "impression" ||
+                            field.label?.toLowerCase() === "findings" ||
+                            field.label?.toLowerCase() === "impression" ||
                             shouldeTextarea(field.unit, field.normalRange)
                               ? "col-span-full"
                               : "grid grid-cols-[4fr_2fr_1fr_3fr] gap-2 items-center border-b pb-2"
@@ -380,8 +380,8 @@ const TemplateLabReport = ({
                             ...provided.draggableProps.style,
                           }}
                         >
-                          {field.label.toLowerCase() === "findings" ||
-                          field.label.toLowerCase() === "impression" ||
+                          {field.label?.toLowerCase() === "findings" ||
+                          field.label?.toLowerCase() === "impression" ||
                           shouldeTextarea(field.unit, field.normalRange) ? (
                             <div className="col-span-full space-y-1">
                               <Label htmlFor={field.name} className="mb-1">

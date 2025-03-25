@@ -163,4 +163,62 @@ router.post("/empty-beds", async (req, res) => {
   }
 });
 
+// Edit room
+router.put("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const roomData = req.body;
+
+    // Ensure the number of beds matches the capacity if beds are being updated
+    if (
+      roomData.beds &&
+      roomData.capacity &&
+      roomData.beds.length !== roomData.capacity
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Number of beds must match the room capacity" });
+    }
+
+    // If beds are being updated, format them correctly
+    if (roomData.beds) {
+      roomData.beds = roomData.beds.map((bedNumber) => ({
+        bedNumber,
+        status: "Available",
+        currentPatient: null,
+      }));
+    }
+
+    const room = await Room.findByIdAndUpdate(id, roomData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+
+    res.json(room);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Delete a single room
+router.delete("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const room = await Room.findByIdAndDelete(id);
+
+    if (!room) {
+      return res.status(404).json({ error: "Room not found" });
+    }
+
+    res.json({ message: "Room deleted successfully", room });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 export default router;

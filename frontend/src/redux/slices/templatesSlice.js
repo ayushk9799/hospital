@@ -198,6 +198,14 @@ const templatesSlice = createSlice({
         if (action.payload.diagnosisTemplate) {
           state.diagnosisTemplate = action.payload.diagnosisTemplate;
         }
+        if(action.payload.medicinelist)
+        {
+          state.medicinelist  =action.payload.medicinelist
+        }
+        if(action.payload.comorbidities)
+        {
+          state.comorbidities=action.payload.comorbidities
+        }
         if (action.payload.labTestsTemplate) {
           state.labTestsTemplate = action.payload.labTestsTemplate;
         }

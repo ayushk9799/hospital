@@ -141,43 +141,56 @@ const SelectServicesDialog = ({
           <ScrollArea className="h-[50vh] pr-4">
             <Table>
               <TableBody>
-                {filteredServices.map((service) => {
-                  const selectedService = localSelectedServices.find(
-                    (s) => s.id === service._id
-                  );
-                  return (
-                    <TableRow
-                      key={service._id}
-                      className={selectedService ? "bg-muted" : ""}
-                    >
-                      <TableCell className="text-center">
-                        <Checkbox
-                          checked={!!selectedService}
-                          onCheckedChange={() => handleCheckboxChange(service)}
-                          className="h-5 w-5"
-                        />
-                      </TableCell>
-                      <TableCell>{service.name}</TableCell>
-                      <TableCell className="hidden md:block">
-                        {service.category}
-                      </TableCell>
-                      <TableCell className="text-right p-0">
-                        {selectedService ? (
-                          <input
-                            type="number"
-                            value={selectedService.rate}
-                            onChange={(e) =>
-                              handleRateChange(service._id, e.target.value)
+                {filteredServices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8">
+                      <p className="text-muted-foreground">
+                        No services found. Please add services in the{" "}
+                        <b>Surgery Category</b> to the services list.
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredServices.map((service) => {
+                    const selectedService = localSelectedServices.find(
+                      (s) => s.id === service._id
+                    );
+                    return (
+                      <TableRow
+                        key={service._id}
+                        className={selectedService ? "bg-muted" : ""}
+                      >
+                        <TableCell className="text-center">
+                          <Checkbox
+                            checked={!!selectedService}
+                            onCheckedChange={() =>
+                              handleCheckboxChange(service)
                             }
-                            className="w-24 text-right p-2 border-0 bg-transparent focus:outline-none focus:ring-0"
+                            className="h-5 w-5"
                           />
-                        ) : (
-                          <span className="px-4">{service.rate || 0}</span>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        </TableCell>
+                        <TableCell>{service.name}</TableCell>
+                        <TableCell className="hidden md:block">
+                          {service.category}
+                        </TableCell>
+                        <TableCell className="text-right p-0">
+                          {selectedService ? (
+                            <input
+                              type="number"
+                              value={selectedService.rate}
+                              onChange={(e) =>
+                                handleRateChange(service._id, e.target.value)
+                              }
+                              className="w-24 text-right p-2 border-0 bg-transparent focus:outline-none focus:ring-0"
+                            />
+                          ) : (
+                            <span className="px-4">{service.rate || 0}</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </ScrollArea>

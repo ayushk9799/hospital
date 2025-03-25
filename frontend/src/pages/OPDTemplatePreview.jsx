@@ -69,7 +69,7 @@ export default function OPDTemplatePreview() {
           <h1 className="text-xl sm:text-2xl font-bold">
             OPD Prescription Template Preview
           </h1>
-          {/* <Button onClick={handleSaveTemplate}>Save Template</Button> */}
+          <Button onClick={handleSaveTemplate}>Save Template</Button>
         </div>
 
         <div className="flex flex-wrap gap-3">

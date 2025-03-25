@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Button } from "../components/ui/button";
 import { useSelector, useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
+import { opdRxTemplateStringDefault2 } from "../templatesExperiments/opdRxExperimental";
 import OPDRxTemplate, { opdRxTemplateStringDefault } from "../templates/opdRx";
 import { Input } from "../components/ui/input";
 import { cn } from "../lib/utils";

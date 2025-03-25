@@ -147,7 +147,7 @@ export default function Customization() {
         <CardContent className="flex-grow flex flex-col p-2 sm:p-4 border-2">
           {renderSection(
             "Diagnosis Customization",
-            "Add new diagnosis",
+            "Add new diagnosis like this (Diagnosis1, Diagnosis2) in comma separated form, then add then save changes",
             newDiagnosis,
             setNewDiagnosis,
             selectedDiagnoses,
@@ -155,7 +155,7 @@ export default function Customization() {
           )}
           {renderSection(
             "Comorbidities Customization",
-            "Add new comorbidity",
+            "Add new comorbidities like this (Comorbidites1, Comorbidites2) in comma separated form, then add then save changes",
             newComorbidity,
             setNewComorbidity,
             selectedComorbidities,
@@ -163,7 +163,7 @@ export default function Customization() {
           )}
           {renderSection(
             "Medicine List Customization",
-            "Add new medicine",
+            "Add new medicine like this (Medicine1, Medicine2) in comma separated form, then add then save changes",
             newMedicine,
             setNewMedicine,
             selectedMedicines,
