@@ -6,6 +6,7 @@ import cookie from "cookie";
 import { Template } from "../models/Template.js";
 import { identifyHospital } from "../middleware/hospitalMiddleware.js";
 import { presignedUrl } from "../s3.js";
+import { HospitalSettings } from "../models/HospitalSettings.js";
 
 const router = express.Router();
 
@@ -66,7 +67,43 @@ router.get("/getHospital", async (req, res) => {
     });
   }
 });
+router.post("/postsettings", identifyHospital, async (req, res) => {
+  try {
+    let settings = await HospitalSettings.findOne();
+    if (!settings) {
+      settings = new HospitalSettings();
+    }
 
+    // Update settings with request body
+    Object.assign(settings, req.body);
+    await settings.save();
+
+    res.status(200).json(settings);
+  } catch (error) {
+    res.status(400).json({
+      message: "Error updating hospital settings",
+      error: error.message,
+    });
+  }
+});
+
+router.get("/settings", identifyHospital, async (req, res) => {
+  try {
+    const settings = await HospitalSettings.findOne();
+    if (!settings) {
+      // Create default settings if none exist
+      const defaultSettings = new HospitalSettings();
+      await defaultSettings.save();
+      return res.status(200).json(defaultSettings);
+    }
+    res.status(200).json(settings);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching hospital settings",
+      error: error.message,
+    });
+  }
+});
 // New route to update hospital information
 router.post("/:hospitalId", async (req, res) => {
   const session = await mongoose.startSession();
@@ -139,7 +176,7 @@ router.post("/template/create", identifyHospital, async (req, res) => {
       template.headerTemplateArray.push(req.body.headerTemplate);
     }
     if (req.body.diagnosisTemplate) {
-      template.diagnosisTemplate=req.body.diagnosisTemplate;
+      template.diagnosisTemplate = req.body.diagnosisTemplate;
     }
     if (req.body.opdRxTemplate) {
       template.opdRxTemplateArray.push(req.body.opdRxTemplate);
@@ -343,5 +380,9 @@ router.delete("/template/delete", identifyHospital, async (req, res) => {
     session.endSession();
   }
 });
+
+// Get hospital settings
+
+// Update hospital settings
 
 export default router;

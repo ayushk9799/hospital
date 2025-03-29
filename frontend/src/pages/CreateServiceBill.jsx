@@ -69,6 +69,10 @@ const CreateServiceBill = ({
   const { billId: urlBillId } = useParams();
   const location = useLocation();
   const { toast } = useToast();
+  const hospitalSettings = useSelector(
+    (state) => state.hospitalSettings.settings
+  );
+
   const [billDataForPrint, setBillDataForPrint] = useState(null);
   const [newlyAddedServices, setNewlyAddedServices] = useState([]);
   const [isViewFromUpdate, setIsViewFromUpdate] = useState(false);
@@ -95,7 +99,10 @@ const CreateServiceBill = ({
   const [isPrintModalOpen, setIsPrintModalOpen] = useState(false);
   const [isViewBillDialogOpen, setIsViewBillDialogOpen] = useState(false);
   const [selectedServices, setSelectedServices] = useState([]);
-  const [breakTotalMode, setBreakTotalMode] = useState(true);
+  const [breakTotalMode, setBreakTotalMode] = useState(() => {
+    return hospitalSettings?.defaultBreakBillMode !== false;
+  });
+
   const [targetTotal, setTargetTotal] = useState("");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [isInitialSetupDone, setIsInitialSetupDone] = useState(false);
@@ -110,6 +117,13 @@ const CreateServiceBill = ({
 
   // Use either the prop billId or URL billId
   const billId = initialBillId || urlBillId;
+
+  // Add this selector to get hospital settings
+
+  // Modify the breakTotalMode state initialization to use hospital settings
+  useEffect(() => {
+    setBreakTotalMode(hospitalSettings?.defaultBreakBillMode !== false);
+  }, [hospitalSettings]);
 
   // Initialize state with props if provided
   useEffect(() => {
@@ -459,8 +473,15 @@ const CreateServiceBill = ({
     // Only clear newly added services
     const existingServices = addedServices.filter(
       (service) =>
-        ((service.isExisting &&
-        (isChecked ? (service.type === "breakup" ? true : false) : (service.type!=="breakup"?true:false)))||service.category==="Room Rent")
+        (service.isExisting &&
+          (isChecked
+            ? service.type === "breakup"
+              ? true
+              : false
+            : service.type !== "breakup"
+            ? true
+            : false)) ||
+        service.category === "Room Rent"
     );
     setNewlyAddedServices([]);
     setSelectedServices(existingServices.map((service) => service.id));
@@ -655,7 +676,11 @@ const CreateServiceBill = ({
     // Filter services based on selection
     const selectedServicesList = addedServices.filter(
       (service) =>
-        selectedServices.includes(service.id) && (breakTotalMode ? (service.type!=="additional"&&(service.type||service.category==="Room Rent")):true)
+        selectedServices.includes(service.id) &&
+        (breakTotalMode
+          ? service.type !== "additional" &&
+            (service.type || service.category === "Room Rent")
+          : true)
     );
     // Calculate totals for selected services only
     const selectedServicesTotal = selectedServicesList.reduce(
@@ -785,7 +810,7 @@ const CreateServiceBill = ({
   const remainingAmount = useMemo(() => {
     if (!breakTotalMode || !targetTotal) return 0;
     const currentTotal = addedServices
-      .filter((ser) => ser.type === "breakup"||ser.category==="Room Rent")
+      .filter((ser) => ser.type === "breakup" || ser.category === "Room Rent")
       .reduce((sum, service) => sum + service.total, 0);
     return parseFloat(targetTotal) - currentTotal;
   }, [breakTotalMode, targetTotal, addedServices]);
@@ -1130,10 +1155,12 @@ const CreateServiceBill = ({
                 </TableHeader>
                 <TableBody>
                   {addedServices
-                    .filter((service) =>
-                      ((breakTotalMode
-                        ? service.type === "breakup"
-                        : service.type !== "breakup")|| service.category==="Room Rent")
+                    .filter(
+                      (service) =>
+                        (breakTotalMode
+                          ? service.type === "breakup"
+                          : service.type !== "breakup") ||
+                        service.category === "Room Rent"
                     )
                     .map((service) => (
                       <TableRow key={service.id}>

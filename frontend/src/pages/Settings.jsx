@@ -51,6 +51,10 @@ export default function Settings() {
     navigate("/settings/department");
   };
 
+  const handleHospitalSettings = () => {
+    navigate("/settings/hospital-settings");
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -64,31 +68,17 @@ export default function Settings() {
         </Button>
         <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
       </div>
-      <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-4">
-        <Button onClick={handleAddStaff} className="w-full sm:w-auto">
-          Add Staff
-        </Button>
-        <Button onClick={handleCreateRoom} className="w-full sm:w-auto">
-          Create Room
-        </Button>
-        <Button onClick={handleHospitalInfo} className="w-full sm:w-auto">
-          Hospital Info
-        </Button>
-        <Button onClick={handleCustomization} className="w-full sm:w-auto">
-          Customization
-        </Button>
-        <Button onClick={handleLabTemplates} className="w-full sm:w-auto">
-          Manage Lab Templates
-        </Button>
-        <Button onClick={handlePrintingTemplates} className="w-full sm:w-auto">
-          Printing Templates
-        </Button>
-        <Button onClick={handlePrefixSettings} className="w-full sm:w-auto">
-          Prefix Settings
-        </Button>
-        <Button onClick={handleDepartmentSettings} className="w-full sm:w-auto">
-          Manage Department
-        </Button>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        <Button onClick={handleAddStaff}>Add Staff</Button>
+        <Button onClick={handleCreateRoom}>Create Room</Button>
+        <Button onClick={handleHospitalInfo}>Hospital Info</Button>
+        <Button onClick={handleCustomization}>Customization</Button>
+        <Button onClick={handleLabTemplates}>Manage Lab Templates</Button>
+        <Button onClick={handlePrintingTemplates}>Printing Templates</Button>
+        <Button onClick={handlePrefixSettings}>Prefix Settings</Button>
+        <Button onClick={handleDepartmentSettings}>Manage Department</Button>
+        <Button onClick={handleHospitalSettings}>Hospital Settings</Button>
       </div>
 
       {/* <div className="mb-6 mt-6">

@@ -76,6 +76,8 @@ import LabTemplatesManager from "./pages/LabTemplatesManager";
 import EditTestTemplate from "./pages/EditTestTemplate";
 import LabTemplatePreview from "./pages/LabTemplatePreview";
 import LabBillingTemplatePreview from "./pages/LabBillingTemplatePreview";
+import { fetchHospitalSettings } from "./redux/slices/hospitalSettingsSlice";
+import HospitalSettings from "./pages/HospitalSettings";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -104,6 +106,7 @@ const AppContent = () => {
             dispatch(fetchRooms()),
             dispatch(fetchHospitalInfo()),
             dispatch(fetchTemplates()),
+            dispatch(fetchHospitalSettings()),
           ]);
         }
       })
@@ -252,8 +255,8 @@ const AppContent = () => {
                     element={<HeaderTemplatePreview />}
                   />
                   <Route
-                  path="/settings/printing-templates/lab-billing-preview"
-                  element={<LabBillingTemplatePreview/>}
+                    path="/settings/printing-templates/lab-billing-preview"
+                    element={<LabBillingTemplatePreview />}
                   />
                   <Route
                     path="/settings/printing-templates/opd-preview"
@@ -271,7 +274,10 @@ const AppContent = () => {
                     path="/settings/printing-templates/merge-template-preview"
                     element={<MergeTemplatePreview />}
                   />
-                  <Route path="/settings/printing-templates/consent-preview" element={<ConsentTemplatePreview />} />
+                  <Route
+                    path="/settings/printing-templates/consent-preview"
+                    element={<ConsentTemplatePreview />}
+                  />
                   <Route
                     path="/settings/prefix-settings"
                     element={<PrefixSettings />}
@@ -289,6 +295,10 @@ const AppContent = () => {
                   <Route
                     path="/settings/edit-test-template"
                     element={<EditTestTemplate />}
+                  />
+                  <Route
+                    path="/settings/hospital-settings"
+                    element={<HospitalSettings />}
                   />
                 </>
               )}
