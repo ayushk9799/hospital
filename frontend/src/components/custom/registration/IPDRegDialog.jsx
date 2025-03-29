@@ -932,7 +932,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         label={`${
                           formData.admission.relation
                             ? formData.admission.relation + "'s Name"
-                            : "Guradian's Name"
+                            : "Guardian's Name"
                         }`}
                       />
                     </div>

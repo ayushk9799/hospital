@@ -116,7 +116,7 @@ export default function VisitDetailsForm({
       id="visit.guardianName"
       value={formData.visit.guardianName}
       onChange={handleInputChange}
-      label={`${formData.visit.relation?formData.visit.relation+"'s Name":"Guradian's Name"}`}
+      label={`${formData.visit.relation?formData.visit.relation+"'s Name":"Guardian's Name"}`}
       />
      
       </div>
