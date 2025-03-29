@@ -1,4 +1,3 @@
-import { ConsoleLogEntry } from "selenium-webdriver/bidi/logEntries.js";
 import { Hospital } from "../models/Hospital.js";
 import { runWithHospitalContext } from "../utils/asyncLocalStorage.js";
 import cookie from "cookie";
