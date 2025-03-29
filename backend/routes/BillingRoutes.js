@@ -7,6 +7,7 @@ import { Visit } from "../models/Visits.js";
 import { Patient } from "../models/Patient.js";
 import { Payment } from "../models/Payment.js";
 import { verifyToken } from "../middleware/authMiddleware.js";
+import { LabRegistration } from "../models/LabRegistration.js";
 
 const router = express.Router();
 
@@ -291,6 +292,30 @@ router.post("/:id/payments", verifyToken, async (req, res) => {
     // Calculate total amount paid
     bill.amountPaid = bill.amountPaid + paymentAmount;
     await bill.save({ session });
+
+    // If this is a Lab bill, update the corresponding LabRegistration record
+    if (bill.patientType === "Lab" && bill.labRegistration) {
+      const labRegistration = await LabRegistration.findById(
+        bill.labRegistration
+      ).session(session);
+
+      if (labRegistration) {
+        // Update payment information
+        labRegistration.paymentInfo.amountPaid =
+          (labRegistration.paymentInfo.amountPaid || 0) + paymentAmount;
+
+        // Recalculate balance due
+        labRegistration.paymentInfo.balanceDue =
+          labRegistration.paymentInfo.totalAmount -
+          labRegistration.paymentInfo.additionalDiscount -
+          labRegistration.paymentInfo.amountPaid;
+
+        // Add payment to the payments array
+        labRegistration.payments.push(payment._id);
+
+        await labRegistration.save({ session });
+      }
+    }
 
     const updatedBill = await ServicesBill.findById(bill._id)
       .populate("payments")

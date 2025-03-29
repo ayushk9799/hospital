@@ -21,6 +21,9 @@ export default function LabTemplatePreview() {
     gender: "FEMALE",
     registrationNumber: "850125",
     contactNumber: "9876543210",
+    referredBy:{
+      name:"Ayush"
+    }
   };
 
   const sampleReportData = {

@@ -40,6 +40,7 @@ import BillModal from "./BillModal";
 import { fetchHospitalInfo } from "../../../redux/slices/HospitalSlice";
 import MultiSelectInput from "../MultiSelectInput";
 import { Label } from "../../ui/label";
+import { convertTo12Hour } from "../../../assets/Data";
 
 const paymentMethods = [
   { name: "Cash" },
@@ -107,11 +108,13 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         .split("/")
         .reverse()
         .join("-"),
-      bookingTime: new Date().toLocaleTimeString("en-US", {
-        hour12: false,
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
+      bookingTime: convertTo12Hour(
+        new Date().toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+      ),
       timeSlot: {
         start: "",
         end: "",
@@ -254,11 +257,13 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
           ...prev.admission,
           guardianName: tempGuardianName,
           relation: tempRelation,
-          bookingTime: new Date().toLocaleTimeString("en-US", {
-            hour12: false,
-            hour: "2-digit",
-            minute: "2-digit",
-          }),
+          bookingTime: convertTo12Hour(
+            new Date().toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })
+          ),
         },
         paymentInfo: {
           ...prev.paymentInfo,
@@ -827,32 +832,71 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         </Label>
                       </div>
 
-                      <div className="relative">
-                        <Input
-                          type="time"
-                          id="admission.bookingTime"
-                          value={formData.admission.bookingTime}
-                          onChange={handleInputChange}
-                          tabIndex={-1}
-                          className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
-                            errors["admission.bookingTime"]
-                              ? "border-red-500"
-                              : "border-gray-300"
-                          }`}
-                        />
-                        <Label
-                          htmlFor="admission.bookingTime"
-                          className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
-                            errors["admission.bookingTime"]
-                              ? "text-red-500"
-                              : "text-gray-500"
-                          }`}
+                      <div className="relative flex gap-2">
+                        <div className="flex-1">
+                          <Input
+                            type="time"
+                            id="admission.bookingTime"
+                            value={formData.admission.bookingTime.split(" ")[0]}
+                            onChange={(e) => {
+                             
+                              const time12 = convertTo12Hour(
+                                e.target.value
+                              );
+                              handleInputChange({
+                                target: {
+                                  id: "admission.bookingTime",
+                                  value: time12,
+                                },
+                              });
+                            }}
+                            tabIndex={-1}
+                            className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+                              errors["admission.bookingTime"]
+                                ? "border-red-500"
+                                : "border-gray-300"
+                            }`}
+                          />
+                          <Label
+                            htmlFor="admission.bookingTime"
+                            className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
+                              errors["admission.bookingTime"]
+                                ? "text-red-500"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            Booking Time
+                            {errors["admission.bookingTime"] && (
+                              <span className="text-red-500 ml-1">
+                                *Required
+                              </span>
+                            )}
+                          </Label>
+                        </div>
+                        <Select
+                          value={
+                            formData.admission.bookingTime.split(" ")[1] || "AM"
+                          }
+                          onValueChange={(value) => {
+                            const timeOnly =
+                              formData.admission.bookingTime.split(" ")[0];
+                            const newTime = `${timeOnly} ${value}`;
+                            handleInputChange({
+                              target: {
+                                id: "admission.bookingTime",
+                                value: newTime,
+                              },
+                            });
+                          }}
                         >
-                          Booking Time
-                          {errors["admission.bookingTime"] && (
-                            <span className="text-red-500 ml-1">*Required</span>
-                          )}
-                        </Label>
+                          <SelectTrigger className="w-[70px]">
+                            <SelectValue placeholder="AM" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="AM">AM</SelectItem>
+                            <SelectItem value="PM">PM</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                   </div>

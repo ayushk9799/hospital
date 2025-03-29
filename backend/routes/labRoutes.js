@@ -57,7 +57,7 @@ router.post("/register", verifyToken, async (req, res) => {
       paymentInfo: {
         totalAmount: paymentInfo.totalAmount,
         amountPaid: paymentInfo.amountPaid,
-       
+
         additionalDiscount: paymentInfo.additionalDiscount,
       },
       referredBy: referredBy?._id,
@@ -78,11 +78,13 @@ router.post("/register", verifyToken, async (req, res) => {
         quantity: 1,
         rate: test.price,
         category: "Laboratory",
-        date:new Date(),
-        type:"additional"
+        date: new Date(),
+        type: "additional",
       })),
-      totalAmount: paymentInfo.totalAmount-Number(paymentInfo.additionalDiscount || 0),
-      subtotal: paymentInfo.totalAmount ,
+      labRegistration: labRegistration._id,
+      totalAmount:
+        paymentInfo.totalAmount - Number(paymentInfo.additionalDiscount || 0),
+      subtotal: paymentInfo.totalAmount,
       additionalDiscount: paymentInfo.additionalDiscount || 0,
       amountPaid: paymentInfo.amountPaid || 0,
       patientType: "Lab",
@@ -96,7 +98,7 @@ router.post("/register", verifyToken, async (req, res) => {
       },
       createdBy: user._id,
     });
-let payments=[];
+    let payments = [];
     // Create payment records if payment is made
     if (paymentInfo.paymentMethod?.length > 0 && paymentInfo.amountPaid > 0) {
       await Promise.all(
@@ -109,7 +111,7 @@ let payments=[];
             createdBy: user._id,
           });
           await payment.save({ session });
-          labRegistration.payments.push(payment._id)
+          labRegistration.payments.push(payment._id);
           bill.payments.push(payment._id);
           payments.push(payment);
         })
@@ -126,8 +128,7 @@ let payments=[];
     const modifiedLabRegistration = {
       ...labRegistration.toObject(),
       referredBy: referredBy,
-      payments:payments
-      
+      payments: payments,
     };
 
     await session.commitTransaction();
@@ -249,7 +250,9 @@ router.post("/addLabReport", verifyToken, async (req, res) => {
     // Handle regular Lab Registration case
     const registration = await LabRegistration.findOne({
       _id: req.body._id,
-    }).populate("referredBy","name").session(session);
+    })
+      .populate("referredBy", "name")
+      .session(session);
 
     if (!registration) {
       throw new Error("Lab registration not found");
@@ -533,7 +536,9 @@ router.post("/:id/payment", verifyToken, async (req, res) => {
     const { method, amount } = req.body;
     const user = req.user;
 
-    const labRegistration = await LabRegistration.findById(id).populate("referredBy","name").session(session);
+    const labRegistration = await LabRegistration.findById(id)
+      .populate("referredBy", "name")
+      .session(session);
     if (!labRegistration) {
       throw new Error("Lab registration not found");
     }
@@ -551,7 +556,7 @@ router.post("/:id/payment", verifyToken, async (req, res) => {
     await payment.save({ session });
 
     // Update lab registration payment info
-    labRegistration.payments.push(payment._id)
+    labRegistration.payments.push(payment._id);
 
     labRegistration.paymentInfo.amountPaid =
       (labRegistration.paymentInfo.amountPaid || 0) + parseFloat(amount);
@@ -586,6 +591,111 @@ router.post("/:id/payment", verifyToken, async (req, res) => {
       message: "Error adding payment",
       error: error.message,
     });
+  } finally {
+    session.endSession();
+  }
+});
+
+// Add tests to existing lab registration
+router.post("/add-tests/:id", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const { labTests, paymentInfo } = req.body;
+    const user = req.user;
+
+    const labRegistration = await LabRegistration.findById(id)
+      .populate("referredBy", "name")
+      .populate("payments")
+      .populate("patient", "name age gender contactNumber address")
+      .session(session);
+
+    if (!labRegistration) {
+      throw new Error("Lab registration not found");
+    }
+
+    // Add new tests
+    labRegistration.labTests.push(
+      ...labTests.map((test) => ({
+        name: test.name,
+        category: test.category,
+        price: test.price,
+      }))
+    );
+
+    // Update payment info
+    labRegistration.paymentInfo.totalAmount += paymentInfo.totalAmount;
+    labRegistration.paymentInfo.additionalDiscount =
+      (labRegistration.paymentInfo.additionalDiscount || 0) +
+      (paymentInfo.additionalDiscount || 0);
+
+    if (paymentInfo.amountPaid > 0) {
+      labRegistration.paymentInfo.amountPaid += paymentInfo.amountPaid;
+    }
+
+    // Recalculate balance due
+    labRegistration.paymentInfo.balanceDue =
+      labRegistration.paymentInfo.totalAmount -
+      labRegistration.paymentInfo.additionalDiscount -
+      labRegistration.paymentInfo.amountPaid;
+
+    // Update services bill
+    const bill = await ServicesBill.findById(
+      labRegistration.billDetails.billId
+    ).session(session);
+    if (bill) {
+      // Add new services
+      bill.services.push(
+        ...labTests.map((test) => ({
+          name: test.name,
+          quantity: 1,
+          rate: test.price,
+          category: "Laboratory",
+          date: new Date(),
+          type: "additional",
+        }))
+      );
+
+      bill.subtotal += paymentInfo.totalAmount;
+      bill.totalAmount =
+        bill.subtotal -
+        (bill.additionalDiscount || 0 + paymentInfo.additionalDiscount || 0);
+      bill.additionalDiscount += paymentInfo.additionalDiscount || 0;
+
+      // Create payment records if payment is made
+      if (paymentInfo.paymentMethod?.length > 0 && paymentInfo.amountPaid > 0) {
+        await Promise.all(
+          paymentInfo.paymentMethod.map(async (pm) => {
+            const payment = new Payment({
+              amount: pm.amount || 0,
+              paymentMethod: pm.method,
+              paymentType: { name: "Laboratory", id: bill._id },
+              type: "Income",
+              createdBy: user._id,
+            });
+            await payment.save({ session });
+            labRegistration.payments.push(payment._id);
+            bill.payments.push(payment._id);
+          })
+        );
+      }
+
+      await bill.save({ session });
+    }
+
+    await labRegistration.save({ session });
+    await session.commitTransaction();
+
+    res.status(200).json({
+      success: true,
+      labRegistration,
+      message: "Tests added successfully",
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ success: false, error: error.message });
   } finally {
     session.endSession();
   }

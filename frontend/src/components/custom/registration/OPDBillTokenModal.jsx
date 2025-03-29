@@ -75,6 +75,101 @@ const OPDBillTokenModal = ({
     }, 300);
   };
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isHospitalCopyPrinting, setIsHospitalCopyPrinting] = useState(false);
+  const [isPatientCopyPrinting, setIsPatientCopyPrinting] = useState(false);
+
+  const hospitalCopyRef = useRef();
+  const patientCopyRef = useRef();
+
+  const singleCopyPrintStyle = `
+    @media print {
+      @page {
+        size: A4;
+        margin: 5mm;
+      }
+      
+      body {
+        margin: 0;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+      }
+
+      #printArea {
+        display: block !important;
+        margin: 0 auto !important;
+        padding-left: 3px;
+        padding-right: 7px;
+        height: 148.5mm;
+      }
+
+      #printArea > div {
+        width: 100% !important;
+        padding: 3mm !important;
+        overflow: hidden !important;
+        page-break-inside: avoid !important;
+        border: none !important;
+      }
+
+      /* Rest of your font styles */
+      .print-header h1 {
+        font-size: 14px !important;
+      }
+
+      .print-header p {
+        font-size: 11px !important;
+      }
+
+      .patient-detailsprint {
+        font-size: 10px !important;
+      }
+
+      table {
+        font-size: 12px !important;
+      }
+
+      thead th {
+        padding: 6px !important;
+        line-height: 1 !important;
+        height: auto !important;
+        min-height: 0 !important;
+      }
+
+      .summary-section {
+        width: 40mm !important;
+        font-size: 12px !important;
+        font-weight: 600;
+      }
+    }
+  `;
+
+  const printHospitalCopy = useReactToPrint({
+    content: () => hospitalCopyRef.current,
+    onBeforeGetContent: () => {
+      setIsHospitalCopyPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setIsHospitalCopyPrinting(false);
+          resolve();
+        }, 0);
+      });
+    },
+    pageStyle: singleCopyPrintStyle,
+  });
+
+  const printPatientCopy = useReactToPrint({
+    content: () => patientCopyRef.current,
+    onBeforeGetContent: () => {
+      setIsPatientCopyPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setIsPatientCopyPrinting(false);
+          resolve();
+        }, 0);
+      });
+    },
+    pageStyle: singleCopyPrintStyle,
+  });
+
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
@@ -143,8 +238,6 @@ const OPDBillTokenModal = ({
           min-height: 0 !important;
         }
 
-       
-
         .summary-section {
           width: 40mm !important;
           font-size: 12px !important;
@@ -156,7 +249,7 @@ const OPDBillTokenModal = ({
 
   if (!patientData) return null;
 
-  const { patient, bill, payment, admissionRecord ,visit} = patientData;
+  const { patient, bill, payment, admissionRecord, visit } = patientData;
   const BillCopy = ({ title }) => (
     <div className="w-full lg:w-1/2 p-1 lg:p-2 border-b lg:border-b-0 lg:border-r border-dashed">
       <div className="mb-0.5 sm:mb-1">
@@ -210,10 +303,12 @@ const OPDBillTokenModal = ({
           </div>
         </div>
         <div>
-          <span className="font-bold text-[16px] print:text-[12px]">Slot No :</span>
+          <span className="font-bold text-[16px] print:text-[12px]">
+            Slot No :
+          </span>
           <span className="font-bold text-[16px] print:text-[12px]">
             {" "}
-            {admissionRecord?.bookingNumber||visit?.bookingNumber}
+            {admissionRecord?.bookingNumber || visit?.bookingNumber}
           </span>
         </div>
         <div>
@@ -386,6 +481,27 @@ const OPDBillTokenModal = ({
           <DialogTitle>OPD Bill Token</DialogTitle>
         </DialogHeader>
 
+        <div className="hidden">
+          <div
+            id="printArea"
+            className={`single-copy-print ${
+              isHospitalCopyPrinting ? "print-content" : ""
+            }`}
+            ref={hospitalCopyRef}
+          >
+            <BillCopy title="Hospital Copy" />
+          </div>
+          <div
+            id="printArea"
+            className={`single-copy-print ${
+              isPatientCopyPrinting ? "print-content" : ""
+            }`}
+            ref={patientCopyRef}
+          >
+            <BillCopy title="Patient Copy" />
+          </div>
+        </div>
+
         <div
           id="printArea"
           ref={componentRef}
@@ -408,12 +524,26 @@ const OPDBillTokenModal = ({
             Close
           </Button>
           <div className="">
-            <PaymentReceipt payments={payment} billData={{...patientData.bill, patient : patientData.patient}} styleData={true} /> 
+            <PaymentReceipt
+              payments={payment}
+              billData={{ ...patientData.bill, patient: patientData.patient }}
+              styleData={true}
+            />
           </div>
-          <Button className="w-full sm:w-auto" onClick={handlePrint}>
-            <PrinterIcon className="mr-2 h-4 w-4" />
-            Print Token
-          </Button>
+          <div className="flex gap-2">
+            <Button className="w-full sm:w-auto" onClick={printHospitalCopy}>
+              <PrinterIcon className="mr-2 h-4 w-4" />
+              Print Hospital Copy
+            </Button>
+            <Button className="w-full sm:w-auto" onClick={printPatientCopy}>
+              <PrinterIcon className="mr-2 h-4 w-4" />
+              Print Patient Copy
+            </Button>
+            <Button className="w-full sm:w-auto" onClick={handlePrint}>
+              <PrinterIcon className="mr-2 h-4 w-4" />
+              Print Both
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

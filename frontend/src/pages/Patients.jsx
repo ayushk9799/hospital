@@ -50,7 +50,7 @@ import { useNavigate } from "react-router-dom";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
 import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
 import { useSelector, useDispatch } from "react-redux";
-import { DateRangePicker } from "../assets/Data";
+import { convertTo12Hour, DateRangePicker } from "../assets/Data";
 import { fetchBills } from "../redux/slices/BillingSlice";
 import { setSelectedPatient } from "../redux/slices/patientSlice";
 import {
@@ -267,7 +267,7 @@ export default function Patients() {
                   </TableCell> */}
                   <TableCell>
                     {format(new Date(patient.bookingDate), "dd MMM")}{" "}
-                    {patient?.bookingTime}
+                    {convertTo12Hour(patient?.bookingTime)}
                   </TableCell>
                   <TableCell>
                     {patient.dateDischarged
@@ -328,7 +328,7 @@ export default function Patients() {
                     )}
                     {patient.type === "IPD" && (
                       <DropdownMenuItem asChild>
-                        <ConsentFormPrint patient={patient} />
+                        <ConsentFormPrint patient={{...patient,bookingTime:convertTo12Hour(patient?.bookingTime)}} />
                       </DropdownMenuItem>
                     )}
                     {patient.type === "IPD" && (

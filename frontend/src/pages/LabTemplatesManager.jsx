@@ -129,7 +129,7 @@ export default function LabTemplatesManager() {
                       variant="outline"
                       onClick={() =>
                         navigate(
-                          `/settings/edit-test-template/${template.name}`
+                          `/settings/edit-test-template`,{state:{name:template.name}}
                         )
                       }
                       className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300"

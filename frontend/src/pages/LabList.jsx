@@ -55,9 +55,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import { labCategories } from "../../src/assets/Data";
+
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Label } from "../components/ui/label";
 import LabPaymentDialog from "../components/custom/registration/LabPaymentDialog";
+import AddLabTestsDialog from "../components/custom/registration/AddLabTestsDialog";
 
 export default function LabList() {
   const navigate = useNavigate();
@@ -74,6 +77,8 @@ export default function LabList() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedLabForPayment, setSelectedLabForPayment] = useState(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
+  const [showAddTestsDialog, setShowAddTestsDialog] = useState(false);
+  const [selectedLabForTests, setSelectedLabForTests] = useState(null);
 
   const {
     registrations,
@@ -89,6 +94,16 @@ export default function LabList() {
 
   const isUpdating = updateStatus === "loading";
 
+  // Add testsList - you should replace this with your actual test list from your app's state/config
+  const labtestsTemplate = useSelector(
+    (state) => state.templates.labTestsTemplate
+  );
+  const readymadeTests = labCategories.flatMap((category) => category.types);
+
+  const testsList = [...labtestsTemplate, ...readymadeTests]?.map((test) => ({
+    name: test.name || test,
+    rate: test.rate,
+  }));
   useEffect(() => {
     fetchTests();
   }, [dateFilter, dateRange, dispatch]);
@@ -239,11 +254,14 @@ export default function LabList() {
     setOpenDropdownId(null);
   };
 
-  const TestCard = ({ test }) => (
+  const TestCard = ({ test, index }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
           <div>
+            {dateFilter === "Today" && (
+              <p className="text-sm text-gray-500 mb-1">Sl No: {index + 1}</p>
+            )}
             <h3 className="font-semibold">{test.patientName}</h3>
             <p className="text-sm text-gray-500">Lab No: {test.labNumber}</p>
           </div>
@@ -271,6 +289,21 @@ export default function LabList() {
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handlePayments(test)}>
                   Payments
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() =>
+                    navigate("/lab", { state: { patientData: test } })
+                  }
+                >
+                  Make Report
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setSelectedLabForTests(test);
+                    setShowAddTestsDialog(true);
+                  }}
+                >
+                  Add Tests
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -424,6 +457,15 @@ export default function LabList() {
           setIsOpen={setShowPaymentDialog}
           labData={selectedLabForPayment}
         />
+        <AddLabTestsDialog
+          isOpen={showAddTestsDialog}
+          onClose={() => {
+            setShowAddTestsDialog(false);
+            setSelectedLabForTests(null);
+          }}
+          labData={selectedLabForTests}
+          testsList={testsList}
+        />
 
         <div className="flex flex-col space-y-4 mb-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
@@ -501,8 +543,8 @@ export default function LabList() {
         {isSmallScreen ? (
           filteredTests.length > 0 ? (
             <div className="space-y-4">
-              {filteredTests.map((test) => (
-                <TestCard key={test._id} test={test} />
+              {filteredTests.map((test, index) => (
+                <TestCard key={test._id} test={test} index={index} />
               ))}
             </div>
           ) : (
@@ -521,21 +563,25 @@ export default function LabList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Lab Number</TableHead>
-                  <TableHead>Patient Name</TableHead>
-                  <TableHead>Contact Number</TableHead>
-                  <TableHead>Registration Date</TableHead>
+                  {dateFilter === "Today" && <TableHead>Sl.</TableHead>}
+                  <TableHead>Lab No.</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Reg. Date</TableHead>
                   <TableHead>Tests</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Total Amount</TableHead>
-                  <TableHead>Paid Amount</TableHead>
-                  <TableHead>Balance Due</TableHead>
+                  <TableHead>Total</TableHead>
+                  <TableHead>Paid</TableHead>
+                  <TableHead>Due</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTests.map((test) => (
+                {filteredTests.map((test, index) => (
                   <TableRow key={test._id}>
+                    {dateFilter === "Today" && (
+                      <TableCell className="font-medium">{index + 1}</TableCell>
+                    )}
                     <TableCell>{test.labNumber}</TableCell>
                     <TableCell className="font-bold">
                       {`${test.patientName} ${
@@ -603,6 +649,14 @@ export default function LabList() {
                             }
                           >
                             Make Report
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setSelectedLabForTests(test);
+                              setShowAddTestsDialog(true);
+                            }}
+                          >
+                            Add Tests
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -2,6 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 import { Backend_URL } from "../../assets/Data";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 import { ChartNoAxesColumnDecreasing } from "lucide-react";
+import { createAsyncThunk } from "@reduxjs/toolkit";
+import axios from "axios";
 
 // Async thunks
 export const fetchLabRegistrations = createLoadingAsyncThunk(
@@ -137,6 +139,36 @@ export const searchLabRegistrations = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+export const addLabTests = createLoadingAsyncThunk(
+  "lab/addTests",
+  async ({ id, labTests, paymentInfo }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/lab/add-tests/${id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          labTests,
+          paymentInfo,
+        }),
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        return rejectWithValue(error);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  {useGlobalLoader:true}
+);
+
 const initialState = {
   registrations: [],
   registrationsStatus: "idle",
@@ -217,7 +249,13 @@ const labSlice = createSlice({
           (reg) => reg._id === action.payload.labRegistration._id
         );
         if (index !== -1) {
-          let dataadd={...action.payload.labRegistration,payments:[...state.registrations[index].payments,action.payload.payment]};
+          let dataadd = {
+            ...action.payload.labRegistration,
+            payments: [
+              ...state.registrations[index].payments,
+              action.payload.payment,
+            ],
+          };
           state.registrations[index] = dataadd;
         }
       })
@@ -236,6 +274,24 @@ const labSlice = createSlice({
       .addCase(searchLabRegistrations.rejected, (state, action) => {
         state.searchStatus = "failed";
         state.error = action.payload;
+      })
+      // Add Lab Tests
+      .addCase(addLabTests.pending, (state) => {
+        state.updateTestStatus = "loading";
+      })
+      .addCase(addLabTests.fulfilled, (state, action) => {
+        state.updateTestStatus = "succeeded";
+        // Update the registration in the list
+        const index = state.registrations.findIndex(
+          (reg) => reg._id === action.payload.labRegistration._id
+        );
+        if (index !== -1) {
+          state.registrations[index] = action.payload.labRegistration;
+        }
+      })
+      .addCase(addLabTests.rejected, (state, action) => {
+        state.updateTestStatus = "failed";
+        state.error = action.payload?.error || "Failed to add tests";
       });
   },
 });

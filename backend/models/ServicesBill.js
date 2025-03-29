@@ -38,6 +38,10 @@ const servicesBillSchema = new mongoose.Schema(
       gender: String,
       address: String,
     },
+    labRegistration:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:"LabRegistration"
+    },
     opdProcedure: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "OPDProcedure",

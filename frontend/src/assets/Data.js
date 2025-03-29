@@ -176,12 +176,67 @@ export const calculatePercentageChange = (current, previous) => {
 };
 
 export const convertTo12Hour = (time24) => {
-  const [hours, minutes] = time24.split(":");
-  let hour = parseInt(hours, 10);
-  const ampm = hour >= 12 ? "PM" : "AM";
-  hour = hour % 12;
-  hour = hour ? hour : 12; // the hour '0' should be '12'
-  return `${hour}:${minutes} ${ampm}`;
+  if (!time24 || typeof time24 !== "string") return "";
+
+  // Trim whitespace and handle any extra spaces
+  const cleanTime = time24.trim().replace(/\s+/g, " ");
+
+  // Split by space to check for AM/PM
+  const timeParts = cleanTime.split(" ");
+
+  // If it's already in 12-hour format (has AM/PM)
+  if (timeParts.length === 2) {
+    const [timeSection, period] = timeParts;
+    const upperPeriod = period.toUpperCase();
+
+    // Verify it's a valid time format and valid period
+    if (
+      timeSection.includes(":") &&
+      (upperPeriod === "AM" || upperPeriod === "PM")
+    ) {
+      const [hours, minutes] = timeSection.split(":");
+      // Validate hours and minutes
+      const hour = parseInt(hours, 10);
+      const minute = parseInt(minutes, 10);
+
+      if (
+        !isNaN(hour) &&
+        !isNaN(minute) &&
+        hour >= 1 &&
+        hour <= 12 &&
+        minute >= 0 &&
+        minute <= 59
+      ) {
+        return `${hours.padStart(2,"0")}:${minutes.padStart(2, "0")} ${upperPeriod}`;
+      }
+    }
+  }
+
+  // Try to convert from 24-hour format
+  try {
+    const [hours, minutes] = cleanTime.split(":");
+    const hour = parseInt(hours, 10);
+    const minute = parseInt(minutes, 10);
+
+    // Validate the time values
+    if (
+      isNaN(hour) ||
+      isNaN(minute) ||
+      hour < 0 ||
+      hour > 23 ||
+      minute < 0 ||
+      minute > 59
+    ) {
+      return "";
+    }
+
+    const ampm = hour >= 12 ? "PM" : "AM";
+    const hour12 = hour % 12 || 12; // Convert to 12-hour format
+
+    return `${hour12.toString().padStart(2,"0")}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+  } catch (error) {
+    return "";
+  }
 };
 
 export const labCategories = [

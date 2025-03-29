@@ -400,7 +400,7 @@ router.post(
           }
 
           const bedIndex = room.beds.findIndex(
-            (bed) => bed._id.toString() === admission.assignedBed.toString()
+            (bed) => bed._id?.toString() === admission.assignedBed?.toString()
           );
           if (bedIndex === -1 || room.beds[bedIndex].status !== "Available") {
             throw new Error("Bed not available");
@@ -426,12 +426,13 @@ router.post(
             
           }
           let invoiceNumber = await BillCounter.getNextBillNumber(session);
+          let userProvided=paymentInfo.services.reduce((sum, service) => sum + service.rate, 0);
           bill = new ServicesBill({
             invoiceNumber: invoiceNumber || null,
             services: [
               ...services.map((service) => {
                 const serviceInfo = paymentInfo.services.find(
-                  (s) => s.id === service._id.toString()
+                  (s) => s.id === service._id?.toString()
                 );
                 return {
                   name: service.name,
@@ -465,11 +466,11 @@ router.post(
             },
             admission: admissionRecord._id,
             totalAmount: Number(paymentInfo.totalAmount),
-            subtotal: services.reduce((sum, service) => sum + service.rate, 0)
-              ? services.reduce((sum, service) => sum + service.rate, 0) +
+            subtotal: userProvided
+              ? userProvided +
                 roomCharge
               : Number(paymentInfo.totalAmount),
-            additionalDiscount: paymentInfo.additionalDiscount || 0,
+            additionalDiscount: paymentInfo.additionalDiscount || Number(userProvided)-Number(paymentInfo.totalAmount)>0?Number(userProvided)-Number(paymentInfo.totalAmount):0,
             amountPaid: Number(paymentInfo.amountPaid) || 0,
             patientType: "IPD",
             createdBy: user._id,
@@ -1538,6 +1539,7 @@ router.post(
           }
         }
         let invoiceNumber = await BillCounter.getNextBillNumber(session);
+        let userProvided = paymentInfo.services.reduce((sum, service) => sum + service.rate, 0);
         bill = new ServicesBill({
           invoiceNumber: invoiceNumber || null,
           services: [
@@ -1550,8 +1552,8 @@ router.post(
                 quantity: 1,
                 rate: serviceInfo?.rate || 0,
                 category: service?.category || "Other",
-                date:new Date(),
-                type:"additional"
+                date: new Date(),
+                type: "additional"
               };
             }),
             // Add room charge if room is assigned
@@ -1562,7 +1564,7 @@ router.post(
                     quantity: 1,
                     rate: roomCharge,
                     category: "Room Rent",
-                    date:new Date()
+                    date: new Date()
                   },
                 ]
               : []),
@@ -1575,14 +1577,17 @@ router.post(
             ipdNumber: admission.ipdNumber,
           },
           totalAmount: Number(paymentInfo.totalAmount),
-          subtotal: services.reduce((sum, service) => sum + service.rate, 0)
-            ? services.reduce((sum, service) => sum + service.rate, 0) +
-              roomCharge
+          subtotal: userProvided
+            ? userProvided + roomCharge
             : Number(paymentInfo.totalAmount),
-          additionalDiscount: paymentInfo.additionalDiscount || 0,
+          additionalDiscount: paymentInfo.additionalDiscount || 
+            (Number(userProvided) - Number(paymentInfo.totalAmount) > 0 
+              ? Number(userProvided) - Number(paymentInfo.totalAmount) 
+              : 0),
           amountPaid: Number(paymentInfo.amountPaid) || 0,
           patientType: "IPD",
           createdBy: user._id,
+          admission: newAdmission._id,
         });
 
         if (

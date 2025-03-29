@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { editTemplate, deleteTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { X, Plus, ChevronLeft } from "lucide-react";
 
 export default function EditTestTemplate() {
-  const { templateName } = useParams();
+  const location = useLocation();
+  const templateName=location.state.name;
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { labTestsTemplate } = useSelector((state) => state.templates);
@@ -17,11 +18,11 @@ export default function EditTestTemplate() {
     rate: 0,
     fields: {},
   });
-
   useEffect(() => {
     const existingTemplate = labTestsTemplate.find(
-      (t) => t.name === templateName
+      (t) => t.name.trim() === templateName.trim()
     );
+    
     if (existingTemplate) {
       setTemplateData({
         ...existingTemplate,

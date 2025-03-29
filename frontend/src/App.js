@@ -287,7 +287,7 @@ const AppContent = () => {
                     element={<DepartmentManger />}
                   />
                   <Route
-                    path="/settings/edit-test-template/:templateName"
+                    path="/settings/edit-test-template"
                     element={<EditTestTemplate />}
                   />
                 </>
