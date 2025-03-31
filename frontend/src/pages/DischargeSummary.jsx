@@ -10,6 +10,7 @@ import {
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
+import {convertTo12Hour} from "../assets/Data"
 import { Label } from "../components/ui/label";
 import { fetchItems } from "../redux/slices/pharmacySlice";
 import { Badge } from "../components/ui/badge";
@@ -66,17 +67,17 @@ import FormCustomizer from "../components/custom/FormCustomizer";
 import { searchBabyByNumber } from "../redux/slices/babySlice";
 
 // Time conversion helper functions
-const convertTo12Hour = (time24) => {
-  if (!time24) return "";
-  const [hours24, minutes] = time24.split(":");
-  let hours12 = parseInt(hours24);
-  const meridiem = hours12 >= 12 ? "PM" : "AM";
+// const convertTo12Hour = (time24) => {
+//   if (!time24) return "";
+//   const [hours24, minutes] = time24.split(":");
+//   let hours12 = parseInt(hours24);
+//   const meridiem = hours12 >= 12 ? "PM" : "AM";
 
-  if (hours12 === 0) hours12 = 12;
-  else if (hours12 > 12) hours12 -= 12;
+//   if (hours12 === 0) hours12 = 12;
+//   else if (hours12 > 12) hours12 -= 12;
 
-  return `${hours12.toString().padStart(2, "0")}:${minutes} ${meridiem}`;
-};
+//   return `${hours12.toString().padStart(2, "0")}:${minutes} ${meridiem}`;
+// };
 
 const convertTo24Hour = (time12, meridiem) => {
   if (!time12) return "";
@@ -122,6 +123,7 @@ const FormField = ({
   suggestions,
   extraProps = {},
 }) => {
+  
   const handleDiagnosisChange = (newDiagnoses) => {
     const diagnosisString = newDiagnoses.map((d) => d.name).join(", ");
     onChange({
@@ -231,6 +233,7 @@ const FormField = ({
         </div>
       );
     case "time": {
+    
       let x=value.split(" ")
       const timeValue = value ? x[0] : "";
       let meridiem = value ? x[1] || "AM" : "AM";
@@ -637,7 +640,6 @@ export default function DischargeSummary() {
     }
     return baseConfig;
   });
-
   const {
     diagnosisTemplate = [],
     comorbidities = [],
@@ -951,13 +953,13 @@ export default function DischargeSummary() {
   }, [patient]);
 
   const [selectedReport, setSelectedReport] = useState(null);
-
   const handlePatientInfoChange = (e) => {
     const { name, value } = e.target;
     setPatientInfo((prev) => ({ ...prev, [name]: value }));
   };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+  
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   const handleDateChange = (field, date) => {
@@ -1668,10 +1670,14 @@ export default function DischargeSummary() {
                 field.id === "admittedTime"||
                 field.id==="bookingTime"
               ) {
-                value =
-                  formData[
-                    field.id === "admittedTime" ? "bookingTime" : field.id
-                  ] || "";
+                value = (
+                  field.id === "admittedTime"
+                    
+                    ? (formData.admittedTime || formData.bookingTime)
+
+                    : formData[field.id]
+              
+                ) || "";
                 onChange = handleInputChange;
               } else {
                 value =
@@ -1912,6 +1918,7 @@ export default function DischargeSummary() {
           ref={componentRef}
           formData={{
             ...formData,
+            admittedTime: formData.admittedTime || convertTo12Hour(formData.bookingTime),
             investigations: formData.investigations
               .filter((inv) => inv.name.trim() !== "" && inv.report)
               .map((inv) => ({
