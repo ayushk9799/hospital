@@ -3,6 +3,7 @@ import { Baby, Heart, Star, Sun, Clock } from "lucide-react";
 import { useToast } from "../../../hooks/use-toast";
 import { useDispatch, useSelector } from "react-redux";
 import { createBaby } from "../../../redux/slices/babySlice";
+import { convertTo12Hour } from "../../../assets/Data";
 import { format, parse } from "date-fns";
 
 import {
@@ -24,6 +25,7 @@ import { Label } from "../../ui/label";
 import { ScrollArea } from "../../ui/scroll-area";
 
 const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
+  console.log(motherData)
   const { toast } = useToast();
   const dispatch = useDispatch();
   const now = new Date();
@@ -35,6 +37,7 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
     try {
       // Assuming timeString is in "HH:mm" 24-hour format
       const parsedTime = parse(timeString, "HH:mm", new Date());
+   
       return format(parsedTime, "hh:mm a");
     } catch (error) {
       return format(new Date(), "hh:mm a");
@@ -47,7 +50,7 @@ const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
     timeOfBirth: initialTime,
     weight: "",
     admissionDate: motherData?.bookingDate ? format(new Date(motherData.bookingDate), "yyyy-MM-dd") : format(new Date(), "yyyy-MM-dd"),
-    timeOfAdmission: formatBookingTime(motherData?.bookingTime),
+    timeOfAdmission: convertTo12Hour(motherData?.bookingTime),
     apgarScore: {
       oneMinute: "",
       fiveMinutes: "",

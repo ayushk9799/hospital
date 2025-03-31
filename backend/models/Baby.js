@@ -5,10 +5,12 @@ import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 const BirthCounterSchema = new mongoose.Schema({
   year: { type: Number, required: true },
   yearlyCount: { type: Number, default: 0 },
-  monthlyCount: { type: Number, default: 0 },
-  month: { type: String, required: true }, // 1-12 for Jan-Dec
+  monthlyCounts: {
+    type: Map,
+    of: Number, 
+    default: {},
+  },
 });
-
 BirthCounterSchema.plugin(hospitalPlugin);
 export const BirthCounter = mongoose.model("BirthCounter", BirthCounterSchema);
 
@@ -24,7 +26,7 @@ const babySchema = new mongoose.Schema(
     },
     ipdAdmission: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "IPDAdmission",
+      ref: "ipdAdmission",
     },
     admissionDate: {
       type: Date,
@@ -110,19 +112,18 @@ babySchema.statics.updateBirthCounter = async function (session, dateOfBirth) {
 
   // Update both yearly and monthly counts in single document
   const counterDoc = await BirthCounter.findOneAndUpdate(
-    { year, month },
-    {
-      $inc: {
-        yearlyCount: 1,
-        monthlyCount: 1,
-      },
+    { year },
+    { 
+      $inc: { 
+        yearlyCount: 1, 
+        [`monthlyCounts.${month}`]: 1 // Dynamically update the correct month
+      }
     },
     { upsert: true, new: true, setDefaultsOnInsert: true, session }
   );
-  return `${counterDoc.year}-${counterDoc.month}/${counterDoc.yearlyCount}-${counterDoc.monthlyCount}`;
+  return `${counterDoc.year}-${month}/${counterDoc.yearlyCount}-${counterDoc.monthlyCounts.get(month)}`;
 };
 
-// Add index to birthCounter field in the babySchema
 babySchema.index({ birthCounter: 1 });
 
 babySchema.plugin(hospitalPlugin);

@@ -42,9 +42,13 @@ export default function ViewBabies() {
   const { motherData } = location.state || {};
   const [showEditBaby, setShowEditBaby] = useState(false);
   const [selectedBabyForEdit, setSelectedBabyForEdit] = useState(null);
-
+ const [motherDetails, setMotherDetails] = useState(null);
   useEffect(() => {
-    dispatch(getBabiesByAdmission(ipdAdmissionId));
+    const fetchBabies = async () => {
+      const babies = await dispatch(getBabiesByAdmission(ipdAdmissionId)).unwrap();
+      setMotherDetails(babies[0]?.ipdAdmission);
+    }
+    fetchBabies();
   }, [dispatch, ipdAdmissionId]);
 
   const handleViewDetails = (babyId) => {
@@ -243,12 +247,14 @@ export default function ViewBabies() {
         />
       )}
 
+    {showBabyReg && (
       <BabyRegDialog 
         open={showBabyReg}
         onOpenChange={setShowBabyReg}
-        motherData={motherData}
+        motherData={{...motherData, bookingDate: motherDetails?.bookingDate? motherDetails?.bookingDate : motherData?.bookingDate, bookingTime: motherDetails?.bookingTime? motherDetails?.bookingTime : motherData?.bookingTime}}
         admissionId={ipdAdmissionId}
       />
+    )}
 
       {selectedBabyForEdit && (
         <EditBabyDetailsDlg

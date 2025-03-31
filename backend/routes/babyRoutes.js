@@ -56,6 +56,7 @@ router.get("/admission/:ipdAdmissionId", verifyToken, async (req, res) => {
   try {
     const babies = await Baby.find({ ipdAdmission: req.params.ipdAdmissionId })
       .populate("mother", "name registrationNumber")
+      .populate("ipdAdmission", "bookingDate bookingTime")
       .sort("-createdAt");
     res.json(babies);
   } catch (error) {

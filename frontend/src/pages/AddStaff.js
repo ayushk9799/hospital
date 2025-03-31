@@ -42,6 +42,7 @@ export default function AddStaff() {
     username: "",
     password: "",
     employeeID: "",
+    aadharNumber: "",
     contactNumber: "",
     email: "",
     dateOfBirth: "",
@@ -731,6 +732,16 @@ export default function AddStaff() {
                 id="employeeID"
                 value={formData.employeeID}
                 onChange={handleInputChange}
+              />
+            </div>
+            <div>
+              <Label htmlFor="aadharNumber">Aadhar Number</Label>
+              <Input
+                id="aadharNumber"
+                value={formData.aadharNumber}
+                onChange={handleInputChange}
+                maxLength={12}
+                placeholder="Enter 12-digit Aadhar number"
               />
             </div>
             <div>

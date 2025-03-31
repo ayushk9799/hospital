@@ -26,7 +26,7 @@ import { ScrollArea } from "../../ui/scroll-area";
 const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
   const { toast } = useToast();
   const dispatch = useDispatch();
-  const { editBabyStatus } = useSelector(state => state.babies);
+  const { editBabyStatus } = useSelector((state) => state.babies);
 
   const [formData, setFormData] = useState({
     gender: "",
@@ -116,7 +116,7 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
         title: "Success",
         description: "Baby record has been updated successfully",
       });
-      
+
       onOpenChange(false);
     } catch (error) {
       toast({
@@ -129,7 +129,7 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-visible">
         <DialogHeader className="">
           <DialogTitle className="flex items-center gap-2">
             <Baby className="h-6 w-6 text-pink-500" />
@@ -137,32 +137,36 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 px-1">
+        <ScrollArea className="px-1 max-h-[80vh]">
           <div className="space-y-4">
             {/* Mother Info & Admission Details */}
             <div className=" gap-2 p-4 bg-gradient-to-r from-pink-50 to-blue-50 rounded-xl border-2 border-pink-100">
               <div className="flex justify-between">
-              <div className="flex items-center gap-2">
-                <Heart className="h-5 w-5 text-pink-500" />
-                <div>
-                  <p className="text-sm text-gray-600">Mother's Name</p>
-                  <p className="font-semibold uppercase">{motherData?.name}</p>
+                <div className="flex items-center gap-2">
+                  <Heart className="h-5 w-5 text-pink-500" />
+                  <div>
+                    <p className="text-sm text-gray-600">Mother's Name</p>
+                    <p className="font-semibold uppercase">
+                      {motherData?.name}
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-sm text-gray-600">Birth Number</p>
-                  <p className="font-semibold">{babyData?.birthCounter}</p>
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="text-sm text-gray-600">Birth Number</p>
+                    <p className="font-semibold">{babyData?.birthCounter}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <Star className="h-5 w-5 text-blue-500" />
-                <div>
-                  <p className="text-sm text-gray-600">UHID</p>
-                  <p className="font-semibold">{motherData?.registrationNumber}</p>
+                <div className="flex items-center gap-2">
+                  <Star className="h-5 w-5 text-blue-500" />
+                  <div>
+                    <p className="text-sm text-gray-600">UHID</p>
+                    <p className="font-semibold">
+                      {motherData?.registrationNumber}
+                    </p>
+                  </div>
                 </div>
-              </div>
               </div>
 
               {/* Admission Details */}
@@ -190,7 +194,11 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
                           onChange={(e) => {
                             const timeValue = e.target.value;
                             if (timeValue) {
-                              const date = parse(timeValue, "HH:mm", new Date());
+                              const date = parse(
+                                timeValue,
+                                "HH:mm",
+                                new Date()
+                              );
                               const time12h = format(date, "hh:mm a");
                               setFormData((prev) => ({
                                 ...prev,
@@ -203,9 +211,14 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
                         <Clock className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                       </div>
                       <Select
-                        value={formData.timeOfAdmission.split(" ")[1]?.toLowerCase() || "am"}
+                        value={
+                          formData.timeOfAdmission
+                            .split(" ")[1]
+                            ?.toLowerCase() || "am"
+                        }
                         onValueChange={(value) => {
-                          const currentTime = formData.timeOfAdmission.split(" ")[0];
+                          const currentTime =
+                            formData.timeOfAdmission.split(" ")[0];
                           setFormData((prev) => ({
                             ...prev,
                             timeOfAdmission: `${currentTime} ${value.toUpperCase()}`,
@@ -227,7 +240,7 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
             </div>
 
             {/* Basic Details */}
-            <div className="grid grid-cols-2 gap-4 p-2">
+            <div className="grid grid-cols-4 gap-2 p-1">
               <div className="space-y-1">
                 <Label>Gender</Label>
                 <Select
@@ -236,7 +249,7 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
                   }
                   value={formData.gender}
                 >
-                  <SelectTrigger className="border-2 border-pink-200 hover:border-pink-300 transition-colors">
+                  <SelectTrigger>
                     <SelectValue placeholder="Select gender" />
                   </SelectTrigger>
                   <SelectContent>
@@ -255,7 +268,6 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
                   value={formData.weight}
                   onChange={handleInputChange}
                   placeholder="Enter weight"
-                  className="border-2 border-pink-200 hover:border-pink-300 transition-colors"
                 />
               </div>
 
@@ -266,7 +278,6 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
                   onChange={handleInputChange}
-                  className="border-2 border-pink-200 hover:border-pink-300 transition-colors"
                 />
               </div>
 
@@ -294,7 +305,9 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
                     <Clock className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
                   </div>
                   <Select
-                    value={formData.timeOfBirth.split(" ")[1]?.toLowerCase() || "am"}
+                    value={
+                      formData.timeOfBirth.split(" ")[1]?.toLowerCase() || "am"
+                    }
                     onValueChange={(value) => {
                       const currentTime = formData.timeOfBirth.split(" ")[0];
                       setFormData((prev) => ({
@@ -369,20 +382,19 @@ const EditBabyDetailsDlg = ({ open, onOpenChange, babyData, motherData }) => {
               </div>
             </div>
           </div>
+          <div className="flex justify-end gap-2 pt-4">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmit}
+              className="bg-pink-600 hover:bg-pink-700"
+              disabled={editBabyStatus === "loading"}
+            >
+              {editBabyStatus === "loading" ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
         </ScrollArea>
-
-        <div className="flex justify-end gap-2 pt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <Button 
-            onClick={handleSubmit} 
-            className="bg-pink-600 hover:bg-pink-700"
-            disabled={editBabyStatus === 'loading'}
-          >
-            {editBabyStatus === 'loading' ? 'Saving...' : 'Save Changes'}
-          </Button>
-        </div>
       </DialogContent>
     </Dialog>
   );
