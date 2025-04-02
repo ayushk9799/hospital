@@ -25,7 +25,6 @@ import { Label } from "../../ui/label";
 import { ScrollArea } from "../../ui/scroll-area";
 
 const BabyRegDialog = ({ open, onOpenChange, motherData, admissionId }) => {
-  console.log(motherData)
   const { toast } = useToast();
   const dispatch = useDispatch();
   const now = new Date();

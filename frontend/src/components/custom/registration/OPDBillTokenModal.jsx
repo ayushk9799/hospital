@@ -271,13 +271,13 @@ const OPDBillTokenModal = ({
               <span className="font-semibold">Name:</span>
               <span className="font-semibold">{patient.name}</span>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1  justify-end">
               <span className="font-semibold">Age/Sex:</span>
               <span className="font-semibold">
                 {`${patient.age} yrs/${patient.gender}`}
               </span>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1 justify-end">
               <span className="font-semibold">UHID No:</span>
               <span className="font-semibold">
                 {patient.registrationNumber}
@@ -291,11 +291,11 @@ const OPDBillTokenModal = ({
                 {patient.address}
               </span>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-1  justify-end">
               <span className="font-semibold">Contact:</span>
               <span className="font-semibold">{patient.contactNumber}</span>
             </div>
-            <div className="flex gap-1 ">
+            <div className="flex gap-1  justify-end">
               <span className="font-semibold">Date:</span>
               <span className="font-semibold">
                 {format(new Date(bill.createdAt), "dd/MM/yyyy")}
