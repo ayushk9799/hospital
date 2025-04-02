@@ -200,6 +200,7 @@ const OPDBillTokenModal = ({
           margin: 0 auto !important;
           padding-left:3px;
           padding-right:7px;
+          padding-top:10px;
           height:148.5mm;
         }
 

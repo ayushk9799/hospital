@@ -14,6 +14,9 @@ const SimplePrintHeader = () => {
       <p className="text-sm m-0 p-0 print:text-sm print:leading-tight">
         {hospitalInfo.doctorName}
       </p>
+      <p className="text-sm m-0 p-0 print:text-sm print:leading-tight">
+        {hospitalInfo.contactNumber}
+      </p>
     </div>
   );
 };

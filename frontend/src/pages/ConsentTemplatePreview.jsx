@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import { cn } from "../lib/utils";
 import { consentFormTemplateStringDefault } from "../components/custom/print/ConsentFormPrint";
-import { consentFormTemplateStringExperimentation } from "../templatesExperiments/consentFromExperimentation";
+import { consentFormTemplateStringExperimentation , consentFormTemplateStringAnesthesia} from "../templatesExperiments/consentFromExperimentation";
 import ConsentDynamicForm from "../components/custom/print/ConsentDynamicForm";
 
 // const consentFormTemplateStringDefault = `(patient, hospitalInfo, ref) => {
@@ -190,7 +190,7 @@ export default function ConsentTemplatePreview() {
           <h1 className="text-xl sm:text-2xl font-bold">
             Consent Form Template Preview
           </h1>
-          <Button onClick={handleSaveTemplate}>Save Template</Button>
+          {/* <Button onClick={handleSaveTemplate}>Save Template</Button> */}
         </div>
 
         <div className="flex flex-wrap gap-3">
