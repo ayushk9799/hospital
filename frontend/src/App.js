@@ -65,6 +65,7 @@ import DischargeTemplatePreview from "./pages/DischargeTemplatePreview";
 import HeaderTemplatePreview from "./pages/HeaderTemplatePreview";
 import OPDTemplatePreview from "./pages/OPDTemplatePreview";
 import OPDRxTemplatePreview from "./pages/OPDRxTemplatePreview";
+import OPDBillTokenPreview from "./pages/OPDBillTokenPreview";
 import MergeTemplatePreview from "./pages/MergeTemplatePreview";
 import PrefixSettings from "./pages/PrefixSettings";
 import ViewBabies from "./pages/ViewBabies";
@@ -265,6 +266,10 @@ const AppContent = () => {
                   <Route
                     path="/settings/printing-templates/opd-rx-preview"
                     element={<OPDRxTemplatePreview />}
+                  />
+                  <Route
+                    path="/settings/printing-templates/opd-bill-token-preview"
+                    element={<OPDBillTokenPreview />}
                   />
                   <Route
                     path="/settings/printing-templates/lab-report-preview"

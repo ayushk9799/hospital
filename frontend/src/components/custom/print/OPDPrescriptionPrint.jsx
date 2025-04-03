@@ -31,6 +31,8 @@ const OPDPrescriptionPrint = ({ patient }) => {
         body {
           margin: 0;
           padding: 0;
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
         }
         .print-content {
           width: 210mm;

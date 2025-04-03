@@ -72,6 +72,18 @@ export default function PrintingTemplates() {
 
         <Button
           onClick={() =>
+            navigate("/settings/printing-templates/opd-bill-token-preview")
+          }
+          className="w-full p-6 h-auto flex flex-col items-center gap-2"
+        >
+          <span className="text-lg">OPD Bill Token</span>
+          <span className="text-sm text-gray-200">
+            Preview and customize OPD bill token template
+          </span>
+        </Button>
+
+        <Button
+          onClick={() =>
             navigate("/settings/printing-templates/lab-report-preview")
           }
           className="w-full p-6 h-auto flex flex-col items-center gap-2 bg-blue-600 hover:bg-blue-700"

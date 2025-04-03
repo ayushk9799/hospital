@@ -37,7 +37,9 @@ export const fetchBills = createLoadingAsyncThunk(
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
-
+       if(!filters.dateRange?.startDate && !filters.dateRange?.endDate){
+        return rejectWithValue("Please select a date range");
+       }
       // Add date range filters if present
       if (filters.dateRange?.startDate) {
         const startDate = new Date(filters.dateRange.startDate + "T00:00:00");
@@ -157,7 +159,6 @@ export const addPayment = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
-// Add this new import at the top of the file
 
 // Add this new async thunk after the other thunks and before the slice definition
 export const createOPDProcedureBill = createLoadingAsyncThunk(

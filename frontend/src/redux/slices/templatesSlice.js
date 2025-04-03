@@ -150,6 +150,7 @@ const initialState = {
   dischargeFormTemplates: null,
   updateTempleteStatus: "idle",
   labBillingTemplate: "",
+  opdBillTokenTemplate: "",
 };
 
 const templatesSlice = createSlice({
@@ -184,6 +185,7 @@ const templatesSlice = createSlice({
           action.payload.birthCertificateTemplate;
         state.labReportUiTemplate = action.payload.labReportUiTemplate;
         state.labBillingTemplate = action.payload.labBillingTemplate || "";
+        state.opdBillTokenTemplate = action.payload.opdBillTokenTemplate || "";
       })
       .addCase(fetchTemplates.rejected, (state, action) => {
         state.status = "failed";
@@ -193,18 +195,15 @@ const templatesSlice = createSlice({
         state.updateTempleteStatus = "loading";
       })
       .addCase(updateTemplate.fulfilled, (state, action) => {
-        // Update both diagnosis and lab test templates based on the response
         state.updateTempleteStatus = "succeeded";
         if (action.payload.diagnosisTemplate) {
           state.diagnosisTemplate = action.payload.diagnosisTemplate;
         }
-        if(action.payload.medicinelist)
-        {
-          state.medicinelist  =action.payload.medicinelist
+        if (action.payload.medicinelist) {
+          state.medicinelist = action.payload.medicinelist;
         }
-        if(action.payload.comorbidities)
-        {
-          state.comorbidities=action.payload.comorbidities
+        if (action.payload.comorbidities) {
+          state.comorbidities = action.payload.comorbidities;
         }
         if (action.payload.labTestsTemplate) {
           state.labTestsTemplate = action.payload.labTestsTemplate;
@@ -225,6 +224,9 @@ const templatesSlice = createSlice({
         }
         if (action.payload.dischargeFormTemplates) {
           state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
+        }
+        if (action.payload.opdBillTokenTemplate) {
+          state.opdBillTokenTemplate = action.payload.opdBillTokenTemplate;
         }
       })
       .addCase(updateTemplate.rejected, (state, action) => {

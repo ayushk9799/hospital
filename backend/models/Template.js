@@ -15,6 +15,7 @@ const templateSchema = new mongoose.Schema({
   opdPrescriptionTemplate: String,
   opdRxTemplate: String,
   labReportUiTemplate: String,
+  opdBillTokenTemplate: String,
   headerTemplateArray: [
     {
       name: String,
