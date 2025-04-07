@@ -13,6 +13,7 @@ import {
   Check,
   PlusCircle,
   Settings,
+  Plus,
 } from "lucide-react";
 import {
   Select,
@@ -21,9 +22,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Dialog, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "../ui/dialog";
 import { useToast } from "../../hooks/use-toast";
-import FieldSettingDialog from "./FieldSettingDialog";
+import { Textarea } from "../ui/textarea";
+import { useSelector } from "react-redux";
 
 export const FIELD_TYPES = [
   { value: "text", label: "Text Input" },
@@ -55,6 +65,13 @@ const SPECIAL_FIELDS = {
 };
 
 const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
+  const { toast } = useToast();
+  const { updateTempleteStatus } = useSelector((state) => state.templates);
+  const [editingField, setEditingField] = useState(null);
+  const [showAddField, setShowAddField] = useState(null);
+  const [selectedField, setSelectedField] = useState(null);
+  const [newTemplate, setNewTemplate] = useState({ name: "", content: "" });
+
   const [customConfig, setCustomConfig] = useState(() => {
     const mergeConfigs = (defaultConfig, enabledConfig) => {
       const mergedSections = defaultConfig.sections.map((defaultSection) => {
@@ -63,7 +80,6 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
         );
         const mergedFields = [];
 
-        // Merge default fields with enabled status
         defaultSection.fields.forEach((defaultField) => {
           const enabledField = enabledSection?.fields.find(
             (f) => f.id === defaultField.id
@@ -72,18 +88,17 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
             ...defaultField,
             hidden: !enabledField,
             templates: enabledField?.templates || defaultField.templates || [],
-            sectionId: defaultSection.id, // Add sectionId to each field
+            sectionId: defaultSection.id,
           });
         });
 
-        // Add enabled fields not present in default
         enabledSection?.fields.forEach((enabledField) => {
           if (!defaultSection.fields.some((f) => f.id === enabledField.id)) {
             mergedFields.push({
               ...enabledField,
               hidden: false,
               templates: enabledField.templates || [],
-              sectionId: defaultSection.id, // Add sectionId to each field
+              sectionId: defaultSection.id,
             });
           }
         });
@@ -91,7 +106,6 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
         return { ...defaultSection, fields: mergedFields };
       });
 
-      // Add sections from enabledConfig not present in default
       const enabledOnlySections = enabledConfig.sections
         .filter(
           (enabledSection) =>
@@ -103,7 +117,7 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
             ...field,
             hidden: false,
             templates: field.templates || [],
-            sectionId: section.id, // Add sectionId to each field
+            sectionId: section.id,
           })),
         }));
 
@@ -115,11 +129,6 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
 
     return mergeConfigs(config, enabledFields);
   });
-
-  const [editingField, setEditingField] = useState(null);
-  const [showAddField, setShowAddField] = useState(null);
-  const [showFieldSettings, setShowFieldSettings] = useState(false);
-  const { toast } = useToast();
 
   const handleDragEnd = (result) => {
     if (!result.destination) return;
@@ -168,7 +177,6 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
           fields: section.fields.map((field) => {
             if (field.id !== fieldId) return field;
 
-            // Preserve existing field properties and merge with updates
             const updatedField = {
               ...field,
               ...updates,
@@ -224,8 +232,36 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
     setShowAddField(null);
   };
 
-  const handleFieldSettings = (field) => {
-    setShowFieldSettings(field);
+  const handleAddTemplate = (field) => {
+    if (!newTemplate.name || !newTemplate.content) {
+      toast({
+        title: "Error",
+        description: "Both template name and content are required",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    handleEditField(field.sectionId, field.id, {
+      ...field,
+      templates: [...(field.templates || []), newTemplate],
+    });
+
+    setNewTemplate({ name: "", content: "" });
+  };
+
+  const handleRemoveTemplate = (field, index) => {
+    handleEditField(field.sectionId, field.id, {
+      ...field,
+      templates: field.templates.filter((_, i) => i !== index),
+    });
+  };
+
+  const isIdTaken = (id, currentId) => {
+    if (id === currentId) return false;
+    return customConfig.sections.some((section) =>
+      section.fields.some((field) => field.id === id && field.id !== currentId)
+    );
   };
 
   const AddFieldForm = ({ sectionId }) => {
@@ -234,12 +270,6 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
       type: "text",
       id: "",
     });
-
-    const isIdTaken = (id) => {
-      return customConfig.sections.some((section) =>
-        section.fields.some((field) => field.id === id)
-      );
-    };
 
     return (
       <div className="flex items-center gap-2 p-2 bg-secondary/5 rounded-md">
@@ -295,8 +325,176 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
     );
   };
 
+  const FieldSettingsContent = ({ field }) => {
+    const [localField, setLocalField] = useState({ ...field });
+
+    const handleFieldChange = (key, value) => {
+      setLocalField((prev) => ({
+        ...prev,
+        [key]: value,
+      }));
+    };
+
+    const handleSaveSettings = () => {
+      if (isIdTaken(localField.id, field.id)) {
+        toast({
+          title: "Error",
+          description: "Field ID must be unique",
+          variant: "destructive",
+        });
+        return;
+      }
+      handleEditField(field.sectionId, field.id, localField);
+      setSelectedField(null);
+    };
+
+    return (
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-0 p-0">
+        <DialogHeader className="px-6 py-4 border-b">
+          <DialogTitle>Field Settings: {field.label}</DialogTitle>
+        </DialogHeader>
+
+        <ScrollArea className="p-4 h-[90vh]">
+          <div className="space-y-4">
+            <Card className="p-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Field ID</Label>
+                  <Input
+                    value={localField.id}
+                    onChange={(e) => handleFieldChange("id", e.target.value)}
+                    placeholder="Unique field identifier"
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Field Label</Label>
+                  <Input
+                    value={localField.label}
+                    onChange={(e) => handleFieldChange("label", e.target.value)}
+                    placeholder="Field label"
+                    className="h-9"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">Field Type</Label>
+                  <Select
+                    value={localField.type}
+                    onValueChange={(value) => handleFieldChange("type", value)}
+                  >
+                    <SelectTrigger className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {FIELD_TYPES.map((type) => (
+                        <SelectItem key={type.value} value={type.value}>
+                          {type.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </Card>
+
+            {field.type === "textarea" &&
+              field.sectionId === "clinicalInfo" && (
+                <Card className="p-4">
+                  <div className="space-y-4">
+                    <Label className="text-lg font-semibold">
+                      Pre-saved Templates
+                    </Label>
+                    <div className="space-y-4">
+                      {field.templates?.map((template, index) => (
+                        <div
+                          key={index}
+                          className="flex items-start gap-2 p-3 bg-secondary/10 rounded-md border"
+                        >
+                          <div className="flex-1 space-y-2">
+                            <div className="flex items-center justify-between">
+                              <Label className="font-medium">
+                                {template.name}
+                              </Label>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  handleRemoveTemplate(field, index)
+                                }
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              {template.content}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      <div className="space-y-3 border-t pt-4">
+                        <Label className="text-sm font-medium">
+                          Add New Template
+                        </Label>
+                        <div className="space-y-3">
+                          <Input
+                            placeholder="Template Name"
+                            value={newTemplate.name}
+                            onChange={(e) =>
+                              setNewTemplate((prev) => ({
+                                ...prev,
+                                name: e.target.value,
+                              }))
+                            }
+                            className="h-9"
+                          />
+                          <Textarea
+                            placeholder="Template Content"
+                            value={newTemplate.content}
+                            onChange={(e) =>
+                              setNewTemplate((prev) => ({
+                                ...prev,
+                                content: e.target.value,
+                              }))
+                            }
+                            className="min-h-[100px]"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => handleAddTemplate(field)}
+                            className="w-full h-9"
+                          >
+                            <Plus className="h-4 w-4 mr-2" />
+                            Add Template
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Card>
+              )}
+          </div>
+        </ScrollArea>
+
+        <DialogFooter className="px-6 py-4 border-t">
+          <div className="flex justify-end gap-2">
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button
+              disabled={updateTempleteStatus === "loading"}
+              onClick={handleSaveSettings}
+            >
+              {updateTempleteStatus === "loading" ? "Saving " : "Save Settings"}
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    );
+  };
+
   const handleSave = () => {
-    // Create a clean version of the config without internal properties
     const cleanConfig = {
       ...customConfig,
       sections: customConfig.sections.map((section) => ({
@@ -305,9 +503,7 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
           .filter((field) => !field.hidden)
           .map((field) => {
             const cleanField = { ...field };
-            // Remove internal properties
             delete cleanField.sectionId;
-            // Only include templates if they exist
             if (!cleanField.templates?.length) {
               delete cleanField.templates;
             }
@@ -385,7 +581,6 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                                       }
                                       className="h-7 text-sm"
                                       autoFocus
-                                      //onBlur={() => setEditingField(null)}
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter") {
                                           setEditingField(null);
@@ -403,28 +598,24 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                                         </span>
                                       )}
                                     </Label>
-                                    <Dialog>
+                                    <Dialog
+                                      open={selectedField?.id === field.id}
+                                    >
                                       <DialogTrigger asChild>
                                         <Button
                                           variant="ghost"
                                           size="sm"
                                           className="h-7 w-7"
+                                          onClick={() =>
+                                            setSelectedField(field)
+                                          }
                                         >
                                           <Settings className="h-3 w-3" />
                                         </Button>
                                       </DialogTrigger>
-                                      <FieldSettingDialog
-                                        field={{
-                                          ...field,
-                                          sectionId: section.id,
-                                        }}
-                                        customConfig={customConfig}
-                                        onSave={handleSave}
-                                        handleEditField={handleEditField}
-                                        setShowFieldSettings={
-                                          setShowFieldSettings
-                                        }
-                                      />
+                                      {selectedField?.id === field.id && (
+                                        <FieldSettingsContent field={field} />
+                                      )}
                                     </Dialog>
                                     <Button
                                       variant="ghost"

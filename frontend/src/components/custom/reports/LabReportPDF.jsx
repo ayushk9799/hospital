@@ -192,7 +192,6 @@ const styles = {
 
 const LabReportPDF = React.forwardRef(
   ({ reportData, patientData, hospital }, ref) => {
-
     const headerTemplateStrings = useSelector(
       (state) => state.templates.headerTemplateArray
     );
@@ -209,7 +208,6 @@ const LabReportPDF = React.forwardRef(
     );
 
     // Add general print styles to the document
-   
 
     // Create a function that returns JSX from the template string
     const templateFunction = new Function(
@@ -220,7 +218,6 @@ const LabReportPDF = React.forwardRef(
     );
 
     try {
-     
       // Get the component function
       const ComponentFunction = templateFunction(React, HospitalHeader, styles);
       // Execute the component function with the props

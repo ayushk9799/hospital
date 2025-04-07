@@ -4,11 +4,19 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { editTemplate, deleteTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { X, Plus, ChevronLeft } from "lucide-react";
+import {
+  X,
+  Plus,
+  ChevronLeft,
+  GripVertical,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
+import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
 export default function EditTestTemplate() {
   const location = useLocation();
-  const templateName=location.state.name;
+  const templateName = location.state.name;
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { labTestsTemplate } = useSelector((state) => state.templates);
@@ -17,13 +25,72 @@ export default function EditTestTemplate() {
     name: "",
     rate: 0,
     fields: {},
+    notes: "",
+    sections: [],
+    order: [], // Array of {type: 'field'|'section', id: string}
   });
+
   useEffect(() => {
     const existingTemplate = labTestsTemplate.find(
       (t) => t.name.trim() === templateName.trim()
     );
-    
+
     if (existingTemplate) {
+      // Convert fields and sections into order array based on section positions
+      const fieldEntries = Object.keys(existingTemplate.fields);
+      const sections = existingTemplate.sections || [];
+
+      // Sort sections by position
+      const sortedSections = [...sections].sort(
+        (a, b) => a.position - b.position
+      );
+
+      // Build order array by inserting sections at their positions
+      let order = [];
+      let currentFieldIndex = 0;
+
+      // Add fields before first section
+      const firstSectionPos =
+        sortedSections.length > 0
+          ? sortedSections[0].position
+          : fieldEntries.length;
+      for (let i = 0; i < firstSectionPos; i++) {
+        if (currentFieldIndex < fieldEntries.length) {
+          order.push({ type: "field", id: fieldEntries[currentFieldIndex] });
+          currentFieldIndex++;
+        }
+      }
+
+      // Add remaining sections and fields
+      for (let i = 0; i < sortedSections.length; i++) {
+        const section = sortedSections[i];
+        const nextSectionPos =
+          i < sortedSections.length - 1
+            ? sortedSections[i + 1].position
+            : fieldEntries.length;
+
+        // Add the section
+        order.push({
+          type: "section",
+          id: section.id || Date.now().toString(),
+        });
+
+        // Add fields until next section position
+        const fieldsToAdd = nextSectionPos - section.position;
+        for (let j = 0; j < fieldsToAdd; j++) {
+          if (currentFieldIndex < fieldEntries.length) {
+            order.push({ type: "field", id: fieldEntries[currentFieldIndex] });
+            currentFieldIndex++;
+          }
+        }
+      }
+
+      // Add any remaining fields
+      while (currentFieldIndex < fieldEntries.length) {
+        order.push({ type: "field", id: fieldEntries[currentFieldIndex] });
+        currentFieldIndex++;
+      }
+
       setTemplateData({
         ...existingTemplate,
         fields: Object.entries(existingTemplate.fields).reduce(
@@ -33,6 +100,12 @@ export default function EditTestTemplate() {
           }),
           {}
         ),
+        sections: (existingTemplate.sections || []).map((section) => ({
+          ...section,
+          id: section.id || Date.now().toString(),
+          isCollapsed: false,
+        })),
+        order: order,
       });
     }
   }, [templateName, labTestsTemplate]);
@@ -50,29 +123,112 @@ export default function EditTestTemplate() {
     }));
   };
 
-  const handleAddNewField = () => {
+  const handleAddNewField = (position = null) => {
     const newFieldKey = `new-field-${Date.now()}`;
-    setTemplateData((prev) => ({
-      ...prev,
-      fields: {
-        ...prev.fields,
-        [newFieldKey]: {
-          label: "New Field",
-          value: "",
-          unit: "",
-          normalRange: "",
-          options: [],
-          fieldName: newFieldKey,
-          isNew: true,
+    const newField = {
+      label: "New Field",
+      value: "",
+      unit: "",
+      normalRange: "",
+      options: [],
+      fieldName: newFieldKey,
+      isNew: true,
+    };
+
+    setTemplateData((prev) => {
+      const newOrder = [...prev.order];
+      const newItem = { type: "field", id: newFieldKey };
+
+      if (position !== null) {
+        newOrder.splice(position + 1, 0, newItem);
+      } else {
+        newOrder.push(newItem);
+      }
+
+      return {
+        ...prev,
+        fields: {
+          ...prev.fields,
+          [newFieldKey]: newField,
         },
-      },
-    }));
+        order: newOrder,
+      };
+    });
+  };
+
+  const handleAddSection = (position = null) => {
+    const newSection = {
+      id: Date.now().toString(),
+      name: "New Section",
+      isCollapsed: false,
+    };
+
+    setTemplateData((prev) => {
+      const newOrder = [...prev.order];
+      const newItem = { type: "section", id: newSection.id };
+
+      if (position !== null) {
+        newOrder.splice(position + 1, 0, newItem);
+      } else {
+        newOrder.push(newItem);
+      }
+
+      return {
+        ...prev,
+        sections: [...prev.sections, newSection],
+        order: newOrder,
+      };
+    });
   };
 
   const handleRemoveField = (fieldKey) => {
-    const newFields = { ...templateData.fields };
-    delete newFields[fieldKey];
-    setTemplateData((prev) => ({ ...prev, fields: newFields }));
+    setTemplateData((prev) => {
+      const newFields = { ...prev.fields };
+      delete newFields[fieldKey];
+      return {
+        ...prev,
+        fields: newFields,
+        order: prev.order.filter(
+          (item) => !(item.type === "field" && item.id === fieldKey)
+        ),
+      };
+    });
+  };
+
+  const handleRemoveSection = (sectionId) => {
+    setTemplateData((prev) => ({
+      ...prev,
+      sections: prev.sections.filter((section) => section.id !== sectionId),
+      order: prev.order.filter(
+        (item) => !(item.type === "section" && item.id === sectionId)
+      ),
+    }));
+  };
+
+  const handleDragEnd = (result) => {
+    if (!result.destination) return;
+
+    const { source, destination } = result;
+
+    const newOrder = Array.from(templateData.order);
+    const [removed] = newOrder.splice(source.index, 1);
+    newOrder.splice(destination.index, 0, removed);
+
+    setTemplateData((prev) => ({
+      ...prev,
+      order: newOrder,
+    }));
+  };
+
+  const toggleSectionCollapse = (sectionId) => {
+    setTemplateData((prev) => ({
+      ...prev,
+      sections: prev.sections.map((section) =>
+        section.id === sectionId
+          ? { ...section, isCollapsed: !section.isCollapsed }
+          : section
+      ),
+    }));
   };
 
   const processFieldsBeforeSave = (fields) => {
@@ -102,9 +258,37 @@ export default function EditTestTemplate() {
     e.preventDefault();
     try {
       const processedFields = processFieldsBeforeSave(templateData.fields);
+
+      // Convert the visual order into section positions
+      const allItems = templateData.order.map((item, index) => ({
+        ...item,
+        visualPosition: index,
+      }));
+
+      // Find field positions for sections
+      const sectionsWithPositions = templateData.sections.map((section) => {
+        const sectionIndex = allItems.findIndex(
+          (item) => item.type === "section" && item.id === section.id
+        );
+
+        // Count how many fields appear before this section
+        const fieldsBeforeSection = allItems
+          .slice(0, sectionIndex)
+          .filter((item) => item.type === "field").length;
+
+        return {
+          name: section.name,
+          position: fieldsBeforeSection,
+        };
+      });
+
+      // Create the final template without the order array
       const updatedTemplate = {
-        ...templateData,
+        name: templateData.name,
+        rate: templateData.rate,
         fields: processedFields,
+        notes: templateData.notes,
+        sections: sectionsWithPositions,
       };
 
       await dispatch(
@@ -136,16 +320,12 @@ export default function EditTestTemplate() {
     }
   };
 
-  const handleBack = () => {
-    navigate(-1);
-  };
-
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <Button
-            onClick={handleBack}
+            onClick={() => navigate(-1)}
             variant="ghost"
             size="icon"
             className="h-8 w-8 p-0"
@@ -159,120 +339,259 @@ export default function EditTestTemplate() {
         </Button>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="space-y-6 bg-white p-6 rounded-lg shadow-md"
-      >
-        <div className="grid grid-cols-2 gap-4">
-          <div className="flex items-center gap-3 col-span-2">
-            <label className="whitespace-nowrap text-sm font-medium text-gray-700 w-32">
-              Template Name:
-            </label>
-            <div className="flex-1 flex items-center">
-              <Input
-                className="flex-1"
-                value={templateData.name}
-                onChange={(e) =>
-                  setTemplateData({ ...templateData, name: e.target.value })
-                }
-              />
-              <div className="flex items-center ml-4">
-                <label className="whitespace-nowrap text-sm font-medium text-gray-700 mr-3">
-                  Rate:
-                </label>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="flex items-center gap-3 col-span-2">
+              <label className="whitespace-nowrap text-sm font-medium text-gray-700 w-32">
+                Template Name:
+              </label>
+              <div className="flex-1 flex items-center">
                 <Input
-                  type="number"
-                  className="w-[150px] text-right"
-                  value={templateData.rate}
+                  className="flex-1"
+                  value={templateData.name}
                   onChange={(e) =>
-                    setTemplateData({ ...templateData, rate: e.target.value })
+                    setTemplateData({ ...templateData, name: e.target.value })
                   }
                 />
-                <span className="ml-2 text-sm text-gray-600">₹</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold">Test Fields</h3>
-            <Button
-              type="button"
-              onClick={handleAddNewField}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              <Plus className="mr-2 h-4 w-4" /> Add Field
-            </Button>
-          </div>
-
-          <div className="border rounded-lg overflow-hidden">
-            <div className="grid grid-cols-[1fr,1fr,1fr,2fr,auto] gap-4 bg-gray-50 p-3 border-b">
-              <div className="font-medium text-sm text-gray-600">Label</div>
-              <div className="font-medium text-sm text-gray-600">Unit</div>
-              <div className="font-medium text-sm text-gray-600">
-                Normal Range
-              </div>
-              <div className="font-medium text-sm text-gray-600">Options</div>
-              <div className="w-10"></div>
-            </div>
-
-            <div className="divide-y">
-              {Object.entries(templateData.fields).map(([fieldKey, field]) => (
-                <div
-                  key={fieldKey}
-                  className="grid grid-cols-[1fr,1fr,1fr,2fr,auto] gap-4 p-3 items-center hover:bg-gray-50"
-                >
+                <div className="flex items-center ml-4">
+                  <label className="whitespace-nowrap text-sm font-medium text-gray-700 mr-3">
+                    Rate:
+                  </label>
                   <Input
-                    className="h-8 font-bold"
-                    value={field.label}
+                    type="number"
+                    className="w-[150px] text-right"
+                    value={templateData.rate}
                     onChange={(e) =>
-                      handleFieldChange(fieldKey, "label", e.target.value)
+                      setTemplateData({ ...templateData, rate: e.target.value })
                     }
                   />
-                  <Input
-                    className="h-8"
-                    value={field.unit}
-                    onChange={(e) =>
-                      handleFieldChange(fieldKey, "unit", e.target.value)
-                    }
-                  />
-                  <Input
-                    className="h-8"
-                    value={field.normalRange}
-                    onChange={(e) =>
-                      handleFieldChange(fieldKey, "normalRange", e.target.value)
-                    }
-                  />
-                  <Input
-                    className="h-8"
-                    value={
-                      Array.isArray(field.options)
-                        ? field.options.join(", ")
-                        : field.options
-                    }
-                    onChange={(e) =>
-                      handleFieldChange(fieldKey, "options", e.target.value)
-                    }
-                    placeholder="Comma separated values"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
-                    onClick={() => handleRemoveField(fieldKey)}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <span className="ml-2 text-sm text-gray-600">₹</span>
                 </div>
-              ))}
+              </div>
+            </div>
+
+            <div className="col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Notes:
+              </label>
+              <textarea
+                className="w-full p-2 border rounded-md"
+                rows={3}
+                value={templateData.notes || ""}
+                onChange={(e) =>
+                  setTemplateData({ ...templateData, notes: e.target.value })
+                }
+                placeholder="Add any notes about this test template..."
+              />
             </div>
           </div>
         </div>
 
-        <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-semibold">Test Fields and Sections</h2>
+            <div className="space-x-2">
+              <Button
+                type="button"
+                onClick={() => handleAddNewField()}
+                size="sm"
+                variant="outline"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add Field
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleAddSection()}
+                size="sm"
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Plus className="mr-2 h-4 w-4" /> Add Section
+              </Button>
+            </div>
+          </div>
+
+          <DragDropContext onDragEnd={handleDragEnd}>
+            <Droppable droppableId="main-list">
+              {(provided) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className="space-y-2"
+                >
+                  {templateData.order.map((item, index) => (
+                    <Draggable
+                      key={`${item.type}-${item.id}`}
+                      draggableId={`${item.type}-${item.id}`}
+                      index={index}
+                    >
+                      {(provided) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          className={`bg-white rounded-lg shadow-sm ${
+                            item.type === "section"
+                              ? "border-l-4 border-green-500"
+                              : ""
+                          }`}
+                        >
+                          {item.type === "field" ? (
+                            // Field Item
+                            <div className="p-3">
+                              <div className="flex items-center gap-4">
+                                <div {...provided.dragHandleProps}>
+                                  <GripVertical className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <div className="grid grid-cols-[1fr,1fr,1fr,2fr,auto] gap-4 flex-1">
+                                  <Input
+                                    className="h-8"
+                                    value={
+                                      templateData.fields[item.id]?.label || ""
+                                    }
+                                    onChange={(e) =>
+                                      handleFieldChange(
+                                        item.id,
+                                        "label",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <Input
+                                    className="h-8"
+                                    value={
+                                      templateData.fields[item.id]?.unit || ""
+                                    }
+                                    onChange={(e) =>
+                                      handleFieldChange(
+                                        item.id,
+                                        "unit",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <Input
+                                    className="h-8"
+                                    value={
+                                      templateData.fields[item.id]
+                                        ?.normalRange || ""
+                                    }
+                                    onChange={(e) =>
+                                      handleFieldChange(
+                                        item.id,
+                                        "normalRange",
+                                        e.target.value
+                                      )
+                                    }
+                                  />
+                                  <Input
+                                    className="h-8"
+                                    value={
+                                      Array.isArray(
+                                        templateData.fields[item.id]?.options
+                                      )
+                                        ? templateData.fields[
+                                            item.id
+                                          ].options.join(", ")
+                                        : templateData.fields[item.id]
+                                            ?.options || ""
+                                    }
+                                    onChange={(e) =>
+                                      handleFieldChange(
+                                        item.id,
+                                        "options",
+                                        e.target.value
+                                      )
+                                    }
+                                    placeholder="Comma separated values"
+                                  />
+                                  <div className="flex gap-2">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
+                                      onClick={() => handleRemoveField(item.id)}
+                                    >
+                                      <X className="h-4 w-4" />
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            // Section Item
+                            <div className="p-3">
+                              <div className="flex items-center gap-4">
+                                <div {...provided.dragHandleProps}>
+                                  <GripVertical className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-0 h-8 w-8"
+                                  onClick={() => toggleSectionCollapse(item.id)}
+                                >
+                                  {templateData.sections.find(
+                                    (s) => s.id === item.id
+                                  )?.isCollapsed ? (
+                                    <ChevronRight className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronDown className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <Input
+                                  className="h-8 font-medium flex-1"
+                                  value={
+                                    templateData.sections.find(
+                                      (s) => s.id === item.id
+                                    )?.name || ""
+                                  }
+                                  onChange={(e) => {
+                                    setTemplateData((prev) => ({
+                                      ...prev,
+                                      sections: prev.sections.map((section) =>
+                                        section.id === item.id
+                                          ? { ...section, name: e.target.value }
+                                          : section
+                                      ),
+                                    }));
+                                  }}
+                                />
+                                <div className="flex gap-2">
+                                  <Button
+                                    type="button"
+                                    onClick={() => handleAddNewField(index)}
+                                    size="sm"
+                                    variant="outline"
+                                  >
+                                    <Plus className="mr-2 h-4 w-4" /> Add Field
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-8 w-8 p-0 text-red-500 hover:bg-red-50"
+                                    onClick={() => handleRemoveSection(item.id)}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </div>
+
+        <div className="flex justify-end space-x-3 pt-6">
           <Button
             type="submit"
             className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -280,6 +599,7 @@ export default function EditTestTemplate() {
             Save Changes
           </Button>
           <Button
+            type="button"
             variant="outline"
             className="border-gray-300 text-gray-700 hover:bg-gray-50"
             onClick={() => navigate("/settings/lab-templates")}

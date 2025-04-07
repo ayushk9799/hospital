@@ -122,13 +122,13 @@ const Lab = () => {
     setSelectedTest(null);
   };
 
-  const handleReportSelection = (report) => {
+  const handleReportSelection = (report, template) => {
     setSelectedReports((prev) => {
       const isSelected = prev.some((r) => r.name === report.name);
       if (isSelected) {
         return prev.filter((r) => r.name !== report.name);
       } else {
-        return [...prev, report];
+        return [...prev, {...report,sections:template.sections}];
       }
     });
   };
@@ -360,7 +360,7 @@ const Lab = () => {
                                         (report) =>
                                           report?.name?.toLowerCase() ===
                                           template?.name?.toLowerCase()
-                                      )
+                                      ),template
                                     )
                                   }
                                 />

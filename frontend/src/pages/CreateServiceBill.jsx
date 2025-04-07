@@ -57,6 +57,12 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 import PaymentDialog from "../components/custom/billing/PaymentDialog";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip";
 
 const CreateServiceBill = ({
   initialBillId,
@@ -215,11 +221,6 @@ const CreateServiceBill = ({
           };
 
           const formattedServices = services.map((service, index) => {
-            const discountedRate =
-              service.category === "Surgery"
-                ? service.rate - billData.additionalDiscount
-                : service.rate;
-
             return {
               id: index + 1,
               service: service.name,
@@ -228,8 +229,8 @@ const CreateServiceBill = ({
               type: service.type,
               category: service.category,
               quantity: service.quantity,
-              rate: discountedRate,
-              total: discountedRate * service.quantity,
+              rate: service.rate,
+              total: service.rate * service.quantity,
               isExisting: true,
             };
           });
@@ -291,10 +292,13 @@ const CreateServiceBill = ({
 
     // Calculate the base amount (portion of original subtotal that wasn't from services)
     const baseAmount = Math.max(0, originalSubtotal - currentServicesTotal);
-
+    console.log("calculate");
+    console.log(targetTotal);
     // If in break total mode, use target total as the main total
-    if (breakTotalMode && targetTotal) {
-      const targetTotalValue = parseFloat(targetTotal);
+    if (breakTotalMode) {
+      const targetTotalValue = parseFloat(targetTotal || 0);
+      console.log("targetTotalValue", targetTotalValue);
+      console.log("additionalDiscount", additionalDiscount);
 
       let discountValue = 0;
       if (additionalDiscount !== "") {
@@ -316,16 +320,11 @@ const CreateServiceBill = ({
         currentServicesSubtotal: currentServicesTotal,
         totalAmountPaid:
           billData?.amountPaid || billData?.services?.[0]?.amountPaid || 0,
-        baseAmount,
       };
     }
 
     // Normal mode calculation
-    // Use manualSubtotal if it exists, otherwise calculate from services
-    const subtotal =
-      manualSubtotal !== null
-        ? parseFloat(manualSubtotal)
-        : currentServicesTotal + baseAmount;
+    const subtotal = currentServicesTotal;
 
     let discountValue = 0;
     if (additionalDiscount !== "") {
@@ -346,7 +345,6 @@ const CreateServiceBill = ({
       currentServicesSubtotal: currentServicesTotal,
       totalAmountPaid:
         billData?.amountPaid || billData?.services?.[0]?.amountPaid || 0,
-      baseAmount,
     };
   }, [
     addedServices,
@@ -355,8 +353,18 @@ const CreateServiceBill = ({
     billData,
     breakTotalMode,
     targetTotal,
-    manualSubtotal, // Add manualSubtotal to dependencies
+    manualSubtotal,
   ]);
+
+  useEffect(() => {
+    console.log("useffect toalt amoint");
+    console.log(calculateTotals);
+    if (calculateTotals.totalAmount) {
+      console.log(calculateTotals.totalAmount);
+      setTargetTotal(calculateTotals.totalAmount);
+    }
+  }, [calculateTotals]);
+
   useEffect(() => {
     if (servicesStatus === "idle") dispatch(fetchServices());
   }, [dispatch, servicesStatus]);
@@ -489,11 +497,6 @@ const CreateServiceBill = ({
     // Update target total based on existing services
   };
 
-  useEffect(() => {
-    if (calculateTotals.totalAmount) {
-      setTargetTotal(calculateTotals.totalAmount.toString());
-    }
-  }, [calculateTotals.totalAmount]);
   const handleAddService = (e) => {
     e.preventDefault();
 
@@ -503,7 +506,7 @@ const CreateServiceBill = ({
     if (breakTotalMode && targetTotal) {
       // Check if adding this service would exceed target total
       const currentBreakupTotal = addedServices
-        .filter((ser) => ser.type === "breakup")
+        .filter((ser) => ser.type === "breakup" || ser.category === "Room Rent")
         .reduce((sum, service) => sum + service.total, 0);
 
       if (currentBreakupTotal + totalValue > parseFloat(targetTotal)) {
@@ -827,7 +830,11 @@ const CreateServiceBill = ({
           className="h-4 w-4 rounded border-gray-300"
         />
         <label htmlFor="breakTotalMode" className="text-sm font-medium">
-          Break Total Mode
+          Break Total Mode{" "}
+          <span className="text-xs text-gray-500">
+            (To be only used when <span className="font-bold text-black">net total</span>{" "}
+            has to be divided)
+          </span>
         </label>
       </div>
       {breakTotalMode && (
@@ -904,16 +911,6 @@ const CreateServiceBill = ({
 
     setBillDataForPrint(formattedBillData);
     setIsPaymentDialogOpen(true);
-  };
-
-  // Modify the subtotal input handler
-  const handleSubtotalChange = (e) => {
-    const value = e.target.value;
-    setManualSubtotal(value === "" ? null : parseFloat(value));
-    setBillData((prev) => ({
-      ...prev,
-      subtotal: value,
-    }));
   };
 
   return (
@@ -1148,8 +1145,8 @@ const CreateServiceBill = ({
                     <TableHead>Service</TableHead>
                     <TableHead>Date</TableHead>
                     <TableHead>Quantity</TableHead>
-                    <TableHead>Rate</TableHead>
-                    <TableHead>Total</TableHead>
+                    <TableHead className="text-right">Rate</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
                     <TableHead className="text-right">Action</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -1182,10 +1179,10 @@ const CreateServiceBill = ({
                             : "-"}
                         </TableCell>
                         <TableCell>{service.quantity}</TableCell>
-                        <TableCell>
+                        <TableCell className="text-right">
                           {service.rate.toLocaleString("en-IN")}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-right">
                           {service.total.toLocaleString("en-IN")}
                         </TableCell>
                         <TableCell className="text-right">
@@ -1221,24 +1218,19 @@ const CreateServiceBill = ({
         <CardContent className="p-1">
           <div className="flex flex-col items-end space-y-0.5">
             {/* Subtotal */}
-            <div className="flex justify-end w-48 items-center text-sm">
-              <span className="text-gray-600 mr-3">Subtotal:</span>
+            <div className="flex justify-end w-48 items-center text-[14px]">
+              <span className="text-gray-600 mr-3 ">Subtotal(₹):</span>
               <div className="flex items-center">
-                <span className="mr-1">₹</span>
-                <Input
-                  value={parseFloat(calculateTotals.subtotal || 0).toFixed(2)}
-                  onChange={handleSubtotalChange}
-                  className="w-20 h-7 text-right font-medium border-0 p-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
-                  placeholder="0.00"
-                />
+                <span className="text-right font-medium">
+                  {parseFloat(calculateTotals.subtotal || 0).toFixed(2)}
+                </span>
               </div>
             </div>
 
             {/* Discount */}
             <div className="flex justify-end w-48 items-center text-sm">
-              <span className="text-gray-600 mr-3">Discount:</span>
+              <span className="text-gray-600 mr-3">Discount(₹):</span>
               <div className="flex items-center">
-                <span className="text-red-600 mr-1">₹</span>
                 <Input
                   value={(parseFloat(additionalDiscount) || 0).toFixed(2)}
                   onChange={(e) => setAdditionalDiscount(e.target.value)}
@@ -1250,9 +1242,8 @@ const CreateServiceBill = ({
 
             {/* Total */}
             <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
-              <span className="font-medium mr-3">Net Total:</span>
+              <span className="font-medium mr-3">Net Total(₹):</span>
               <span className="font-medium">
-                ₹
                 {calculateTotals.totalAmount?.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -1262,9 +1253,8 @@ const CreateServiceBill = ({
 
             {/* Amount Paid */}
             <div className="flex justify-end w-48 items-center text-sm">
-              <span className="text-gray-600 mr-3">Paid:</span>
+              <span className="text-gray-600 mr-3">Paid(₹):</span>
               <span className="text-green-600 font-bold">
-                ₹
                 {calculateTotals.totalAmountPaid?.toLocaleString("en-IN", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
@@ -1274,9 +1264,8 @@ const CreateServiceBill = ({
 
             {/* Amount Due */}
             <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
-              <span className="text-gray-600 mr-3">Balance:</span>
+              <span className="text-gray-600 mr-3">Balance Due(₹):</span>
               <span className="text-red-600 font-bold">
-                ₹
                 {(
                   calculateTotals.totalAmount -
                   (calculateTotals.totalAmountPaid || 0)

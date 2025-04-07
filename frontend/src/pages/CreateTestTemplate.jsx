@@ -73,7 +73,8 @@ export default function CreateTestTemplate() {
   const handleSelectAllFields = (category, test) => {
     const formattedCategory = formatKey(category);
     const fields = labReportFields[formattedCategory]?.[test] || [];
-
+    console.log(fields);
+    console.log(test);
     const updatedFields = {};
     fields.forEach((field) => {
       updatedFields[field.name] = {
@@ -82,6 +83,7 @@ export default function CreateTestTemplate() {
         unit: field.unit || "",
         normalRange: field.normalRange || "",
         options: field.options || "",
+        calculationDetails: field.calculationDetails || null,
         isSelected: true,
       };
     });
@@ -111,6 +113,7 @@ export default function CreateTestTemplate() {
             unit: field.unit || "",
             normalRange: field.normalRange || "",
             options: field.options || "",
+            calculationDetails: field.calculationDetails || null,
             isSelected:
               !prev[formattedCategory]?.[formattedTest]?.[field.name]
                 ?.isSelected,
@@ -192,6 +195,8 @@ export default function CreateTestTemplate() {
       return;
     }
 
+    console.log(selectedFields);
+
     const template = {
       name: templateName,
       rate: Number(rate) || 0,
@@ -213,6 +218,9 @@ export default function CreateTestTemplate() {
                       .map((opt) => opt.trim())
                       .filter((opt) => opt !== ""),
                   }),
+                ...(field.calculationDetails && {
+                  calculationDetails: field.calculationDetails,
+                }),
               },
             }),
             {}
@@ -236,6 +244,9 @@ export default function CreateTestTemplate() {
                   normalRange: field.normalRange,
                   ...(processedOptions.length > 0 && {
                     options: processedOptions,
+                  }),
+                  ...(field.calculationDetails && {
+                    calculationDetails: field.calculationDetails,
                   }),
                 };
               });
@@ -356,6 +367,7 @@ export default function CreateTestTemplate() {
             unit: param.field.unit || "",
             normalRange: param.field.normalRange || "",
             options: param.field.options || "",
+            calculationDetails: param.field.calculationDetails || null,
             isSelected: true,
           },
         },
@@ -448,6 +460,7 @@ export default function CreateTestTemplate() {
             unit: "",
             normalRange: "",
             options: "",
+            calculationDetails: null,
             isSelected: true,
             isCustom: true,
           },
@@ -473,6 +486,7 @@ export default function CreateTestTemplate() {
         unit: "",
         normalRange: "",
         options: "",
+        calculationDetails: null,
         isSelected: true,
         isCustom: true,
       },
@@ -781,6 +795,7 @@ export default function CreateTestTemplate() {
                             unit: field.unit,
                             normalRange: field.normalRange,
                             options: field.options,
+                            calculationDetails: field.calculationDetails,
                             isCustom: true,
                           })),
                       ].map((field) => {
@@ -920,17 +935,6 @@ export default function CreateTestTemplate() {
                                         )
                                       }
                                     />
-                                    {fieldErrors[
-                                      `${formattedCategory}-${test}-${field.name}-normalRange`
-                                    ] && (
-                                      <p className="text-red-500 text-xs mt-1">
-                                        {
-                                          fieldErrors[
-                                            `${formattedCategory}-${test}-${field.name}-normalRange`
-                                          ]
-                                        }
-                                      </p>
-                                    )}
                                   </div>
                                   <Input
                                     placeholder="Options (comma separated)"
@@ -945,6 +949,35 @@ export default function CreateTestTemplate() {
                                       )
                                     }
                                   />
+                                  {selectedField.calculationDetails && (
+                                    <div className="mt-2 p-2 bg-gray-50 rounded border">
+                                      <h5 className="text-sm font-semibold mb-1">
+                                        Calculation Details
+                                      </h5>
+                                      <div className="space-y-1 text-sm">
+                                        <p>
+                                          <span className="font-medium">
+                                            Formula:{" "}
+                                          </span>
+                                          {
+                                            selectedField.calculationDetails
+                                              .formula
+                                          }
+                                        </p>
+                                        {selectedField.calculationDetails
+                                          .dependencies && (
+                                          <p>
+                                            <span className="font-medium">
+                                              Dependencies:{" "}
+                                            </span>
+                                            {selectedField.calculationDetails.dependencies.join(
+                                              ", "
+                                            )}
+                                          </p>
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
                                 </div>
                               )}
                           </div>

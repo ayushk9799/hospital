@@ -11,7 +11,7 @@ import { format, subMonths, isBefore } from "date-fns";
 import { cn } from "../lib/utils";
 
 // backend url
-export const Backend_URL = "https://thehospital.in";
+export const Backend_URL = "http://localhost:3000";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -207,7 +207,10 @@ export const convertTo12Hour = (time24) => {
         minute >= 0 &&
         minute <= 59
       ) {
-        return `${hours.padStart(2,"0")}:${minutes.padStart(2, "0")} ${upperPeriod}`;
+        return `${hours.padStart(2, "0")}:${minutes.padStart(
+          2,
+          "0"
+        )} ${upperPeriod}`;
       }
     }
   }
@@ -233,7 +236,9 @@ export const convertTo12Hour = (time24) => {
     const ampm = hour >= 12 ? "PM" : "AM";
     const hour12 = hour % 12 || 12; // Convert to 12-hour format
 
-    return `${hour12.toString().padStart(2,"0")}:${minutes.toString().padStart(2, "0")} ${ampm}`;
+    return `${hour12.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")} ${ampm}`;
   } catch (error) {
     return "";
   }
@@ -423,18 +428,30 @@ export const labReportFields = {
         label: "Mean Corpuscular Volume (MCV)",
         unit: "fL",
         normalRange: "80-100",
+        calculationDetails: {
+          formula: "(hematocrit/rbc)*10",
+          dependencies: ["hematocrit", "rbc"],
+        },
       },
       {
         name: "mch",
         label: "Mean Corpuscular Hemoglobin (MCH)",
         unit: "pg",
         normalRange: "27-31",
+        calculationDetails: {
+          formula: "(hemoglobin/rbc)*10",
+          dependencies: ["hemoglobin", "rbc"],
+        },
       },
       {
         name: "mchc",
         label: "Mean Corpuscular Hemoglobin Concentration (MCHC)",
         unit: "g/dL",
         normalRange: "32-36",
+        calculationDetails: {
+          formula: "(hemoglobin/hematocrit)*100",
+          dependencies: ["hemoglobin", "hematocrit"],
+        },
       },
       {
         name: "rdw",
@@ -484,30 +501,50 @@ export const labReportFields = {
         label: "Absolute Neutrophils",
         unit: "10^3/µL",
         normalRange: "2.0-7.0",
+        calculationDetails: {
+          formula: "(wbc * neutrophils) / 100",
+          dependencies: ["wbc", "neutrophils"],
+        },
       },
       {
         name: "abs_lymphocytes",
         label: "Absolute Lymphocytes",
         unit: "10^3/µL",
         normalRange: "1.0-3.0",
+        calculationDetails: {
+          formula: "(wbc * lymphocytes) / 100",
+          dependencies: ["wbc", "lymphocytes"],
+        },
       },
       {
         name: "abs_monocytes",
         label: "Absolute Monocytes",
         unit: "10^3/µL",
         normalRange: "0.2-1.0",
+        calculationDetails: {
+          formula: "(wbc * monocytes) / 100",
+          dependencies: ["wbc", "monocytes"],
+        },
       },
       {
         name: "abs_eosinophils",
         label: "Absolute Eosinophils",
         unit: "10^3/µL",
         normalRange: "0.02-0.5",
+        calculationDetails: {
+          formula: "(wbc * eosinophils) / 100",
+          dependencies: ["wbc", "eosinophils"],
+        },
       },
       {
         name: "abs_basophils",
         label: "Absolute Basophils",
         unit: "10^3/µL",
         normalRange: "0.02-0.1",
+        calculationDetails: {
+          formula: "(wbc * basophils) / 100",
+          dependencies: ["wbc", "basophils"],
+        },
       },
     ],
     "Erythrocyte Sedimentation Rate": [
@@ -769,7 +806,15 @@ export const labReportFields = {
         name: "ldl",
         label: "LDL Cholesterol",
         unit: "mg/dL",
-        normalRange: "<100",
+        normalRange: "<130",
+        calculationDetails: {
+          formula: "total_cholesterol - hdl_cholesterol - (triglycerides / 5)",
+          dependencies: [
+            "total_cholesterol",
+            "hdl_cholesterol",
+            "triglycerides",
+          ],
+        },
       },
       {
         name: "hdl",
@@ -788,12 +833,20 @@ export const labReportFields = {
         label: "VLDL Cholesterol",
         unit: "mg/dL",
         normalRange: "<30",
+        calculationDetails: {
+          formula: "triglycerides / 5",
+          dependencies: ["triglycerides"],
+        },
       },
       {
         name: "cholesterol_hdl_ratio",
         label: "Cholesterol/HDL Ratio",
         unit: "",
         normalRange: "<3.5",
+        calculationDetails: {
+          formula: "total_cholesterol / hdl_cholesterol",
+          dependencies: ["total_cholesterol", "hdl_cholesterol"],
+        },
       },
     ],
     "Liver Function Tests": [
@@ -840,6 +893,10 @@ export const labReportFields = {
         label: "A/G Ratio",
         unit: "",
         normalRange: "1.2-2.2",
+        calculationDetails: {
+          formula: "albumin / globulin",
+          dependencies: ["albumin", "globulin"],
+        },
       },
       {
         name: "ggt",
@@ -878,6 +935,10 @@ export const labReportFields = {
         label: "BUN/Creatinine Ratio",
         unit: "",
         normalRange: "6-22",
+        calculationDetails: {
+          formula: "urea / creatinine",
+          dependencies: ["urea", "creatinine"],
+        },
       },
       {
         name: "creatinine",
@@ -889,6 +950,11 @@ export const labReportFields = {
         name: "gfr",
         label: "Estimated Glomerular Filtration Rate (eGFR)",
         unit: "mL/min/1.73m²",
+        calculationDetails: {
+          formula:
+            "142 * Math.min(creatinine/0.9, 1)**-0.411 * Math.max(creatinine/0.9, 1)**-1.209 * 0.993**age * (female ? 1.018 : 1)",
+          dependencies: ["creatinine", "age", "gender"],
+        },
         normalRange: ">90",
       },
       {
@@ -921,12 +987,20 @@ export const labReportFields = {
         label: "Albumin/Globulin Ratio (A:G Ratio)",
         unit: "",
         normalRange: "0.90-2.00",
+        calculationDetails: {
+          formula: "albumin / globulin",
+          dependencies: ["albumin", "globulin"],
+        },
       },
       {
         name: "globulin",
         label: "Globulin (Calculated)",
         unit: "g/dL",
         normalRange: "",
+        calculationDetails: {
+          formula: "total_protein - albumin",
+          dependencies: ["total_protein", "albumin"],
+        },
       },
       {
         name: "calcium",
@@ -1128,6 +1202,10 @@ export const labReportFields = {
         name: "homa_ir",
         label: "HOMA-IR",
         unit: "",
+        calculationDetails: {
+          formula: "insulin * fasting_glucose / 405",
+          dependencies: ["insulin", "fasting_glucose"],
+        },
         normalRange: "<2.5",
       },
     ],

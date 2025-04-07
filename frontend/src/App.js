@@ -79,7 +79,8 @@ import LabTemplatePreview from "./pages/LabTemplatePreview";
 import LabBillingTemplatePreview from "./pages/LabBillingTemplatePreview";
 import { fetchHospitalSettings } from "./redux/slices/hospitalSettingsSlice";
 import HospitalSettings from "./pages/HospitalSettings";
-
+import ConsultationFees from "./pages/ConsultationFees";
+import { fetchConsultationFees } from "./redux/slices/consultationFeeSlice";
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
@@ -102,6 +103,7 @@ const AppContent = () => {
         if (isAuthenticated) {
           return Promise.all([
             dispatch(fetchPatients({ startDate: today })),
+            dispatch(fetchConsultationFees()),
             dispatch(fetchStaffMembers()),
             dispatch(fetchDepartments()),
             dispatch(fetchRooms()),
@@ -304,6 +306,10 @@ const AppContent = () => {
                   <Route
                     path="/settings/hospital-settings"
                     element={<HospitalSettings />}
+                  />
+                  <Route
+                    path="/settings/consultation-fees"
+                    element={<ConsultationFees />}
                   />
                 </>
               )}

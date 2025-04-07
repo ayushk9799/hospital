@@ -67,6 +67,7 @@ export default function PatientInfoForm({
   handleInputChange,
   handleSelectChange,
   errors,
+  consultationFeeSettings,
   setSearchedPatient,
 }) {
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -92,7 +93,22 @@ export default function PatientInfoForm({
     },
     [handleInputChange]
   );
-
+  const checkFollowUpDate = (patient, formData, consultationFeeSettings) => {
+    try{
+    const lastVisitDate = new Date(new Date(patient.lastVisit).toDateString())
+    const bookingDate = new Date(new Date(formData.visit.bookingDate).toDateString())
+    const followUpLimitDate = new Date(lastVisitDate);
+    followUpLimitDate.setDate(followUpLimitDate.getDate() + (consultationFeeSettings.masterFollowup===-1?14:consultationFeeSettings.masterFollowup));
+    
+    console.log(followUpLimitDate);
+    console.log(lastVisitDate);
+    return bookingDate >= lastVisitDate && bookingDate <= followUpLimitDate;
+    }catch(error){
+      console.error("Error checking follow-up date:", error);
+      return false;
+    }
+  };
+  
   const handleSearch = async () => {
     if (!formData.registrationNumber) return;
     
@@ -100,10 +116,12 @@ export default function PatientInfoForm({
       const result = await dispatch(searchPatients(formData.registrationNumber)).unwrap();
       if (result.results && result.results.length > 0) {
         const patient = result.results[0];
+        console.log(patient)
         setSearchedPatient({
           ...patient,
           isFromSearch: true
         });
+       handleSelectChange("visit.consultationType", checkFollowUpDate(patient, formData, consultationFeeSettings)?"follow-up":"new");
       }
     } catch (error) {
       console.error("Search failed:", error);

@@ -7,6 +7,13 @@ const templateSchema = new mongoose.Schema({
       name: String,
       fields: mongoose.Schema.Types.Mixed,
       rate: Number,
+      notes: String,
+      sections: [
+        {
+          name: String,
+          position: Number,
+        },
+      ],
     },
   ],
   headerTemplate: String,

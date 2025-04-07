@@ -56,8 +56,9 @@ const initialFormData = {
   address: "",
   bloodType: "",
   patientType: "OPD",
-  upgradegenReg:false,
+  upgradegenReg: false,
   visit: {
+    consultationType: "new",
     reasonForVisit: "",
     vitals: {
       bloodPressure: "",
@@ -81,8 +82,8 @@ const initialFormData = {
       start: "",
       end: "",
     },
-    guardianName:"",
-    relation:"",
+    guardianName: "",
+    relation: "",
     department: "",
     doctor: "",
     insuranceDetails: {
@@ -105,9 +106,15 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     (state) => state.patients.registerPatientStatus
   );
   const { services, servicesStatus } = useSelector((state) => state.services);
+
   const consultationService = services.find((service) =>
     service.name.toLowerCase().includes("consultation")
   );
+  const consultationFeeSettings = useSelector(
+    (state) => state.consultationFees
+  );
+
+  const { doctorWiseFee, consultationTypes } = consultationFeeSettings;
 
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState(initialErrors);
@@ -187,7 +194,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     (id, value) => handleInputChange({ target: { id, value } }),
     [handleInputChange]
   );
-
+  console.log(formData.visit.consultationType);
   const handleAmountPaidChange = (method, amount) => {
     setFormData((prev) => ({
       ...prev,
@@ -196,25 +203,22 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
         paymentMethod: prev.visit.paymentMethod.map((pm) =>
           pm.method === method ? { ...pm, amount } : pm
         ),
-       
       },
     }));
   };
-useEffect(()=>
-{
-  const amount=formData.visit.paymentMethod.reduce(
-    (sum, pm) => sum + (pm.amount ? parseFloat(pm.amount) : 0),
-    0
-  );
-  setFormData((prev)=>
-  ({
-    ...prev,
-    visit:{
-      ...prev.visit,
-      amountPaid:amount
-    }
-  }))
-},[formData.visit.paymentMethod])
+  useEffect(() => {
+    const amount = formData.visit.paymentMethod.reduce(
+      (sum, pm) => sum + (pm.amount ? parseFloat(pm.amount) : 0),
+      0
+    );
+    setFormData((prev) => ({
+      ...prev,
+      visit: {
+        ...prev.visit,
+        amountPaid: amount,
+      },
+    }));
+  }, [formData.visit.paymentMethod]);
   const handlePaymentMethodChange = (newMethods) => {
     setFormData((prev) => {
       // Get existing payment methods with their amounts
@@ -276,10 +280,12 @@ useEffect(()=>
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
-   
+
       // Add validation for registration number
-      if(formData.registrationNumber===generatedRegNumber?.registrationNumber){
-        formData.upgradegenReg=true;
+      if (
+        formData.registrationNumber === generatedRegNumber?.registrationNumber
+      ) {
+        formData.upgradegenReg = true;
       }
 
       if (validateForm()) {
@@ -289,8 +295,8 @@ useEffect(()=>
             ? new Date(formData.dateOfBirth).toISOString()
             : null,
           age: Number(formData.age, 10),
-          lastVisit : formData.visit.bookingDate,
-          lastVisitType : formData.patientType,
+          lastVisit: formData.visit.bookingDate,
+          lastVisitType: formData.patientType,
           visit: {
             ...formData.visit,
             bookingDate: formData.visit.bookingDate,
@@ -366,25 +372,21 @@ useEffect(()=>
     setTimeout(() => {
       document.body.style = "";
     }, 500);
-    setFormData((prevData) => ({
-      ...initialFormData,
-      visit: {
-        ...initialFormData.visit,
-        consultationAmount: consultationService
-          ? consultationService.rate.toString()
-          : "",
-      },
-    }));
   }, [onOpenChange, consultationService]);
 
   useEffect(() => {
     if (patientData || searchedPatient) {
       const sourceData = searchedPatient || patientData;
-     
 
-      const tempGuardianName = sourceData?.visits[0]?.guardianName || sourceData?.admissionDetails[0]?.guardianName || "";
-      const tempRelation = sourceData?.visits[0]?.relation || sourceData?.admissionDetails[0]?.relation || "";
-      
+      const tempGuardianName =
+        sourceData?.visits[0]?.guardianName ||
+        sourceData?.admissionDetails[0]?.guardianName ||
+        "";
+      const tempRelation =
+        sourceData?.visits[0]?.relation ||
+        sourceData?.admissionDetails[0]?.relation ||
+        "";
+
       setFormData((prev) => ({
         ...prev,
         _id: sourceData._id,
@@ -393,8 +395,12 @@ useEffect(()=>
         gender: sourceData.gender,
         contactNumber: sourceData.contactNumber,
         registrationNumber: sourceData.registrationNumber,
-        address : sourceData.address,
-        visit : {...formData.visit, guardianName : tempGuardianName, relation : tempRelation}
+        address: sourceData.address,
+        visit: {
+          ...formData.visit,
+          guardianName: tempGuardianName,
+          relation: tempRelation,
+        },
         // Add any other fields you want to prefill
       }));
     }
@@ -409,25 +415,63 @@ useEffect(()=>
       }, 500);
     }
   }, [open]);
+  const getConsultationFee = (doctorId, consultationType) => {
+    // First check doctor-specific consultation type fees
+    console.log(consultationFeeSettings);
+      if (doctorId && consultationType) {
+        const doctorFee = consultationFeeSettings.doctorWiseFee.find(
+          (fee) => fee.doctor._id === doctorId
+        );
+        if (
+          doctorFee &&
+          doctorFee.consultationType?.[consultationType] !== undefined
+        ) {
+          return doctorFee.consultationType?.[consultationType];
+        }
+      }
 
-  useEffect(() => {
-    if (servicesStatus === "idle") {
-      dispatch(fetchServices());
-    }
-  }, [dispatch, servicesStatus]);
+      // Then check master fees for doctor
+      if (doctorId) {
+        const masterDoctorFee =
+          consultationFeeSettings.masterConsultationFeesDoctor?.[doctorId];
+        if (masterDoctorFee !== -1) {
+          return masterDoctorFee;
+        }
+      }
 
+      // Finally check master fees for consultation type
+      if (consultationType) {
+        const masterTypeFee =
+          consultationFeeSettings.masterConsultationFeesType?.[
+            consultationType
+          ];
+
+          console.log(masterTypeFee);
+        if (masterTypeFee !== -1) {
+
+          return masterTypeFee;
+        }
+      }
+   
+    // Default fallback
+    return -1;
+  };
   // Modify this useEffect to run when 'open' changes
   useEffect(() => {
-    if (open && consultationService) {
+    if (open) {
+     const fee = getConsultationFee(formData.visit.doctor, formData.visit.consultationType);
       setFormData((prevData) => ({
         ...prevData,
         visit: {
           ...prevData.visit,
-          totalFee: consultationService.rate.toString(),
+          totalFee:
+          (fee === -1||fee === undefined||fee === null)
+              ? consultationService.rate.toString() || ""
+              : fee.toString(),
         },
       }));
     }
-  }, [open, consultationService]);
+  }, [open, formData.visit.doctor, formData.visit.consultationType]);
 
   useEffect(() => {
     return () => {
@@ -456,8 +500,9 @@ useEffect(()=>
       dispatch(fetchRegistrationAndIPDNumbers())
         .unwrap()
         .then((numbers) => {
-         
-          setGeneratedRegNumber({registrationNumber:numbers.registrationNumber});
+          setGeneratedRegNumber({
+            registrationNumber: numbers.registrationNumber,
+          });
 
           setFormData((prev) => ({
             ...prev,
@@ -470,7 +515,6 @@ useEffect(()=>
     }
   }, [open, dispatch, patientData, searchedPatient]);
 
-
   return (
     <>
       <Dialog
@@ -478,7 +522,6 @@ useEffect(()=>
         onOpenChange={(ev) => {
           handleDialogClose(ev);
         }}
-        
       >
         <DialogContent className="md:max-w-[1000px] md:min-h-[60vh] md:max-h-[60vh] overflow-y-auto md:overflow-y-hidden w-[95vw] p-4 md:p-6 gap-0 md:gap-4 rounded-lg">
           <DialogHeader>
@@ -489,14 +532,25 @@ useEffect(()=>
               <p>Register new patient</p>
               {searchedPatient && searchedPatient.lastVisit && (
                 <p className="text-black font-semibold">
-                  Last Visit: {format(new Date(searchedPatient.lastVisit), "dd MMM yyyy")} [
-                  <span className={`capitalize ${
-                    differenceInDays(new Date(), new Date(searchedPatient.lastVisit)) > 14 
-                    ? 'text-red-500' 
-                    : 'text-green-500'
-                  }`}>
-                    {differenceInDays(new Date(), new Date(searchedPatient.lastVisit))} days ago
-                  </span>]
+                  Last Visit:{" "}
+                  {format(new Date(searchedPatient.lastVisit), "dd MMM yyyy")} [
+                  <span
+                    className={`capitalize ${
+                      differenceInDays(
+                        new Date(),
+                        new Date(searchedPatient.lastVisit)
+                      ) > 14
+                        ? "text-red-500"
+                        : "text-green-500"
+                    }`}
+                  >
+                    {differenceInDays(
+                      new Date(),
+                      new Date(searchedPatient.lastVisit)
+                    )}{" "}
+                    days ago
+                  </span>
+                  ]
                 </p>
               )}
             </DialogDescription>
@@ -522,6 +576,7 @@ useEffect(()=>
                       handleInputChange={handleInputChange}
                       handleSelectChange={handleSelectChange}
                       errors={errors}
+                      consultationFeeSettings={consultationFeeSettings}
                       setSearchedPatient={setSearchedPatient}
                     />
                   </div>
@@ -637,7 +692,7 @@ useEffect(()=>
                             )}
                             setSelectedValues={handlePaymentMethodChange}
                           />
-                          {formData.visit.paymentMethod.length > 0 ?
+                          {formData.visit.paymentMethod.length > 0 ? (
                             formData.visit.paymentMethod.map((pm) => (
                               <MemoizedInput
                                 key={pm.method}
@@ -653,14 +708,16 @@ useEffect(()=>
                                 className="bg-gray-50"
                                 error={errors[`payment.${pm.method}`]}
                               />
-                            )): <MemoizedInput
-                            key="Rajiv"
-                            id="invalid"
-                            label={`Amount Paid`}
-                            disabled={true}
-                            className="bg-gray-50"
-                            
-                          />}
+                            ))
+                          ) : (
+                            <MemoizedInput
+                              key="Rajiv"
+                              id="invalid"
+                              label={`Amount Paid`}
+                              disabled={true}
+                              className="bg-gray-50"
+                            />
+                          )}
                         </div>
                         {errors.amountPaid && (
                           <p className="text-red-500 text-xs mt-1">

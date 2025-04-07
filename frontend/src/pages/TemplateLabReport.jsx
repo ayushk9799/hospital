@@ -165,9 +165,18 @@ const TemplateLabReport = ({
     setFields(
       Object.entries(template.fields).map(([name, field]) => ({
         name,
-        label: template.name.toLowerCase() === report.name.toLowerCase() ? report.report?.[name]?.label : field.label,
-        unit: template.name.toLowerCase() === report.name.toLowerCase() ? report.report?.[name]?.unit : field.unit,
-        normalRange: template.name.toLowerCase() === report.name.toLowerCase() ? report.report?.[name]?.normalRange : field.normalRange,
+        label:
+          template.name.toLowerCase() === report.name.toLowerCase()
+            ? report.report?.[name]?.label
+            : field.label,
+        unit:
+          template.name.toLowerCase() === report.name.toLowerCase()
+            ? report.report?.[name]?.unit
+            : field.unit,
+        normalRange:
+          template.name.toLowerCase() === report.name.toLowerCase()
+            ? report.report?.[name]?.normalRange
+            : field.normalRange,
         options: field.options,
         value:
           template.name.toLowerCase() === report.name.toLowerCase()
@@ -272,7 +281,6 @@ const TemplateLabReport = ({
         handlePrint();
 
         // Don't close immediately to allow state updates to propagate
-       
       } else {
         throw new Error("Failed to add lab report");
       }
@@ -518,6 +526,91 @@ const TemplateLabReport = ({
             reportData={{
               name: template.name,
               date: reportDate,
+              notes: template.notes,
+              sections: template.sections,
+              order: template.sections
+                ? (() => {
+                    const orderedItems = [];
+                    let currentPosition = 0;
+
+                    // Sort sections by position
+                    const sortedSections = [...(template.sections || [])].sort(
+                      (a, b) => a.position - b.position
+                    );
+
+                    // Process each section and its fields
+                    sortedSections.forEach((section, idx) => {
+                      // Add fields before this section
+                      const fieldsBeforeSection = fields.slice(
+                        currentPosition,
+                        section.position
+                      );
+                      orderedItems.push(
+                        ...fieldsBeforeSection.map((field, index) => ({
+                          type: "field",
+                          id: field.name,
+                          label: field.label,
+                          value: field.value,
+                          unit: field.unit,
+                          normalRange: field.normalRange,
+                          position: currentPosition + index,
+                        }))
+                      );
+
+                      // Add the section
+                      orderedItems.push({
+                        type: "section",
+                        id: section.name,
+                        name: section.name,
+                        position: section.position,
+                      });
+
+                      // Update current position
+                      currentPosition = section.position;
+
+                      // If it's the last section, add remaining fields
+                      if (idx === sortedSections.length - 1) {
+                        const remainingFields = fields.slice(currentPosition);
+                        orderedItems.push(
+                          ...remainingFields.map((field, index) => ({
+                            type: "field",
+                            id: field.name,
+                            label: field.label,
+                            value: field.value,
+                            unit: field.unit,
+                            normalRange: field.normalRange,
+                            position: currentPosition + index,
+                          }))
+                        );
+                      }
+                    });
+
+                    // If there are fields before first section
+                    if (sortedSections.length === 0) {
+                      orderedItems.push(
+                        ...fields.map((field, index) => ({
+                          type: "field",
+                          id: field.name,
+                          label: field.label,
+                          value: field.value,
+                          unit: field.unit,
+                          normalRange: field.normalRange,
+                          position: index,
+                        }))
+                      );
+                    }
+
+                    return orderedItems;
+                  })()
+                : fields.map((field, index) => ({
+                    type: "field",
+                    id: field.name,
+                    label: field.label,
+                    value: field.value,
+                    unit: field.unit,
+                    normalRange: field.normalRange,
+                    position: index,
+                  })),
               report: fields.reduce((acc, field) => {
                 acc[field.label] = {
                   value: field.value,

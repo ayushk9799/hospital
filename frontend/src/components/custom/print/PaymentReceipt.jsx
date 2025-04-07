@@ -11,6 +11,7 @@ import { numberToWords } from "../../../assets/Data";
 const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
 
   const { hospitalInfo } = useSelector((state) => state.hospital);
+  console.log(billData);
   const headerTemplateStrings = useSelector(
     (state) => state.templates.headerTemplateArray
   );
@@ -62,7 +63,7 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
         variant={styleData ? "outline" : "ghost"}
         size="icon"
         onClick={handlePrint}
-        className={`flex justify-center items-center${
+        className={`flex print:hidden justify-center items-center${
           styleData ? "px-2 w-[200px] ml-2" : "h-6 w-6"
         }`}
       >

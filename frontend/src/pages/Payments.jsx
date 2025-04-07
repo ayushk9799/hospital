@@ -642,7 +642,7 @@ const Payments = () => {
             </h2>
             <div className="grid grid-cols-1 gap-4 mb-6">
               <div
-                className={`grid gap-4`}
+                className="hidden md:grid gap-4"
                 style={{
                   gridTemplateColumns: `repeat(${
                     Object.keys(methodTotals).length + 3
@@ -676,6 +676,7 @@ const Payments = () => {
                     </p>
                   </CardContent>
                 </Card>
+
                 {Object.entries(methodTotals).map(([method, totals]) => (
                   <Card key={method} className="bg-purple-100">
                     <CardContent className="p-3">
@@ -704,33 +705,135 @@ const Payments = () => {
                   </Card>
                 ))}
               </div>
-              {/* 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
-                
-              </div> */}
+
+              {/* Mobile view for summary cards */}
+              <div className="grid md:hidden gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <Card className="bg-blue-100">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-sm">Total Credit</h3>
+                      <p className="text-xl">
+                        ₹
+                        {Number(totalCredit?.toFixed(2))?.toLocaleString(
+                          "en-IN"
+                        )}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-red-100">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold text-sm">Total Debit</h3>
+                      <p className="text-xl">
+                        ₹
+                        {Number(totalDebit?.toFixed(2))?.toLocaleString(
+                          "en-IN"
+                        )}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="bg-green-100">
+                  <CardContent className="p-4">
+                    <h3 className="font-semibold text-sm">Net Amount</h3>
+                    <p className="text-xl">
+                      ₹{Number(netAmount?.toFixed(2))?.toLocaleString("en-IN")}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {Object.entries(methodTotals).map(([method, totals]) => (
+                    <Card key={method} className="bg-purple-100">
+                      <CardContent className="p-3">
+                        <h3 className="font-semibold text-sm mb-1">{method}</h3>
+                        <div className="flex justify-between text-sm">
+                          <div className="text-green-600 font-bold text-xl">
+                            +₹
+                            {Number(totals.credit.toFixed(2)).toLocaleString(
+                              "en-IN"
+                            )}
+                          </div>
+                          <div className="text-red-600 font-bold text-xl">
+                            -₹
+                            {Number(totals.debit.toFixed(2)).toLocaleString(
+                              "en-IN"
+                            )}
+                          </div>
+                        </div>
+                        <div className="text-xl text-center font-bold mt-1">
+                          Net: ₹
+                          {Number(
+                            (totals.credit - totals.debit).toFixed(2)
+                          ).toLocaleString("en-IN")}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {filteredPayments.length > 0 ? (
-              <div className="rounded-md border">
-                <Table className="border-2 border-gray-200">
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Date & Time</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Method</TableHead>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Amount</TableHead>
-                      <TableHead>Created By</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredPayments.map((payment) => (
-                      <TableRow key={payment._id}>
-                        <TableCell>
-                          {formatDate(payment.createdAt)}{" "}
-                          {formatTime(payment.createdAt)}
-                        </TableCell>
-                        <TableCell>
+              <>
+                {/* Table view for larger screens */}
+                <div className="hidden md:block rounded-md border">
+                  <Table className="border-2 border-gray-200">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Date & Time</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Description</TableHead>
+                        <TableHead>Amount</TableHead>
+                        <TableHead>Created By</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredPayments.map((payment) => (
+                        <TableRow key={payment._id}>
+                          <TableCell>
+                            {formatDate(payment.createdAt)}{" "}
+                            {formatTime(payment.createdAt)}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                payment.type === "Income"
+                                  ? "success"
+                                  : "destructive"
+                              }
+                            >
+                              {payment.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>{payment.paymentMethod}</TableCell>
+                          <TableCell>
+                            {payment.description ||
+                              payment.associatedInvoiceOrId ||
+                              payment.paymentType?.name}
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            ₹{payment.amount?.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            {payment.createdByName ||
+                              payment.createdBy?.name ||
+                              "--"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {/* Card view for mobile screens */}
+                <div className="grid grid-cols-1 gap-3 md:hidden">
+                  {filteredPayments.map((payment) => (
+                    <Card key={payment._id} className="p-3">
+                      <div className="flex justify-between items-center mb-1">
+                        <div className="flex items-center gap-2">
                           <Badge
                             variant={
                               payment.type === "Income"
@@ -740,26 +843,44 @@ const Payments = () => {
                           >
                             {payment.type}
                           </Badge>
-                        </TableCell>
-                        <TableCell>{payment.paymentMethod}</TableCell>
-                        <TableCell>
-                          {payment.description ||
-                            payment.associatedInvoiceOrId ||
-                            payment.paymentType?.name}
-                        </TableCell>
-                        <TableCell className="font-medium">
-                          ₹{payment.amount?.toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          {payment.createdByName ||
-                            payment.createdBy?.name ||
-                            "--"}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
+                          <p className="text-sm text-gray-500">
+                            {formatDate(payment.createdAt)}{" "}
+                            {formatTime(payment.createdAt)}
+                          </p>
+                        </div>
+                        <p className="text-base font-bold">
+                          ₹
+                          {Number(payment.amount?.toFixed(2)).toLocaleString(
+                            "en-IN"
+                          )}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 text-sm">
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-gray-500">Method:</span>
+                          <span>{payment.paymentMethod}</span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-gray-500">Description:</span>
+                          <span className="text-right">
+                            {payment.description ||
+                              payment.associatedInvoiceOrId ||
+                              payment.paymentType?.name}
+                          </span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
+                          <span className="text-gray-500">Created By:</span>
+                          <span>
+                            {payment.createdByName ||
+                              payment.createdBy?.name ||
+                              "--"}
+                          </span>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center py-10">
                 <FileX className="h-16 w-16 text-gray-400 mb-4" />

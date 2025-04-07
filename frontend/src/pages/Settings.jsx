@@ -55,6 +55,10 @@ export default function Settings() {
     navigate("/settings/hospital-settings");
   };
 
+  const handleConsultationFees = () => {
+    navigate("/settings/consultation-fees");
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -79,6 +83,7 @@ export default function Settings() {
         <Button onClick={handlePrefixSettings}>Prefix Settings</Button>
         <Button onClick={handleDepartmentSettings}>Manage Department</Button>
         <Button onClick={handleHospitalSettings}>Hospital Settings</Button>
+        <Button onClick={handleConsultationFees}>Consultation Fees</Button>
       </div>
 
       {/* <div className="mb-6 mt-6">

@@ -30,6 +30,7 @@ export default function VisitDetailsForm({
   const isMobile = useMediaQuery("(max-width: 640px)");
   const doctors = useSelector((state) => state.staff.doctors);
   const departments = useSelector((state) => state.departments.departments);
+  const { consultationTypes } = useSelector((state) => state.consultationFees);
 
   const formatTime = (time) => {
     if (!time) return { hour: "", minute: "", amPm: "AM" };
@@ -82,7 +83,6 @@ export default function VisitDetailsForm({
 
   return (
     <div className="space-y-4">
-      
       <MemoizedInput
         id="contactNumber"
         label="Contact Number"
@@ -100,54 +100,83 @@ export default function VisitDetailsForm({
         className="min-h-9 h-9 no-scrollbar"
       />
       <div className="grid grid-cols-[1fr_2fr] gap-2">
-      <FloatingLabelSelect
-      id="visit.relation"
-      label="Relation"
-      value={formData.visit.relation}
-      onValueChange={(value) => handleSelectChange("visit.relation", value)}
-      >
-         {["Father","Husband","Mother","Wife","Guardian"].map((relation) => (
-          <SelectItem key={relation} value={relation}>
-            {relation}
-          </SelectItem>
-        ))}
+        <FloatingLabelSelect
+          id="visit.relation"
+          label="Relation"
+          value={formData.visit.relation}
+          onValueChange={(value) => handleSelectChange("visit.relation", value)}
+        >
+          {["Father", "Husband", "Mother", "Wife", "Guardian"].map(
+            (relation) => (
+              <SelectItem key={relation} value={relation}>
+                {relation}
+              </SelectItem>
+            )
+          )}
         </FloatingLabelSelect>
-      <MemoizedInput
-      id="visit.guardianName"
-      value={formData.visit.guardianName}
-      onChange={handleInputChange}
-      label={`${formData.visit.relation?formData.visit.relation+"'s Name":"Guardian's Name"}`}
-      />
-     
+        <MemoizedInput
+          id="visit.guardianName"
+          value={formData.visit.guardianName}
+          onChange={handleInputChange}
+          label={`${
+            formData.visit.relation
+              ? formData.visit.relation + "'s Name"
+              : "Guardian's Name"
+          }`}
+        />
       </div>
-      
+
       {!isMobile && (
-        <div className="relative ">
-          <Input
-            type="date"
-            id="visit.bookingDate"
-            value={formData.visit.bookingDate}
-            onChange={handleInputChange}
-            tabIndex={-1}
-            className={`peer pl-2 pt-2 pb-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
-              errors["visit.bookingDate"] ? "border-red-500" : "border-gray-300"
-            }`}
-          />
-          <Label
-            htmlFor="visit.bookingDate"
-            className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
-              errors["visit.bookingDate"] ? "text-red-500" : "text-gray-500"
-            }`}
-          >
-            Booking Date
-            {errors["visit.bookingDate"] && (
-              <span className="text-red-500 ml-1">*Required</span>
-            )}
-          </Label>
+        <div className="grid grid-cols-[1fr_2fr] gap-2">
+          <div className="relative">
+            <Input
+              type="date"
+              id="visit.bookingDate"
+              value={formData.visit.bookingDate}
+              onChange={handleInputChange}
+              tabIndex={-1}
+              className={`peer pl-2 pt-2 pb-2 block  border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
+                errors["visit.bookingDate"]
+                  ? "border-red-500"
+                  : "border-gray-300"
+              }`}
+            />
+            <Label
+              htmlFor="visit.bookingDate"
+              className={`absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white ${
+                errors["visit.bookingDate"] ? "text-red-500" : "text-gray-500"
+              }`}
+            >
+              Booking Date
+              {errors["visit.bookingDate"] && (
+                <span className="text-red-500 ml-1">*Required</span>
+              )}
+            </Label>
+          </div>
+          <div className="relative">
+            <Select
+              value={formData.visit.consultationType || ""}
+              onValueChange={(value) =>
+                handleSelectChange("visit.consultationType", value)
+              }
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Consultation type" />
+              </SelectTrigger>
+              <SelectContent>
+                {consultationTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    <span className="capitalize">{type}</span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Label className="absolute text-xs transform -translate-y-3 top-1 z-10 origin-[0] left-2 px-1 bg-white text-gray-500">
+              Consultation Type
+            </Label>
+          </div>
         </div>
       )}
-
-     
     </div>
   );
 }

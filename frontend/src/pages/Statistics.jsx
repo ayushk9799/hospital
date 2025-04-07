@@ -578,18 +578,11 @@ const Dashboard = () => {
   return (
     <div className="container mx-auto p-4">
       {/* Header Section - More compact */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-bold text-xl text-gray-800">Dashboard</h2>
-        <div className="flex items-center gap-2">
-          {dateFilter === "Custom" && (
-            <DateRangePicker
-              from={tempDateRange?.from}
-              to={tempDateRange?.to}
-              onSelect={(range) => setTempDateRange(range)}
-              onSearch={handleDateRangeSearch}
-              onCancel={handleDateRangeCancel}
-            />
-          )}
+      <div className="flex flex-col gap-4 mb-4">
+        <div className="flex flex-row sm:flex-row justify-between items-start sm:items-center gap-2">
+          <h2 className="font-bold text-xl text-gray-800">
+            {getStatsHeaderText()}
+          </h2>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
@@ -631,14 +624,25 @@ const Dashboard = () => {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
+        {dateFilter === "Custom" && (
+          <div className="w-full sm:w-auto">
+            <DateRangePicker
+              from={tempDateRange?.from}
+              to={tempDateRange?.to}
+              onSelect={(range) => setTempDateRange(range)}
+              onSearch={handleDateRangeSearch}
+              onCancel={handleDateRangeCancel}
+            />
+          </div>
+        )}
       </div>
 
       {/* Main Stats Grid - More efficient layout */}
       <div className="grid gap-4">
         {/* Patient Stats Row */}
-        <div className="grid grid-cols-10 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-10 gap-4">
           <Card
-            className="bg-pink-100 shadow-sm col-span-2 transition-all duration-200 
+            className="bg-pink-100 shadow-sm lg:col-span-2 transition-all duration-200 
             hover:shadow-lg hover:scale-[1.02] hover:bg-pink-200 cursor-pointer"
           >
             <CardContent className="p-3">
@@ -671,7 +675,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           <Card
-            className="bg-orange-100 shadow-sm col-span-2 transition-all duration-200 
+            className="bg-orange-100 shadow-sm lg:col-span-2 transition-all duration-200 
             hover:shadow-lg hover:scale-[1.02] hover:bg-orange-200 cursor-pointer"
           >
             <CardContent className="p-3">
@@ -704,14 +708,14 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           <Card
-            className="bg-purple-100 shadow-sm col-span-3 transition-all duration-200 
+            className="bg-purple-100 shadow-sm lg:col-span-3 transition-all duration-200 
             hover:shadow-lg hover:scale-[1.02] hover:bg-purple-200 cursor-pointer"
           >
             <CardContent className="p-3">
               <div className="flex gap-3">
                 <ChartLine className="w-8 h-8 text-purple-700 shrink-0" />
                 <div className="w-full">
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
                     <div>
                       <p
                         className={`text-2xl font-bold text-purple-700 ${
@@ -747,7 +751,7 @@ const Dashboard = () => {
                     </div>
 
                     {hasFinancialViewPermission(userData) && (
-                      <div className="flex gap-2 flex-wrap justify-end">
+                      <div className="flex gap-2 flex-wrap justify-start lg:justify-end w-full lg:w-auto">
                         {calculateTotalPaymentMethods.map((payment) => (
                           <div
                             key={payment.method}
@@ -770,14 +774,14 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           <Card
-            className="bg-blue-100 shadow-sm col-span-3 transition-all duration-200 
+            className="bg-blue-100 shadow-sm lg:col-span-3 transition-all duration-200 
             hover:shadow-lg hover:scale-[1.02] hover:bg-blue-200 cursor-pointer"
           >
             <CardContent className="p-3">
               <div className="flex gap-3">
                 <ChartLine className="w-8 h-8 text-blue-700 shrink-0" />
                 <div className="w-full">
-                  <div className="flex justify-between items-start">
+                  <div className="flex flex-col lg:flex-row justify-between items-start gap-4">
                     <div>
                       <p
                         className={`text-2xl font-bold text-blue-700 ${
@@ -796,7 +800,7 @@ const Dashboard = () => {
                     </div>
 
                     {hasFinancialViewPermission(userData) && (
-                      <div className="flex gap-2 flex-wrap justify-end">
+                      <div className="flex gap-2 flex-wrap justify-start lg:justify-end w-full lg:w-auto">
                         {Object.entries(
                           filteredData.currentValue[0]?.expenseTypeWise || {}
                         ).map(
@@ -827,7 +831,7 @@ const Dashboard = () => {
         </div>
 
         {/* Collections Stats Row */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {["IPD", "OPD", "OPD Procedure", "Pharmacy", "Laboratory"].map(
             (type, index) => (
               <Card
@@ -873,7 +877,7 @@ const Dashboard = () => {
         </div>
 
         {/* Payment Methods Grid - More compact and efficient */}
-        <div className="grid grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {["IPD", "OPD", "OPD Procedure", "Pharmacy", "Laboratory"].map(
             (type) => (
               <Card
@@ -884,14 +888,14 @@ const Dashboard = () => {
                 <CardHeader className="py-2 px-3">
                   <CardTitle className="text-sm">{type} Payments</CardTitle>
                 </CardHeader>
-                <CardContent className="p-3">
+                <CardContent className="p-1">
                   {!hasFinancialViewPermission(userData) ? (
                     <div className="flex flex-col items-center justify-center h-24 text-gray-500">
                       <AlertCircle className="w-8 h-8 mb-1" />
                       <p className="text-xs text-center">No permission</p>
                     </div>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
                       {calculatePaymentMethods?.[
                         `${type?.replace(" ", "")?.toLowerCase()}Payments`
                       ]?.map((method) => (

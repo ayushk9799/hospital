@@ -17,6 +17,7 @@ import babyReducer from "./slices/babySlice";
 import paymentReducer from "./slices/paymentSlice";
 import labReducer from "./slices/labSlice";
 import hospitalSettingsReducer from "./slices/hospitalSettingsSlice";
+import consultationFeeReducer from "./slices/consultationFeeSlice";
 
 export const store = configureStore({
   reducer: {
@@ -38,5 +39,6 @@ export const store = configureStore({
     payments: paymentReducer,
     lab: labReducer,
     hospitalSettings: hospitalSettingsReducer,
+    consultationFees: consultationFeeReducer,
   },
 });

@@ -630,6 +630,7 @@ router.post("/details", verifyToken, async (req, res) => {
       reasonForVisit: visit.reasonForVisit,
       status: visit.status,
       comorbidities: visit.comorbidities,
+      consultationType: visit.consultationType,
       vitals: visit.vitals,
       diagnosis: visit.diagnosis,
       treatment: visit.treatment,

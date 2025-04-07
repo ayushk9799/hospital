@@ -1,5 +1,4 @@
 export const labReportTemplateStringDefault = `(reportData, patientData, hospital, ref) => {
-  const reportEntries = Object.entries(reportData.report||{});
   const formatDate = (date) => {
     if (!date) return "";
     return new Date(date).toLocaleDateString('en-IN', { 
@@ -49,10 +48,11 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
   
     return "inherit";
   };
-  
+
   const shouldUseTextarea = (unit, normalRange) => {
     return !(["",undefined,null,"N/A"].includes(unit) && ["",undefined,null,"N/A"].includes(normalRange))
-  }
+  };
+
   const getGenderSpecificRange = (normalRange, gender) => {
     if (!normalRange || !gender) return normalRange;
 
@@ -73,15 +73,11 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
     return normalRange;
   };
 
-  // Calculate footer height for proper content area sizing
-  const footerHeight = 50; // height in mm
-
   return React.createElement("div", { 
     ref: ref, 
     className: "relative font-[Tinos] bg-white w-[210mm] min-h-[297mm] mx-auto box-border p-[5mm] print:absolute print:left-0 print:top-0 print:w-full print:[&_*]:visible print:visible print:p-5 print:[&_.no-print]:hidden"
   },
    
-
     React.createElement(HospitalHeader, { hospitalInfo: hospital }),
 
     React.createElement("div", { 
@@ -96,27 +92,22 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
           React.createElement("span", { className: " font-bold text-[#34495e] mr-[2mm] min-w-[20mm]" }, "Age/Gender:"),
           React.createElement("span", { className: " text-[#2c3e50]" }, \`\${patientData?.patient?.age || patientData.age} YEARS/\${patientData?.patient?.gender || patientData.gender}\`)
         ),
-      
-     
         React.createElement("div", { className: "flex items-center" },
           React.createElement("span", { className: " font-bold text-[#34495e] mr-[2mm] min-w-[20mm]" }, "Reg No/Lab No:"),
           React.createElement("span", { className: " text-[#2c3e50]" }, \`\${patientData?.registrationNumber ? patientData.registrationNumber : "--"}/\${patientData?.labNumber ? patientData.labNumber : "--"}\`)
         ),
-      
-     
-      React.createElement("div", { className: "flex items-start min-h-[24px]" },
-        React.createElement("span", { className: "font-bold text-[#34495e] mr-[2mm] min-w-[20mm] mt-[2px]" }, "Address:"),
-        React.createElement("span", { 
-          className: "text-[#2c3e50] flex-1 break-words overflow-hidden",
-          style: {
-            lineHeight: '1.2',
-            maxHeight: '2.4em',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis'
-          }
-        }, patientData?.address)
-      ),
-     
+        React.createElement("div", { className: "flex items-start min-h-[24px]" },
+          React.createElement("span", { className: "font-bold text-[#34495e] mr-[2mm] min-w-[20mm] mt-[2px]" }, "Address:"),
+          React.createElement("span", { 
+            className: "text-[#2c3e50] flex-1 break-words overflow-hidden",
+            style: {
+              lineHeight: '1.2',
+              maxHeight: '2.4em',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }
+          }, patientData?.address)
+        ),
         React.createElement("div", { className: "flex items-center" },
           React.createElement("span", { className: " font-bold text-[#34495e] mr-[2mm] min-w-[20mm]" }, "Contact:"),
           React.createElement("span", { className: " text-[#2c3e50]" }, patientData?.contactNumber)
@@ -125,22 +116,31 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
           React.createElement("span", { className: " font-bold text-[#34495e] mr-[2mm] min-w-[20mm]" }, "Date:"),
           React.createElement("span", { className: " text-[#2c3e50]" }, formatDate(reportData?.date))
         )
-      
     ),
 
     // Report Title
-    React.createElement("div", { className: " mb-2", style: { pageBreakAfter: "avoid" } },
-      React.createElement("h2", { className: "text-[16px] font-bold underline text-center tracking-wider" },
-        reportData?.completeType || reportData?.name
+    React.createElement("div", { className: "text-center my-1" },
+      React.createElement("h2", { className: "text-[16px] font-bold underline tracking-wider" },
+       reportData?.name
       )
     ),
 
-    // Report Content (with padding-bottom to prevent overlap with footer)
-    React.createElement("div", { className: "border-t-2 border-b-2 border-[#ecf0f1] pb-[10mm]" }, 
-      reportEntries.filter(([_, value]) => shouldUseTextarea(value.unit, value.normalRange)).length > 0 &&
-      React.createElement("div", { 
-        className: "grid grid-cols-12 gap-4 bg-[#f8f9fa] py-2 font-bold text-[14px]",
-        style: { pageBreakAfter: "avoid" } // Prevent breaking after header row
+    // Notes if present
+    reportData.notes && React.createElement("div", { 
+      className: "mb-4 p-2 bg-[#f8f9fa] rounded border border-[#e2e8f0]"
+    },
+      React.createElement("strong", {}, "Notes: "),
+      React.createElement("span", {}, reportData.notes)
+    ),
+
+    // Report Content
+    React.createElement("div", { className: "border-t-2 border-b-2 border-[#ecf0f1] pb-[60mm]" },
+      // Only show table header if there are table-format fields
+      reportData.order && reportData.order.some(item => 
+        item.type === 'field' && shouldUseTextarea(item.unit, item.normalRange)
+      ) && React.createElement("div", { 
+        className: "grid grid-cols-12 gap-4 bg-[#f8f9fa] py-1 font-bold text-[14px] mb-2",
+        style: { pageBreakAfter: "avoid" }
       },
         React.createElement("div", { className: "col-span-5 font-bold pr-[2mm]" }, "Test Name"),
         React.createElement("div", { className: "col-span-2 font-bold text-center" }, "Result"),
@@ -148,46 +148,82 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
         React.createElement("div", { className: "col-span-3 font-bold text-right" }, "Normal Range")
       ),
 
-      reportEntries
-        .filter(([_, value]) => value.value)
-        .map(([key, value]) =>
-          React.createElement("div", { 
-            className: \`\${!shouldUseTextarea(value.unit, value.normalRange) ? "" : "grid grid-cols-12 pt-1 items-center"}\`, 
-            key: key 
+      // Ordered Items (Fields and Sections)
+      reportData.order && reportData.order.map((item, index) => {
+        if (item.type === 'section') {
+          return React.createElement("div", {
+            key: \`section-\${index}\`,
+            className: "col-span-12  p-1 font-bold text-[14px] text-[#2c3e50]"
+          }, item.name);
+        } else {
+          // Check if field should use textarea format
+          const useTableFormat = shouldUseTextarea(item.unit, item.normalRange);
+          
+          return item.value ? React.createElement("div", {
+            key: \`field-\${index}\`,
+            className: useTableFormat ? 
+              "grid grid-cols-12 gap-4 py-[2px] items-center text-[13px]" :
+              "grid grid-cols-12 gap-5 py-[2px] items-baseline"
           },
-            shouldUseTextarea(value.unit, value.normalRange) ?
+            useTableFormat ? 
+              // Table format
               React.createElement(React.Fragment, null,
-                React.createElement("div", { className: "text-[15px] col-span-5" }, key),
-                React.createElement("div", { 
-                  className: "text-[15px] text-center col-span-2 font-bold",
+                React.createElement("div", { className: "col-span-5 text-[#2c3e50] pr-[2mm] pl-4 " }, 
+                  item.label
+                ),
+                React.createElement("div", {
+                  className: "col-span-2 text-center font-bold",
                   style: { 
-                    color: getValueColor(value.value, value.normalRange, patientData?.patient?.gender || patientData.gender)
-                  } 
-                }, value.value),
-                React.createElement("div", { className: "text-[15px] text-center col-span-2" }, value.unit),
-                React.createElement("div", { className: "text-[15px] text-right col-span-3" }, 
-                  getGenderSpecificRange(value.normalRange, patientData?.patient?.gender || patientData.gender)
+                    color: getValueColor(
+                      item.value, 
+                      item.normalRange, 
+                      patientData?.gender || patientData?.patient?.gender
+                    )
+                  }
+                }, item.value || '-'),
+                React.createElement("div", { className: "col-span-2 text-center" }, 
+                  item.unit || '-'
+                ),
+                React.createElement("div", { className: "col-span-3 text-right" },
+                  getGenderSpecificRange(
+                    item.normalRange, 
+                    patientData?.gender || patientData?.patient?.gender
+                  ) || '-'
                 )
               ) :
-              React.createElement("div", { 
-                className: "grid grid-cols-12 gap-5 items-baseline"
-              },
-                React.createElement("div", { className: "text-[15px] col-span-2 font-bold" }, key),
-                React.createElement("div", { 
+              // Textarea format
+              React.createElement(React.Fragment, null,
+                React.createElement("div", { className: "text-[15px] col-span-2 font-bold" }, 
+                  item.label
+                ),
+                React.createElement("div", {
                   className: "text-[14px] flex col-span-10 whitespace-pre-wrap break-all w-full",
-                  style: { 
-                    color: getValueColor(value.value, value.normalRange, patientData?.patient?.gender || patientData.gender),
+                  style: {
+                    color: getValueColor(
+                      item.value, 
+                      item.normalRange, 
+                      patientData?.gender || patientData?.patient?.gender
+                    ),
                     wordBreak: 'break-word',
                     overflowWrap: 'break-word',
                     lineHeight: '1.2'
-                  } 
-                }, value.value)
+                  }
+                }, item.value || '')
               )
-          )
-        )
-    )
+          ):React.createElement("div",null);
+        }
+      })
+    ),
 
-    
+    // Footer
+    React.createElement("div", { className: "absolute bottom-[7mm] left-[10mm] right-[10mm] pt-[5mm]" },
+      React.createElement("div", { className: "text-right pr-[20mm] border-t border-black pt-[4mm]" },
+        React.createElement("div", { className: "text-[10pt] font-bold" }, "Doctor's Signature")
+      ),
+      React.createElement("div", { className: "text-[8pt] text-[#666] mb-[2mm] text-center" },
+        "This is a computer-generated report and does not require a physical signature."
+      )
+    )
   );
 }`;
 
@@ -266,14 +302,90 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
 
   // Group reports by table/non-table format
   const groupedReports = reportsData.reduce((acc, report) => {
-    const hasTableEntries = Object.entries(report.report || {}).some(
-      ([_, value]) => shouldUseTextarea(value.unit, value.normalRange)
+    // Process report fields and sections into ordered items
+    const orderedItems = report.sections
+      ? (() => {
+          const items = [];
+          let currentPosition = 0;
+
+          // Sort sections by position
+          const sortedSections = [...(report.sections || [])].sort(
+            (a, b) => a.position - b.position
+          );
+
+          // Get all fields as array
+          const fields = Object.entries(report.report || {}).map(([key, value]) => ({
+            id: key,
+            ...value
+          }));
+
+          // Process each section and its fields
+          sortedSections.forEach((section, idx) => {
+            // Add fields before this section
+            const fieldsBeforeSection = fields.slice(
+              currentPosition,
+              section.position
+            );
+            items.push(
+              ...fieldsBeforeSection.map((field, index) => ({
+                type: "field",
+                ...field,
+                position: currentPosition + index,
+              }))
+            );
+
+            // Add the section
+            items.push({
+              type: "section",
+              id: section._id,
+              name: section.name,
+              position: section.position,
+            });
+
+            currentPosition = section.position;
+
+            // If it's the last section, add remaining fields
+            if (idx === sortedSections.length - 1) {
+              const remainingFields = fields.slice(currentPosition);
+              items.push(
+                ...remainingFields.map((field, index) => ({
+                  type: "field",
+                  ...field,
+                  position: currentPosition + index,
+                }))
+              );
+            }
+          });
+
+          // If no sections, just add all fields
+          if (sortedSections.length === 0) {
+            items.push(
+              ...fields.map((field, index) => ({
+                type: "field",
+                ...field,
+                position: index,
+              }))
+            );
+          }
+
+          return items;
+        })()
+      : Object.entries(report.report || {}).map(([key, value], index) => ({
+          type: "field",
+          id: key,
+          ...value,
+          position: index,
+        }));
+
+    // Check if report has any table format entries
+    const hasTableEntries = orderedItems.some(
+      item => item.type === "field" && shouldUseTextarea(item.unit, item.normalRange)
     );
 
     if (hasTableEntries) {
-      acc.tableReports.push(report);
+      acc.tableReports.push({...report, orderedItems});
     } else {
-      acc.nonTableReports.push(report);
+      acc.nonTableReports.push({...report, orderedItems});
     }
     return acc;
   }, { tableReports: [], nonTableReports: [] });
@@ -299,7 +411,7 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
       React.createElement("div", { className: "flex items-center" },
         React.createElement("span", { className: "font-bold text-[#34495e] mr-[2mm] min-w-[20mm]" }, "Age/Gender:"),
         React.createElement("span", { className: "text-[#2c3e50]" }, 
-          \`\${patientData?.patient?.age || patientData.age} YEARS/\${patientData?.patient?.gender || patientData.gender}\`
+          \`\${patientData?.patient?.age || patientData?.age} YEARS/\${patientData?.patient?.gender || patientData?.gender}\`
         )
       ),
       React.createElement("div", { className: "flex items-center" },
@@ -343,7 +455,6 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
       groupedReports.tableReports.length > 0 && React.createElement(React.Fragment, null,
         React.createElement("div", { 
           className: "grid grid-cols-12 gap-4 bg-[#f8f9fa] pt-1 tracking-wide font-bold text-[16px] mb-2",
-         
         },
           React.createElement("div", { className: "col-span-5 font-bold pr-[2mm]" }, "Test Name"),
           React.createElement("div", { className: "col-span-2 font-bold text-center" }, "Result"),
@@ -355,34 +466,34 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
           React.createElement("div", { 
             key: reportIndex, 
             className: "mb-1",
-            // Allow content to flow naturally between pages, no avoid here
           },
             React.createElement("h3", { 
               className: "text-base mb-1 tracking-wider font-bold",
             }, 
-             React.createElement("span",{},reportData.name),
-            React.createElement("span",{className:"text-xs pl-3"},formatDate(reportData.date))
-
+              React.createElement("span",{},reportData.name),
+              React.createElement("span",{className:"text-xs pl-3"},formatDate(reportData.date))
             ),
-            Object.entries(reportData.report || {})
-              .filter(([_, value]) => value.value && shouldUseTextarea(value.unit, value.normalRange))
-              .map(([key, value], index) => 
-                React.createElement("div", { 
-                  key: \`table-\${reportIndex}-\${index}\`,
-                  className: "grid grid-cols-12 gap-4  items-center  text-[14px]",
-                 
-                },
-                  React.createElement("div", { className: "col-span-5 text-[#2c3e50] pr-[2mm] pl-4" }, value.label || key),
-                  React.createElement("div", { 
-                    className: "col-span-2 text-[10pt] text-center font-bold",
-                    style: { color: getValueColor(value.value, value.normalRange, patientData?.patient?.gender || patientData.gender) }
-                  }, value.value),
-                  React.createElement("div", { className: "col-span-2 text-center" }, value.unit),
-                  React.createElement("div", { className: "col-span-3 text-right" }, 
-                    getGenderSpecificRange(value.normalRange, patientData?.patient?.gender || patientData.gender)
-                  )
-                )
-              )
+            reportData.orderedItems.map((item, index) => 
+              item.type === "section" 
+                ? React.createElement("div", {
+                    key: \`section-\${index}\`,
+                    className: "col-span-12  pr-[2mm] pl-4 font-bold text-[16px] text-[#2c3e50]"
+                  }, item.name)
+                : item.value ? React.createElement("div", { 
+                    key: \`table-\${reportIndex}-\${index}\`,
+                    className: "grid grid-cols-12 gap-4 items-center text-[14px]",
+                  },
+                    React.createElement("div", { className: "col-span-5 text-[#2c3e50] pr-[2mm] pl-4" }, item.label),
+                    React.createElement("div", { 
+                      className: "col-span-2 text-[10pt] text-center font-bold",
+                      style: { color: getValueColor(item.value, item.normalRange, patientData?.patient?.gender || patientData.gender) }
+                    }, item.value),
+                    React.createElement("div", { className: "col-span-2 text-center" }, item.unit),
+                    React.createElement("div", { className: "col-span-3 text-right" }, 
+                      getGenderSpecificRange(item.normalRange, patientData?.patient?.gender || patientData.gender)
+                    )
+                  ) : React.createElement("div",null)
+            )
           )
         )
       ),
@@ -393,35 +504,35 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
           React.createElement("div", { 
             key: reportIndex, 
             className: "",
-            // Allow content to flow naturally between pages, no avoid here
           },
             React.createElement("h3", { 
               className: "text-base font-bold tracking-wider",
             }, 
-             React.createElement("span",{},reportData.name),
-            React.createElement("span",{className:"text-xs pl-3"},formatDate(reportData.date))
-
-
+              React.createElement("span",{},reportData.name),
+              React.createElement("span",{className:"text-xs pl-3"},formatDate(reportData.date))
             ),
-            Object.entries(reportData.report || {})
-              .filter(([_, value]) => value.value)
-              .map(([key, value], index) => 
-                React.createElement("div", { 
-                  key: \`non-table-\${reportIndex}-\${index}\`,
-                  className: "grid grid-cols-12 gap-5 py-1 items-baseline"
-                },
-                  React.createElement("div", { className: "text-[12pt] pl-4 col-span-2 font-bold" }, value.label || key),
-                  React.createElement("div", { 
-                    className: "text-[11pt] flex col-span-10 whitespace-pre-wrap break-all w-full",
-                    style: {
-                      color: getValueColor(value.value, value.normalRange, patientData?.patient?.gender || patientData.gender),
-                      wordBreak: "break-word",
-                      overflowWrap: "break-word",
-                      lineHeight: "1"
-                    }
-                  }, value.value)
-                )
-              )
+            reportData.orderedItems.map((item, index) => 
+              item.type === "section"
+                ? React.createElement("div", {
+                    key: \`section-\${index}\`,
+                    className: "text-base mb-1 pl-4 text-[#2c3e50]"
+                  }, item.name)
+                : item.value ? React.createElement("div", { 
+                    key: \`non-table-\${reportIndex}-\${index}\`,
+                    className: "grid grid-cols-12 gap-5 py-1 items-baseline"
+                  },
+                    React.createElement("div", { className: "text-[12pt] pl-4 col-span-2 font-bold" }, item.label),
+                    React.createElement("div", { 
+                      className: "text-[11pt] flex col-span-10 whitespace-pre-wrap break-all w-full",
+                      style: {
+                        color: getValueColor(item.value, item.normalRange, patientData?.patient?.gender || patientData.gender),
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word",
+                        lineHeight: "1"
+                      }
+                    }, item.value)
+                  ) : React.createElement("div",null)
+            )
           )
         )
       )

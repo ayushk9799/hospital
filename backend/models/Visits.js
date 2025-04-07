@@ -26,6 +26,7 @@ const visitSchema = new mongoose.Schema(
     relation:String,
     patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
+    consultationType: { type: String },
     department: { type: String },
     reasonForVisit: { type: String },
     timeSlot: {

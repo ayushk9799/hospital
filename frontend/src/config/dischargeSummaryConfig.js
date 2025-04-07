@@ -45,7 +45,7 @@ export const DEFAULT_FORM_CONFIG = {
           width:"full"
         },
         {
-          id:"husbandName",
+          id:"husband",
           label:"Husband Name",
           type:"text",
           width:"full"

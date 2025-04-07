@@ -26,10 +26,11 @@ import registrationRoutes from "./routes/registrationRoutes.js";
 import babyRoutes from "./routes/babyRoutes.js";
 import labRoutes from "./routes/labRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import consultationFeeRoutes from "./routes/consultationFeeRoutes.js";
 dotenv.config({ path: "./config/config.env" });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Get the directory name of the current module
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -71,6 +72,7 @@ app.use("/api/registration", registrationRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/babies", babyRoutes);
 app.use("/api/lab", labRoutes);
+app.use("/api/consultation-fees", consultationFeeRoutes);
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {

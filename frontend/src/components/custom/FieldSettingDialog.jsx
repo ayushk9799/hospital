@@ -76,6 +76,7 @@ const FieldSettingDialog = ({
   };
 
   const handleSaveDialog = () => {
+    console.log(localField);
     if (isIdTaken(localField.id)) {
       toast({
         title: "Error",

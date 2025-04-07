@@ -10,7 +10,7 @@ import {
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
-import {convertTo12Hour} from "../assets/Data"
+import { convertTo12Hour } from "../assets/Data";
 import { Label } from "../components/ui/label";
 import { fetchItems } from "../redux/slices/pharmacySlice";
 import { Badge } from "../components/ui/badge";
@@ -123,7 +123,7 @@ const FormField = ({
   suggestions,
   extraProps = {},
 }) => {
-  
+  console.log(field);
   const handleDiagnosisChange = (newDiagnoses) => {
     const diagnosisString = newDiagnoses.map((d) => d.name).join(", ");
     onChange({
@@ -233,12 +233,11 @@ const FormField = ({
         </div>
       );
     case "time": {
-    
-      let x=value.split(" ")
+      let x = value.split(" ");
       const timeValue = value ? x[0] : "";
       let meridiem = value ? x[1] || "AM" : "AM";
-      if(x.length===1){
-        meridiem=convertTo12Hour(timeValue).split(" ")[1]
+      if (x.length === 1) {
+        meridiem = convertTo12Hour(timeValue).split(" ")[1];
       }
       // Convert from 12-hour format to 24-hour format for input value
       const time24 = timeValue;
@@ -673,7 +672,7 @@ export default function DischargeSummary() {
     treatment: "",
     conditionOnAdmission: "",
     conditionOnDischarge: "",
-    comorbidityHandling:"separate",
+    comorbidityHandling: "separate",
     vitals: {
       admission: {
         bloodPressure: "",
@@ -809,7 +808,6 @@ export default function DischargeSummary() {
           console.error("Error fetching patient details:", error);
         }
       } else if (dischargeData) {
-       
         setPatient(dischargeData);
 
         if (dischargeData.formConfig || formConfig) {
@@ -959,7 +957,7 @@ export default function DischargeSummary() {
   };
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-  
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
   const handleDateChange = (field, date) => {
@@ -1471,9 +1469,10 @@ export default function DischargeSummary() {
   const handleCancelCustomize = () => {
     setShowCustomizer(false);
   };
-
+  console.log(patientInfo);
   // Render form sections based on configuration
   const renderFormSection = (section) => {
+    console.log(section);
     return (
       <div key={section.id} className={section.className}>
         {section.title && (
@@ -1667,27 +1666,24 @@ export default function DischargeSummary() {
                 field.id === "admissionDate" ||
                 field.id === "dateDischarged" ||
                 field.id === "timeDischarged" ||
-                field.id === "admittedTime"||
-                field.id==="bookingTime"
+                field.id === "admittedTime" ||
+                field.id === "bookingTime"
               ) {
-                value = (
-                  field.id === "admittedTime"
-                    
-                    ? (formData.admittedTime || formData.bookingTime)
-
-                    : formData[field.id]
-              
-                ) || "";
+                value =
+                  (field.id === "admittedTime"
+                    ? formData.admittedTime || formData.bookingTime
+                    : formData[field.id]) || "";
                 onChange = handleInputChange;
               } else {
-                value =
-                  patientInfo[field.id] ||
-                  patientInfo?.[patientInfo?.relation] ||
-                  formData?.[field.id] ||
-                  "";
-                if (!patientInfo?.[field.id]) {
-                  label = patientInfo?.relation;
+                // Get the value directly from patientInfo without fallback to relation
+                value = patientInfo[field.id] || formData?.[field.id] || "";
+                
+                // Only set relation-specific value if this field is actually the relation field
+                if (field.id === patientInfo?.relation?.toLowerCase()) {
+                  value = patientInfo[patientInfo.relation.toLowerCase()] || "";
+                  label = patientInfo.relation;
                 }
+
                 onChange = handlePatientInfoChange;
               }
             } else {
@@ -1767,6 +1763,8 @@ export default function DischargeSummary() {
       const patientInfoSection = savedConfig.sections.find(
         (section) => section.id === "patientInfo"
       );
+      console.log("patientInfoSection");
+      console.log(patientInfoSection);
       if (patientInfoSection) {
         const updatedPatientInfo = {};
         patientInfoSection.fields.forEach((field) => {
@@ -1918,7 +1916,8 @@ export default function DischargeSummary() {
           ref={componentRef}
           formData={{
             ...formData,
-            admittedTime: formData.admittedTime || convertTo12Hour(formData.bookingTime),
+            admittedTime:
+              formData.admittedTime || convertTo12Hour(formData.bookingTime),
             investigations: formData.investigations
               .filter((inv) => inv.name.trim() !== "" && inv.report)
               .map((inv) => ({
