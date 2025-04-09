@@ -423,23 +423,71 @@ export default function LabList() {
 
   return (
     <Card className="w-full border-none shadow-none">
-      <CardHeader>
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+      <CardHeader className="pb-2">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
+          <div className="flex items-center gap-4 w-full sm:w-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="hidden sm:flex"
+            >
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <div>
-              <CardTitle>Laboratory Tests</CardTitle>
-              <CardDescription>
+            <div className="w-full sm:w-auto">
+              <CardTitle className="text-center sm:text-left">
+                Laboratory Tests
+              </CardTitle>
+              <CardDescription className="hidden sm:block">
                 Manage and view lab test records
               </CardDescription>
             </div>
           </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            New Registration
-          </Button>
+          <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Registration</span>
+              <span className="sm:hidden">New</span>
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <CalendarIcon className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{dateFilter}</span>
+                  <span className="sm:hidden">Date</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setDateFilter("Today")}>
+                  Today
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>
+                  Yesterday
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>
+                  This Week
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>
+                  Custom Range
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {dateFilter === "Custom" && (
+              <div className="col-span-2 sm:col-span-1">
+                <DateRangePicker
+                  from={tempDateRange.from}
+                  to={tempDateRange.to}
+                  onSelect={(range) => setTempDateRange(range)}
+                  onSearch={handleDateRangeSearch}
+                  onCancel={handleDateRangeCancel}
+                />
+              </div>
+            )}
+          </div>
         </div>
       </CardHeader>
 
@@ -500,40 +548,6 @@ export default function LabList() {
                 <span className="w-2 h-2 rounded-full bg-green-600"></span>
                 <span>Completed</span>
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {dateFilter}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onSelect={() => setDateFilter("Today")}>
-                    Today
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setDateFilter("Yesterday")}>
-                    Yesterday
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>
-                    This Week
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>
-                    Custom Range
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {dateFilter === "Custom" && (
-                <DateRangePicker
-                  from={tempDateRange.from}
-                  to={tempDateRange.to}
-                  onSelect={(range) => setTempDateRange(range)}
-                  onSearch={handleDateRangeSearch}
-                  onCancel={handleDateRangeCancel}
-                />
-              )}
             </div>
           </div>
         </div>

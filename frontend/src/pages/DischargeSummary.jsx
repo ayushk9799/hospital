@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
+import { dischargeSummaryTemplateStringDefault } from "../templates/dischargesummary";
 import { Button } from "../components/ui/button";
 import { Textarea } from "../components/ui/textarea";
 import { convertTo12Hour } from "../assets/Data";
@@ -65,6 +66,7 @@ import {
 } from "../config/dischargeSummaryConfig";
 import FormCustomizer from "../components/custom/FormCustomizer";
 import { searchBabyByNumber } from "../redux/slices/babySlice";
+import { ScrollArea, ScrollBar } from "../components/ui/scroll-area";
 
 // Time conversion helper functions
 // const convertTo12Hour = (time24) => {
@@ -209,18 +211,19 @@ const FormField = ({
                     {template.name}
                   </button>
 
-                  {/* Hover Preview - Only show when not selected */}
-                  {value !== template.content && (
-                    <div className="absolute z-50 invisible group-hover:visible bg-popover text-popover-foreground p-3 rounded-lg shadow-lg min-w-[200px] max-w-[400px] mt-2 left-0 whitespace-pre-wrap text-sm border">
-                      <div className="font-semibold mb-1">
-                        Template Preview:
-                      </div>
-                      {template.content}
+                      {/* Hover Preview - Only show when not selected */}
+                      {value !== template.content && (
+                        <div className="absolute z-50 invisible group-hover:visible bg-popover text-popover-foreground p-3 rounded-lg shadow-lg min-w-[200px] max-w-[400px] mt-2 left-0 whitespace-pre-wrap text-sm border">
+                          <div className="font-semibold mb-1">
+                            Template Preview:
+                          </div>
+                          {template.content}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  ))}
                 </div>
-              ))}
-            </div>
+              
           )}
           <Textarea
             id={field.id}
@@ -491,122 +494,133 @@ const BabyTable = ({ value = [], onChange }) => {
 
   return (
     <div className="space-y-4">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Baby No.</TableHead>
-            <TableHead>Sex</TableHead>
-            <TableHead>Weight (g)</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead>Time</TableHead>
-            <TableHead>APGAR Score</TableHead>
-            <TableHead>Action</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {value.map((baby, index) => (
-            <TableRow key={index}>
-              <TableCell>
-                <div className="relative">
-                  <Input
-                    type="text"
-                    value={baby.number}
-                    onChange={(e) =>
-                      updateBaby(index, "number", e.target.value)
-                    }
-                    className="flex-1 pr-10"
-                  />
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 hover:bg-transparent "
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        baby.number &&
-                          dispatch(searchBabyByNumber(baby.number));
+      <ScrollArea className="w-full border rounded-lg">
+        <div className="min-w-[800px]">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Baby No.</TableHead>
+                <TableHead>Sex</TableHead>
+                <TableHead>Weight (g)</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Time</TableHead>
+                <TableHead>APGAR Score</TableHead>
+                <TableHead>Action</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {value.map((baby, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <div className="relative">
+                      <Input
+                        type="text"
+                        value={baby.number}
+                        onChange={(e) =>
+                          updateBaby(index, "number", e.target.value)
+                        }
+                        className="flex-1 pr-10"
+                      />
+                      <div className="absolute right-2 top-1/2 -translate-y-1/2">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 hover:bg-transparent "
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            baby.number &&
+                              dispatch(searchBabyByNumber(baby.number));
+                          }}
+                        >
+                          <Search className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                        </Button>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Select
+                      value={baby.sex}
+                      onValueChange={(newValue) =>
+                        updateBaby(index, "sex", newValue)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sex" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="male">Male</SelectItem>
+                        <SelectItem value="female">Female</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={baby.weight}
+                      onChange={(e) =>
+                        updateBaby(index, "weight", e.target.value)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="date"
+                      value={baby.date}
+                      onChange={(e) =>
+                        updateBaby(index, "date", e.target.value)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell className="flex gap-2 items-center">
+                    <Input
+                      type="time"
+                      value={baby.time?.split(" ")[0] || ""}
+                      onChange={(e) => handleTimeChange(index, e.target.value)}
+                      className="w-24"
+                    />
+                    <Select
+                      value={baby.time?.split(" ")[1] || "AM"}
+                      onValueChange={(value) => {
+                        const time = baby.time?.split(" ")[0] || "";
+                        updateBaby(index, "time", `${time} ${value}`);
                       }}
                     >
-                      <Search className="h-4 w-4 text-muted-foreground cursor-pointer" />
+                      <SelectTrigger className="w-20">
+                        <SelectValue placeholder="AM/PM" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="AM">AM</SelectItem>
+                        <SelectItem value="PM">PM</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </TableCell>
+                  <TableCell>
+                    <Input
+                      type="text"
+                      value={baby.apgar}
+                      onChange={(e) =>
+                        updateBaby(index, "apgar", e.target.value)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeBaby(index)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
-                  </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Select
-                  value={baby.sex}
-                  onValueChange={(newValue) =>
-                    updateBaby(index, "sex", newValue)
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Sex" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={baby.weight}
-                  onChange={(e) => updateBaby(index, "weight", e.target.value)}
-                />
-              </TableCell>
-              <TableCell>
-                <Input
-                  type="date"
-                  value={baby.date}
-                  onChange={(e) => updateBaby(index, "date", e.target.value)}
-                />
-              </TableCell>
-              <TableCell className="flex gap-2 items-center">
-                <Input
-                  type="time"
-                  value={baby.time?.split(" ")[0] || ""}
-                  onChange={(e) => handleTimeChange(index, e.target.value)}
-                  className="w-24"
-                />
-                <Select
-                  value={baby.time?.split(" ")[1] || "AM"}
-                  onValueChange={(value) => {
-                    const time = baby.time?.split(" ")[0] || "";
-                    updateBaby(index, "time", `${time} ${value}`);
-                  }}
-                >
-                  <SelectTrigger className="w-20">
-                    <SelectValue placeholder="AM/PM" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="AM">AM</SelectItem>
-                    <SelectItem value="PM">PM</SelectItem>
-                  </SelectContent>
-                </Select>
-              </TableCell>
-              <TableCell>
-                <Input
-                  type="text"
-                  value={baby.apgar}
-                  onChange={(e) => updateBaby(index, "apgar", e.target.value)}
-                />
-              </TableCell>
-              <TableCell>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => removeBaby(index)}
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
       <Button type="button" variant="outline" onClick={addBaby}>
         <PlusCircle className="h-4 w-4 mr-2" /> Add Baby
       </Button>
@@ -628,7 +642,12 @@ export default function DischargeSummary() {
   const [
     selectedTemplateDischargeSummary,
     setSelectedTemplateDischargeSummary,
-  ] = useState(dischargeSummaryTemplates[0] || { name: "", value: "" });
+  ] = useState(
+    dischargeSummaryTemplates[0] || {
+      name: "Template 1",
+      value: dischargeSummaryTemplateStringDefault,
+    }
+  );
   const savedConfig = useSelector(
     (state) => state.templates.dischargeFormTemplates
   );
@@ -1474,13 +1493,16 @@ export default function DischargeSummary() {
   const renderFormSection = (section) => {
     console.log(section);
     return (
-      <div key={section.id} className={section.className}>
+      <div
+        key={section.id}
+        className={`${section.className} bg-white rounded-lg p-2 sm:p-4`}
+      >
         {section.title && (
-          <h2 className="text-lg font-semibold mb-2 text-primary">
+          <h2 className="text-base sm:text-lg font-semibold mb-2 text-primary">
             {section.title}
           </h2>
         )}
-        <div className="gap-2 text-sm">
+        <div className="grid gap-2 sm:gap-4 text-sm sm:text-base">
           {section.fields.map((field) => {
             // Handle special components separately
             if (field.type === "vitals") {
@@ -1677,7 +1699,7 @@ export default function DischargeSummary() {
               } else {
                 // Get the value directly from patientInfo without fallback to relation
                 value = patientInfo[field.id] || formData?.[field.id] || "";
-                
+
                 // Only set relation-specific value if this field is actually the relation field
                 if (field.id === patientInfo?.relation?.toLowerCase()) {
                   value = patientInfo[patientInfo.relation.toLowerCase()] || "";
@@ -1779,11 +1801,11 @@ export default function DischargeSummary() {
   }, [savedConfig]);
 
   return (
-    <div className="container mx-auto py-4 px-2 sm:px-4 max-w-5xl">
+    <div className="container mx-auto py-2 sm:py-4 px-2 sm:px-4 lg:px-6 max-w-7xl">
       <Card className="w-full shadow-lg">
-        <CardHeader className="bg-primary text-primary-foreground py-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+        <CardHeader className="bg-primary text-primary-foreground py-2 sm:py-3">
+          <div className="flex items-center justify-between flex-wrap sm:flex-nowrap gap-2">
+            <div className="flex items-center gap-2 sm:gap-4">
               <Button
                 variant="ghost"
                 size="icon"
@@ -1792,27 +1814,336 @@ export default function DischargeSummary() {
               >
                 <ArrowLeft className="h-4 w-4" />
               </Button>
-              <CardTitle className="text-xl">Discharge Summary</CardTitle>
+              <CardTitle className="text-lg sm:text-xl">
+                Discharge Summary
+              </CardTitle>
             </div>
             <Button
               variant="ghost"
               onClick={handleCustomizeForm}
-              className="text-primary-foreground hover:text-primary hover:bg-primary-foreground"
+              className="text-primary-foreground hover:text-primary hover:bg-primary-foreground flex items-center"
             >
-              Customize Form
+              <ChartNoAxesColumnDecreasingIcon className="h-4 w-4 sm:hidden" />
+              <span className="hidden sm:inline text-sm sm:text-base">
+                Customize Form
+              </span>
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-4">
-          <div className="space-y-4">
-            {formConfig.sections.map(renderFormSection)}
+        <CardContent className="p-2 sm:p-4 md:p-6">
+          <div className="space-y-3 sm:space-y-4">
+            {formConfig.sections.map((section) => (
+              <div
+                key={section.id}
+                className={`${section.className} bg-white rounded-lg p-2 sm:p-4`}
+              >
+                {section.title && (
+                  <h2 className="text-base sm:text-lg font-semibold mb-2 text-primary">
+                    {section.title}
+                  </h2>
+                )}
+                <div className="grid gap-2 sm:gap-4 text-sm sm:text-base">
+                  {section.fields.map((field) => {
+                    // Handle special components separately
+                    if (field.type === "vitals") {
+                      return (
+                        <div key={field.id} className=" py-2">
+                          <Label htmlFor={field.id}>{field.label}</Label>
+                          {renderVitalsInputs(field.prefix)}
+                        </div>
+                      );
+                    }
+
+                    if (field.type === "investigations") {
+                      return (
+                        <div key={field.id} className=" py-2">
+                          <Label htmlFor={field.id}>{field.label}</Label>
+                          <div className="space-y-2 mt-2">
+                            {formData.investigations.map((investigation, index) => (
+                              <div
+                                key={index}
+                                className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                              >
+                                <div className="sm:col-span-3">
+                                  <SearchSuggestion
+                                    suggestions={allLabTests}
+                                    placeholder="Select investigation"
+                                    value={investigation.name}
+                                    setValue={(value) =>
+                                      handleInvestigationChange(index, {
+                                        name: value,
+                                      })
+                                    }
+                                    onSuggestionSelect={(suggestion) =>
+                                      handleInvestigationChange(
+                                        index,
+                                        suggestion
+                                      )
+                                    }
+                                  />
+                                </div>
+                                <div className="flex space-x-2">
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() =>
+                                      handleOpenLabReport(investigation)
+                                    }
+                                    aria-label="Open Lab Report"
+                                    disabled={!investigation.name}
+                                  >
+                                    <ChevronRight className="h-5 w-5" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    variant="destructive"
+                                    size="icon"
+                                    onClick={() =>
+                                      handleRemoveInvestigation(index)
+                                    }
+                                    disabled={
+                                      formData.investigations.length === 1
+                                    }
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                            ))}
+                            <Button
+                              onClick={handleAddInvestigation}
+                              variant="outline"
+                              className="mt-2 font-semibold"
+                              type="button"
+                            >
+                              <PlusCircle className="h-4 w-4 mr-2" /> Add
+                              Investigation
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    if (field.type === "medicineAdvice") {
+                      return (
+                        <div key={field.id} className=" py-2">
+                          <Label htmlFor={field.id}>{field.label}</Label>
+                          <div className="space-y-2 mt-2">
+                            {formData[field.id]?.map((item, index) => (
+                              <div
+                                key={index}
+                                className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                              >
+                                <div
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                    }
+                                  }}
+                                >
+                                  <SearchSuggestion
+                                    suggestions={medicinelist?.map((item) => ({
+                                      name: item,
+                                    }))}
+                                    placeholder="Select medicine/advice"
+                                    value={item.name}
+                                    setValue={(value) =>
+                                      handleMedicineAdviceChange(
+                                        index,
+                                        "name",
+                                        value,
+                                        field.id
+                                      )
+                                    }
+                                    onSuggestionSelect={(suggestion) =>
+                                      handleMedicineAdviceSuggestionSelect(
+                                        index,
+                                        suggestion,
+                                        field.id
+                                      )
+                                    }
+                                  />
+                                </div>
+                                <Input
+                                  type="text"
+                                  placeholder="Dosage"
+                                  value={item.dosage}
+                                  onChange={(e) =>
+                                    handleMedicineAdviceChange(
+                                      index,
+                                      "dosage",
+                                      e.target.value,
+                                      field.id
+                                    )
+                                  }
+                                  className="font-medium"
+                                  onKeyDown={(e) => {
+                                    // Prevent form submission on Enter key
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                    }
+                                  }}
+                                />
+                                <Input
+                                  type="text"
+                                  placeholder="Duration"
+                                  value={item.duration}
+                                  onChange={(e) =>
+                                    handleMedicineAdviceChange(
+                                      index,
+                                      "duration",
+                                      e.target.value,
+                                      field.id
+                                    )
+                                  }
+                                  className="font-medium"
+                                  onKeyDown={(e) => {
+                                    // Prevent form submission on Enter key
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                    }
+                                  }}
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  onClick={() =>
+                                    removeMedicineAdvice(index, field.id)
+                                  }
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            ))}
+                            <Button
+                              type="button" // Add type="button" to prevent form submission
+                              onClick={() => addMedicineAdvice(field.id)}
+                              variant="outline"
+                              className="mt-2 font-semibold"
+                            >
+                              <PlusCircle className="h-4 w-4 mr-2" /> Add
+                              Medicine/Advice
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // For standard form fields
+                    let value;
+                    let onChange;
+                    let label;
+                    // Check if this is a patientInfo field
+                    if (section.id === "patientInfo") {
+                      // Special handling for admission and discharge dates
+                      if (
+                        field.id === "admissionDate" ||
+                        field.id === "dateDischarged" ||
+                        field.id === "timeDischarged" ||
+                        field.id === "admittedTime" ||
+                        field.id === "bookingTime"
+                      ) {
+                        value =
+                          (field.id === "admittedTime"
+                            ? formData.admittedTime || formData.bookingTime
+                            : formData[field.id]) || "";
+                        onChange = handleInputChange;
+                      } else {
+                        // Get the value directly from patientInfo without fallback to relation
+                        value =
+                          patientInfo[field.id] || formData?.[field.id] || "";
+
+                        // Only set relation-specific value if this field is actually the relation field
+                        if (field.id === patientInfo?.relation?.toLowerCase()) {
+                          value =
+                            patientInfo[patientInfo.relation.toLowerCase()] ||
+                            "";
+                          label = patientInfo.relation;
+                        }
+
+                        onChange = handlePatientInfoChange;
+                      }
+                    } else {
+                      value = field.id.includes(".")
+                        ? field.id
+                            .split(".")
+                            .reduce((obj, key) => obj[key], formData)
+                        : formData[field.id];
+
+                      onChange = (e) => {
+                        if (field.type === "multiselect") {
+                          const newValue = Array.isArray(e)
+                            ? e.map((v) => v.name).join(", ")
+                            : e.target.value;
+                          handleInputChange({
+                            target: {
+                              name: field.id,
+                              value: newValue,
+                            },
+                          });
+                        } else {
+                          handleInputChange(e);
+                        }
+                      };
+                    }
+
+                    // Get suggestions based on the field configuration
+                    let suggestions = [];
+                    if (field.suggestions) {
+                      switch (field.suggestions) {
+                        case "diagnosisTemplate":
+                          suggestions = diagnosisTemplate;
+                          break;
+                        case "comorbidities":
+                          suggestions = comorbidities;
+                          break;
+                        case "medicinelist":
+                          suggestions = medicinelist;
+                          break;
+                        default:
+                          try {
+                            suggestions = eval(field.suggestions) || [];
+                          } catch (e) {
+                            console.error("Error evaluating suggestions:", e);
+                          }
+                      }
+                    }
+
+                    // Add extra props for baby table
+                    const extraProps = {
+                      ...field.extraProps,
+                      onComorbidityHandlingChange:
+                        handleComorbidityHandlingChange,
+                      comorbidityHandling: formData.comorbidityHandling,
+                      showBabyDetails: field.dependsOn
+                        ? formData[field.dependsOn]
+                        : true,
+                    };
+
+                    return (
+                      <FormField
+                        key={field.id}
+                        field={field}
+                        value={value}
+                        label={label}
+                        onChange={onChange}
+                        suggestions={suggestions}
+                        extraProps={extraProps}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
 
             <div className="flex flex-col sm:flex-row justify-end mt-4 space-y-2 sm:space-y-0 sm:space-x-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={handlePrint}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto text-sm sm:text-base py-2 px-4"
               >
                 Print
               </Button>
@@ -1821,7 +2152,7 @@ export default function DischargeSummary() {
                 onClick={handleSave}
                 variant="outline"
                 disabled={savingStatus === "loading" || !patientId}
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto text-sm sm:text-base py-2 px-4"
               >
                 {savingStatus === "loading" ? "Saving..." : "Save"}
               </Button>
@@ -1833,7 +2164,7 @@ export default function DischargeSummary() {
                   !patientId ||
                   !hasDischargePermission
                 }
-                className="w-full sm:w-auto"
+                className="w-full sm:w-auto text-sm sm:text-base py-2 px-4"
               >
                 {!hasDischargePermission
                   ? "No Permission to Discharge"
@@ -1848,30 +2179,33 @@ export default function DischargeSummary() {
 
       {/* Form Customizer Modal */}
       {showCustomizer && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <FormCustomizer
-            config={DEFAULT_FORM_CONFIG}
-            enabledFields={formConfig}
-            onSave={handleSaveCustomConfig}
-            onCancel={handleCancelCustomize}
-          />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <FormCustomizer
+              config={DEFAULT_FORM_CONFIG}
+              enabledFields={formConfig}
+              onSave={handleSaveCustomConfig}
+              onCancel={handleCancelCustomize}
+            />
+          </div>
         </div>
       )}
 
       {/* Lab Report Modal */}
       {isLabReportOpen && selectedInvestigation && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white rounded-lg shadow-lg w-11/12 md:w-3/4 lg:w-2/3 p-4 overflow-y-auto max-h-[90vh]">
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="text-lg font-semibold">
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-2 sm:p-4">
+          <div className="bg-white rounded-lg shadow-lg w-full sm:w-11/12 md:w-3/4 lg:w-2/3 p-3 sm:p-4 overflow-y-auto max-h-[90vh]">
+            <div className="flex justify-between items-center mb-2 sm:mb-3">
+              <h2 className="text-base sm:text-lg font-semibold">
                 Lab Report: {selectedInvestigation.name}
               </h2>
               <Button
                 onClick={handleCloseLabReport}
                 variant="ghost"
                 size="icon"
+                className="h-8 w-8 sm:h-10 sm:w-10"
               >
-                <X className="h-5 w-5" />
+                <X className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </div>
             {selectedTemplate ? (
@@ -1911,6 +2245,8 @@ export default function DischargeSummary() {
           </div>
         </div>
       )}
+
+      {/* Print Preview */}
       <div style={{ display: "none" }} className="print-content">
         <DischargeSummaryPDF
           ref={componentRef}
@@ -1935,20 +2271,28 @@ export default function DischargeSummary() {
 
       {/* Print Confirmation Dialog */}
       {isPrintDialogOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-[90%] max-w-md">
-            <h2 className="text-lg font-semibold mb-4">Print Confirmation</h2>
-            <p className="mb-6">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg p-4 sm:p-6 w-[90%] max-w-md">
+            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
+              Print Confirmation
+            </h2>
+            <p className="mb-4 sm:mb-6 text-sm sm:text-base">
               Would you like to print the discharge summary?
             </p>
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-end gap-2 sm:gap-3">
               <Button
                 variant="outline"
                 onClick={() => handlePrintConfirm(false)}
+                className="text-sm sm:text-base py-2 px-4"
               >
                 No
               </Button>
-              <Button onClick={() => handlePrintConfirm(true)}>Yes</Button>
+              <Button
+                onClick={() => handlePrintConfirm(true)}
+                className="text-sm sm:text-base py-2 px-4"
+              >
+                Yes
+              </Button>
             </div>
           </div>
         </div>

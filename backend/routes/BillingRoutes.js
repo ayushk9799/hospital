@@ -376,7 +376,20 @@ router.get("/get-bill/:id", verifyToken, async (req, res) => {
   try {
     const bill = await ServicesBill.findById(req.params.id)
       .populate("patient")
-      .populate("visit")
+      .populate({
+        path: "visit",
+        populate: {
+          path: "doctor",
+          select: "name",
+        },
+      })
+      .populate({
+        path: "admission",
+        populate: {
+          path: "assignedDoctor",
+          select: "name",
+        },
+      })
       .populate("payments")
       .populate("createdBy", "name");
 

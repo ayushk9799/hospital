@@ -3,7 +3,7 @@ import { Button } from "../components/ui/button";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
-import { headerTemplateString4 ,headerTemplateStringnew} from "../templatesExperiments/HospitalHeaderTemplate";
+// import { headerTemplateString4 } from "../templatesExperiments/HospitalHeaderTemplate";
 import { headerTemplateString } from "../templates/headertemplate";
 import {headerTemplateString2} from "../templatesExperiments/HospitalHeaderTemplate"
 import { headerTemplateString3 as headerTemplateStringExperimental, headerTemplateString as headerTemplateStringGolpathar } from "../templatesExperiments/HospitalHeaderTemplate";
@@ -25,10 +25,6 @@ export default function HeaderTemplatePreview() {
     {
       name:"image",
       value:headerTemplateString2
-    },
-    {
-      name:"wbcwdxb",
-      value:headerTemplateString4
     },
     ...(headerTemplates || []),
   ]);
@@ -65,7 +61,7 @@ export default function HeaderTemplatePreview() {
   return (
     <div className="p-4 sm:p-6">
       <div className="flex flex-col gap-6 mb-6">
-        {/* <div className="flex justify-between items-center">
+        <div className="flex justify-between items-center">
           <h1 className="text-xl sm:text-2xl font-bold">
             Hospital Header Preview
           </h1>
@@ -85,7 +81,7 @@ export default function HeaderTemplatePreview() {
           >
             Save Template
           </Button>
-        </div> */}
+        </div>
 
         <div className="flex flex-wrap gap-3">
           {availableTemplates.map((template, index) => (

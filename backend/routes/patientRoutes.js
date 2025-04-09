@@ -323,8 +323,8 @@ router.post(
               quantity: 1,
               rate: totalFee,
               category: "Consultation",
-              date:new Date(),
-              type:"additional"
+              date: new Date(),
+              type: "additional",
             },
           ],
           patient: patient._id,
@@ -389,12 +389,10 @@ router.post(
           doctor: admission.doctor || null,
           department: admission.department || null,
         });
-   let room;
+        let room;
         // Handle room assignment if provided
         if (admission.assignedRoom) {
-           room = await Room.findById(admission.assignedRoom).session(
-            session
-          );
+          room = await Room.findById(admission.assignedRoom).session(session);
           if (!room) {
             throw new Error("Room not found");
           }
@@ -421,12 +419,13 @@ router.post(
           // Get room rate if room is assigned
           let roomCharge = 0;
           if (admission.assignedRoom) {
-           
-              roomCharge = room.ratePerDay || 0;
-            
+            roomCharge = room.ratePerDay || 0;
           }
           let invoiceNumber = await BillCounter.getNextBillNumber(session);
-          let userProvided=paymentInfo.services.reduce((sum, service) => sum + service.rate, 0);
+          let userProvided = paymentInfo.services.reduce(
+            (sum, service) => sum + service.rate,
+            0
+          );
           bill = new ServicesBill({
             invoiceNumber: invoiceNumber || null,
             services: [
@@ -439,8 +438,8 @@ router.post(
                   quantity: 1,
                   rate: serviceInfo?.rate || 0,
                   category: service?.category || "Other",
-                  date:new Date(),
-                  type:"additional"
+                  date: new Date(),
+                  type: "additional",
                 };
               }),
               // Add room charge if room is assigned
@@ -451,8 +450,7 @@ router.post(
                       quantity: 1,
                       rate: roomCharge,
                       category: "Room Rent",
-                      date:new Date(),
-                    
+                      date: new Date(),
                     },
                   ]
                 : []),
@@ -467,10 +465,16 @@ router.post(
             admission: admissionRecord._id,
             totalAmount: Number(paymentInfo.totalAmount),
             subtotal: userProvided
-              ? userProvided +
-                roomCharge
+              ? userProvided + roomCharge
               : Number(paymentInfo.totalAmount),
-            additionalDiscount: paymentInfo.additionalDiscount || Number(userProvided)-Number(paymentInfo.totalAmount)>0?Number(userProvided)-Number(paymentInfo.totalAmount):0,
+            additionalDiscount:
+              paymentInfo.additionalDiscount ||
+              Number(userProvided + roomCharge) -
+                Number(paymentInfo.totalAmount) >
+                0
+                ? Number(userProvided + roomCharge) -
+                  Number(paymentInfo.totalAmount)
+                : 0,
             amountPaid: Number(paymentInfo.amountPaid) || 0,
             patientType: "IPD",
             createdBy: user._id,
@@ -1065,8 +1069,8 @@ router.post(
             quantity: 1,
             rate: totalFee,
             category: "Consultation",
-            date:new Date(),
-            type:"additional"
+            date: new Date(),
+            type: "additional",
           },
         ],
         patient: patient._id,
@@ -1382,8 +1386,11 @@ router.post("/discharge/:id", verifyToken, async (req, res) => {
         );
         if (bedIndex !== -1) {
           room.beds[bedIndex].status = "Available";
-         
-          if(room.beds[bedIndex].currentPatient?.toString()===admission.patient?.toString()){
+
+          if (
+            room.beds[bedIndex].currentPatient?.toString() ===
+            admission.patient?.toString()
+          ) {
             room.currentOccupancy -= 1;
           }
           room.beds[bedIndex].currentPatient = null;
@@ -1540,7 +1547,10 @@ router.post(
           }
         }
         let invoiceNumber = await BillCounter.getNextBillNumber(session);
-        let userProvided = paymentInfo.services.reduce((sum, service) => sum + service.rate, 0);
+        let userProvided = paymentInfo.services.reduce(
+          (sum, service) => sum + service.rate,
+          0
+        );
         bill = new ServicesBill({
           invoiceNumber: invoiceNumber || null,
           services: [
@@ -1554,7 +1564,7 @@ router.post(
                 rate: serviceInfo?.rate || 0,
                 category: service?.category || "Other",
                 date: new Date(),
-                type: "additional"
+                type: "additional",
               };
             }),
             // Add room charge if room is assigned
@@ -1565,7 +1575,7 @@ router.post(
                     quantity: 1,
                     rate: roomCharge,
                     category: "Room Rent",
-                    date: new Date()
+                    date: new Date(),
                   },
                 ]
               : []),
@@ -1581,9 +1591,13 @@ router.post(
           subtotal: userProvided
             ? userProvided + roomCharge
             : Number(paymentInfo.totalAmount),
-          additionalDiscount: paymentInfo.additionalDiscount || 
-            (Number(userProvided) - Number(paymentInfo.totalAmount) > 0 
-              ? Number(userProvided) - Number(paymentInfo.totalAmount) 
+          additionalDiscount:
+            paymentInfo.additionalDiscount ||
+            (Number(userProvided + roomCharge) -
+              Number(paymentInfo.totalAmount) >
+            0
+              ? Number(userProvided + roomCharge) -
+                Number(paymentInfo.totalAmount)
               : 0),
           amountPaid: Number(paymentInfo.amountPaid) || 0,
           patientType: "IPD",
@@ -1965,7 +1979,40 @@ router.post("/discharged-by-date", verifyToken, async (req, res) => {
   }
 });
 
-// Define service rates
+// Get OPD details for token printing
+router.post("/opd-details", verifyToken, async (req, res) => {
+  try {
+    const { visitId } = req.body;
 
+    const visit = await Visit.findById(visitId)
+      .populate("patient")
+      .populate("doctor")
+      .populate({
+        path: "bills.services",
+        populate: {
+          path: "payments",
+          model: "Payment",
+        },
+      });
+
+    if (!visit) {
+      return res.status(404).json({ message: "Visit not found" });
+    }
+
+    // Get the latest payment for this visit
+
+    const responseData = {
+      patient: visit.patient,
+      bill: visit.bills.services?.[0],
+      payment: visit.bills.services?.[0]?.payments,
+      admissionRecord: visit,
+    };
+
+    res.json(responseData);
+  } catch (error) {
+    console.error("Error in opd-details route:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
 
 export default router;

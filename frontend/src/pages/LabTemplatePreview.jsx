@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { useDispatch } from "react-redux";
  import { labReportTemplateStringDefault } from "../templates/labReportTemplate";
 import { updateTemplate } from "../redux/slices/templatesSlice";
-import { labReportTemplateStringExperiment, labReportTemplateStringExperiment2, mergedLabReportTemplateStringExperiment } from "../templatesExperiments/labtemplateExperiment";
+import { labReportTemplateStringExperiment, labReportTemplateStringExperiment2, mergedLabReportTemplateStringExperiment, chandraneel } from "../templatesExperiments/labtemplateExperiment";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 import { Input } from "../components/ui/input";
 import { cn } from "../lib/utils";
@@ -61,7 +61,7 @@ export default function LabTemplatePreview() {
   // const handleSaveTemplate = () => {
   //   dispatch(
   //     updateTemplate({
-  //       labReportUiTemplate: labReportTemplateStringExperiment2,
+  //       labReportUiTemplate: chandraneel,
   //     })
   //   );
   // };

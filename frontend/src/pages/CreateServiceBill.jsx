@@ -698,7 +698,7 @@ const CreateServiceBill = ({
 
     const totalAfterDiscount = selectedServicesTotal - discountAmount;
     const firstBill = billData?.services?.[0] || {};
-
+    console.log(patientDetails)
     if (patientDetails?.type === "OPD") {
       const opdBillData = {
         patient: {

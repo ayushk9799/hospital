@@ -126,12 +126,7 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
     ),
 
     // Notes if present
-    reportData.notes && React.createElement("div", { 
-      className: "mb-4 p-2 bg-[#f8f9fa] rounded border border-[#e2e8f0]"
-    },
-      React.createElement("strong", {}, "Notes: "),
-      React.createElement("span", {}, reportData.notes)
-    ),
+  
 
     // Report Content
     React.createElement("div", { className: "border-t-2 border-b-2 border-[#ecf0f1] pb-[60mm]" },
@@ -213,6 +208,12 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
           ):React.createElement("div",null);
         }
       })
+    ),
+      reportData.notes && React.createElement("div", { 
+      className: "mb-4 p-2 bg-[#f8f9fa] rounded border border-[#e2e8f0]"
+    },
+      React.createElement("strong", {}, "Notes: "),
+      React.createElement("span", {}, reportData.notes)
     ),
 
     // Footer

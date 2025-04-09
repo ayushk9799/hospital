@@ -52,7 +52,10 @@ import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
 import { useSelector, useDispatch } from "react-redux";
 import { convertTo12Hour, DateRangePicker } from "../assets/Data";
 import { fetchBills } from "../redux/slices/BillingSlice";
-import { setSelectedPatient } from "../redux/slices/patientSlice";
+import {
+  setSelectedPatient,
+  fetchOPDDetails,
+} from "../redux/slices/patientSlice";
 import {
   startOfDay,
   endOfDay,
@@ -69,6 +72,7 @@ import OPDPrescriptionPrint from "../components/custom/print/OPDPrescriptionPrin
 import ConsentFormPrint from "../components/custom/print/ConsentFormPrint";
 import EditPatientDialog from "../components/custom/patients/EditPatientDialog";
 import LabRegDialog from "../components/custom/registration/LabRegDialog";
+import OPDBillTokenModal from "../components/custom/registration/OPDBillTokenModal";
 
 export default function Patients() {
   const dispatch = useDispatch();
@@ -84,6 +88,10 @@ export default function Patients() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isLabDialogOpen, setIsLabDialogOpen] = useState(false);
+  const [isOPDTokenModalOpen, setIsOPDTokenModalOpen] = useState(false);
+  const { opdDetails, opdDetailsStatus } = useSelector(
+    (state) => state.patients
+  );
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
@@ -181,6 +189,11 @@ export default function Patients() {
   const handleLabRegistration = (patient) => {
     setSelectedPatient(patient);
     setIsLabDialogOpen(true);
+  };
+
+  const handlePrintOPDToken = async (patient) => {
+    await dispatch(fetchOPDDetails(patient._id));
+    setIsOPDTokenModalOpen(true);
   };
 
   const PatientTable = ({ patients, type }) => {
@@ -322,13 +335,25 @@ export default function Patients() {
                       Edit Patient
                     </DropdownMenuItem>
                     {patient.type === "OPD" && (
-                      <DropdownMenuItem asChild>
-                        <OPDPrescriptionPrint patient={patient} />
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem asChild>
+                          <OPDPrescriptionPrint patient={patient} />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handlePrintOPDToken(patient)}
+                        >
+                          Print OPD Token
+                        </DropdownMenuItem>
+                      </>
                     )}
                     {patient.type === "IPD" && (
                       <DropdownMenuItem asChild>
-                        <ConsentFormPrint patient={{...patient,bookingTime:convertTo12Hour(patient?.bookingTime)}} />
+                        <ConsentFormPrint
+                          patient={{
+                            ...patient,
+                            bookingTime: convertTo12Hour(patient?.bookingTime),
+                          }}
+                        />
                       </DropdownMenuItem>
                     )}
                     {patient.type === "IPD" && (
@@ -425,6 +450,18 @@ export default function Patients() {
                     >
                       Edit Patient
                     </DropdownMenuItem>
+                    {patient.type === "OPD" && (
+                      <>
+                        <DropdownMenuItem asChild>
+                          <OPDPrescriptionPrint patient={patient} />
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => handlePrintOPDToken(patient)}
+                        >
+                          Print OPD Token
+                        </DropdownMenuItem>
+                      </>
+                    )}
                     {patient.type === "IPD" && (
                       <DropdownMenuItem
                         onClick={() => handleDischarge(patient)}
@@ -558,6 +595,11 @@ export default function Patients() {
           open={isLabDialogOpen}
           onOpenChange={setIsLabDialogOpen}
           patientData={selectedPatient}
+        />
+        <OPDBillTokenModal
+          isOpen={isOPDTokenModalOpen}
+          setIsOpen={setIsOPDTokenModalOpen}
+          patientData={opdDetails}
         />
         <Tabs
           defaultValue="OPD"

@@ -331,7 +331,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                 : "The new patient has been added.",
               variant: "success",
             });
-
+            console.log(response);
             setRegisteredPatient(response);
             setShowBillModal(true);
 

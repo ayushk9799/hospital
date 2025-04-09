@@ -176,7 +176,7 @@ export default function AdmittedPatients() {
       {!showBilling ? (
         <Card className="w-full">
           <CardHeader className="bg-primary text-primary-foreground">
-            <div className="flex flex-row justify-between items-center gap-2">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div className="flex items-center gap-2">
                 <Button
                   variant="ghost"
@@ -191,41 +191,94 @@ export default function AdmittedPatients() {
                   Admitted Patients
                 </CardTitle>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="relative">
-                  {/* Desktop Search */}
-                  <div className="hidden sm:block relative">
-                    <Input
-                      type="text"
-                      placeholder="Search by UHID..."
-                      value={searchQuery}
-                      onChange={handleInputChangeSearch}
-                      onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                      className="bg-white/90 border-0 pr-8 text-black w-72"
-                    />
-                    <Search
-                      className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:cursor-pointer"
-                      onClick={handleSearch}
-                    />
-                  </div>
 
-                  {/* Mobile Search */}
-                  <div className="sm:hidden flex items-center gap-2">
-                    <Input
-                      type="text"
-                      placeholder="Search by UHID..."
-                      value={searchQuery}
-                      onChange={handleInputChangeSearch}
-                      className="bg-white/90 border-0 pr-8 text-black w-[40px] focus:w-[200px] transition-all duration-300"
-                    />
-                    <Search
-                      className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:cursor-pointer"
-                      onClick={handleSearch}
-                    />
-                  </div>
+              {/* Mobile View */}
+              <div className="flex flex-row items-center gap-2 w-full sm:hidden">
+                <div className="relative flex-1">
+                  <Input
+                    type="text"
+                    placeholder="Search by UHID..."
+                    value={searchQuery}
+                    onChange={handleInputChangeSearch}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    className="bg-white/90 border-0 pr-8 text-black w-full"
+                  />
+                  <Search
+                    className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:cursor-pointer"
+                    onClick={handleSearch}
+                  />
+                </div>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      className="bg-white text-black hover:bg-white/75"
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-2" align="end">
+                    <div className="flex flex-col gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-full justify-start text-left font-normal"
+                          >
+                            <CalendarIcon className="mr-2 h-4 w-4" />
+                            {date
+                              ? format(date, "PPP")
+                              : "Date wise discharged"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={date}
+                            onSelect={setDate}
+                            initialFocus
+                          />
+                          <div className="p-2 border-t">
+                            <Button
+                              className="w-full"
+                              onClick={handleDateSearch}
+                            >
+                              Search
+                            </Button>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                      <Button
+                        onClick={() => navigate("/patients/discharge")}
+                        variant="outline"
+                        className="w-full justify-start text-left"
+                      >
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Create Discharge
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+
+              {/* Desktop View */}
+              <div className="hidden sm:flex flex-row items-center gap-2">
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Search by UHID..."
+                    value={searchQuery}
+                    onChange={handleInputChangeSearch}
+                    onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                    className="bg-white/90 border-0 pr-8 text-black w-72"
+                  />
+                  <Search
+                    className="h-4 w-4 absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:cursor-pointer"
+                    onClick={handleSearch}
+                  />
                 </div>
 
-                {/* Date Picker */}
                 <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -236,11 +289,7 @@ export default function AdmittedPatients() {
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {date ? (
-                        format(date, "PPP")
-                      ) : (
-                        <span>Date wise discharged</span>
-                      )}
+                      {date ? format(date, "PPP") : "Date wise discharged"}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -263,8 +312,8 @@ export default function AdmittedPatients() {
                   variant="secondary"
                   className="bg-white text-black hover:bg-white"
                 >
-                  <Pencil className="h-4 w-4 sm:hidden" />
-                  <span className="hidden sm:block">Create Discharge</span>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Create Discharge
                 </Button>
               </div>
             </div>
@@ -426,7 +475,7 @@ export default function AdmittedPatients() {
                   </div>
 
                   {/* Mobile view - shown only on mobile */}
-                  <div className="block md:hidden">
+                  <div className="block md:hidden px-2 py-1">
                     {admittedPatients.length === 0 ? (
                       <div className="flex flex-col items-center justify-center h-32 text-muted-foreground m-4">
                         <AlertCircle className="h-8 w-8 mb-2" />
@@ -491,7 +540,7 @@ export default function AdmittedPatients() {
                               </div>
 
                               {/* Actions */}
-                              <div className="flex gap-2 pt-1.5">
+                              <div className="flex flex-wrap gap-2 pt-1.5">
                                 {patient.department
                                   ?.toLowerCase()
                                   .includes("obstetric") &&
@@ -516,7 +565,7 @@ export default function AdmittedPatients() {
                                       }
                                       variant="outline"
                                       size="sm"
-                                      className="flex-1 h-8 text-xs border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center justify-center gap-1"
+                                      className="flex-1 min-w-[120px] h-8 text-xs border-pink-200 hover:border-pink-300 hover:bg-pink-50 inline-flex items-center justify-center gap-1"
                                     >
                                       <Baby className="h-3 w-3 text-pink-500" />
                                       Babies
@@ -527,7 +576,7 @@ export default function AdmittedPatients() {
                                   onClick={() => handleOpenBill(patient)}
                                   variant="outline"
                                   size="sm"
-                                  className="flex-1 h-8 text-xs inline-flex items-center justify-center gap-1"
+                                  className="flex-1 min-w-[120px] h-8 text-xs inline-flex items-center justify-center gap-1"
                                 >
                                   <FileText className="h-3 w-3" />
                                   Bills
@@ -537,7 +586,7 @@ export default function AdmittedPatients() {
                                   onClick={() => handleAddServices(patient)}
                                   variant="outline"
                                   size="sm"
-                                  className="flex-1 h-8 text-xs inline-flex items-center justify-center gap-1"
+                                  className="flex-1 min-w-[120px] h-8 text-xs inline-flex items-center justify-center gap-1"
                                 >
                                   <Plus className="h-3 w-3" />
                                   Add Services
@@ -549,7 +598,7 @@ export default function AdmittedPatients() {
                                   }
                                   variant="default"
                                   size="sm"
-                                  className="flex-1 h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                  className="flex-1 min-w-[120px] h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
                                 >
                                   {patient.status === "Discharged"
                                     ? "View/Edit"

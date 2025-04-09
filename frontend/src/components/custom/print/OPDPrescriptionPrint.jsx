@@ -53,7 +53,7 @@ const OPDPrescriptionPrint = ({ patient }) => {
     setTimeout(handlePrint, 100);
   };
 
-  if (opdRxTemplateArray.length <= 1) {
+  if (opdRxTemplateArray.length <= 1  ) {
     return (
       <>
         <DropdownMenuItem onClick={() => handleTemplatePrint(opdRxTemplateArray[0])} className="font-bold">
@@ -78,7 +78,7 @@ const OPDPrescriptionPrint = ({ patient }) => {
     <>
       <DropdownMenuSub>
         <DropdownMenuSubTrigger>
-          <Printer className="h-4 w-4 mr-2" />
+          <Printer className="h-4 w-4 mr-2 font-bold" />
           Print OPD (Rx)
         </DropdownMenuSubTrigger>
         <DropdownMenuSubContent>

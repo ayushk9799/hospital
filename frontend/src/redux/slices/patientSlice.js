@@ -471,6 +471,31 @@ export const fetchDischargedPatientsByDate = createLoadingAsyncThunk(
   }
 );
 
+// Add this new thunk for fetching OPD details
+export const fetchOPDDetails = createLoadingAsyncThunk(
+  "patients/fetchOPDDetails",
+  async (visitId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/opd-details`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ visitId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -496,6 +521,8 @@ const initialState = {
   ipdNumber: null,
   numbersStatus: "idle",
   editPatientStatus: "idle",
+  opdDetails: null,
+  opdDetailsStatus: "idle",
 };
 
 const patientSlice = createSlice({
@@ -775,6 +802,19 @@ const patientSlice = createSlice({
       })
       .addCase(editPatient.rejected, (state) => {
         state.editPatientStatus = "failed";
+      })
+      .addCase(fetchOPDDetails.pending, (state) => {
+        state.opdDetailsStatus = "loading";
+        state.opdDetails = null;
+      })
+      .addCase(fetchOPDDetails.fulfilled, (state, action) => {
+        state.opdDetailsStatus = "succeeded";
+        state.opdDetails = action.payload;
+      })
+      .addCase(fetchOPDDetails.rejected, (state, action) => {
+        state.opdDetailsStatus = "failed";
+        state.opdDetails = null;
+        state.error = action.payload;
       });
   },
 });
