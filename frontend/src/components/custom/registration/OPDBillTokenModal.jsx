@@ -45,7 +45,6 @@ const OPDBillTokenModal = ({
   onClose,
 }) => {
   const componentRef = useRef();
-  console.log(patientData);
   const { hospitalInfo } = useSelector((state) => state.hospital);
 
   useEffect(() => {
@@ -110,7 +109,6 @@ const OPDBillTokenModal = ({
 
   const handleTemplatePrint = useReactToPrint({
     content: () => {
-      console.log(opdRxTemplateRef.current);
       return opdRxTemplateRef.current;
     },
     pageStyle: `
@@ -140,8 +138,7 @@ const OPDBillTokenModal = ({
   if (!patientData) return null;
 
   const { patient, bill, payment, admissionRecord, visit } = patientData;
-  console.log(admissionRecord);
-  console.log(patient);
+ 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-[95vw] h-[90vh] overflow-y-auto lg:max-w-6xl gap-0">

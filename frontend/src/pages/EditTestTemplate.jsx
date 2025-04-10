@@ -4,6 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { editTemplate, deleteTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { labReportFields } from "../assets/Data";
 import {
   X,
   Plus,
@@ -13,6 +14,34 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+
+const findCalculationDetailsFromLabReportFields = (fieldName) => {
+  // Search through all categories and their tests in labReportFields
+  for (const category of Object.values(labReportFields)) {
+    for (const tests of Object.values(category)) {
+      if (Array.isArray(tests)) {
+        const matchingField = tests.find((field) => field.name === fieldName);
+        if (matchingField?.calculationDetails) {
+          return matchingField.calculationDetails;
+        }
+      }
+    }
+  }
+  return null;
+};
+
+const checkMissingDependencies = (dependencies, fields) => {
+  if (!dependencies) return [];
+  const fieldNames = Object.keys(fields);
+  return dependencies.filter((dep) => !fieldNames.includes(dep));
+};
+
+// Add counter for generating unique IDs
+let idCounter = 0;
+const generateUniqueId = (prefix) => {
+  idCounter += 1;
+  return `${prefix}-${idCounter}-${Math.random().toString(36).substr(2, 9)}`;
+};
 
 export default function EditTestTemplate() {
   const location = useLocation();
@@ -29,7 +58,6 @@ export default function EditTestTemplate() {
     sections: [],
     order: [], // Array of {type: 'field'|'section', id: string}
   });
-
   useEffect(() => {
     const existingTemplate = labTestsTemplate.find(
       (t) => t.name.trim() === templateName.trim()
@@ -60,7 +88,6 @@ export default function EditTestTemplate() {
           currentFieldIndex++;
         }
       }
-
       // Add remaining sections and fields
       for (let i = 0; i < sortedSections.length; i++) {
         const section = sortedSections[i];
@@ -69,10 +96,12 @@ export default function EditTestTemplate() {
             ? sortedSections[i + 1].position
             : fieldEntries.length;
 
-        // Add the section
+        // Add the section with a guaranteed ID
+        const sectionId = section._id;
+
         order.push({
           type: "section",
-          id: section.id || Date.now().toString(),
+          id: sectionId,
         });
 
         // Add fields until next section position
@@ -91,20 +120,41 @@ export default function EditTestTemplate() {
         currentFieldIndex++;
       }
 
+      // Process fields to include calculation details from labReportFields
+      const processedFields = Object.entries(existingTemplate.fields).reduce(
+        (acc, [key, val]) => {
+          const calculationDetails =
+            val.calculationDetails ||
+            findCalculationDetailsFromLabReportFields(key);
+          return {
+            ...acc,
+            [key]: {
+              ...val,
+              fieldName: key,
+              fromLabReportFields: val.calculationDetails ? false : true,
+              ...(calculationDetails && {
+                calculationDetails,
+                isFormulaVisible: false,
+              }),
+            },
+          };
+        },
+        {}
+      );
+
+      // Process sections to ensure they all have IDs
+      const processedSections = (existingTemplate.sections || []).map(
+        (section) => ({
+          ...section,
+          id: section._id || Date.now().toString(),
+          isCollapsed: false,
+        })
+      );
+
       setTemplateData({
         ...existingTemplate,
-        fields: Object.entries(existingTemplate.fields).reduce(
-          (acc, [key, val]) => ({
-            ...acc,
-            [key]: { ...val, fieldName: key },
-          }),
-          {}
-        ),
-        sections: (existingTemplate.sections || []).map((section) => ({
-          ...section,
-          id: section.id || Date.now().toString(),
-          isCollapsed: false,
-        })),
+        fields: processedFields,
+        sections: processedSections,
         order: order,
       });
     }
@@ -117,14 +167,14 @@ export default function EditTestTemplate() {
         ...prev.fields,
         [fieldKey]: {
           ...prev.fields[fieldKey],
-          [property]: value,
+          [property]: property === "calculationDetails" ? value : value,
         },
       },
     }));
   };
 
   const handleAddNewField = (position = null) => {
-    const newFieldKey = `new-field-${Date.now()}`;
+    const newFieldKey = generateUniqueId("field");
     const newField = {
       label: "New Field",
       value: "",
@@ -157,15 +207,16 @@ export default function EditTestTemplate() {
   };
 
   const handleAddSection = (position = null) => {
+    const sectionId = generateUniqueId("section");
     const newSection = {
-      id: Date.now().toString(),
+      id: sectionId,
       name: "New Section",
       isCollapsed: false,
     };
 
     setTemplateData((prev) => {
       const newOrder = [...prev.order];
-      const newItem = { type: "section", id: newSection.id };
+      const newItem = { type: "section", id: sectionId };
 
       if (position !== null) {
         newOrder.splice(position + 1, 0, newItem);
@@ -204,7 +255,6 @@ export default function EditTestTemplate() {
       ),
     }));
   };
-
   const handleDragEnd = (result) => {
     if (!result.destination) return;
 
@@ -231,6 +281,40 @@ export default function EditTestTemplate() {
     }));
   };
 
+  const handleApplyFormula = (fieldId) => {
+    const calculationDetails =
+      findCalculationDetailsFromLabReportFields(fieldId);
+    if (calculationDetails) {
+      setTemplateData((prev) => ({
+        ...prev,
+        fields: {
+          ...prev.fields,
+          [fieldId]: {
+            ...prev.fields[fieldId],
+            calculationDetails,
+            isFormulaApplied: true,
+            fromLabReportFields: false,
+          },
+        },
+      }));
+    }
+  };
+
+  const handleRemoveFormula = (fieldId) => {
+    setTemplateData((prev) => ({
+      ...prev,
+      fields: {
+        ...prev.fields,
+        [fieldId]: {
+          ...prev.fields[fieldId],
+          calculationDetails: undefined,
+          isFormulaApplied: false,
+          fromLabReportFields: true,
+        },
+      },
+    }));
+  };
+
   const processFieldsBeforeSave = (fields) => {
     return Object.entries(fields).reduce((acc, [key, field]) => {
       const processedOptions =
@@ -249,11 +333,14 @@ export default function EditTestTemplate() {
           unit: field.unit,
           normalRange: field.normalRange,
           ...(processedOptions?.length > 0 && { options: processedOptions }),
+          ...((field.isFormulaApplied || !field.fromLabReportFields) &&
+            field.calculationDetails?.formula && {
+              calculationDetails: field.calculationDetails,
+            }),
         },
       };
     }, {});
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -412,7 +499,7 @@ export default function EditTestTemplate() {
           </div>
 
           <DragDropContext onDragEnd={handleDragEnd}>
-            <Droppable droppableId="main-list">
+            <Droppable droppableId="main-list" mode="standard" type="DEFAULT">
               {(provided) => (
                 <div
                   ref={provided.innerRef}
@@ -442,7 +529,34 @@ export default function EditTestTemplate() {
                                 <div {...provided.dragHandleProps}>
                                   <GripVertical className="h-4 w-4 text-gray-400" />
                                 </div>
-                                <div className="grid grid-cols-[1fr,1fr,1fr,2fr,auto] gap-4 flex-1">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-0 h-8 w-8"
+                                  onClick={() => {
+                                    setTemplateData((prev) => ({
+                                      ...prev,
+                                      fields: {
+                                        ...prev.fields,
+                                        [item.id]: {
+                                          ...prev.fields[item.id],
+                                          isFormulaVisible:
+                                            !prev.fields[item.id]
+                                              .isFormulaVisible,
+                                        },
+                                      },
+                                    }));
+                                  }}
+                                >
+                                  {templateData.fields[item.id]
+                                    ?.isFormulaVisible ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                  )}
+                                </Button>
+                                <div className="grid grid-cols-[2fr,1fr,1fr,2fr,auto] gap-4 flex-1">
                                   <Input
                                     className="h-8"
                                     value={
@@ -517,6 +631,203 @@ export default function EditTestTemplate() {
                                   </div>
                                 </div>
                               </div>
+                              {/* Formula details section */}
+                              {templateData.fields[item.id]
+                                ?.isFormulaVisible && (
+                                <div className="mt-2 ml-12 p-3 bg-gray-50 rounded-md">
+                                  {templateData.fields[item.id]
+                                    ?.calculationDetails ? (
+                                    <>
+                                      {(() => {
+                                        const missingDeps =
+                                          checkMissingDependencies(
+                                            templateData.fields[item.id]
+                                              .calculationDetails.dependencies,
+                                            templateData.fields
+                                          );
+
+                                        return (
+                                          <>
+                                            <div className="text-sm">
+                                              <span className="font-medium">
+                                                Formula:{" "}
+                                              </span>
+                                              <span className="text-gray-600">
+                                                {
+                                                  templateData.fields[item.id]
+                                                    .calculationDetails.formula
+                                                }
+                                              </span>
+                                            </div>
+                                            <div className="text-sm mt-1">
+                                              <span className="font-medium">
+                                                Dependencies:{" "}
+                                              </span>
+                                              <span className="text-gray-600">
+                                                {templateData.fields[
+                                                  item.id
+                                                ].calculationDetails.dependencies.join(
+                                                  ", "
+                                                )}
+                                              </span>
+                                            </div>
+                                            {missingDeps.length > 0 ? (
+                                              <div className="mt-2">
+                                                <div className="text-sm text-red-500 mb-2">
+                                                  Missing dependencies:{" "}
+                                                  {missingDeps.join(", ")}
+                                                </div>
+                                                {templateData.fields[item.id]
+                                                  .fromLabReportFields ? (
+                                                  <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                      handleApplyFormula(
+                                                        item.id
+                                                      )
+                                                    }
+                                                  >
+                                                    Apply Formula
+                                                  </Button>
+                                                ) : (
+                                                  <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                      handleRemoveFormula(
+                                                        item.id
+                                                      )
+                                                    }
+                                                  >
+                                                    Remove Formula
+                                                  </Button>
+                                                )}
+                                              </div>
+                                            ) : (
+                                              <div className="mt-2">
+                                                {templateData.fields[item.id]
+                                                  .fromLabReportFields ? (
+                                                  <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                      handleApplyFormula(
+                                                        item.id
+                                                      )
+                                                    }
+                                                  >
+                                                    Apply Formula
+                                                  </Button>
+                                                ) : (
+                                                  <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                      handleRemoveFormula(
+                                                        item.id
+                                                      )
+                                                    }
+                                                  >
+                                                    Remove Formula
+                                                  </Button>
+                                                )}
+                                              </div>
+                                            )}
+                                          </>
+                                        );
+                                      })()}
+                                    </>
+                                  ) : (
+                                    <>
+                                      {(() => {
+                                        const availableFormula =
+                                          findCalculationDetailsFromLabReportFields(
+                                            item.id
+                                          );
+                                        if (!availableFormula) {
+                                          return (
+                                            <div className="text-sm text-gray-500">
+                                              No calculation formula found for
+                                              this parameter in the system.
+                                            </div>
+                                          );
+                                        }
+
+                                        const missingDeps =
+                                          checkMissingDependencies(
+                                            availableFormula.dependencies,
+                                            templateData.fields
+                                          );
+
+                                        return (
+                                          <>
+                                            <div className="text-sm">
+                                              <span className="font-medium">
+                                                Available Formula:{" "}
+                                              </span>
+                                              <span className="text-gray-600">
+                                                {availableFormula.formula}
+                                              </span>
+                                            </div>
+                                            <div className="text-sm mt-1">
+                                              <span className="font-medium">
+                                                Dependencies:{" "}
+                                              </span>
+                                              <span className="text-gray-600">
+                                                {availableFormula.dependencies.join(
+                                                  ", "
+                                                )}
+                                              </span>
+                                            </div>
+                                            {missingDeps.length > 0 ? (
+                                              <div className="mt-2 text-sm text-red-500">
+                                                Missing dependencies:{" "}
+                                                {missingDeps.join(", ")}
+                                              </div>
+                                            ) : (
+                                              <div className="mt-2">
+                                                {templateData.fields[item.id]
+                                                  .fromLabReportFields ? (
+                                                  <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                      handleApplyFormula(
+                                                        item.id
+                                                      )
+                                                    }
+                                                  >
+                                                    Apply Formula
+                                                  </Button>
+                                                ) : (
+                                                  <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                      handleRemoveFormula(
+                                                        item.id
+                                                      )
+                                                    }
+                                                  >
+                                                    Remove Formula
+                                                  </Button>
+                                                )}
+                                              </div>
+                                            )}
+                                          </>
+                                        );
+                                      })()}
+                                    </>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           ) : (
                             // Section Item
@@ -533,7 +844,7 @@ export default function EditTestTemplate() {
                                   onClick={() => toggleSectionCollapse(item.id)}
                                 >
                                   {templateData.sections.find(
-                                    (s) => s.id === item.id
+                                    (s) => s.id?.toString() === item.id
                                   )?.isCollapsed ? (
                                     <ChevronRight className="h-4 w-4" />
                                   ) : (
@@ -545,7 +856,7 @@ export default function EditTestTemplate() {
                                   value={
                                     templateData.sections.find(
                                       (s) => s.id === item.id
-                                    )?.name || ""
+                                    )?.name ?? ""
                                   }
                                   onChange={(e) => {
                                     setTemplateData((prev) => ({

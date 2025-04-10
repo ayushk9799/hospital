@@ -11,7 +11,6 @@ import { numberToWords } from "../../../assets/Data";
 const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
 
   const { hospitalInfo } = useSelector((state) => state.hospital);
-  console.log(billData);
   const headerTemplateStrings = useSelector(
     (state) => state.templates.headerTemplateArray
   );

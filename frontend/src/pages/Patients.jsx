@@ -62,6 +62,8 @@ import {
   subDays,
   isWithinInterval,
   addDays,
+  startOfWeek,
+  endOfWeek,
 } from "date-fns";
 import { format } from "date-fns";
 import { fetchPatients } from "../redux/slices/patientSlice";
@@ -111,8 +113,8 @@ export default function Patients() {
         };
       case "This Week":
         return {
-          startDate: format(subDays(today, 7), "yyyy-MM-dd"),
-          endDate: format(addDays(today, 1), "yyyy-MM-dd"),
+          startDate: startOfWeek(today, { weekStartsOn: 0 }).toISOString(),
+          endDate: endOfWeek(today, { weekStartsOn: 0 }).toISOString(),
         };
       case "Custom":
         if (dateRange.from && dateRange.to) {
@@ -196,6 +198,30 @@ export default function Patients() {
     setIsOPDTokenModalOpen(true);
   };
 
+  const getStatusBadgeVariant = (status) => {
+    switch (status.toLowerCase()) {
+      case "admitted":
+        return "default";
+      case "discharged":
+        return "secondary";
+      case "critical":
+        return "destructive";
+      default:
+        return "outline";
+    }
+  };
+
+  const getConsultationBadgeVariant = (type) => {
+    switch (type?.toLowerCase()) {
+      case "new":
+        return "success";
+      case "follow-up":
+        return "muted";
+      default:
+        return "success";
+    }
+  };
+
   const PatientTable = ({ patients, type }) => {
     const navigate = useNavigate();
 
@@ -203,19 +229,6 @@ export default function Patients() {
       navigate(`/patients/discharge/${patient._id}`, {
         state: { ignoreList: true, dischargeData: patient },
       });
-    };
-
-    const getStatusBadgeVariant = (status) => {
-      switch (status.toLowerCase()) {
-        case "admitted":
-          return "default";
-        case "discharged":
-          return "secondary";
-        case "critical":
-          return "destructive";
-        default:
-          return "outline";
-      }
     };
 
     if (patients.length === 0) {
@@ -246,7 +259,12 @@ export default function Patients() {
                 <TableHead>Operation</TableHead>
               </>
             )}
-            {type === "OPD" && <TableHead>Date & Time</TableHead>}
+            {type === "OPD" && (
+              <>
+                <TableHead>Date & Time</TableHead>
+                <TableHead>Consultation</TableHead>
+              </>
+            )}
             <TableHead>Mobile</TableHead>
             <TableHead>Address</TableHead>
             <TableHead>Gender</TableHead>
@@ -298,11 +316,22 @@ export default function Patients() {
                 </>
               )}
               {type === "OPD" && (
-                <TableCell>
-                  {dateFilter === "Today"
-                    ? format(new Date(patient.createdAt), "hh:mm a")
-                    : format(new Date(patient.bookingDate), "dd-MM-yyyy")}
-                </TableCell>
+                <>
+                  <TableCell>
+                    {dateFilter === "Today"
+                      ? format(new Date(patient.createdAt), "hh:mm a")
+                      : format(new Date(patient.bookingDate), "dd-MM-yyyy")}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={getConsultationBadgeVariant(
+                        patient.consultationType
+                      )}
+                    >
+                      {patient.consultationType?.toUpperCase() || "New"}
+                    </Badge>
+                  </TableCell>
+                </>
               )}
               <TableCell>{patient.patient.contactNumber}</TableCell>
               <TableCell>
@@ -487,7 +516,19 @@ export default function Patients() {
                   UHID No: {patient.registrationNumber || "--"}
                 </span>
               </div>
-
+              {patient.type === "OPD" && (
+                <div className="flex items-center col-span-2">
+                  <Clock className="h-4 w-4 text-muted-foreground mr-2" />
+                  <Badge
+                    variant={getConsultationBadgeVariant(
+                      patient.consultationType
+                    )}
+                    className="text-xs"
+                  >
+                    {patient.consultationType || "Regular"}
+                  </Badge>
+                </div>
+              )}
               <div className="flex items-center">
                 <CalendarIcon className="h-4 w-4 text-muted-foreground mr-2" />
                 <span className="text-sm">

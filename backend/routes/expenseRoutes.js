@@ -9,9 +9,7 @@ const router = express.Router();
 // Helper function to get start of day in UTC
 const getStartOfDay = (date) => {
   const d = new Date(date);
-  console.log(d);
   d.setUTCHours(0, 0, 0, 0);
-  console.log(d);
   return d;
 };
 

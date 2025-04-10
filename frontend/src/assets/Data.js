@@ -7,11 +7,22 @@ import {
 } from "../components/ui/popover";
 import { Calendar } from "../components/ui/calendar";
 import { CalendarIcon } from "@radix-ui/react-icons";
-import { format, subMonths, isBefore } from "date-fns";
+import {
+  format,
+  subMonths,
+  isBefore,
+  startOfDay,
+  endOfDay,
+  subDays,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+} from "date-fns";
 import { cn } from "../lib/utils";
 
 // backend url
-export const Backend_URL = "http://localhost:3000";
+export const Backend_URL = "https://thehospital.in";
 
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
@@ -131,38 +142,31 @@ export const convertFilterToDateRange = (filter) => {
 
   switch (filter) {
     case "Today":
-      from = new Date(today.setHours(0, 0, 0, 0));
-      to = new Date(today.setHours(23, 59, 59, 999));
+      from = startOfDay(today);
+      to = endOfDay(today);
       break;
     case "Yesterday":
-      from = new Date(today.setDate(today.getDate() - 1));
-      from.setHours(0, 0, 0, 0);
-      to = new Date(from);
-      to.setHours(23, 59, 59, 999);
+      const yesterday = subDays(today, 1);
+      from = startOfDay(yesterday);
+      to = endOfDay(yesterday);
       break;
     case "This Week":
-      from = new Date(today.setDate(today.getDate() - today.getDay()));
-      from.setHours(0, 0, 0, 0);
-      to = new Date(today.setDate(from.getDate() + 6));
-      to.setHours(23, 59, 59, 999);
+      from = startOfWeek(today, { weekStartsOn: 0 });
+      to = endOfWeek(today, { weekStartsOn: 0 });
       break;
     case "This Month":
-      from = new Date(today.getFullYear(), today.getMonth(), 1);
-      to = new Date(today.getFullYear(), today.getMonth() + 1, 0);
-      to.setHours(23, 59, 59, 999);
+      from = startOfMonth(today);
+      to = endOfMonth(today);
       break;
     case "Last 7 Days":
-      from = new Date(today.setDate(today.getDate() - 6));
-      from.setHours(0, 0, 0, 0);
-      to = new Date();
-      to.setHours(23, 59, 59, 999);
+      from = startOfDay(subDays(today, 6));
+      to = endOfDay(today);
       break;
     default:
-      from = new Date(today.setDate(today.getDate() - 30));
-      to = new Date();
+      from = startOfDay(subDays(today, 30));
+      to = endOfDay(today);
   }
 
-  // Add this log
   return { from, to };
 };
 
@@ -923,12 +927,20 @@ export const labReportFields = {
         label: "Blood Urea",
         unit: "mg/dL",
         normalRange: "13-43",
+        calculationDetails: {
+          formula: "urea_nitrogen/2.14",
+          dependencies: ["urea_nitrogen"],
+        },
       },
       {
         name: "urea_nitrogen",
-        label: "Urea Nitrogen (Blood)",
+        label: "BUN",
         unit: "mg/dL",
         normalRange: "6-20",
+        calculationDetails: {
+          formula: "urea * 2.14",
+          dependencies: ["urea"],
+        },
       },
       {
         name: "bun_creatinine_ratio",

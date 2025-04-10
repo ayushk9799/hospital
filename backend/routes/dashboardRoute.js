@@ -387,7 +387,7 @@ router.get("/daily-stats", async (req, res) => {
         },
       ]).session(session),
     ]);
-
+ 
     const mergedAppointmentStats = [...visitStats, ...ipdStats].reduce(
       (acc, curr) => {
         const existingEntry = acc.find((entry) => entry._id === curr._id);
@@ -420,7 +420,6 @@ router.get("/daily-stats", async (req, res) => {
       ...paymentStats.map((stat) => stat.date),
       ...mergedAppointmentStats.map((stat) => stat._id),
     ]);
-
     // Create the final stats array
     const finalStats = Array.from(allDates).map((date) => {
       const payStat = paymentStats.find((stat) => stat.date === date) || {
@@ -443,6 +442,7 @@ router.get("/daily-stats", async (req, res) => {
           due: { total: 0, count: 0 }
         }
       };
+    
       const appStat = mergedAppointmentStats.find(
         (stat) => stat._id === date
       ) || {
@@ -463,7 +463,6 @@ router.get("/daily-stats", async (req, res) => {
     });
 
     // Sort the finalStats array by date
-
     const formattedStats = finalStats.reduce((acc, stat) => {
       acc[stat.date] = stat;
       return acc;

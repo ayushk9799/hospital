@@ -74,40 +74,19 @@ const Dashboard = () => {
     from: null,
     to: null,
   });
-  const isMobile = useMediaQuery("(max-width: 767px)");
-
-  const recentPatients = useMemo(() => {
-    return [...patientlist]
-      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-      .slice(0, 4)
-      .map((patient) => ({
-        _id: patient._id,
-        name: patient.patient.name,
-        time: formatDistanceToNow(new Date(patient.createdAt), {
-          addSuffix: true,
-        }),
-        type: patient.type || "OPD",
-        avatar: patient.patient.name
-          .split(" ")
-          .map((word) => word[0])
-          .join("")
-          .slice(0, 2)
-          .toUpperCase(),
-      }));
-  }, [patientlist]);
 
   //
 
   const filteredData = useMemo(() => {
     if (typeof dashboardData !== "object" || dashboardData === null) {
-      return { currentValue: [], previousValue: [] };
+      return { currentValue: [] };
     }
 
     const dataArray = Object.values(dashboardData);
 
     if (dateFilter === "Custom") {
       if (!selectedDateRange.from || !selectedDateRange.to) {
-        return { currentValue: [], previousValue: [] };
+        return { currentValue: [] };
       }
 
       const startDate = startOfDay(selectedDateRange.from);
@@ -118,46 +97,19 @@ const Dashboard = () => {
         return isWithinInterval(itemDate, { start: startDate, end: endDate });
       });
 
-      return { currentValue, previousValue: [] };
+      return { currentValue };
     }
 
     const dates = convertFilterToDateRange(dateFilter);
     const startDate = new Date(dates.from);
     const endDate = new Date(dates.to);
-    let previousStartDate, previousEndDate;
-
-    if (dateFilter === "Today") {
-      previousStartDate = startOfDay(subDays(startDate, 1));
-      previousEndDate = endOfDay(subDays(endDate, 1));
-    } else if (dateFilter === "Yesterday") {
-      previousStartDate = startOfDay(subDays(startDate, 1));
-      previousEndDate = endOfDay(subDays(endDate, 1));
-    } else if (dateFilter === "This Week") {
-      previousStartDate = startOfWeek(subDays(startDate, 7));
-      previousEndDate = endOfWeek(subDays(endDate, 7));
-    } else if (dateFilter === "This Month") {
-      previousStartDate = startOfMonth(subDays(startDate, 30));
-      previousEndDate = endOfMonth(subDays(endDate, 30));
-    } else {
-      previousStartDate = null;
-      previousEndDate = null;
-    }
 
     const currentValue = dataArray.filter((item) => {
       const itemDate = new Date(item.date);
       return isWithinInterval(itemDate, { start: startDate, end: endDate });
     });
-    const previousValue =
-      previousStartDate && previousEndDate
-        ? dataArray.filter((item) => {
-            const itemDate = new Date(item.date);
-            return isWithinInterval(itemDate, {
-              start: previousStartDate,
-              end: previousEndDate,
-            });
-          })
-        : [];
-    return { currentValue, previousValue };
+
+    return { currentValue };
   }, [dashboardData, dateFilter, selectedDateRange]);
 
   const dashboardTotals = useMemo(() => {
@@ -170,7 +122,6 @@ const Dashboard = () => {
         paymentMethods: {},
       };
     }
-
     const totals = filteredData.currentValue.reduce(
       (acc, curr) => {
         acc.totalRevenue += curr.revenue || 0;
@@ -206,7 +157,6 @@ const Dashboard = () => {
         paymentMethods: {},
       }
     );
-
     return totals;
   }, [filteredData]);
 
@@ -283,12 +233,12 @@ const Dashboard = () => {
         range = "Last 7 Days";
         break;
       case "This Week":
-        startDate = startOfWeek(subDays(today, 7), { weekStartsOn: 0 });
+        startDate = startOfWeek(today, { weekStartsOn: 0 });
         endDate = endOfWeek(today, { weekStartsOn: 0 });
         range = "This Week";
         break;
       case "This Month":
-        startDate = startOfMonth(subDays(today, 30));
+        startDate = startOfMonth(today);
         endDate = endOfMonth(today);
         range = "This Month";
         break;
@@ -298,12 +248,12 @@ const Dashboard = () => {
         range = "All";
         break;
       case "Custom":
-        if (!selectedDateRange.from || !selectedDateRange.to) {
+        if (!tempDateRange.from || !tempDateRange.to) {
           console.warn("Invalid date range selected");
           return;
         }
-        startDate = selectedDateRange.from;
-        endDate = selectedDateRange.to;
+        startDate = tempDateRange.from;
+        endDate = addDays(tempDateRange.to, 1);
         break;
       default:
         startDate = startOfDay(subDays(today, 6));
@@ -314,86 +264,13 @@ const Dashboard = () => {
       console.warn("Invalid date range");
       return;
     }
+  
     const ISO_time = {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
       range: range,
     };
     dispatch(fetchDashboardData(ISO_time));
-  };
-
-  const calculatePercentageChanges = useMemo(() => {
-    if (filteredData.currentValue && filteredData.previousValue) {
-      const calculateChange = (key) => {
-        const currentValue = filteredData.currentValue.reduce(
-          (sum, day) => sum + (day[key] || 0),
-          0
-        );
-        const previousValue = filteredData.previousValue.reduce(
-          (sum, day) => sum + (day[key] || 0),
-          0
-        );
-
-        if (previousValue === 0) return 100; // If previous value was 0, consider it as 100% increase
-
-        const percentageChange =
-          ((currentValue - previousValue) / previousValue) * 100;
-        return percentageChange.toFixed(2);
-      };
-
-      return {
-        totalRevenue: calculateChange("revenue"),
-        serviceCollection: calculateChange("services.revenue"),
-        pharmacyCollection: calculateChange("pharmacy.revenue"),
-        totalPatients: calculateChange("uniquePatientCount"),
-        totalAppointments: calculateChange("totalAppointments"),
-      };
-    }
-    return {
-      totalRevenue: null,
-      serviceCollection: null,
-      pharmacyCollection: null,
-      totalPatients: null,
-      totalAppointments: null,
-    };
-  }, [filteredData]);
-
-  const getComparisonText = () => {
-    switch (dateFilter) {
-      case "Today":
-        return "from yesterday";
-      case "Yesterday":
-        return "from day before";
-      case "This Week":
-        return "from last week";
-      case "This Month":
-        return "from last month";
-      default:
-        return "";
-    }
-  };
-
-  const handleDateFilterChange = (newFilter) => {
-    setDateFilter(newFilter);
-    if (newFilter !== "Custom") {
-      const newDateRange = convertFilterToDateRange(newFilter);
-      setSelectedDateRange(newDateRange);
-      fetchData(newFilter);
-    }
-  };
-
-  const handleDateRangeSearch = () => {
-    if (tempDateRange.from && tempDateRange.to) {
-      setDateFilter("Custom");
-      setSelectedDateRange(tempDateRange);
-      fetchData("Custom");
-    }
-  };
-
-  const handleDateRangeCancel = () => {
-    setTempDateRange({ from: null, to: null });
-    setDateFilter("Today");
-    fetchData("Today");
   };
 
   // Update the calculateCollections function
@@ -566,13 +443,35 @@ const Dashboard = () => {
         return "This Week's Stats";
       case "This Month":
         return "This Month's Stats";
-      case "All":
-        return "All Time Stats";
+
       case "Custom":
         return "Custom Period Stats";
       default:
         return "Stats";
     }
+  };
+
+  const handleDateFilterChange = (newFilter) => {
+    setDateFilter(newFilter);
+    if (newFilter !== "Custom") {
+      const newDateRange = convertFilterToDateRange(newFilter);
+      setSelectedDateRange(newDateRange);
+      fetchData(newFilter);
+    }
+  };
+
+  const handleDateRangeSearch = () => {
+    if (tempDateRange.from && tempDateRange.to) {
+      setDateFilter("Custom");
+      setSelectedDateRange(tempDateRange);
+      fetchData("Custom");
+    }
+  };
+
+  const handleDateRangeCancel = () => {
+    setTempDateRange({ from: null, to: null });
+    setDateFilter("Today");
+    fetchData("Today");
   };
 
   return (
@@ -587,7 +486,7 @@ const Dashboard = () => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm">
                 <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFilter === "All" ? "All Time" : dateFilter}
+                {dateFilter}
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[200px]">
@@ -613,9 +512,7 @@ const Dashboard = () => {
               >
                 This Month
               </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleDateFilterChange("All")}>
-                All Time
-              </DropdownMenuItem>
+
               <DropdownMenuItem
                 onSelect={() => handleDateFilterChange("Custom")}
               >
@@ -653,23 +550,6 @@ const Dashboard = () => {
                     {dashboardTotals.totalPatients}
                   </p>
                   <p className="text-sm text-gray-600">OPD Patients</p>
-                  {calculatePercentageChanges.totalPatients !== null &&
-                    dateFilter !== "Custom" &&
-                    dateFilter !== "All" && (
-                      <p
-                        className={`text-xs ${
-                          calculatePercentageChanges.totalPatients >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {calculatePercentageChanges.totalPatients >= 0
-                          ? "+"
-                          : ""}
-                        {calculatePercentageChanges.totalPatients}%{" "}
-                        {getComparisonText()}
-                      </p>
-                    )}
                 </div>
               </div>
             </CardContent>
@@ -686,23 +566,6 @@ const Dashboard = () => {
                     {dashboardTotals.totalAppointments}
                   </p>
                   <p className="text-sm text-gray-600">IPD Patients</p>
-                  {calculatePercentageChanges.totalAppointments !== null &&
-                    dateFilter !== "Custom" &&
-                    dateFilter !== "All" && (
-                      <p
-                        className={`text-xs ${
-                          calculatePercentageChanges.totalAppointments >= 0
-                            ? "text-green-600"
-                            : "text-red-600"
-                        }`}
-                      >
-                        {calculatePercentageChanges.totalAppointments >= 0
-                          ? "+"
-                          : ""}
-                        {calculatePercentageChanges.totalAppointments}%{" "}
-                        {getComparisonText()}
-                      </p>
-                    )}
                 </div>
               </div>
             </CardContent>
@@ -731,32 +594,13 @@ const Dashboard = () => {
                           : "₹XXXXX"}
                       </p>
                       <p className="text-sm text-gray-600">Total Revenue</p>
-                      {calculatePercentageChanges.totalRevenue !== null &&
-                        dateFilter !== "Custom" &&
-                        dateFilter !== "All" && (
-                          <p
-                            className={`text-xs ${
-                              calculatePercentageChanges.totalRevenue >= 0
-                                ? "text-green-600"
-                                : "text-red-600"
-                            }`}
-                          >
-                            {calculatePercentageChanges.totalRevenue >= 0
-                              ? "+"
-                              : ""}
-                            {calculatePercentageChanges.totalRevenue}%{" "}
-                            {getComparisonText()}
-                          </p>
-                        )}
                     </div>
-
                     {hasFinancialViewPermission(userData) && (
                       <div className="flex gap-2 flex-wrap justify-start lg:justify-end w-full lg:w-auto">
                         {calculateTotalPaymentMethods.map((payment) => (
                           <div
                             key={payment.method}
-                            className="bg-purple-50 px-2 py-1 rounded-md transition-colors 
-                              duration-200 hover:bg-purple-100"
+                            className="bg-purple-50 px-2 py-1 rounded-md transition-colors duration-200 hover:bg-purple-100"
                           >
                             <p className="text-xs font-medium text-gray-600">
                               {payment.method}
@@ -922,7 +766,58 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* Expense Breakdown Section */}
+        {/* Net Revenue Section */}
+        {hasFinancialViewPermission(userData) && (
+          <div className="mt-4">
+            <Card className="max-w-2xl mx-auto shadow-lg transition-all duration-200 hover:shadow-xl hover:scale-[1.02]">
+              <CardHeader className="text-center pb-2">
+                <CardTitle className="text-xl font-bold">
+                  Net Amount Overview
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {/* Net Revenue Calculation */}
+                  <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                    <div className="space-y-1">
+                      <p className="text-sm text-gray-600">Total Revenue</p>
+                      <p className="text-lg font-bold text-green-600">
+                        ₹
+                        {parseInt(
+                          dashboardTotals.totalRevenue
+                        ).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-xl">-</div>
+                    <div className="space-y-1 text-right">
+                      <p className="text-sm text-gray-600">Total Expense</p>
+                      <p className="text-lg font-bold text-red-600">
+                        ₹
+                        {parseInt(
+                          dashboardTotals.totalExpense
+                        ).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="text-xl">=</div>
+                    <div className="space-y-1 text-right">
+                      <p className="text-sm text-gray-600">Net Revenue</p>
+                      <p className="text-lg font-bold text-blue-600">
+                        ₹
+                        {parseInt(
+                          dashboardTotals.totalRevenue -
+                            dashboardTotals.totalExpense
+                        ).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Total Payment Methods */}
+                 
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -292,14 +292,11 @@ const CreateServiceBill = ({
 
     // Calculate the base amount (portion of original subtotal that wasn't from services)
     const baseAmount = Math.max(0, originalSubtotal - currentServicesTotal);
-    console.log("calculate");
-    console.log(targetTotal);
+   
     // If in break total mode, use target total as the main total
     if (breakTotalMode) {
       const targetTotalValue = parseFloat(targetTotal || 0);
-      console.log("targetTotalValue", targetTotalValue);
-      console.log("additionalDiscount", additionalDiscount);
-
+    
       let discountValue = 0;
       if (additionalDiscount !== "") {
         if (additionalDiscountType === "amount") {
@@ -357,10 +354,8 @@ const CreateServiceBill = ({
   ]);
 
   useEffect(() => {
-    console.log("useffect toalt amoint");
-    console.log(calculateTotals);
+    
     if (calculateTotals.totalAmount) {
-      console.log(calculateTotals.totalAmount);
       setTargetTotal(calculateTotals.totalAmount);
     }
   }, [calculateTotals]);
@@ -698,7 +693,6 @@ const CreateServiceBill = ({
 
     const totalAfterDiscount = selectedServicesTotal - discountAmount;
     const firstBill = billData?.services?.[0] || {};
-    console.log(patientDetails)
     if (patientDetails?.type === "OPD") {
       const opdBillData = {
         patient: {

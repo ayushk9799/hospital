@@ -73,8 +73,7 @@ export default function CreateTestTemplate() {
   const handleSelectAllFields = (category, test) => {
     const formattedCategory = formatKey(category);
     const fields = labReportFields[formattedCategory]?.[test] || [];
-    console.log(fields);
-    console.log(test);
+   
     const updatedFields = {};
     fields.forEach((field) => {
       updatedFields[field.name] = {
@@ -195,7 +194,6 @@ export default function CreateTestTemplate() {
       return;
     }
 
-    console.log(selectedFields);
 
     const template = {
       name: templateName,

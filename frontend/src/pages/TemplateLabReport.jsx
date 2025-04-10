@@ -94,6 +94,36 @@ const reorder = (list, startIndex, endIndex) => {
   return result;
 };
 
+const calculateDependentValue = (field, allFields) => {
+  if (!field.calculationDetails) return null;
+
+  const { formula, dependencies } = field.calculationDetails;
+
+  // Check if all dependencies have values
+  const dependencyValues = {};
+  for (const dep of dependencies) {
+    const dependentField = allFields.find((f) => f.name === dep);
+    // Return empty string if any dependency is empty or undefined
+    if (!dependentField || !dependentField.value || dependentField.value === "")
+      return "";
+    const numericValue = parseFloat(dependentField.value);
+    if (isNaN(numericValue)) return "";
+    dependencyValues[dep] = numericValue;
+  }
+
+  try {
+    // Create a function from the formula string
+    const calculateFormula = new Function(...dependencies, `return ${formula}`);
+    const result = calculateFormula(
+      ...dependencies.map((dep) => dependencyValues[dep])
+    );
+    return isNaN(result) ? "" : result.toFixed(2);
+  } catch (error) {
+    console.error("Error calculating formula:", error);
+    return "";
+  }
+};
+
 const TemplateLabReport = ({
   template,
   patientData,
@@ -160,7 +190,6 @@ const TemplateLabReport = ({
       initializeEmptyFields();
     }
   };
-
   const loadReportData = (report) => {
     setFields(
       Object.entries(template.fields).map(([name, field]) => ({
@@ -182,6 +211,7 @@ const TemplateLabReport = ({
           template.name.toLowerCase() === report.name.toLowerCase()
             ? report.report?.[name]?.value
             : "",
+        calculationDetails: field.calculationDetails,
       }))
     );
   };
@@ -195,6 +225,7 @@ const TemplateLabReport = ({
         normalRange: field.normalRange,
         options: field.options,
         value: "",
+        calculationDetails: field.calculationDetails,
       }))
     );
   };
@@ -202,20 +233,36 @@ const TemplateLabReport = ({
   const handleInputChange = (e, fieldName, fieldType) => {
     const { value } = e.target;
 
-    if (fieldType) {
-      setFields((prevFields) =>
-        prevFields.map((field) =>
-          field.name === fieldName ? { ...field, [fieldType]: value } : field
-        )
+    setFields((prevFields) => {
+      // First update the changed field
+      const updatedFields = prevFields.map((field) =>
+        field.name === fieldName
+          ? { ...field, [fieldType || "value"]: value }
+          : field
       );
-    } else {
-      setFields((prevFields) =>
-        prevFields.map((field) =>
-          field.name === fieldName ? { ...field, value } : field
-        )
-      );
-    }
+
+      // Find fields that depend on the changed field
+      return updatedFields.map((field) => {
+        // Skip recalculation if this is the field being directly edited
+        if (field.name === fieldName) {
+          return field;
+        }
+
+        // Only recalculate fields that have the changed field as a dependency
+        if (
+          field.calculationDetails &&
+          field.calculationDetails.dependencies.includes(fieldName)
+        ) {
+          const calculatedValue = calculateDependentValue(field, updatedFields);
+         
+          // Always update the value, whether it's calculated or empty
+          return { ...field, value: calculatedValue };
+        }
+        return field;
+      });
+    });
   };
+
   const handleOptionSelect = (fieldName, selectedOption) => {
     setFields((prevFields) =>
       prevFields.map((field) =>

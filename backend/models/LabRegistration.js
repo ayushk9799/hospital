@@ -78,7 +78,7 @@ const labRegistrationSchema = new mongoose.Schema(
       default: "Registered",
     },
     notes: { type: String },
-
+    referredByName: { type: String },
     referredBy: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
     department: { type: String },
   },

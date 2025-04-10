@@ -100,8 +100,7 @@ export default function PatientInfoForm({
     const followUpLimitDate = new Date(lastVisitDate);
     followUpLimitDate.setDate(followUpLimitDate.getDate() + (consultationFeeSettings.masterFollowup===-1?14:consultationFeeSettings.masterFollowup));
     
-    console.log(followUpLimitDate);
-    console.log(lastVisitDate);
+   
     return bookingDate >= lastVisitDate && bookingDate <= followUpLimitDate;
     }catch(error){
       console.error("Error checking follow-up date:", error);
@@ -116,7 +115,6 @@ export default function PatientInfoForm({
       const result = await dispatch(searchPatients(formData.registrationNumber)).unwrap();
       if (result.results && result.results.length > 0) {
         const patient = result.results[0];
-        console.log(patient)
         setSearchedPatient({
           ...patient,
           isFromSearch: true

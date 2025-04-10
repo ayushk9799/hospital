@@ -194,7 +194,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     (id, value) => handleInputChange({ target: { id, value } }),
     [handleInputChange]
   );
-  console.log(formData.visit.consultationType);
   const handleAmountPaidChange = (method, amount) => {
     setFormData((prev) => ({
       ...prev,
@@ -331,7 +330,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                 : "The new patient has been added.",
               variant: "success",
             });
-            console.log(response);
             setRegisteredPatient(response);
             setShowBillModal(true);
 
@@ -417,7 +415,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [open]);
   const getConsultationFee = (doctorId, consultationType) => {
     // First check doctor-specific consultation type fees
-    console.log(consultationFeeSettings);
       if (doctorId && consultationType) {
         const doctorFee = consultationFeeSettings.doctorWiseFee.find(
           (fee) => fee.doctor._id === doctorId
@@ -446,7 +443,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
             consultationType
           ];
 
-          console.log(masterTypeFee);
         if (masterTypeFee !== -1) {
 
           return masterTypeFee;

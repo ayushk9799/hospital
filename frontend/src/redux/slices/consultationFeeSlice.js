@@ -145,14 +145,11 @@ const consultationFeeSlice = createSlice({
         const followUpDates = action.payload.doctorWiseFee.map(
           (fee) => fee.followUpDateWithin
         );
-        console.log(followUpDates);
         const allSameFollowUp =
           followUpDates.length > 0 &&
           followUpDates.every((date) => date === followUpDates[0]);
-        console.log(allSameFollowUp);
         // Add masterFollowup property
         state.masterFollowup = allSameFollowUp ? followUpDates[0] : -1;
-        console.log(state.masterFollowup);
         state.consultationTypes = action.payload.consultationTypes || [];
         state.error = null;
       })

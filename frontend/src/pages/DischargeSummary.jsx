@@ -125,7 +125,6 @@ const FormField = ({
   suggestions,
   extraProps = {},
 }) => {
-  console.log(field);
   const handleDiagnosisChange = (newDiagnoses) => {
     const diagnosisString = newDiagnoses.map((d) => d.name).join(", ");
     onChange({
@@ -211,19 +210,18 @@ const FormField = ({
                     {template.name}
                   </button>
 
-                      {/* Hover Preview - Only show when not selected */}
-                      {value !== template.content && (
-                        <div className="absolute z-50 invisible group-hover:visible bg-popover text-popover-foreground p-3 rounded-lg shadow-lg min-w-[200px] max-w-[400px] mt-2 left-0 whitespace-pre-wrap text-sm border">
-                          <div className="font-semibold mb-1">
-                            Template Preview:
-                          </div>
-                          {template.content}
-                        </div>
-                      )}
+                  {/* Hover Preview - Only show when not selected */}
+                  {value !== template.content && (
+                    <div className="absolute z-50 invisible group-hover:visible bg-popover text-popover-foreground p-3 rounded-lg shadow-lg min-w-[200px] max-w-[400px] mt-2 left-0 whitespace-pre-wrap text-sm border">
+                      <div className="font-semibold mb-1">
+                        Template Preview:
+                      </div>
+                      {template.content}
                     </div>
-                  ))}
+                  )}
                 </div>
-              
+              ))}
+            </div>
           )}
           <Textarea
             id={field.id}
@@ -1488,296 +1486,8 @@ export default function DischargeSummary() {
   const handleCancelCustomize = () => {
     setShowCustomizer(false);
   };
-  console.log(patientInfo);
   // Render form sections based on configuration
-  const renderFormSection = (section) => {
-    console.log(section);
-    return (
-      <div
-        key={section.id}
-        className={`${section.className} bg-white rounded-lg p-2 sm:p-4`}
-      >
-        {section.title && (
-          <h2 className="text-base sm:text-lg font-semibold mb-2 text-primary">
-            {section.title}
-          </h2>
-        )}
-        <div className="grid gap-2 sm:gap-4 text-sm sm:text-base">
-          {section.fields.map((field) => {
-            // Handle special components separately
-            if (field.type === "vitals") {
-              return (
-                <div key={field.id} className=" py-2">
-                  <Label htmlFor={field.id}>{field.label}</Label>
-                  {renderVitalsInputs(field.prefix)}
-                </div>
-              );
-            }
 
-            if (field.type === "investigations") {
-              return (
-                <div key={field.id} className=" py-2">
-                  <Label htmlFor={field.id}>{field.label}</Label>
-                  <div className="space-y-2 mt-2">
-                    {formData.investigations.map((investigation, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
-                      >
-                        <div className="sm:col-span-3">
-                          <SearchSuggestion
-                            suggestions={allLabTests}
-                            placeholder="Select investigation"
-                            value={investigation.name}
-                            setValue={(value) =>
-                              handleInvestigationChange(index, { name: value })
-                            }
-                            onSuggestionSelect={(suggestion) =>
-                              handleInvestigationChange(index, suggestion)
-                            }
-                          />
-                        </div>
-                        <div className="flex space-x-2">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenLabReport(investigation)}
-                            aria-label="Open Lab Report"
-                            disabled={!investigation.name}
-                          >
-                            <ChevronRight className="h-5 w-5" />
-                          </Button>
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => handleRemoveInvestigation(index)}
-                            disabled={formData.investigations.length === 1}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    <Button
-                      onClick={handleAddInvestigation}
-                      variant="outline"
-                      className="mt-2 font-semibold"
-                      type="button"
-                    >
-                      <PlusCircle className="h-4 w-4 mr-2" /> Add Investigation
-                    </Button>
-                  </div>
-                </div>
-              );
-            }
-
-            if (field.type === "medicineAdvice") {
-              return (
-                <div key={field.id} className=" py-2">
-                  <Label htmlFor={field.id}>{field.label}</Label>
-                  <div className="space-y-2 mt-2">
-                    {formData[field.id]?.map((item, index) => (
-                      <div
-                        key={index}
-                        className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
-                      >
-                        <div
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                            }
-                          }}
-                        >
-                          <SearchSuggestion
-                            suggestions={medicinelist?.map((item) => ({
-                              name: item,
-                            }))}
-                            placeholder="Select medicine/advice"
-                            value={item.name}
-                            setValue={(value) =>
-                              handleMedicineAdviceChange(
-                                index,
-                                "name",
-                                value,
-                                field.id
-                              )
-                            }
-                            onSuggestionSelect={(suggestion) =>
-                              handleMedicineAdviceSuggestionSelect(
-                                index,
-                                suggestion,
-                                field.id
-                              )
-                            }
-                          />
-                        </div>
-                        <Input
-                          type="text"
-                          placeholder="Dosage"
-                          value={item.dosage}
-                          onChange={(e) =>
-                            handleMedicineAdviceChange(
-                              index,
-                              "dosage",
-                              e.target.value,
-                              field.id
-                            )
-                          }
-                          className="font-medium"
-                          onKeyDown={(e) => {
-                            // Prevent form submission on Enter key
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                            }
-                          }}
-                        />
-                        <Input
-                          type="text"
-                          placeholder="Duration"
-                          value={item.duration}
-                          onChange={(e) =>
-                            handleMedicineAdviceChange(
-                              index,
-                              "duration",
-                              e.target.value,
-                              field.id
-                            )
-                          }
-                          className="font-medium"
-                          onKeyDown={(e) => {
-                            // Prevent form submission on Enter key
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="icon"
-                          onClick={() => removeMedicineAdvice(index, field.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    ))}
-                    <Button
-                      type="button" // Add type="button" to prevent form submission
-                      onClick={() => addMedicineAdvice(field.id)}
-                      variant="outline"
-                      className="mt-2 font-semibold"
-                    >
-                      <PlusCircle className="h-4 w-4 mr-2" /> Add
-                      Medicine/Advice
-                    </Button>
-                  </div>
-                </div>
-              );
-            }
-
-            // For standard form fields
-            let value;
-            let onChange;
-            let label;
-            // Check if this is a patientInfo field
-            if (section.id === "patientInfo") {
-              // Special handling for admission and discharge dates
-              if (
-                field.id === "admissionDate" ||
-                field.id === "dateDischarged" ||
-                field.id === "timeDischarged" ||
-                field.id === "admittedTime" ||
-                field.id === "bookingTime"
-              ) {
-                value =
-                  (field.id === "admittedTime"
-                    ? formData.admittedTime || formData.bookingTime
-                    : formData[field.id]) || "";
-                onChange = handleInputChange;
-              } else {
-                // Get the value directly from patientInfo without fallback to relation
-                value = patientInfo[field.id] || formData?.[field.id] || "";
-
-                // Only set relation-specific value if this field is actually the relation field
-                if (field.id === patientInfo?.relation?.toLowerCase()) {
-                  value = patientInfo[patientInfo.relation.toLowerCase()] || "";
-                  label = patientInfo.relation;
-                }
-
-                onChange = handlePatientInfoChange;
-              }
-            } else {
-              value = field.id.includes(".")
-                ? field.id.split(".").reduce((obj, key) => obj[key], formData)
-                : formData[field.id];
-
-              onChange = (e) => {
-                if (field.type === "multiselect") {
-                  const newValue = Array.isArray(e)
-                    ? e.map((v) => v.name).join(", ")
-                    : e.target.value;
-                  handleInputChange({
-                    target: {
-                      name: field.id,
-                      value: newValue,
-                    },
-                  });
-                } else {
-                  handleInputChange(e);
-                }
-              };
-            }
-
-            // Get suggestions based on the field configuration
-            let suggestions = [];
-            if (field.suggestions) {
-              switch (field.suggestions) {
-                case "diagnosisTemplate":
-                  suggestions = diagnosisTemplate;
-                  break;
-                case "comorbidities":
-                  suggestions = comorbidities;
-                  break;
-                case "medicinelist":
-                  suggestions = medicinelist;
-                  break;
-                default:
-                  try {
-                    suggestions = eval(field.suggestions) || [];
-                  } catch (e) {
-                    console.error("Error evaluating suggestions:", e);
-                  }
-              }
-            }
-
-            // Add extra props for baby table
-            const extraProps = {
-              ...field.extraProps,
-              onComorbidityHandlingChange: handleComorbidityHandlingChange,
-              comorbidityHandling: formData.comorbidityHandling,
-              showBabyDetails: field.dependsOn
-                ? formData[field.dependsOn]
-                : true,
-            };
-
-            return (
-              <FormField
-                key={field.id}
-                field={field}
-                value={value}
-                label={label}
-                onChange={onChange}
-                suggestions={suggestions}
-                extraProps={extraProps}
-              />
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
   // Add a new useEffect to handle form config changes
   useEffect(() => {
     if (savedConfig) {
@@ -1785,8 +1495,7 @@ export default function DischargeSummary() {
       const patientInfoSection = savedConfig.sections.find(
         (section) => section.id === "patientInfo"
       );
-      console.log("patientInfoSection");
-      console.log(patientInfoSection);
+     
       if (patientInfoSection) {
         const updatedPatientInfo = {};
         patientInfoSection.fields.forEach((field) => {

@@ -179,12 +179,12 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                           : "N/A"}
                       </p>
                     </div>
-                    {labData?.referredBy && (
+                    {(labData?.referredBy || labData?.referredByName) && (
                       <div className="flex items-center">
                         <Label className="font-semibold mr-2">
                           Referred By:
                         </Label>
-                        <p>{labData.referredBy.name || "N/A"}</p>
+                        <p>{labData?.referredBy?.name || labData.referredByName || "N/A"}</p>
                       </div>
                     )}
                   </div>

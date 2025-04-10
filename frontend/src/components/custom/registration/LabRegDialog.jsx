@@ -39,6 +39,7 @@ import { format, differenceInDays } from "date-fns";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
 import LabDetailsModal from "./LabDetailsModal";
+import SearchSuggestion from "./CustomSearchSuggestion";
 
 const paymentMethods = [
   { name: "Cash" },
@@ -86,6 +87,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
       additionalDiscount: "",
     },
     upgradegenReg: false,
+    referredByName: "",
     labTests: [],
     referredBy: {},
     department: departments.length === 1 ? departments[0].name : "",
@@ -361,7 +363,6 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
           },
           {}
         );
-
         const result = await dispatch(
           createLabRegistration(cleanedFormData)
         ).unwrap();
@@ -589,35 +590,30 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
                   onChange={handleInputChange}
                   className="min-h-9 h-9 no-scrollbar"
                 />
-                <Select
-                  id="referredBy"
-                  value={formData.referredBy?._id}
-                  onValueChange={(value) => {
-                    const selectedDoctor = doctors.find(
-                      (doc) => doc._id === value
-                    );
+                <SearchSuggestion
+                  suggestions={doctors.map((doctor) => ({
+                    name: doctor.name,
+                    _id: doctor._id,
+                  }))}
+                  value={formData.referredByName}
+                  setValue={(value) => {
+                    setFormData((prev) => ({
+                      ...prev,
+                      referredByName: value,
+                    }));
+                  }}
+                  onSuggestionSelect={(selectedDoctor) => {
                     setFormData((prev) => ({
                       ...prev,
                       referredBy: {
                         _id: selectedDoctor._id,
                         name: selectedDoctor.name,
                       },
+                      referredByName: selectedDoctor.name,
                     }));
                   }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Referred By">
-                      {formData.referredBy?.name || "Referred By"}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {doctors.map((doctor) => (
-                      <SelectItem key={doctor._id} value={doctor._id}>
-                        {doctor.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder={formData.referredBy?.name || "Referred By"}
+                />
                 <div className="flex gap-2 relative z-50">
                   <MultiSelectInput
                     suggestions={allLabTests}
