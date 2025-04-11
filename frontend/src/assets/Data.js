@@ -928,7 +928,7 @@ export const labReportFields = {
         unit: "mg/dL",
         normalRange: "13-43",
         calculationDetails: {
-          formula: "urea_nitrogen/2.14",
+          formula: "urea_nitrogen*2.14",
           dependencies: ["urea_nitrogen"],
         },
       },
@@ -938,7 +938,7 @@ export const labReportFields = {
         unit: "mg/dL",
         normalRange: "6-20",
         calculationDetails: {
-          formula: "urea * 2.14",
+          formula: "urea / 2.14",
           dependencies: ["urea"],
         },
       },
