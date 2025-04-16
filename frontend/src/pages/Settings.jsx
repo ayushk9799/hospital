@@ -59,6 +59,10 @@ export default function Settings() {
     navigate("/settings/consultation-fees");
   };
 
+  const handleDischargeFormTemplates = () => {
+    navigate("/settings/discharge-form-templates");
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -84,6 +88,9 @@ export default function Settings() {
         <Button onClick={handleDepartmentSettings}>Manage Department</Button>
         <Button onClick={handleHospitalSettings}>Hospital Settings</Button>
         <Button onClick={handleConsultationFees}>Consultation Fees</Button>
+        <Button onClick={handleDischargeFormTemplates}>
+          Discharge Form Templates
+        </Button>
       </div>
 
       {/* <div className="mb-6 mt-6">

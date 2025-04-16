@@ -89,7 +89,7 @@ router.post("/types", verifyToken, async (req, res) => {
       });
     }
 
-    let feeDoc = await ConsultationFee.findOne({ hospital: req.hospital });
+    let feeDoc = await ConsultationFee.findOne();
     if (!feeDoc) {
       feeDoc = new ConsultationFee({
         doctorWiseFee: [],

@@ -252,6 +252,14 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                     </div>
                   ) : null}
                 </div>
+                <div>
+                      {billData.opdProcedure?.procedureName ?(
+                        <div className="flex items-center">
+                              <Label className="font-semibold mr-2">Proceudure:</Label>
+                              <p>{billData.opdProcedure?.procedureName}</p>
+                        </div>
+                      ):null}
+                </div>
                 {services.length > 0 ? (
                   <div className="flex flex-col gap-4">
                     <div className="w-full">
@@ -504,6 +512,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                         id="printPaymentHistory"
                         checked={printPaymentHistory}
                         onCheckedChange={setPrintPaymentHistory}
+                        className="print:hidden"
                       />
                       <h3 className="text-lg font-semibold">Payment History</h3>
                       {billData?.payments?.length > 0 && (

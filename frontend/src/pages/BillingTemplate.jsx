@@ -1,6 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
+import { newlifeline } from "../templatesExperiments/labbillingexperiment";
 import { labReportTemplateStringExperiment } from "../templatesExperiments/labtemplateExperiment";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../templates/headertemplate";
@@ -216,7 +217,7 @@ const BillingTemplate = React.forwardRef(
       "React",
       "HospitalHeader",
      
-      `return (${labBillingTemplate||labBillingTemplateStringDefault});`
+      `return (${newlifeline});`
     );
 
     try {

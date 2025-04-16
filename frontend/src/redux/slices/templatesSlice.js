@@ -141,6 +141,7 @@ const initialState = {
   diagnosisTemplate: [],
   mergeTemplate: "",
   dischargeSummaryTemplateArray: [],
+  dischargeFormTemplateArray: [],
   opdPrescriptionTemplateArray: [],
   opdRxTemplateArray: [],
   consentFormTemplateArray: [],
@@ -172,6 +173,8 @@ const templatesSlice = createSlice({
         state.diagnosisTemplate = action.payload.diagnosisTemplate;
         state.dischargeSummaryTemplateArray =
           action.payload.dischargeSummaryTemplateArray || [];
+        state.dischargeFormTemplateArray =
+          action.payload.dischargeFormTemplateArray || [];
         state.opdPrescriptionTemplateArray =
           action.payload.opdPrescriptionTemplateArray || [];
         state.opdRxTemplateArray = action.payload.opdRxTemplateArray || [];
@@ -215,15 +218,16 @@ const templatesSlice = createSlice({
           state.dischargeSummaryTemplateArray =
             action.payload.dischargeSummaryTemplateArray || [];
         }
+        if (action.payload.dischargeFormTemplateArray) {
+          state.dischargeFormTemplateArray =
+            action.payload.dischargeFormTemplateArray || [];
+        }
         if (action.payload.opdPrescriptionTemplateArray) {
           state.opdPrescriptionTemplateArray =
             action.payload.opdPrescriptionTemplateArray || [];
         }
         if (action.payload.opdRxTemplateArray) {
           state.opdRxTemplateArray = action.payload.opdRxTemplateArray || [];
-        }
-        if (action.payload.dischargeFormTemplates) {
-          state.dischargeFormTemplates = action.payload.dischargeFormTemplates;
         }
         if (action.payload.opdBillTokenTemplate) {
           state.opdBillTokenTemplate = action.payload.opdBillTokenTemplate;

@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import { ScrollArea } from "./components/ui/scroll-area";
 import { Provider } from "react-redux";
+import DischargeFormTemplates from "./pages/DischargeFormTemplates";
 import { store } from "./redux/store";
 import ConsentTemplatePreview from "./pages/ConsentTemplatePreview";
 import { useDispatch, useSelector } from "react-redux";
@@ -288,6 +289,10 @@ const AppContent = () => {
                   <Route
                     path="/settings/prefix-settings"
                     element={<PrefixSettings />}
+                  />
+                  <Route
+                    path="/settings/discharge-form-templates"
+                    element={<DischargeFormTemplates />}
                   />
                   <Route
                     path="/patients/:ipdAdmissionId/babies"

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   FileText,
   ArrowLeft,
@@ -44,6 +44,13 @@ import {
 } from "../components/ui/popover";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { cn } from "../lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 
 export default function AdmittedPatients() {
   const { toast } = useToast();
@@ -57,6 +64,12 @@ export default function AdmittedPatients() {
   const [searchQuery, setSearchQuery] = useState("");
   const [date, setDate] = useState(null);
   const [calendarOpen, setCalendarOpen] = useState(false);
+  const savedConfig = useSelector(
+    (state) => state.templates.dischargeFormTemplateArray
+  );
+  const oldConfig = useSelector(
+    (state) => state.templates.dischargeFormTemplates
+  );
 
   useEffect(() => {
     dispatch(fetchAdmittedPatients())
@@ -66,9 +79,38 @@ export default function AdmittedPatients() {
       });
   }, []);
 
-  const handleDischarge = (patientId, patient) => {
+  const getRelevantTemplates = (patient) => {
+   
+    return (
+      savedConfig?.filter((template) => {
+        const isDefault = template.isDefault;
+        const doctorIds = template.associatedDoctors?.map((doc) => doc._id?.toString()) || [];
+        const patientDoctorId = patient.assignedDoctor._id?.toString();
+      
+      
+      
+        return isDefault || doctorIds.includes(patientDoctorId);
+      }) || []
+      
+    );
+  };
+
+  const handleDischarge = (patientId, patient, id) => {
+   
+
+    // Get relevant templates based on patient's assigned doctor
+    const relevantTemplates = getRelevantTemplates(patient);
+
+    // If id is provided, find that specific template, otherwise use first relevant template
+    const selectedTemplate = id
+      ? relevantTemplates?.find((t) => t._id === id)
+      : relevantTemplates?.[0] || oldConfig;
     navigate(`/patients/discharge/${patientId}`, {
-      state: { ignoreList: true, dischargeData: patient },
+      state: {
+        ignoreList: true,
+        dischargeData: patient,
+        selectedTemplate: selectedTemplate || null,
+      },
     });
   };
 
@@ -453,18 +495,77 @@ export default function AdmittedPatients() {
                                     <Plus className="h-4 w-4" />
                                     Services
                                   </Button>
-                                  <Button
-                                    onClick={() =>
-                                      handleDischarge(patient._id, patient)
+                                  {(() => {
+                                    const relevantTemplates =
+                                      getRelevantTemplates(patient);
+
+                                    if (relevantTemplates.length === 0) {
+                                      return (
+                                        <Button
+                                          onClick={() =>
+                                            handleDischarge(
+                                              patient._id,
+                                              patient
+                                            )
+                                          }
+                                          variant="default"
+                                          size="sm"
+                                          className=" h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                        >
+                                          {patient.status === "Discharged"
+                                            ? "View/Edit"
+                                            : "Discharge"}
+                                        </Button>
+                                      );
                                     }
-                                    variant="default"
-                                    size="sm"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                                  >
-                                    {patient.status === "Discharged"
-                                      ? "View/Edit Discharge Summary"
-                                      : "Discharge"}
-                                  </Button>
+
+                                    if (relevantTemplates.length === 1) {
+                                      return (
+                                        <Button
+                                          onClick={() =>
+                                            handleDischarge(
+                                              patient._id,
+                                              patient,
+                                              relevantTemplates[0]._id
+                                            )
+                                          }
+                                          variant="default"
+                                          size="sm"
+                                          className=" h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                        >
+                                          {patient.status === "Discharged"
+                                            ? "View/Edit"
+                                            : "Discharge"}
+                                        </Button>
+                                      );
+                                    }
+
+                                    return (
+                                      <Select
+                                        onValueChange={(id) =>
+                                          handleDischarge(
+                                            patient._id,
+                                            patient,
+                                            id
+                                          )
+                                        }
+                                      >
+                                        <SelectTrigger className="bg-blue-600 hover:bg-blue-700 text-white border-0 h-8">
+                                          <SelectValue placeholder="Discharge" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          {relevantTemplates.map((template) => (
+                                            <SelectItem
+                                              key={template._id}
+                                              value={template._id}
+                                            >
+                                              {template.name}
+                                            </SelectItem>
+                                          ))}
+                                        </SelectContent>
+                                      </Select>
+                                    );
+                                  })()}
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -592,18 +693,74 @@ export default function AdmittedPatients() {
                                   Add Services
                                 </Button>
 
-                                <Button
-                                  onClick={() =>
-                                    handleDischarge(patient._id, patient)
+                                {(() => {
+                                  const relevantTemplates =
+                                    getRelevantTemplates(patient);
+
+                                  if (relevantTemplates.length === 0) {
+                                    return (
+                                      <Button
+                                        onClick={() =>
+                                          handleDischarge(patient._id, patient)
+                                        }
+                                        variant="default"
+                                        size="sm"
+                                        className="  h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                      >
+                                        {patient.status === "Discharged"
+                                          ? "View/Edit"
+                                          : "Discharge"}
+                                      </Button>
+                                    );
                                   }
-                                  variant="default"
-                                  size="sm"
-                                  className="flex-1 min-w-[120px] h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
-                                >
-                                  {patient.status === "Discharged"
-                                    ? "View/Edit"
-                                    : "Discharge"}
-                                </Button>
+
+                                  if (relevantTemplates.length === 1) {
+                                    return (
+                                      <Button
+                                        onClick={() =>
+                                          handleDischarge(
+                                            patient._id,
+                                            patient,
+                                            relevantTemplates[0]._id
+                                          )
+                                        }
+                                        variant="default"
+                                        size="sm"
+                                        className="  h-8 text-xs bg-blue-600 hover:bg-blue-700 text-white"
+                                      >
+                                        {patient.status === "Discharged"
+                                          ? "View/Edit"
+                                          : "Discharge"}
+                                      </Button>
+                                    );
+                                  }
+
+                                  return (
+                                    <Select
+                                      onValueChange={(id) =>
+                                        handleDischarge(
+                                          patient._id,
+                                          patient,
+                                          id
+                                        )
+                                      }
+                                    >
+                                      <SelectTrigger className="bg-blue-600 hover:bg-blue-700 text-white border-0 h-8">
+                                        <SelectValue placeholder="Discharge" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {relevantTemplates.map((template) => (
+                                          <SelectItem
+                                            key={template._id}
+                                            value={template._id}
+                                          >
+                                            {template.name}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </CardContent>

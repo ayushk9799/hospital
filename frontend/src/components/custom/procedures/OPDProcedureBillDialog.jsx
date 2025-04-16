@@ -21,6 +21,8 @@ import {
   TableRow,
 } from "../../ui/table";
 import { PrinterIcon, X } from "lucide-react";
+import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
+import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { numberToWords } from "../../../assets/Data";
 import HospitalHeader from "../../../utils/print/HospitalHeader";
 import { AlertCircle } from "lucide-react";
@@ -33,7 +35,16 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
-
+  const headerTemplateStrings = useSelector(
+    (state) => state.templates.headerTemplateArray
+  );
+  const headerTemplateString =
+    headerTemplateStrings?.length > 0
+      ? headerTemplateStrings[0].value
+      : headerTemplateStringDefault;
+  const HeaderComponent = createDynamicComponentFromString(
+    headerTemplateString || headerTemplateStringDefault
+  );
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
@@ -78,7 +89,7 @@ const OPDProcedureBillDialog = ({ isOpen, setIsOpen, procedureData }) => {
         <ScrollArea className="max-h-[80vh]">
           <div ref={componentRef} className={isPrinting ? "print-content" : ""}>
             <div className="hidden print:block mb-2">
-              <HospitalHeader hospitalInfo={hospitalInfo} />
+              <HeaderComponent hospitalInfo={hospitalInfo} />
             </div>
             <div className="print:pb-6">
               <div className="no-print">

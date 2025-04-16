@@ -39,7 +39,7 @@ const HospitalHeader = ({ hospitalInfo }) => {
           <img
             src={hospitalInfo?.hospitalLogo2Blob}
             alt="Clinic Logo"
-            className="w-[120px] h-[100px]"
+            className="w-[100px] h-[100px]"
           />
         </div>
       </div>

@@ -64,12 +64,22 @@ const SPECIAL_FIELDS = {
   },
 };
 
-const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
+const FormCustomizer = ({
+  config,
+  enabledFields,
+  onSave,
+  onCancel,
+  initialValues = {},
+}) => {
   const { toast } = useToast();
   const { updateTempleteStatus } = useSelector((state) => state.templates);
   const [editingField, setEditingField] = useState(null);
   const [showAddField, setShowAddField] = useState(null);
   const [selectedField, setSelectedField] = useState(null);
+  const [templateName, setTemplateName] = useState(
+    initialValues.templateName || ""
+  );
+  const [isDefault, setIsDefault] = useState(initialValues.isDefault || false);
   const [newTemplate, setNewTemplate] = useState({ name: "", content: "" });
 
   const [customConfig, setCustomConfig] = useState(() => {
@@ -78,34 +88,50 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
         const enabledSection = enabledConfig.sections.find(
           (s) => s.id === defaultSection.id
         );
-        const mergedFields = [];
 
-        defaultSection.fields.forEach((defaultField) => {
-          const enabledField = enabledSection?.fields.find(
-            (f) => f.id === defaultField.id
-          );
-          mergedFields.push({
-            ...defaultField,
-            hidden: !enabledField,
-            templates: enabledField?.templates || defaultField.templates || [],
+        // Create a map of fields from default config for quick lookup
+        const defaultFieldsMap = new Map(
+          defaultSection.fields.map((field) => [field.id, field])
+        );
+
+        // Start with enabled fields to maintain their order
+        let mergedFields = [];
+
+        if (enabledSection) {
+          // First add all enabled fields in their order
+          mergedFields = enabledSection.fields.map((enabledField) => ({
+            ...(defaultFieldsMap.get(enabledField.id) || enabledField),
+            ...enabledField,
+            hidden: false,
+            templates: enabledField.templates || [],
             sectionId: defaultSection.id,
-          });
-        });
+          }));
 
-        enabledSection?.fields.forEach((enabledField) => {
-          if (!defaultSection.fields.some((f) => f.id === enabledField.id)) {
-            mergedFields.push({
-              ...enabledField,
-              hidden: false,
-              templates: enabledField.templates || [],
-              sectionId: defaultSection.id,
-            });
-          }
-        });
+          // Then add any remaining default fields that weren't in enabled config
+          defaultSection.fields.forEach((defaultField) => {
+            if (!enabledSection.fields.some((f) => f.id === defaultField.id)) {
+              mergedFields.push({
+                ...defaultField,
+                hidden: true,
+                templates: defaultField.templates || [],
+                sectionId: defaultSection.id,
+              });
+            }
+          });
+        } else {
+          // If section not in enabled config, use default fields
+          mergedFields = defaultSection.fields.map((field) => ({
+            ...field,
+            hidden: true,
+            templates: field.templates || [],
+            sectionId: defaultSection.id,
+          }));
+        }
 
         return { ...defaultSection, fields: mergedFields };
       });
 
+      // Handle sections that only exist in enabled config
       const enabledOnlySections = enabledConfig.sections
         .filter(
           (enabledSection) =>
@@ -327,6 +353,10 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
 
   const FieldSettingsContent = ({ field }) => {
     const [localField, setLocalField] = useState({ ...field });
+    const [localTemplate, setLocalTemplate] = useState({
+      name: "",
+      content: "",
+    });
 
     const handleFieldChange = (key, value) => {
       setLocalField((prev) => ({
@@ -348,8 +378,39 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
       setSelectedField(null);
     };
 
+    const handleClose = () => {
+      setSelectedField(null);
+    };
+
+    const handleLocalAddTemplate = () => {
+      if (!localTemplate.name || !localTemplate.content) {
+        toast({
+          title: "Error",
+          description: "Both template name and content are required",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setLocalField((prev) => ({
+        ...prev,
+        templates: [...(prev.templates || []), localTemplate],
+      }));
+      setLocalTemplate({ name: "", content: "" });
+    };
+
+    const handleLocalRemoveTemplate = (index) => {
+      setLocalField((prev) => ({
+        ...prev,
+        templates: prev.templates.filter((_, i) => i !== index),
+      }));
+    };
+
     return (
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col gap-0 p-0">
+      <DialogContent
+        className="max-w-4xl max-h-[90vh] flex flex-col gap-0 p-0"
+        onInteractOutside={handleClose}
+      >
         <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle>Field Settings: {field.label}</DialogTitle>
         </DialogHeader>
@@ -405,7 +466,7 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                       Pre-saved Templates
                     </Label>
                     <div className="space-y-4">
-                      {field.templates?.map((template, index) => (
+                      {localField.templates?.map((template, index) => (
                         <div
                           key={index}
                           className="flex items-start gap-2 p-3 bg-secondary/10 rounded-md border"
@@ -418,9 +479,7 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() =>
-                                  handleRemoveTemplate(field, index)
-                                }
+                                onClick={() => handleLocalRemoveTemplate(index)}
                               >
                                 <X className="h-4 w-4" />
                               </Button>
@@ -439,9 +498,9 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                         <div className="space-y-3">
                           <Input
                             placeholder="Template Name"
-                            value={newTemplate.name}
+                            value={localTemplate.name}
                             onChange={(e) =>
-                              setNewTemplate((prev) => ({
+                              setLocalTemplate((prev) => ({
                                 ...prev,
                                 name: e.target.value,
                               }))
@@ -450,9 +509,9 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                           />
                           <Textarea
                             placeholder="Template Content"
-                            value={newTemplate.content}
+                            value={localTemplate.content}
                             onChange={(e) =>
-                              setNewTemplate((prev) => ({
+                              setLocalTemplate((prev) => ({
                                 ...prev,
                                 content: e.target.value,
                               }))
@@ -462,7 +521,7 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
                           <Button
                             type="button"
                             variant="outline"
-                            onClick={() => handleAddTemplate(field)}
+                            onClick={handleLocalAddTemplate}
                             className="w-full h-9"
                           >
                             <Plus className="h-4 w-4 mr-2" />
@@ -479,9 +538,9 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
 
         <DialogFooter className="px-6 py-4 border-t">
           <div className="flex justify-end gap-2">
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
+            <Button variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
             <Button
               disabled={updateTempleteStatus === "loading"}
               onClick={handleSaveSettings}
@@ -495,6 +554,15 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
   };
 
   const handleSave = () => {
+    if (!templateName.trim()) {
+      toast({
+        title: "Error",
+        description: "Template name is required",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const cleanConfig = {
       ...customConfig,
       sections: customConfig.sections.map((section) => ({
@@ -511,17 +579,53 @@ const FormCustomizer = ({ config, enabledFields, onSave, onCancel }) => {
           }),
       })),
     };
-    onSave(cleanConfig);
+
+    const templateData = {
+      name: templateName,
+      value: cleanConfig,
+      isDefault: isDefault,
+    };
+
+    onSave(templateData);
   };
 
   return (
     <Card className="w-full max-w-2xl mx-auto flex flex-col h-[600px] min-h-[400px] max-h-[90vh]">
       <CardHeader className="border-b py-3">
-        <div className="flex justify-between items-center">
-          <CardTitle>Customize Form Fields</CardTitle>
-          <Button variant="ghost" size="sm">
-            <X className="h-4 w-4" onClick={onCancel} />
-          </Button>
+        <div className="flex flex-col gap-3">
+          <div className="flex justify-between items-center">
+            <CardTitle>Customize Form Fields</CardTitle>
+            <Button variant="ghost" size="sm" onClick={onCancel}>
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="flex-1">
+              <Label
+                htmlFor="templateName"
+                className="text-sm font-medium mb-1"
+              >
+                Template Name
+              </Label>
+              <Input
+                id="templateName"
+                placeholder="Enter template name"
+                value={templateName}
+                onChange={(e) => setTemplateName(e.target.value)}
+                className="h-8"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Switch
+                id="isDefault"
+                checked={isDefault}
+                onCheckedChange={setIsDefault}
+              />
+              <Label htmlFor="isDefault" className="text-sm">
+                Set as default
+              </Label>
+            </div>
+          </div>
         </div>
       </CardHeader>
       <ScrollArea className="flex-1">

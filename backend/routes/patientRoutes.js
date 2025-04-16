@@ -461,6 +461,9 @@ router.post(
               phone: patient?.contactNumber,
               registrationNumber: patient.registrationNumber,
               ipdNumber: admission.ipdNumber,
+              age:patient.age,
+              gender:patient.gender
+              
             },
             admission: admissionRecord._id,
             totalAmount: Number(paymentInfo.totalAmount),

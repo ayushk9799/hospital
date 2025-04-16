@@ -319,6 +319,9 @@ router.post("/:id/payments", verifyToken, async (req, res) => {
 
     const updatedBill = await ServicesBill.findById(bill._id)
       .populate("payments")
+      .populate("patient", "name phone registrationNumber age gender address")
+      .populate("createdBy", "name")
+      .populate("opdProcedure", "procedureName")
       .session(session);
 
     await session.commitTransaction();

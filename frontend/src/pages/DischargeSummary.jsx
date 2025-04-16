@@ -647,12 +647,21 @@ export default function DischargeSummary() {
     }
   );
   const savedConfig = useSelector(
-    (state) => state.templates.dischargeFormTemplates
+    (state) => state.templates.dischargeFormTemplateArray
   );
   const [formConfig, setFormConfig] = useState(() => {
     const baseConfig = getFormConfig();
-    if (savedConfig) {
-      return savedConfig;
+
+    // Use template from navigation state if available
+    if (
+      location.state?.selectedTemplate?.value ||
+      location.state?.selectedTemplate
+    ) {
+      return (
+        location.state.selectedTemplate.value ||
+        location.state.selectedTemplate ||
+        baseConfig
+      );
     }
     return baseConfig;
   });
@@ -690,6 +699,7 @@ export default function DischargeSummary() {
     conditionOnAdmission: "",
     conditionOnDischarge: "",
     comorbidityHandling: "separate",
+    
     vitals: {
       admission: {
         bloodPressure: "",
@@ -732,7 +742,6 @@ export default function DischargeSummary() {
   const mergeDataWithFormFields = (data, config) => {
     const fieldIds = getAllFieldIds(config);
     const mergedData = { ...initialFormData };
-
     // First, handle standard fields
     const standardFields = [
       "admissionDate",
@@ -793,11 +802,39 @@ export default function DischargeSummary() {
     }
 
     // Handle custom fields from form config
+    // fieldIds.forEach((fieldId) => {
+    //   if (data?.[fieldId] !== undefined && !standardFields.includes(fieldId)) {
+    //     mergedData[fieldId] = data?.[fieldId];
+    //   }
+    // });
+
     fieldIds.forEach((fieldId) => {
-      if (data?.[fieldId] !== undefined && !standardFields.includes(fieldId)) {
-        mergedData[fieldId] = data?.[fieldId];
+      // Get value from nested path
+      const value = fieldId.includes(".")
+        ? fieldId.split(".").reduce((obj, key) => obj?.[key], data)
+        : data?.[fieldId];
+    
+      if (value !== undefined && !standardFields.includes(fieldId)) {
+        // Set value in mergedData, supporting nested paths
+        if (fieldId.includes(".")) {
+          const keys = fieldId.split(".");
+          let temp = mergedData;
+    
+          // Traverse or create nested structure
+          keys.forEach((key, index) => {
+            if (index === keys.length - 1) {
+              temp[key] = value;
+            } else {
+              temp[key] = temp[key] || {};
+              temp = temp[key];
+            }
+          });
+        } else {
+          mergedData[fieldId] = value;
+        }
       }
     });
+    
 
     return mergedData;
   };
@@ -1461,13 +1498,18 @@ export default function DischargeSummary() {
     setShowCustomizer(true);
   };
 
-  const handleSaveCustomConfig = async (newConfig) => {
+  const handleSaveCustomConfig = async (templateData) => {
     try {
       await dispatch(
-        updateTemplate({ dischargeFormTemplates: newConfig })
+        updateTemplate({
+          dischargeFormTemplateArray: [
+            ...(savedConfig || []).filter((t) => t.name !== templateData.name),
+            templateData,
+          ],
+        })
       ).unwrap();
 
-      setFormConfig(newConfig);
+      setFormConfig(templateData.value);
       setShowCustomizer(false);
       toast({
         title: "Success",
@@ -1490,12 +1532,12 @@ export default function DischargeSummary() {
 
   // Add a new useEffect to handle form config changes
   useEffect(() => {
-    if (savedConfig) {
+    if (formConfig) {
       // Update form fields based on saved configuration
-      const patientInfoSection = savedConfig.sections.find(
+      const patientInfoSection = formConfig.sections.find(
         (section) => section.id === "patientInfo"
       );
-     
+
       if (patientInfoSection) {
         const updatedPatientInfo = {};
         patientInfoSection.fields.forEach((field) => {
@@ -1507,7 +1549,7 @@ export default function DischargeSummary() {
         }));
       }
     }
-  }, [savedConfig]);
+  }, [formConfig]);
 
   return (
     <div className="container mx-auto py-2 sm:py-4 px-2 sm:px-4 lg:px-6 max-w-7xl">
@@ -1527,16 +1569,7 @@ export default function DischargeSummary() {
                 Discharge Summary
               </CardTitle>
             </div>
-            <Button
-              variant="ghost"
-              onClick={handleCustomizeForm}
-              className="text-primary-foreground hover:text-primary hover:bg-primary-foreground flex items-center"
-            >
-              <ChartNoAxesColumnDecreasingIcon className="h-4 w-4 sm:hidden" />
-              <span className="hidden sm:inline text-sm sm:text-base">
-                Customize Form
-              </span>
-            </Button>
+           
           </div>
         </CardHeader>
         <CardContent className="p-2 sm:p-4 md:p-6">
@@ -1544,14 +1577,14 @@ export default function DischargeSummary() {
             {formConfig.sections.map((section) => (
               <div
                 key={section.id}
-                className={`${section.className} bg-white rounded-lg p-2 sm:p-4`}
+                className={` bg-white rounded-lg p-2 sm:p-4`}
               >
                 {section.title && (
                   <h2 className="text-base sm:text-lg font-semibold mb-2 text-primary">
                     {section.title}
                   </h2>
                 )}
-                <div className="grid gap-2 sm:gap-4 text-sm sm:text-base">
+                <div className=" gap-2 sm:gap-4 text-sm sm:text-base">
                   {section.fields.map((field) => {
                     // Handle special components separately
                     if (field.type === "vitals") {
@@ -1568,58 +1601,60 @@ export default function DischargeSummary() {
                         <div key={field.id} className=" py-2">
                           <Label htmlFor={field.id}>{field.label}</Label>
                           <div className="space-y-2 mt-2">
-                            {formData.investigations.map((investigation, index) => (
-                              <div
-                                key={index}
-                                className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
-                              >
-                                <div className="sm:col-span-3">
-                                  <SearchSuggestion
-                                    suggestions={allLabTests}
-                                    placeholder="Select investigation"
-                                    value={investigation.name}
-                                    setValue={(value) =>
-                                      handleInvestigationChange(index, {
-                                        name: value,
-                                      })
-                                    }
-                                    onSuggestionSelect={(suggestion) =>
-                                      handleInvestigationChange(
-                                        index,
-                                        suggestion
-                                      )
-                                    }
-                                  />
+                            {formData.investigations.map(
+                              (investigation, index) => (
+                                <div
+                                  key={index}
+                                  className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                                >
+                                  <div className="sm:col-span-3">
+                                    <SearchSuggestion
+                                      suggestions={allLabTests}
+                                      placeholder="Select investigation"
+                                      value={investigation.name}
+                                      setValue={(value) =>
+                                        handleInvestigationChange(index, {
+                                          name: value,
+                                        })
+                                      }
+                                      onSuggestionSelect={(suggestion) =>
+                                        handleInvestigationChange(
+                                          index,
+                                          suggestion
+                                        )
+                                      }
+                                    />
+                                  </div>
+                                  <div className="flex space-x-2">
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleOpenLabReport(investigation)
+                                      }
+                                      aria-label="Open Lab Report"
+                                      disabled={!investigation.name}
+                                    >
+                                      <ChevronRight className="h-5 w-5" />
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="destructive"
+                                      size="icon"
+                                      onClick={() =>
+                                        handleRemoveInvestigation(index)
+                                      }
+                                      disabled={
+                                        formData.investigations.length === 1
+                                      }
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </div>
                                 </div>
-                                <div className="flex space-x-2">
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() =>
-                                      handleOpenLabReport(investigation)
-                                    }
-                                    aria-label="Open Lab Report"
-                                    disabled={!investigation.name}
-                                  >
-                                    <ChevronRight className="h-5 w-5" />
-                                  </Button>
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    size="icon"
-                                    onClick={() =>
-                                      handleRemoveInvestigation(index)
-                                    }
-                                    disabled={
-                                      formData.investigations.length === 1
-                                    }
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </div>
-                            ))}
+                              )
+                            )}
                             <Button
                               onClick={handleAddInvestigation}
                               variant="outline"
@@ -1778,7 +1813,7 @@ export default function DischargeSummary() {
                       value = field.id.includes(".")
                         ? field.id
                             .split(".")
-                            .reduce((obj, key) => obj[key], formData)
+                            .reduce((obj, key) => obj?.[key], formData)
                         : formData[field.id];
 
                       onChange = (e) => {

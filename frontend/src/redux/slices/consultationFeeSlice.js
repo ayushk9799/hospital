@@ -1,7 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 import { Backend_URL } from "../../assets/Data";
-import axios from "axios";
 
 // Async thunks
 export const fetchConsultationFees = createLoadingAsyncThunk(
@@ -10,6 +9,9 @@ export const fetchConsultationFees = createLoadingAsyncThunk(
     try {
       const response = await fetch(`${Backend_URL}/api/consultation-fees`, {
         credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (!response.ok) {

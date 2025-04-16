@@ -108,7 +108,7 @@ babySchema.statics.getBirthStats = async function (year, month) {
 // Pre-save middleware to update counters
 babySchema.statics.updateBirthCounter = async function (session, dateOfBirth) {
   const year = dateOfBirth?.split("-")?.[0];
-  const month = dateOfBirth?.split("-")?.[1]; // JavaScript months are 0-11
+  const month = dateOfBirth?.split("-")?.[1]; 
 
   // Update both yearly and monthly counts in single document
   const counterDoc = await BirthCounter.findOneAndUpdate(
@@ -116,7 +116,7 @@ babySchema.statics.updateBirthCounter = async function (session, dateOfBirth) {
     { 
       $inc: { 
         yearlyCount: 1, 
-        [`monthlyCounts.${month}`]: 1 // Dynamically update the correct month
+        [`monthlyCounts.${month}`]: 1
       }
     },
     { upsert: true, new: true, setDefaultsOnInsert: true, session }

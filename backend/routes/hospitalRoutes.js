@@ -161,6 +161,7 @@ router.post("/template/create", identifyHospital, async (req, res) => {
         opdRxTemplateArray: [],
         comorbidities: [],
         medicinelist: [],
+        dischargeFormTemplateArray: [],
         dischargeSummaryTemplateArray: [],
         opdPrescriptionTemplateArray: [],
         dischargeFormTemplates: {},
@@ -213,9 +214,11 @@ router.post("/template/create", identifyHospital, async (req, res) => {
     if (req.body.opdBillTokenTemplate) {
       template.opdBillTokenTemplate = req.body.opdBillTokenTemplate;
     }
+    if (req.body.dischargeFormTemplateArray) {
+      template.dischargeFormTemplateArray = req.body.dischargeFormTemplateArray;
+    }
 
     await template.save({ session });
-
     await session.commitTransaction();
     session.endSession();
 

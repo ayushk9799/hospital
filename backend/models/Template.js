@@ -36,6 +36,27 @@ const templateSchema = new mongoose.Schema({
       value: String,
     },
   ],
+  dischargeFormTemplateArray: [
+    {
+      name: String,
+      value: mongoose.Schema.Types.Mixed,
+      isDefault: {
+        type: Boolean,
+        default: false,
+      },
+      associatedDoctors: [
+        {
+          _id:{
+            type:mongoose.Schema.Types.ObjectId,
+            ref:"Staff"
+          },
+          name:{
+          type:String
+          }
+        },
+      ],
+    },
+  ],
   opdPrescriptionTemplateArray: [
     {
       name: String,

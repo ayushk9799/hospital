@@ -77,7 +77,7 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
               <HospitalHeader hospitalInfo={hospitalInfo} />
             </div>
             <div className="border-black border-b-[1px] text-center text-2xl font-semibold uppercase flex justify-between px-4">
-              <div className="w-1/3"></div>
+              <div className="w-1/3">{billData.patientType}</div>
               <div className="w-1/3">Receipt</div>
               <div className="w-1/3 text-right text-base pt-2">
                 <span className="font-semibold">Invoice No: </span>
@@ -138,13 +138,13 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
                   )}
                 </p>
               </div>
-              {(billData?.procedureName || billData?.operationName) && (
+              {((billData?.procedureName||billData.opdProcedure?.procedureName) || billData?.operationName) && (
                 <div className="grid grid-cols-3">
                   <p className="font-semibold">
-                    {billData?.procedureName ? "Procedure" : "Operation"}
+                    {(billData?.procedureName||billData.opdProcedure?.procedureName) ? "Procedure" : "Operation"}
                   </p>
                   <p className="col-span-2 capitalize">
-                    {billData?.procedureName || billData?.operationName || ""}
+                    {(billData?.procedureName||billData.opdProcedure?.procedureName) || billData?.operationName || ""}
                   </p>
                 </div>
               )}

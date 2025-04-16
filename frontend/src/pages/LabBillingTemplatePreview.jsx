@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { Button } from "../components/ui/button";
 import { updateTemplate } from "../redux/slices/templatesSlice";
-import {labBillingTemplateStringExperiment} from "../templatesExperiments/labbillingexperiment"
+import {labBillingTemplateStringExperiment, newlifeline} from "../templatesExperiments/labbillingexperiment"
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import BillingTemplate from "../../src/pages/BillingTemplate";
 import { labBillingTemplateStringDefault } from "../templates/labBillingTemplate";
@@ -40,13 +40,13 @@ export default function LabBillingTemplatePreview() {
     ],
   };
 
-  // const handleSaveTemplate = () => {
-  //   dispatch(
-  //     updateTemplate({
-  //       labBillingTemplate: labBillingTemplateStringExperiment,
-  //     })
-  //   );
-  // };
+  const handleSaveTemplate = () => {
+    dispatch(
+      updateTemplate({
+        labBillingTemplate: newlifeline,
+      })
+    );
+  };
 
   return (
     <div className="p-4 sm:p-6">
@@ -55,7 +55,7 @@ export default function LabBillingTemplatePreview() {
           <h1 className="text-xl sm:text-2xl font-bold">
             Lab Billing Template Preview
           </h1>
-          {/* <Button onClick={handleSaveTemplate}>Save Template</Button> */}
+          <Button onClick={handleSaveTemplate}>Save Template</Button>
         </div>
       </div>
 

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
 import { useDispatch } from "react-redux";
-import { configBasedDischargeSummaryTemplate, hybridDischargeSummaryTemplate} from "../templatesExperiments/dischargeSummaryExperimental";
+import { configBasedDischargeSummaryTemplate, hybridDischargeSummaryTemplate,newlifeline} from "../templatesExperiments/dischargeSummaryExperimental";
 // import { dischargeSummaryTemplateString } from "../templatesExperiments/dischargeSummaryExperimental";
 import { dischargeSummaryTemplateStringDefault } from "../templates/dischargesummary";
 import { updateTemplate } from "../redux/slices/templatesSlice";
@@ -33,6 +33,7 @@ export default function DischargeTemplatePreview() {
       name:"hybrid",
       value:hybridDischargeSummaryTemplate,
     },
+
     ...(dischargeSummaryTemplates || []),
   ]);
 
