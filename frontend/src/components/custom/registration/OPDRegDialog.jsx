@@ -254,6 +254,10 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     if (!formData.gender) newErrors.gender = "Gender is required";
     if (!formData.contactNumber)
       newErrors.contactNumber = "Contact number is required";
+    if (!formData.visit.department)
+      newErrors.department = "Department selection is required";
+    if (!formData.visit.doctor)
+      newErrors.doctor = "Doctor selection is required";
 
     // Payment validation
     const totalFee = Number(formData.visit.totalFee) || 0;
@@ -415,53 +419,53 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [open]);
   const getConsultationFee = (doctorId, consultationType) => {
     // First check doctor-specific consultation type fees
-      if (doctorId && consultationType) {
-        const doctorFee = consultationFeeSettings.doctorWiseFee.find(
-          (fee) => fee.doctor._id === doctorId
-        );
-        if (
-          doctorFee &&
-          doctorFee.consultationType?.[consultationType] !== undefined
-        ) {
-          return doctorFee.consultationType?.[consultationType];
-        }
+    if (doctorId && consultationType) {
+      const doctorFee = consultationFeeSettings.doctorWiseFee.find(
+        (fee) => fee.doctor._id === doctorId
+      );
+      if (
+        doctorFee &&
+        doctorFee.consultationType?.[consultationType] !== undefined
+      ) {
+        return doctorFee.consultationType?.[consultationType];
       }
+    }
 
-      // Then check master fees for doctor
-      if (doctorId) {
-        const masterDoctorFee =
-          consultationFeeSettings.masterConsultationFeesDoctor?.[doctorId];
-        if (masterDoctorFee !== -1) {
-          return masterDoctorFee;
-        }
+    // Then check master fees for doctor
+    if (doctorId) {
+      const masterDoctorFee =
+        consultationFeeSettings.masterConsultationFeesDoctor?.[doctorId];
+      if (masterDoctorFee !== -1) {
+        return masterDoctorFee;
       }
+    }
 
-      // Finally check master fees for consultation type
-      if (consultationType) {
-        const masterTypeFee =
-          consultationFeeSettings.masterConsultationFeesType?.[
-            consultationType
-          ];
+    // Finally check master fees for consultation type
+    if (consultationType) {
+      const masterTypeFee =
+        consultationFeeSettings.masterConsultationFeesType?.[consultationType];
 
-        if (masterTypeFee !== -1) {
-
-          return masterTypeFee;
-        }
+      if (masterTypeFee !== -1) {
+        return masterTypeFee;
       }
-   
+    }
+
     // Default fallback
     return -1;
   };
   // Modify this useEffect to run when 'open' changes
   useEffect(() => {
     if (open) {
-     const fee = getConsultationFee(formData.visit.doctor, formData.visit.consultationType);
+      const fee = getConsultationFee(
+        formData.visit.doctor,
+        formData.visit.consultationType
+      );
       setFormData((prevData) => ({
         ...prevData,
         visit: {
           ...prevData.visit,
           totalFee:
-          (fee === -1||fee === undefined||fee === null)
+            fee === -1 || fee === undefined || fee === null
               ? consultationService.rate.toString() || ""
               : fee.toString(),
         },
@@ -597,7 +601,9 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                           handleSelectChange("visit.department", value)
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={errors.department ? "border-red-500" : ""}
+                        >
                           <SelectValue
                             placeholder={
                               departments.length === 1
@@ -617,6 +623,11 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                           ))}
                         </SelectContent>
                       </Select>
+                      {errors.department && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.department}
+                        </p>
+                      )}
                     </div>
                     <div className="relative hidden sm:block">
                       <Select
@@ -626,7 +637,9 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                           handleSelectChange("visit.doctor", value)
                         }
                       >
-                        <SelectTrigger>
+                        <SelectTrigger
+                          className={errors.doctor ? "border-red-500" : ""}
+                        >
                           <SelectValue
                             placeholder={
                               doctors.length === 1
@@ -643,6 +656,11 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                           ))}
                         </SelectContent>
                       </Select>
+                      {errors.doctor && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.doctor}
+                        </p>
+                      )}
                     </div>
                     <div className="flex flex-col gap-6 pt-2 md:pt-1">
                       <div className="flex flex-col gap-2">

@@ -217,7 +217,7 @@ const BillingTemplate = React.forwardRef(
       "React",
       "HospitalHeader",
      
-      `return (${newlifeline});`
+      `return (${labBillingTemplate||labBillingTemplateStringDefault});`
     );
 
     try {

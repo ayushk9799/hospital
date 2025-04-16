@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 const CounterSchema = new mongoose.Schema({
   date: { type: Date },
+  doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff", default: null },
   seq: { type: Number, default: 0 },
 });
 CounterSchema.plugin(hospitalPlugin);
@@ -17,13 +18,13 @@ function formatDate(date) {
 const visitSchema = new mongoose.Schema(
   {
     bookingDate: { type: Date },
-    bookingTime : {type : String},
+    bookingTime: { type: String },
     bookingNumber: { type: Number },
     patientName: { type: String },
     contactNumber: { type: String },
     registrationNumber: { type: String },
-    guardianName:String,
-    relation:String,
+    guardianName: String,
+    relation: String,
     patient: { type: mongoose.Schema.Types.ObjectId, ref: "Patient" },
     doctor: { type: mongoose.Schema.Types.ObjectId, ref: "Staff" },
     consultationType: { type: String },
@@ -77,14 +78,39 @@ const visitSchema = new mongoose.Schema(
 
 visitSchema.pre("save", async function (next) {
   if (!this.bookingNumber) {
-    const counter = await Counter.findOneAndUpdate(
-      { date: this.bookingDate },
-      { $inc: { seq: 1 } },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
-    );
-    this.bookingNumber = counter.seq;
-  }
+    try {
+      // First try to find an existing counter for this date (legacy case)
+      let existingCounter = await Counter.findOne({
+        date: this.bookingDate,
+        doctor: { $exists: false }, // Look for legacy counters without doctor field
+      });
 
+      if (existingCounter) {
+        // If found legacy counter, use and update it
+        existingCounter = await Counter.findByIdAndUpdate(
+          existingCounter._id,
+          { $inc: { seq: 1 } },
+          { new: true }
+        );
+        this.bookingNumber = existingCounter.seq;
+      } else {
+        // If no legacy counter, use the new doctor-based system
+        let query = {
+          date: this.bookingDate,
+          doctor: this.doctor || null,
+        };
+
+        const counter = await Counter.findOneAndUpdate(
+          query,
+          { $inc: { seq: 1 } },
+          { new: true, upsert: true, setDefaultsOnInsert: true }
+        );
+        this.bookingNumber = counter.seq;
+      }
+    } catch (error) {
+      next(error);
+    }
+  }
   next();
 });
 visitSchema.plugin(hospitalPlugin);

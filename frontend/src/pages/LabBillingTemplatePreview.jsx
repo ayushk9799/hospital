@@ -40,13 +40,13 @@ export default function LabBillingTemplatePreview() {
     ],
   };
 
-  const handleSaveTemplate = () => {
-    dispatch(
-      updateTemplate({
-        labBillingTemplate: newlifeline,
-      })
-    );
-  };
+  // const handleSaveTemplate = () => {
+  //   dispatch(
+  //     updateTemplate({
+  //       labBillingTemplate: newlifeline,
+  //     })
+  //   );
+  // };
 
   return (
     <div className="p-4 sm:p-6">
@@ -55,7 +55,7 @@ export default function LabBillingTemplatePreview() {
           <h1 className="text-xl sm:text-2xl font-bold">
             Lab Billing Template Preview
           </h1>
-          <Button onClick={handleSaveTemplate}>Save Template</Button>
+          {/* <Button onClick={handleSaveTemplate}>Save Template</Button> */}
         </div>
       </div>
 

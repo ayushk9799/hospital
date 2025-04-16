@@ -100,7 +100,6 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
   const HospitalHeader = createDynamicComponentFromString(
     headerTemplateString || headerTemplateStringDefault
   );
-
   const getStatusBadgeVariant = (status) => {
     switch (status) {
       case "Completed":
