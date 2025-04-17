@@ -55,6 +55,7 @@ import {
 import { Pill } from "lucide-react";
 import { PieChart, Pie, Cell, Label } from "recharts";
 import { useMediaQuery } from "../hooks/use-media-query";
+import { useNavigate } from "react-router-dom";
 
 const hasFinancialViewPermission = (userData) => {
   return userData?.permissions?.includes("view_financial") || false;
@@ -62,6 +63,7 @@ const hasFinancialViewPermission = (userData) => {
 
 const Dashboard = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { userData } = useSelector((state) => state.user);
 
   const { dashboardData, dashboardDataStatus } = useSelector(
@@ -264,7 +266,7 @@ const Dashboard = () => {
       console.warn("Invalid date range");
       return;
     }
-  
+
     const ISO_time = {
       startDate: startDate.toISOString(),
       endDate: endDate.toISOString(),
@@ -472,6 +474,21 @@ const Dashboard = () => {
     setTempDateRange({ from: null, to: null });
     setDateFilter("Today");
     fetchData("Today");
+  };
+
+  const handleCollectionClick = (type) => {
+    const typeMapping = {
+      "OPD Procedure": "OPDProcedure",
+      Laboratory: "Lab",
+    };
+
+    navigate("/billings", {
+      state: {
+        filterType: typeMapping[type] || type,
+        dateFilter: dateFilter,
+        dateRange: dateFilter === "Custom" ? selectedDateRange : null,
+      },
+    });
   };
 
   return (
@@ -683,6 +700,7 @@ const Dashboard = () => {
                 className={`bg-${getBackgroundColor(index)}-100 shadow-sm 
                   transition-all duration-200 hover:shadow-lg hover:scale-[1.02] 
                   hover:bg-${getBackgroundColor(index)}-200 cursor-pointer`}
+                onClick={() => handleCollectionClick(type)}
               >
                 <CardContent className="p-3">
                   <div className="flex items-center gap-2">
@@ -812,7 +830,6 @@ const Dashboard = () => {
                   </div>
 
                   {/* Total Payment Methods */}
-                 
                 </div>
               </CardContent>
             </Card>

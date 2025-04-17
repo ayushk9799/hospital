@@ -121,6 +121,21 @@ const Billings = () => {
         handleViewBill(patientBills[0]);
       }
     }
+
+    // Handle filters from Statistics page
+    if (location.state?.filterType) {
+      setPatientTypeFilter(location.state.filterType);
+      if (location.state.dateFilter) {
+        setDateFilter(location.state.dateFilter);
+        if (
+          location.state.dateRange &&
+          location.state.dateFilter === "Custom"
+        ) {
+          setDateRange(location.state.dateRange);
+          setTempDateRange(location.state.dateRange);
+        }
+      }
+    }
   }, [location.state, bills]);
 
   useEffect(() => {
@@ -650,6 +665,11 @@ const Billings = () => {
                           >
                             OPD Procedure
                           </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => setPatientTypeFilter("Lab")}
+                          >
+                            Lab
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                       <DropdownMenu>
@@ -758,6 +778,11 @@ const Billings = () => {
                       onSelect={() => setPatientTypeFilter("OPDProcedure")}
                     >
                       OPD Procedure
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setPatientTypeFilter("Lab")}
+                    >
+                      Lab
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>

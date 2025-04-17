@@ -80,24 +80,24 @@ export default function AdmittedPatients() {
   }, []);
 
   const getRelevantTemplates = (patient) => {
-   
+    // If patient is discharged, only return their formConfig
+    if (patient.status === "Discharged" && patient.formConfig) {
+      return [patient.formConfig];
+    }
+
+    // For non-discharged patients, return relevant templates
     return (
       savedConfig?.filter((template) => {
         const isDefault = template.isDefault;
-        const doctorIds = template.associatedDoctors?.map((doc) => doc._id?.toString()) || [];
+        const doctorIds =
+          template.associatedDoctors?.map((doc) => doc._id?.toString()) || [];
         const patientDoctorId = patient.assignedDoctor._id?.toString();
-      
-      
-      
         return isDefault || doctorIds.includes(patientDoctorId);
       }) || []
-      
     );
   };
 
   const handleDischarge = (patientId, patient, id) => {
-   
-
     // Get relevant templates based on patient's assigned doctor
     const relevantTemplates = getRelevantTemplates(patient);
 
@@ -486,15 +486,7 @@ export default function AdmittedPatients() {
                                     <FileText className="h-4 w-4" />
                                     Bills
                                   </Button>
-                                  <Button
-                                    onClick={() => handleAddServices(patient)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="inline-flex items-center"
-                                  >
-                                    <Plus className="h-4 w-4" />
-                                    Services
-                                  </Button>
+
                                   {(() => {
                                     const relevantTemplates =
                                       getRelevantTemplates(patient);

@@ -75,6 +75,13 @@ import ConsentFormPrint from "../components/custom/print/ConsentFormPrint";
 import EditPatientDialog from "../components/custom/patients/EditPatientDialog";
 import LabRegDialog from "../components/custom/registration/LabRegDialog";
 import OPDBillTokenModal from "../components/custom/registration/OPDBillTokenModal";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 
 export default function Patients() {
   const dispatch = useDispatch();
@@ -91,9 +98,11 @@ export default function Patients() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isLabDialogOpen, setIsLabDialogOpen] = useState(false);
   const [isOPDTokenModalOpen, setIsOPDTokenModalOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState("All");
   const { opdDetails, opdDetailsStatus } = useSelector(
     (state) => state.patients
   );
+  const { doctors } = useSelector((state) => state.staff);
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
@@ -165,7 +174,10 @@ export default function Patients() {
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
 
-    return nameMatch;
+    const doctorMatch =
+      selectedDoctor === "All" || patient.doctor?._id === selectedDoctor;
+
+    return nameMatch && doctorMatch;
   });
 
   const handleExistingBills = (patient) => {
@@ -703,6 +715,47 @@ export default function Patients() {
                         className="overflow-hidden w-full"
                       >
                         <div className="pt-2 space-y-2">
+                          {doctors.length > 1 && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="w-full justify-between"
+                                >
+                                  <div className="flex items-center">
+                                    <User className="mr-2 h-4 w-4" />
+                                    {selectedDoctor === "All"
+                                      ? "All Doctors"
+                                      : doctors.find(
+                                          (d) => d._id === selectedDoctor
+                                        )?.name || "Select Doctor"}
+                                  </div>
+                                  <ChevronDown className="h-4 w-4 opacity-50" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent className="w-full">
+                                <DropdownMenuLabel>
+                                  Filter by Doctor
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onSelect={() => setSelectedDoctor("All")}
+                                >
+                                  All Doctors
+                                </DropdownMenuItem>
+                                {doctors.map((doctor) => (
+                                  <DropdownMenuItem
+                                    key={doctor._id}
+                                    onSelect={() =>
+                                      setSelectedDoctor(doctor._id)
+                                    }
+                                  >
+                                    {doctor.name}
+                                  </DropdownMenuItem>
+                                ))}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="outline" className="w-full">
@@ -762,7 +815,47 @@ export default function Patients() {
                   </AnimatePresence>
                 ) : (
                   <>
-                    {/* */}
+                    {doctors.length > 1 && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="outline"
+                            className="w-[200px] justify-between"
+                          >
+                            <div className="flex items-center">
+                              <User className="mr-2 h-4 w-4" />
+                              {selectedDoctor === "All"
+                                ? "All Doctors"
+                                : doctors.find((d) => d._id === selectedDoctor)
+                                    ?.name || "Select Doctor"}
+                            </div>
+                            <ChevronDown className="h-4 w-4 opacity-50" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-[200px]"
+                        >
+                          <DropdownMenuLabel>
+                            Filter by Doctor
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() => setSelectedDoctor("All")}
+                          >
+                            All Doctors
+                          </DropdownMenuItem>
+                          {doctors.map((doctor) => (
+                            <DropdownMenuItem
+                              key={doctor._id}
+                              onSelect={() => setSelectedDoctor(doctor._id)}
+                            >
+                              {doctor.name}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="outline">
