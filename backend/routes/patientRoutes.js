@@ -307,7 +307,7 @@ router.post(
           patientName: patient.name,
           contactNumber: patient.contactNumber,
           registrationNumber: patient.registrationNumber,
-          doctor: visit.doctor || null,
+          doctor: visit.doctor?.id || visit.doctor|| null,
         });
 
         // Create bill
@@ -461,9 +461,8 @@ router.post(
               phone: patient?.contactNumber,
               registrationNumber: patient.registrationNumber,
               ipdNumber: admission.ipdNumber,
-              age:patient.age,
-              gender:patient.gender
-              
+              age: patient.age,
+              gender: patient.gender,
             },
             admission: admissionRecord._id,
             totalAmount: Number(paymentInfo.totalAmount),
@@ -515,6 +514,19 @@ router.post(
       }
 
       await session.commitTransaction();
+
+      // Add doctor's name for OPD cases
+      if (admissionRecord && patientType === "OPD") {
+        admissionRecord=admissionRecord.toObject();
+        if(visit.doctor?.id && visit.doctor?.name){
+        admissionRecord.doctor = {
+          _id: visit.doctor?.id,
+          name: visit.doctor?.name,
+        };
+      }
+       
+      }
+
       res.status(201).json({
         patient,
         admissionRecord,
@@ -1050,13 +1062,13 @@ router.post(
       }
 
       // Create new visit
-      const newVisit = new Visit({
+      let newVisit = new Visit({
         ...visit,
         patient: patient._id,
         patientName: patient.name,
         contactNumber: patient.contactNumber,
         registrationNumber: patient.registrationNumber,
-        doctor: visit.doctor || null,
+        doctor: visit.doctor?.id || visit.doctor|| null,
       });
 
       // Create bill
@@ -1122,6 +1134,15 @@ router.post(
 
       await newVisit.save({ session });
       await patient.save({ session });
+
+      if(newVisit)
+      {    newVisit=newVisit.toObject();
+        if(visit.doctor?.id)
+        {
+          newVisit.doctor={_id:visit.doctor?.id,name:visit.doctor?.name}
+          
+        }
+      }
 
       await session.commitTransaction();
 

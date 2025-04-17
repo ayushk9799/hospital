@@ -85,7 +85,7 @@ const initialFormData = {
     guardianName: "",
     relation: "",
     department: "",
-    doctor: "",
+    doctor: { id: "", name: "" },
     insuranceDetails: {
       provider: "",
       policyNumber: "",
@@ -256,7 +256,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       newErrors.contactNumber = "Contact number is required";
     if (!formData.visit.department)
       newErrors.department = "Department selection is required";
-    if (!formData.visit.doctor)
+    if (!formData.visit?.doctor?.id)
       newErrors.doctor = "Doctor selection is required";
 
     // Payment validation
@@ -312,7 +312,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
             ),
           },
         };
-
         // Choose the appropriate action based on whether this is a revisit
         const sourceData = searchedPatient || patientData;
         const action = sourceData
@@ -334,6 +333,9 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                 : "The new patient has been added.",
               variant: "success",
             });
+            if(response.visit && !response.admissionRecord){
+                  response={...response, admissionRecord:response.visit}
+            }
             setRegisteredPatient(response);
             setShowBillModal(true);
 
@@ -457,7 +459,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   useEffect(() => {
     if (open) {
       const fee = getConsultationFee(
-        formData.visit.doctor,
+        formData.visit.doctor.id,
         formData.visit.consultationType
       );
       setFormData((prevData) => ({
@@ -471,7 +473,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
         },
       }));
     }
-  }, [open, formData.visit.doctor, formData.visit.consultationType]);
+  }, [open, formData.visit.doctor.id, formData.visit.consultationType]);
 
   useEffect(() => {
     return () => {
@@ -485,7 +487,10 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       handleSelectChange("visit.department", departments[0].name);
     }
     if (doctors.length === 1) {
-      handleSelectChange("visit.doctor", doctors[0]._id);
+      handleSelectChange("visit.doctor", {
+        id: doctors[0]._id,
+        name: doctors[0].name,
+      });
     }
   }, [departments, doctors, handleSelectChange, open]);
 
@@ -632,10 +637,16 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                     <div className="relative hidden sm:block">
                       <Select
                         id="visit.doctor"
-                        value={formData.visit.doctor}
-                        onValueChange={(value) =>
-                          handleSelectChange("visit.doctor", value)
-                        }
+                        value={formData.visit.doctor.id}
+                        onValueChange={(value) => {
+                          const selectedDoctor = doctors.find(
+                            (doc) => doc._id === value
+                          );
+                          handleSelectChange("visit.doctor", {
+                            id: value,
+                            name: selectedDoctor?.name,
+                          });
+                        }}
                       >
                         <SelectTrigger
                           className={errors.doctor ? "border-red-500" : ""}
