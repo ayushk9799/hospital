@@ -191,9 +191,7 @@ export default function Patients() {
     navigate("/billings/create-service-bill");
   };
 
-  const handleDischarge = (patient) => {
-    navigate(`/patients/discharge/${patient._id}`, { state: { patient } });
-  };
+ 
 
   const handleEditPatient = (patient) => {
     setSelectedPatient(patient);
@@ -223,6 +221,12 @@ export default function Patients() {
     }
   };
 
+  const savedConfig = useSelector(
+    (state) => state.templates.dischargeFormTemplateArray
+  );
+  const oldConfig = useSelector(
+    (state) => state.templates.dischargeFormTemplates
+  );
   const getConsultationBadgeVariant = (type) => {
     switch (type?.toLowerCase()) {
       case "new":
@@ -233,15 +237,52 @@ export default function Patients() {
         return "success";
     }
   };
+  const getRelevantTemplates = (patient) => {
+    // If patient is discharged, only return their formConfig
+    if (patient.status === "Discharged" && patient.formConfig) {
+      return [patient.formConfig];
+    }
 
+    // For non-discharged patients, return relevant templates
+    return (
+      savedConfig?.filter((template) => {
+        const isDefault = template.isDefault;
+        const doctorIds =
+          template.associatedDoctors?.map((doc) => doc._id?.toString()) || [];
+        const patientDoctorId = patient.assignedDoctor?._id?.toString() || patient.doctor?._id||patient.dcotor;
+        return isDefault || doctorIds.includes(patientDoctorId);
+      }) || []
+    );
+  };
+
+  const handleDischarge = (patient) => {
+     
+    const relevantTemplates= getRelevantTemplates(patient);
+    const selectedTemplate = relevantTemplates?.[0] || oldConfig;
+    // if(!patient.assignedDoctor && patient.doctor){
+    //   patient.assignedDoctor={_id:patient.doctor?._id, name :patient.doctor?.name}
+
+    // }
+    const updatedPatient = {
+      ...patient,
+      assignedDoctor: patient.assignedDoctor || 
+        (patient.doctor && {
+          _id: patient.doctor?._id,
+          name: patient.doctor?.name
+        }),
+    };
+    
+     
+    navigate(`/patients/discharge/${patient._id}`, {
+      state: { ignoreList: true, dischargeData: updatedPatient, selectedTemplate:selectedTemplate },
+    });
+  };
   const PatientTable = ({ patients, type }) => {
     const navigate = useNavigate();
+  
 
-    const handleDischarge = (patient) => {
-      navigate(`/patients/discharge/${patient._id}`, {
-        state: { ignoreList: true, dischargeData: patient },
-      });
-    };
+
+   
 
     if (patients.length === 0) {
       return (

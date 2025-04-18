@@ -726,7 +726,6 @@ export default function DischargeSummary() {
 
   // Initialize form data state with initial values
   const [formData, setFormData] = useState(initialFormData);
-
   // Helper function to get all field IDs from form config
   const getAllFieldIds = (config) => {
     const fieldIds = new Set();
@@ -863,7 +862,6 @@ export default function DischargeSummary() {
         }
       } else if (dischargeData) {
         setPatient(dischargeData);
-
         if (dischargeData.formConfig || formConfig) {
           const mergedData = mergeDataWithFormFields(
             dischargeData.dischargeData || dischargeData,
@@ -923,7 +921,6 @@ export default function DischargeSummary() {
       dispatch(fetchTemplates());
     }
   }, [dispatch, templateStatus]);
-
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [isLabReportOpen, setIsLabReportOpen] = useState(false);
   const [selectedInvestigation, setSelectedInvestigation] = useState(null);
@@ -975,7 +972,7 @@ export default function DischargeSummary() {
           patient.labReports?.length > 0
             ? patient.labReports
             : [{ name: "", category: "" }],
-        medicineAdvice: patient.medicineAdvice || [
+        medicineAdvice: patient.medicineAdvice || patient.medicineAdvice|| patient.dischargeData?.medicineAdvice||[
           { name: "", dosage: "", duration: "" },
         ],
         notes: patient.notes || "",
@@ -1121,7 +1118,6 @@ export default function DischargeSummary() {
       });
     }
   };
-
   const handleSave = async (e) => {
     e.preventDefault();
 
@@ -1146,6 +1142,7 @@ export default function DischargeSummary() {
           date: i.date || new Date().toISOString(),
         })),
     };
+
 
     try {
       await dispatch(saveDischargeData(savePayload)).unwrap();

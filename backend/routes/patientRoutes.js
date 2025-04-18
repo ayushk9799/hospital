@@ -151,6 +151,10 @@ router.post("/admittedpatientsSearch", verifyToken, async (req, res) => {
         populate: {
           path: "payments",
         },
+      })
+      .populate({
+        path: "assignedDoctor",
+        select: "name",
       });
 
     // Calculate financial details for each patient
