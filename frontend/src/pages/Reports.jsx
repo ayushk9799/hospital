@@ -62,9 +62,9 @@ export default function Reports() {
   const departments = useSelector((state) => state.departments.departments);
   const filteredStaff = staffMembers.filter(
     (staff) =>
-      staff.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+      staff.name?.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (filterDepartment === "All" ||
-        staff.department.includes(filterDepartment)) &&
+        staff.department?.includes(filterDepartment)) &&
       (filterRole === "All" || staff.roles.includes(filterRole.toLowerCase()))
   );
 
@@ -293,12 +293,12 @@ export default function Reports() {
                         >
                           <Avatar>
                             <AvatarFallback>
-                              {staff.name
+                              {staff?.name
                                 .split(" ")
                                 .filter(
                                   (n, i, arr) => i === 0 || i === arr.length - 1
                                 )
-                                .map((n) => n[0].toUpperCase())
+                                .map((n) => n[0]?.toUpperCase())
                                 .join("")}
                             </AvatarFallback>
                           </Avatar>
@@ -353,13 +353,13 @@ export default function Reports() {
                           <div className="flex items-center space-x-2">
                             <Avatar className="hidden md:block">
                               <AvatarFallback>
-                                {staff.name
+                                {staff?.name
                                   .split(" ")
                                   .filter(
                                     (n, i, arr) =>
                                       i === 0 || i === arr.length - 1
                                   )
-                                  .map((n) => n[0].toUpperCase())
+                                  .map((n) => n[0]?.toUpperCase())
                                   .join("")}
                               </AvatarFallback>
                             </Avatar>

@@ -2,11 +2,12 @@ import React from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { newlifeline } from "../templatesExperiments/labbillingexperiment";
+import {headerTemplateStringnew} from "../templatesExperiments/HospitalHeaderTemplate"
 import { labReportTemplateStringExperiment } from "../templatesExperiments/labtemplateExperiment";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../templates/headertemplate";
 import { labBillingTemplateStringDefault } from "../templates/labBillingTemplate";
-import { labBillingTemplateStringExperiment } from "../templatesExperiments/labbillingexperiment";
+import { labBillingTemplateStringExperiment} from "../templatesExperiments/labbillingexperiment";
 
 // Define styles
 const styles = {

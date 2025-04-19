@@ -708,11 +708,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                               <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
-                          {errors.gender && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {errors.gender}
-                            </p>
-                          )}
                         </div>
                       </>
                     ) : (
@@ -795,11 +790,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                               <SelectItem value="Other">Other</SelectItem>
                             </SelectContent>
                           </Select>
-                          {errors.gender && (
-                            <p className="text-red-500 text-xs mt-1">
-                              {errors.gender}
-                            </p>
-                          )}
                         </div>
                       </>
                     )}
@@ -839,10 +829,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             id="admission.bookingTime"
                             value={formData.admission.bookingTime.split(" ")[0]}
                             onChange={(e) => {
-                             
-                              const time12 = convertTo12Hour(
-                                e.target.value
-                              );
+                              const time12 = convertTo12Hour(e.target.value);
                               handleInputChange({
                                 target: {
                                   id: "admission.bookingTime",
@@ -912,9 +899,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           })
                         }
                       >
-                        <SelectTrigger
-                          className={errors.gender ? "border-red-500" : ""}
-                        >
+                        <SelectTrigger>
                           <SelectValue placeholder="Relation" />
                         </SelectTrigger>
                         <SelectContent>
@@ -964,13 +949,31 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           handleInputChange({
                             target: { id: "admission.assignedRoom", value },
                           });
-                          setFormData((prev) => ({
-                            ...prev,
-                            admission: {
-                              ...prev.admission,
-                              assignedBed: "",
-                            },
-                          }));
+                          // Auto-select bed if only one is available
+                          const selectedRoom = rooms.find(
+                            (room) => room._id === value
+                          );
+                          const availableBeds =
+                            selectedRoom?.beds.filter(
+                              (bed) => bed.status !== "Occupied"
+                            ) || [];
+                          if (availableBeds.length === 1) {
+                            setFormData((prev) => ({
+                              ...prev,
+                              admission: {
+                                ...prev.admission,
+                                assignedBed: availableBeds[0]?._id,
+                              },
+                            }));
+                          } else {
+                            setFormData((prev) => ({
+                              ...prev,
+                              admission: {
+                                ...prev.admission,
+                                assignedBed: "",
+                              },
+                            }));
+                          }
                         }}
                       >
                         <SelectTrigger
@@ -980,7 +983,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                               : ""
                           }
                         >
-                          <SelectValue placeholder="Room" />
+                          <SelectValue placeholder="Select Room" />
                         </SelectTrigger>
                         <SelectContent>
                           {rooms
@@ -1001,8 +1004,31 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         }
                         disabled={!formData.admission.assignedRoom}
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Bed" />
+                        <SelectTrigger
+                          className={
+                            errors["admission.assignedBed"]
+                              ? "border-red-500"
+                              : ""
+                          }
+                        >
+                          <SelectValue
+                            placeholder={
+                              formData.admission.assignedBed &&
+                              formData.admission.assignedRoom
+                                ? rooms
+                                    .find(
+                                      (room) =>
+                                        room._id ===
+                                        formData.admission.assignedRoom
+                                    )
+                                    ?.beds.find(
+                                      (bed) =>
+                                        bed._id ===
+                                        formData.admission.assignedBed
+                                    )?.bedNumber || "Bed"
+                                : "Bed"
+                            }
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {formData.admission.assignedRoom &&
@@ -1019,6 +1045,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                               ))}
                         </SelectContent>
                       </Select>
+                      {errors.admission?.assignedBed && (
+                        <p className="text-red-500 text-xs mt-1">
+                          {errors.admission.assignedBed}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -1063,7 +1094,13 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                               })
                             }
                           >
-                            <SelectTrigger>
+                            <SelectTrigger
+                              className={
+                                errors["admission.assignedDoctor"]
+                                  ? "border-red-500"
+                                  : ""
+                              }
+                            >
                               <SelectValue
                                 placeholder={
                                   doctors.length === 1
@@ -1118,7 +1155,13 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             })
                           }
                         >
-                          <SelectTrigger>
+                          <SelectTrigger
+                            className={
+                              errors["admission.assignedDoctor"]
+                                ? "border-red-500"
+                                : ""
+                            }
+                          >
                             <SelectValue
                               placeholder={
                                 doctors.length === 1
@@ -1137,11 +1180,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         </Select>
                       </>
                     )}
-                    {errors["admission.assignedDoctor"] && (
-                      <p className="text-red-500 text-xs mt-1">
-                        {errors["admission.assignedDoctor"]}
-                      </p>
-                    )}
+
                     <div className="space-y-2">
                       <div className="flex items-center gap-1">
                         {/* <div className="flex items-center gap-2 text-xs">

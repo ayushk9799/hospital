@@ -58,13 +58,13 @@ export default function LabTemplatePreview() {
     },
   };
 
-  // const handleSaveTemplate = () => {
-  //   dispatch(
-  //     updateTemplate({
-  //       labReportUiTemplate: chandraneel,
-  //     })
-  //   );
-  // };
+  const handleSaveTemplate = () => {
+    dispatch(
+      updateTemplate({
+        labReportUiTemplate: chandraneel,
+      })
+    );
+  };
 
   return (
     <div className="p-4 sm:p-6">
@@ -73,7 +73,7 @@ export default function LabTemplatePreview() {
           <h1 className="text-xl sm:text-2xl font-bold">
             Lab Report Template Preview
           </h1>
-          {/* <Button onClick={handleSaveTemplate}>Save Template</Button> */}
+          <Button onClick={handleSaveTemplate}>Save Template</Button>
         </div>
       </div>
 

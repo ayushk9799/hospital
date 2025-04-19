@@ -141,7 +141,7 @@ export const searchLabRegistrations = createLoadingAsyncThunk(
 
 export const addLabTests = createLoadingAsyncThunk(
   "lab/addTests",
-  async ({ id, labTests, paymentInfo }, { rejectWithValue }) => {
+  async ({ id, labTests, testsToRemove, paymentInfo }, { rejectWithValue }) => {
     try {
       const response = await fetch(`${Backend_URL}/api/lab/add-tests/${id}`, {
         method: "POST",
@@ -150,23 +150,29 @@ export const addLabTests = createLoadingAsyncThunk(
         },
         body: JSON.stringify({
           labTests,
-          paymentInfo,
+          testsToRemove,
+          paymentInfo: {
+            totalAmount: paymentInfo.totalAmount,
+            amountPaid: paymentInfo.amountPaid,
+            paymentMethod: paymentInfo.paymentMethod,
+            additionalDiscount:paymentInfo.additionalDiscount
+          },
         }),
         credentials: "include",
       });
 
       if (!response.ok) {
         const error = await response.json();
-        return rejectWithValue(error);
+        return rejectWithValue(error.message || "Failed to update tests");
       }
 
       const data = await response.json();
       return data;
     } catch (error) {
-      return rejectWithValue(error.message);
+      return rejectWithValue(error.message || "Failed to update tests");
     }
   },
-  {useGlobalLoader:true}
+  { useGlobalLoader: true }
 );
 
 const initialState = {
@@ -281,17 +287,20 @@ const labSlice = createSlice({
       })
       .addCase(addLabTests.fulfilled, (state, action) => {
         state.updateTestStatus = "succeeded";
-        // Update the registration in the list
         const index = state.registrations.findIndex(
           (reg) => reg._id === action.payload.labRegistration._id
         );
         if (index !== -1) {
-          state.registrations[index] = action.payload.labRegistration;
+          state.registrations[index] = {
+            ...state.registrations[index],
+            ...action.payload.labRegistration,
+            payments: action.payload.labRegistration.payments,
+          };
         }
       })
       .addCase(addLabTests.rejected, (state, action) => {
         state.updateTestStatus = "failed";
-        state.error = action.payload?.error || "Failed to add tests";
+        state.error = action.payload?.error || "Failed to update tests";
       });
   },
 });

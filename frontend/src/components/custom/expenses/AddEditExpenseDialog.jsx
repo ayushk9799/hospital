@@ -1,42 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { createExpense, updateExpense } from '../../../redux/slices/expenseSlice';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "../../ui/dialog";
+import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  createExpense,
+  updateExpense,
+} from "../../../redux/slices/expenseSlice";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "../../ui/dialog";
 import { Button } from "../../ui/button";
 import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
 import { useToast } from "../../../hooks/use-toast";
-import { format, parseISO, startOfDay } from 'date-fns';
-import  SearchSuggestion  from '../registration/CustomSearchSuggestion';
+import { format, parseISO, startOfDay } from "date-fns";
+import SearchSuggestion from "../registration/CustomSearchSuggestion";
 
 const EXPENSE_CATEGORIES = [
-  { _id: '1', name: 'Supplies' },
-  { _id: '2', name: 'Utilities' },
-  { _id: '3', name: 'Salaries' },
-  { _id: '4', name: 'Equipment' },
-  { _id: '5', name: 'Maintenance' },
-  { _id: '6', name: 'OPDReturn' },
+  { _id: "1", name: "Supplies" },
+  { _id: "2", name: "Utilities" },
+  { _id: "3", name: "Salaries" },
+  { _id: "4", name: "Equipment" },
+  { _id: "5", name: "Maintenance" },
+  { _id: "6", name: "OPDReturn" },
 ];
 
 const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
   const dispatch = useDispatch();
-  const { createExpenseStatus, updateExpenseStatus } = useSelector((state) => state.expenses);
+  const { createExpenseStatus, updateExpenseStatus } = useSelector(
+    (state) => state.expenses
+  );
   const { toast } = useToast();
   const [formData, setFormData] = useState({
-    category: '',
-    description: '',
-    amount: '',
-    date: '',
-    amountPaid: '',
-    paymentMethod: ''
+    category: "",
+    description: "",
+    amount: "",
+    date: "",
+    amountPaid: "",
+    paymentMethod: "",
   });
   const [errors, setErrors] = useState({
-    category: '',
-    description: '',
-    amount: '',
-    date: '',
-    paymentMethod: ''
+    category: "",
+    description: "",
+    amount: "",
+    date: "",
+    paymentMethod: "",
   });
 
   useEffect(() => {
@@ -46,34 +64,34 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
         category: expenseToEdit.category,
         description: expenseToEdit.description,
         amount: expenseToEdit.amount.toString(),
-        date: format(expenseDate, 'yyyy-MM-dd'),
+        date: format(expenseDate, "yyyy-MM-dd"),
         amountPaid: expenseToEdit.amountPaid.toString(),
-        paymentMethod: expenseToEdit.paymentMethod || ''
+        paymentMethod: expenseToEdit.paymentMethod || "",
       });
     } else {
       setFormData({
-        category: '',
-        description: '',
-        amount: '',
-        date: format(new Date(), 'yyyy-MM-dd'),
-        amountPaid: '',
-        paymentMethod: ''
+        category: "",
+        description: "",
+        amount: "",
+        date: format(new Date(), "yyyy-MM-dd"),
+        amountPaid: "",
+        paymentMethod: "",
       });
     }
   }, [expenseToEdit]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prevData => {
+    setFormData((prevData) => {
       const updatedData = {
         ...prevData,
-        [name]: value
+        [name]: value,
       };
-      
-      if (name === 'amount') {
+
+      if (name === "amount") {
         updatedData.amountPaid = value;
       }
-      
+
       return updatedData;
     });
   };
@@ -81,38 +99,38 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
   const validateForm = () => {
     let isValid = true;
     const newErrors = {
-      category: '',
-      description: '',
-      amount: '',
-      date: '',
-      paymentMethod: ''
+      category: "",
+      description: "",
+      amount: "",
+      date: "",
+      paymentMethod: "",
     };
 
     if (!formData.category.trim()) {
-      newErrors.category = 'Category is required';
+      newErrors.category = "Category is required";
       isValid = false;
     }
 
     if (!formData.description.trim()) {
-      newErrors.description = 'Description is required';
+      newErrors.description = "Description is required";
       isValid = false;
     }
 
     if (!formData.amount) {
-      newErrors.amount = 'Amount is required';
+      newErrors.amount = "Amount is required";
       isValid = false;
     } else if (isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
-      newErrors.amount = 'Please enter a valid amount';
+      newErrors.amount = "Please enter a valid amount";
       isValid = false;
     }
 
     if (!formData.date) {
-      newErrors.date = 'Date is required';
+      newErrors.date = "Date is required";
       isValid = false;
     }
 
     if (!formData.paymentMethod) {
-      newErrors.paymentMethod = 'Payment method is required';
+      newErrors.paymentMethod = "Payment method is required";
       isValid = false;
     }
 
@@ -122,7 +140,7 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       toast({
         title: "Validation Error",
@@ -136,7 +154,7 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
       ...formData,
       amount: parseFloat(formData.amount),
       amountPaid: parseFloat(formData.amountPaid),
-      date: new Date(formData.date).toISOString()
+      date: new Date(formData.date).toISOString(),
     };
 
     const action = expenseToEdit
@@ -147,24 +165,30 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
       .unwrap()
       .then(() => {
         toast({
-          title: `Expense ${expenseToEdit ? 'updated' : 'added'} successfully`,
-          description: `The expense has been ${expenseToEdit ? 'updated' : 'added'}.`,
+          title: `Expense ${expenseToEdit ? "updated" : "added"} successfully`,
+          description: `The expense has been ${
+            expenseToEdit ? "updated" : "added"
+          }.`,
           variant: "success",
         });
         setFormData({
-          category: '',
-          description: '',
-          amount: '',
-          date: format(new Date(), 'yyyy-MM-dd'),
-          amountPaid: '',
-          paymentMethod: ''
+          category: "",
+          description: "",
+          amount: "",
+          date: format(new Date(), "yyyy-MM-dd"),
+          amountPaid: "",
+          paymentMethod: "",
         });
         onClose();
       })
       .catch((error) => {
         toast({
-          title: `Failed to ${expenseToEdit ? 'update' : 'add'} expense`,
-          description: error.message || `There was an error ${expenseToEdit ? 'updating' : 'adding'} the expense. Please try again.`,
+          title: `Failed to ${expenseToEdit ? "update" : "add"} expense`,
+          description:
+            error.message ||
+            `There was an error ${
+              expenseToEdit ? "updating" : "adding"
+            } the expense. Please try again.`,
           variant: "destructive",
         });
       });
@@ -172,44 +196,54 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
 
   const getDescriptionPlaceholder = (category) => {
     switch (category) {
-      case 'OPDReturn':
-        return 'Enter Patient Details';
-      case 'Salaries':
-        return 'Enter Salary Description';
-      case 'Supplies':
-        return 'Enter Supply Details';
-      case 'Utilities':
-        return 'Enter Utility Bill Details';
-      case 'Equipment':
-        return 'Enter Equipment Details';
-      case 'Maintenance':
-        return 'Enter Maintenance Details';
+      case "OPDReturn":
+        return "Enter Patient Details";
+      case "Salaries":
+        return "Enter Salary Description";
+      case "Supplies":
+        return "Enter Supply Details";
+      case "Utilities":
+        return "Enter Utility Bill Details";
+      case "Equipment":
+        return "Enter Equipment Details";
+      case "Maintenance":
+        return "Enter Maintenance Details";
       default:
-        return 'Enter description of the expense';
+        return "Enter description of the expense";
     }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className=" sm:max-w-[425px] max-w-[90vw] rounded-lg">
+      <DialogContent className=" sm:max-w-[425px] max-w-[90vw] rounded-lg" onOpenAutoFocus={(e)=>e.preventDefault()}>
         <DialogHeader>
           <DialogTitle className="text-2xl font-semibold">
-            {expenseToEdit ? 'Edit Expense' : 'Add New Expense'}
+            {expenseToEdit ? "Edit Expense" : "Add New Expense"}
           </DialogTitle>
           <DialogDescription className="text-gray-500">
-            {expenseToEdit ? 'Update the expense details below.' : 'Fill in the details to add a new expense.'}
+            {expenseToEdit
+              ? "Update the expense details below."
+              : "Fill in the details to add a new expense."}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
+            
             <div className="space-y-2">
               <Label htmlFor="category">Category *</Label>
               <SearchSuggestion
                 suggestions={EXPENSE_CATEGORIES}
                 placeholder="Select or type category"
                 value={formData.category}
-                setValue={(value) => setFormData(prev => ({ ...prev, category: value }))}
-                onSuggestionSelect={(suggestion) => setFormData(prev => ({ ...prev, category: suggestion.name }))}
+                setValue={(value) =>
+                  setFormData((prev) => ({ ...prev, category: value }))
+                }
+                onSuggestionSelect={(suggestion) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    category: suggestion.name,
+                  }))
+                }
               />
               {errors.category && (
                 <span className="text-sm text-red-500">{errors.category}</span>
@@ -223,17 +257,23 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
                 value={formData.description}
                 onChange={handleChange}
                 placeholder={getDescriptionPlaceholder(formData.category)}
-                className={errors.description ? 'border-red-500 ring-red-500' : ''}
+                className={
+                  errors.description ? "border-red-500 ring-red-500" : ""
+                }
               />
               {errors.description && (
-                <span className="text-sm text-red-500">{errors.description}</span>
+                <span className="text-sm text-red-500">
+                  {errors.description}
+                </span>
               )}
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount *</Label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">₹</span>
+                  <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">
+                    ₹
+                  </span>
                   <Input
                     id="amount"
                     name="amount"
@@ -241,10 +281,14 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
                     value={formData.amount}
                     onChange={handleChange}
                     placeholder="0.00"
-                    className={`pl-7 ${errors.amount ? 'border-red-500 ring-red-500' : ''}`}
+                    className={`pl-7 ${
+                      errors.amount ? "border-red-500 ring-red-500" : ""
+                    }`}
                   />
                   {errors.amount && (
-                    <span className="text-sm text-red-500">{errors.amount}</span>
+                    <span className="text-sm text-red-500">
+                      {errors.amount}
+                    </span>
                   )}
                 </div>
               </div>
@@ -253,10 +297,10 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
                 <Input
                   id="date"
                   name="date"
-                  type="date" 
+                  type="date"
                   value={formData.date}
                   onChange={handleChange}
-                  className={errors.date ? 'border-red-500 ring-red-500' : ''}
+                  className={errors.date ? "border-red-500 ring-red-500" : ""}
                 />
                 {errors.date && (
                   <span className="text-sm text-red-500">{errors.date}</span>
@@ -265,12 +309,18 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="paymentMethod">Payment Method *</Label>
-              <Select 
-                name="paymentMethod" 
-                value={formData.paymentMethod} 
-                onValueChange={(value) => handleChange({ target: { name: 'paymentMethod', value } })}
+              <Select
+                name="paymentMethod"
+                value={formData.paymentMethod}
+                onValueChange={(value) =>
+                  handleChange({ target: { name: "paymentMethod", value } })
+                }
               >
-                <SelectTrigger className={`w-full ${errors.paymentMethod ? 'border-red-500 ring-red-500' : ''}`}>
+                <SelectTrigger
+                  className={`w-full ${
+                    errors.paymentMethod ? "border-red-500 ring-red-500" : ""
+                  }`}
+                >
                   <SelectValue placeholder="Select method" />
                 </SelectTrigger>
                 <SelectContent>
@@ -282,20 +332,32 @@ const AddEditExpenseDialog = ({ isOpen, onClose, expenseToEdit }) => {
                 </SelectContent>
               </Select>
               {errors.paymentMethod && (
-                <span className="text-sm text-red-500">{errors.paymentMethod}</span>
+                <span className="text-sm text-red-500">
+                  {errors.paymentMethod}
+                </span>
               )}
             </div>
           </div>
           <DialogFooter className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <Button 
-              type="submit" 
-              disabled={expenseToEdit ? updateExpenseStatus === "loading" : createExpenseStatus === "loading"}
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                expenseToEdit
+                  ? updateExpenseStatus === "loading"
+                  : createExpenseStatus === "loading"
+              }
               className="px-4 py-2"
             >
               {expenseToEdit
-                ? (updateExpenseStatus === "loading" ? "Updating..." : "Update Expense")
-                : (createExpenseStatus === "loading" ? "Adding..." : "Add Expense")}
+                ? updateExpenseStatus === "loading"
+                  ? "Updating..."
+                  : "Update Expense"
+                : createExpenseStatus === "loading"
+                ? "Adding..."
+                : "Add Expense"}
             </Button>
           </DialogFooter>
         </form>

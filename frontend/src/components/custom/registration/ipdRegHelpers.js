@@ -13,6 +13,8 @@ export const validateForm = (formData, setErrors) => {
     newErrors["admission.assignedDoctor"] = "Doctor is required";
   if (!formData.admission.department)
     newErrors["admission.department"] = "Department is required";
+  if(formData.admission.assignedRoom && !formData.admission.assignedBed)
+     newErrors["admission.assignedBed"]="Bed is required";
   // if(!formData.admission.operationName)
   // {
   //   newErrors["admission.operationName"]="Operation name is required";

@@ -70,7 +70,8 @@ const LabPaymentDialog = ({ isOpen, setIsOpen, labData }) => {
   // Calculate total amount and due amount
   const totalAmount = labData?.paymentInfo?.totalAmount || 0;
   const paidAmount = labData?.paymentInfo?.amountPaid || 0;
-  const dueAmount = totalAmount - paidAmount;
+  const discAmt=labData?.paymentInfo?.additionalDiscount||0;
+  const dueAmount = totalAmount-discAmt - paidAmount;
   const isFullyPaid = dueAmount <= 0;
 
   const handleAddPayment = () => {

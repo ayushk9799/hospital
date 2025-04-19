@@ -100,6 +100,7 @@ export const SearchSuggestion = forwardRef(
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onFocus={() => setShowSuggestions(true)}
+            
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={placeholder || "Search or type"}
             className="pr-8 hover:cursor-pointer font-semibold" // Add right padding to accommodate the icon

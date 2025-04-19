@@ -75,13 +75,14 @@ router.post("/register", verifyToken, async (req, res) => {
     let invoiceNumber = await BillCounter.getNextBillNumber(session);
     const bill = new ServicesBill({
       invoiceNumber,
-      services: labTests.map((test) => ({
+      services: labRegistration.labTests.map((test) => ({
         name: test.name,
         quantity: 1,
         rate: test.price,
         category: "Laboratory",
         date: new Date(),
         type: "additional",
+        _id:test._id
       })),
       labRegistration: labRegistration._id,
       totalAmount:
@@ -167,7 +168,7 @@ router.get("/registrations", verifyToken, async (req, res) => {
     }
 
     const registrations = await LabRegistration.find(query)
-      .sort({ bookingDate: -1 })
+      .sort({ createdAt: 1 })
       .populate("referredBy", "name")
       .populate("payments")
       .populate("patient", "name age gender contactNumber address");
@@ -598,14 +599,14 @@ router.post("/:id/payment", verifyToken, async (req, res) => {
   }
 });
 
-// Add tests to existing lab registration
+// Add or remove tests from lab registration
 router.post("/add-tests/:id", verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
   try {
     const { id } = req.params;
-    const { labTests, paymentInfo } = req.body;
+    const { labTests, testsToRemove, paymentInfo } = req.body;
     const user = req.user;
 
     const labRegistration = await LabRegistration.findById(id)
@@ -618,82 +619,162 @@ router.post("/add-tests/:id", verifyToken, async (req, res) => {
       throw new Error("Lab registration not found");
     }
 
-    // Add new tests
-    labRegistration.labTests.push(
-      ...labTests.map((test) => ({
-        name: test.name,
-        category: test.category,
-        price: test.price,
-      }))
-    );
+    // Handle test removals if any
+    if (testsToRemove?.length > 0) {
+      // Check if any of the tests to remove are completed
+      const hasCompletedTests = testsToRemove.some((test) => {
+        const findtest = labRegistration.labTests.find((t) => t._id === test._id);
+        return findtest && findtest.reportStatus === "Completed";
+      });
 
-    // Update payment info
-    labRegistration.paymentInfo.totalAmount += paymentInfo.totalAmount;
-    labRegistration.paymentInfo.additionalDiscount =
-      (labRegistration.paymentInfo.additionalDiscount || 0) +
-      (paymentInfo.additionalDiscount || 0);
+      if (hasCompletedTests) {
+        throw new Error("Cannot remove completed tests");
+      }
 
-    if (paymentInfo.amountPaid > 0) {
-      labRegistration.paymentInfo.amountPaid += paymentInfo.amountPaid;
+      // Calculate amount to reduce from removed tests
+      const amountToReduce = testsToRemove.reduce((sum, test) => {
+        return sum + (test?.price || 0);
+      }, 0);
+        const testRemovalId=testsToRemove.map((test)=>test._id);
+        console.log(testRemovalId)
+      // Remove tests and their reports
+      labRegistration.labTests = labRegistration.labTests.filter(
+        (test) => !testRemovalId.includes(test._id?.toString())
+      );
+      labRegistration.labReports = labRegistration.labReports.filter(
+        (report) => !testRemovalId.includes(report._id?.toString())
+      );
+      
+console.log(labRegistration.labTests)
+      // Adjust total amount for removals
+      labRegistration.paymentInfo.totalAmount -= amountToReduce;
+    }
+
+    // Add new tests if any
+    if (labTests?.length > 0) {
+      labRegistration.labTests.push(
+        ...labTests.map((test) => ({
+          name: test.name,
+          category: test.category,
+          price: test.price,
+          reportStatus: "Registered",
+        }))
+      );
+
+      // Add new amount
+      labRegistration.paymentInfo.totalAmount += paymentInfo.totalAmount || 0;
+      labRegistration.paymentInfo.amountPaid += paymentInfo.amountPaid || 0;
+    }
+
+    // Prevent removing all tests
+    if (labRegistration.labTests.length === 0) {
+      throw new Error("Cannot remove all tests from a lab registration");
+    }
+
+    // Update discount if provided
+    if (paymentInfo.additionalDiscount !== undefined) {
+      labRegistration.paymentInfo.additionalDiscount =
+        (labRegistration.paymentInfo.additionalDiscount || 0) +
+        (paymentInfo.additionalDiscount || 0);
+    }
+
+    // Handle payments if provided
+    let newPayments = [];
+    let bill;
+    if (labRegistration.billDetails?.billId) {
+      bill = await ServicesBill.findById(
+        labRegistration.billDetails.billId
+      ).session(session);
+      if (bill) {
+        if (testsToRemove?.length > 0) {
+          bill.services = bill.services.filter(
+            (service) => !testsToRemove?.map(tests=>tests._id).includes(service._id?.toString())
+          );
+        }
+
+    
+        if (labTests?.length > 0) {
+          bill.services.push(
+            ...labTests.map((test) => ({
+              name: test.name,
+              quantity: 1,
+              rate: test.price,
+              category: "Laboratory",
+              date: new Date(),
+              type: "additional",
+            }))
+          );
+        }
+
+        // Update bill totals and discount
+        bill.subtotal = bill?.services?.reduce(
+          (sum, service) => sum + service.rate * service.quantity,
+          0
+        );
+
+        // Update discount and total amount properly
+        if (paymentInfo.additionalDiscount !== undefined) {
+          bill.additionalDiscount =
+            bill.additionalDiscount + paymentInfo.additionalDiscount || 0;
+        }
+        bill.totalAmount = bill.subtotal - bill.additionalDiscount;
+
+        // Add new payments to bill if any
+        bill.amountPaid = (bill.amountPaid || 0) + paymentInfo.amountPaid;
+      }
+    }
+    if (paymentInfo?.paymentMethod?.length > 0 && paymentInfo.amountPaid > 0) {
+      // Create payment records for each payment method
+      await Promise.all(
+        paymentInfo.paymentMethod
+          .filter((pm) => pm.amount > 0)
+          .map(async (pm) => {
+            const payment = new Payment({
+              amount: pm.amount,
+              paymentMethod: pm.method,
+              paymentType: { name: "Laboratory", id: labRegistration._id },
+              type: "Income",
+              createdBy: user._id,
+              associatedInvoiceOrId: labRegistration.billDetails?.invoiceNumber,
+            });
+            await payment.save({ session });
+            labRegistration.payments.push(payment._id);
+            bill.payments.push(payment._id);
+            newPayments.push(payment);
+          })
+      );
     }
 
     // Recalculate balance due
     labRegistration.paymentInfo.balanceDue =
       labRegistration.paymentInfo.totalAmount -
-      labRegistration.paymentInfo.additionalDiscount -
+      (labRegistration.paymentInfo.additionalDiscount || 0) -
       labRegistration.paymentInfo.amountPaid;
 
-    // Update services bill
-    const bill = await ServicesBill.findById(
-      labRegistration.billDetails.billId
-    ).session(session);
-    if (bill) {
-      // Add new services
-      bill.services.push(
-        ...labTests.map((test) => ({
-          name: test.name,
-          quantity: 1,
-          rate: test.price,
-          category: "Laboratory",
-          date: new Date(),
-          type: "additional",
-        }))
-      );
+    // Update bill if it exists
+    await bill.save({ session });
 
-      bill.subtotal += paymentInfo.totalAmount;
-      bill.totalAmount =
-        bill.subtotal -
-        (bill.additionalDiscount || 0 + paymentInfo.additionalDiscount || 0);
-      bill.additionalDiscount += paymentInfo.additionalDiscount || 0;
-
-      // Create payment records if payment is made
-      if (paymentInfo.paymentMethod?.length > 0 && paymentInfo.amountPaid > 0) {
-        await Promise.all(
-          paymentInfo.paymentMethod.map(async (pm) => {
-            const payment = new Payment({
-              amount: pm.amount || 0,
-              paymentMethod: pm.method,
-              paymentType: { name: "Laboratory", id: bill._id },
-              type: "Income",
-              createdBy: user._id,
-            });
-            await payment.save({ session });
-            labRegistration.payments.push(payment._id);
-            bill.payments.push(payment._id);
-          })
-        );
-      }
-
-      await bill.save({ session });
-    }
-
+    // Update lab registration payment info
     await labRegistration.save({ session });
+
+    // Recalculate balance due
+
     await session.commitTransaction();
+
+    // Populate the new payments before sending response
+    if (newPayments.length > 0) {
+      labRegistration.payments = [
+        ...labRegistration.payments.filter(
+          (p) => !newPayments.find((np) => np._id.equals(p._id))
+        ),
+        ...newPayments,
+      ];
+    }
 
     res.status(200).json({
       success: true,
       labRegistration,
-      message: "Tests added successfully",
+      message: "Tests, payments, and discount updated successfully",
     });
   } catch (error) {
     await session.abortTransaction();

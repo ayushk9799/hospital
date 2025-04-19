@@ -631,7 +631,7 @@ export default function LabList() {
                       </span>
                     </TableCell>
                     <TableCell className="font-bold text-black">
-                      ₹{test.paymentInfo.totalAmount.toLocaleString("en-IN")}
+                      ₹{(test.paymentInfo?.totalAmount-test.paymentInfo?.additionalDiscount).toLocaleString("en-IN")}
                     </TableCell>
                     <TableCell className="font-bold text-green-600">
                       ₹{test.paymentInfo.amountPaid?.toLocaleString("en-IN")}

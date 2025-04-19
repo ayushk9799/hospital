@@ -229,7 +229,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                         <TableRow className="font-medium">
                           <TableCell className="hidden print:table-cell"></TableCell>
                           <TableCell colSpan={2} className="text-right">
-                            Total:
+                            Sub Total:
                           </TableCell>
                           <TableCell className="text-right">
                             ₹
@@ -251,7 +251,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                         </h4>
                         <div className="space-y-1">
                           <div className="flex justify-between">
-                            <span>Total Amount:</span>
+                            <span>Sub Total:</span>
                             <span>
                               ₹{labData.paymentInfo.totalAmount?.toFixed(2)}
                             </span>
