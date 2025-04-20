@@ -82,7 +82,7 @@ router.post("/register", verifyToken, async (req, res) => {
         category: "Laboratory",
         date: new Date(),
         type: "additional",
-        _id:test._id
+        _id: test._id,
       })),
       labRegistration: labRegistration._id,
       totalAmount:
@@ -109,6 +109,7 @@ router.post("/register", verifyToken, async (req, res) => {
           const payment = new Payment({
             amount: pm.amount || 0,
             paymentMethod: pm.method,
+            associatedInvoiceOrId: invoiceNumber,
             paymentType: { name: "Laboratory", id: bill._id },
             type: "Income",
             createdBy: user._id,
@@ -623,7 +624,9 @@ router.post("/add-tests/:id", verifyToken, async (req, res) => {
     if (testsToRemove?.length > 0) {
       // Check if any of the tests to remove are completed
       const hasCompletedTests = testsToRemove.some((test) => {
-        const findtest = labRegistration.labTests.find((t) => t._id === test._id);
+        const findtest = labRegistration.labTests.find(
+          (t) => t._id === test._id
+        );
         return findtest && findtest.reportStatus === "Completed";
       });
 
@@ -635,8 +638,7 @@ router.post("/add-tests/:id", verifyToken, async (req, res) => {
       const amountToReduce = testsToRemove.reduce((sum, test) => {
         return sum + (test?.price || 0);
       }, 0);
-        const testRemovalId=testsToRemove.map((test)=>test._id);
-        console.log(testRemovalId)
+
       // Remove tests and their reports
       labRegistration.labTests = labRegistration.labTests.filter(
         (test) => !testRemovalId.includes(test._id?.toString())
@@ -644,8 +646,7 @@ router.post("/add-tests/:id", verifyToken, async (req, res) => {
       labRegistration.labReports = labRegistration.labReports.filter(
         (report) => !testRemovalId.includes(report._id?.toString())
       );
-      
-console.log(labRegistration.labTests)
+
       // Adjust total amount for removals
       labRegistration.paymentInfo.totalAmount -= amountToReduce;
     }
@@ -688,11 +689,13 @@ console.log(labRegistration.labTests)
       if (bill) {
         if (testsToRemove?.length > 0) {
           bill.services = bill.services.filter(
-            (service) => !testsToRemove?.map(tests=>tests._id).includes(service._id?.toString())
+            (service) =>
+              !testsToRemove
+                ?.map((tests) => tests._id)
+                .includes(service._id?.toString())
           );
         }
 
-    
         if (labTests?.length > 0) {
           bill.services.push(
             ...labTests.map((test) => ({
@@ -775,6 +778,195 @@ console.log(labRegistration.labTests)
       success: true,
       labRegistration,
       message: "Tests, payments, and discount updated successfully",
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ success: false, error: error.message });
+  } finally {
+    session.endSession();
+  }
+});
+
+// Update lab registration
+router.put("/update/:id", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+    const user = req.user;
+
+    // Find the lab registration
+    const labRegistration = await LabRegistration.findById(id)
+      .populate("payments")
+      .session(session);
+    if (!labRegistration) {
+      throw new Error("Lab registration not found");
+    }
+
+    // Update basic information
+    labRegistration.patientName = updateData.name;
+    labRegistration.age = updateData.age;
+    labRegistration.gender = updateData.gender;
+    labRegistration.contactNumber = updateData.contactNumber;
+    labRegistration.address = updateData.address;
+    labRegistration.referredBy = updateData.referredBy?._id;
+    labRegistration.referredByName = updateData.referredByName;
+    labRegistration.department = updateData.department;
+    labRegistration.notes = updateData.notes;
+
+    // Handle payments
+    const existingPaymentIds = labRegistration.payments.map((p) =>
+      p._id.toString()
+    );
+    const updatedPaymentIds = updateData.payments
+      .filter((p) => p._id)
+      .map((p) => p._id);
+    const paymentsToDelete = existingPaymentIds.filter(
+      (id) => !updatedPaymentIds.includes(id)
+    );
+    const newPayments = updateData.payments.filter(
+      (p) => !p._id && p.amount > 0
+    );
+
+    // Delete removed payments
+    if (paymentsToDelete.length > 0) {
+      await Payment.deleteMany({
+        _id: { $in: paymentsToDelete },
+      }).session(session);
+
+      // Remove from lab registration
+      labRegistration.payments = labRegistration.payments.filter(
+        (p) => !paymentsToDelete.includes(p._id.toString())
+      );
+
+      // Remove from bill if exists
+      if (labRegistration.billDetails?.billId) {
+        const bill = await ServicesBill.findById(
+          labRegistration.billDetails.billId
+        ).session(session);
+        if (bill) {
+          bill.payments = bill.payments.filter(
+            (p) => !paymentsToDelete.includes(p.toString())
+          );
+          await bill.save({ session });
+        }
+      }
+    }
+
+    // Update existing payments
+    const existingPayments = updateData.payments.filter((p) => p._id);
+    for (const paymentData of existingPayments) {
+      await Payment.findByIdAndUpdate(
+        paymentData._id,
+        {
+          amount: paymentData.amount,
+          paymentMethod: paymentData.paymentMethod,
+        },
+        { session }
+      );
+    }
+
+    // Add new payments
+    let newPaymentDocs = [];
+    if (newPayments.length > 0) {
+      for (const payment of newPayments) {
+        const newPayment = new Payment({
+          amount: payment.amount,
+          paymentMethod: payment.paymentMethod,
+          paymentType: { name: "Laboratory", id: labRegistration._id },
+          type: "Income",
+          createdBy: user._id,
+          associatedInvoiceOrId: labRegistration.billDetails?.invoiceNumber,
+        });
+        await newPayment.save({ session });
+        newPaymentDocs.push(newPayment);
+        labRegistration.payments.push(newPayment._id);
+
+        // Add to bill if exists
+        if (labRegistration.billDetails?.billId) {
+          const bill = await ServicesBill.findById(
+            labRegistration.billDetails.billId
+          ).session(session);
+          if (bill) {
+            bill.payments.push(newPayment._id);
+            await bill.save({ session });
+          }
+        }
+      }
+    }
+
+    // Update payment info
+    labRegistration.paymentInfo = {
+      ...labRegistration.paymentInfo,
+      totalAmount: updateData.paymentInfo.totalAmount,
+      additionalDiscount: updateData.paymentInfo.additionalDiscount,
+    };
+
+    // Calculate total amount paid from all payments
+    const totalPaid = [...existingPayments, ...newPayments].reduce(
+      (sum, payment) => sum + (payment.amount || 0),
+      0
+    );
+    labRegistration.paymentInfo.amountPaid = totalPaid;
+
+    // Recalculate balance due
+    labRegistration.paymentInfo.balanceDue =
+      labRegistration.paymentInfo.totalAmount -
+      labRegistration.paymentInfo.additionalDiscount -
+      labRegistration.paymentInfo.amountPaid;
+
+    // Update lab tests
+    labRegistration.labTests = updateData.labTests.map((test) => ({
+      name: test.name,
+      price: test.price,
+      reportStatus: test.reportStatus || "Registered",
+    }));
+
+    // Save the updated registration
+    await labRegistration.save({ session });
+
+    // Update the associated bill if it exists
+    if (labRegistration.billDetails?.billId) {
+      const bill = await ServicesBill.findById(
+        labRegistration.billDetails.billId
+      ).session(session);
+      if (bill) {
+        bill.services = labRegistration.labTests.map((test) => ({
+          name: test.name,
+          quantity: 1,
+          rate: test.price,
+          category: "Laboratory",
+          date: new Date(),
+          type: "additional",
+        }));
+
+        bill.subtotal = bill.services.reduce(
+          (sum, service) => sum + service.rate * service.quantity,
+          0
+        );
+        bill.additionalDiscount =
+          labRegistration.paymentInfo.additionalDiscount;
+        bill.totalAmount = bill.subtotal - bill.additionalDiscount;
+        bill.amountPaid = totalPaid;
+
+        await bill.save({ session });
+      }
+    }
+
+    await session.commitTransaction();
+
+    // Fetch the updated registration with populated fields
+    const updatedRegistration = await LabRegistration.findById(id)
+      .populate("referredBy", "name")
+      .populate("payments")
+      .populate("patient", "name age gender contactNumber address");
+
+    res.json({
+      success: true,
+      labRegistration: updatedRegistration,
+      message: "Lab registration updated successfully",
     });
   } catch (error) {
     await session.abortTransaction();

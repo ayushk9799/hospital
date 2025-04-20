@@ -155,7 +155,7 @@ export const addLabTests = createLoadingAsyncThunk(
             totalAmount: paymentInfo.totalAmount,
             amountPaid: paymentInfo.amountPaid,
             paymentMethod: paymentInfo.paymentMethod,
-            additionalDiscount:paymentInfo.additionalDiscount
+            additionalDiscount: paymentInfo.additionalDiscount,
           },
         }),
         credentials: "include",
@@ -175,10 +175,39 @@ export const addLabTests = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+export const updateLabRegistration = createLoadingAsyncThunk(
+  "lab/updateRegistration",
+  async (formData, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/lab/update/${formData._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData),
+          credentials: "include",
+        }
+      );
+
+      const data = await response.json();
+      if (!data.success) {
+        return rejectWithValue(
+          data.message || "Failed to update lab registration"
+        );
+      }
+      return data.labRegistration;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   registrations: [],
   registrationsStatus: "idle",
   createRegistrationStatus: "idle",
+  updateRegistrationStatus: "idle",
   updateTestStatus: "idle",
   error: null,
   searchResults: [],
@@ -191,6 +220,9 @@ const labSlice = createSlice({
   reducers: {
     setCreateRegistrationStatusIdle: (state) => {
       state.createRegistrationStatus = "idle";
+    },
+    setUpdateRegistrationStatusIdle: (state) => {
+      state.updateRegistrationStatus = "idle";
     },
     setUpdateTestStatusIdle: (state) => {
       state.updateTestStatus = "idle";
@@ -301,12 +333,31 @@ const labSlice = createSlice({
       .addCase(addLabTests.rejected, (state, action) => {
         state.updateTestStatus = "failed";
         state.error = action.payload?.error || "Failed to update tests";
+      })
+      // Update lab registration
+      .addCase(updateLabRegistration.pending, (state) => {
+        state.updateRegistrationStatus = "loading";
+        state.error = null;
+      })
+      .addCase(updateLabRegistration.fulfilled, (state, action) => {
+        state.updateRegistrationStatus = "succeeded";
+        const index = state.registrations.findIndex(
+          (reg) => reg._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.registrations[index] = action.payload;
+        }
+      })
+      .addCase(updateLabRegistration.rejected, (state, action) => {
+        state.updateRegistrationStatus = "failed";
+        state.error = action.payload;
       });
   },
 });
 
 export const {
   setCreateRegistrationStatusIdle,
+  setUpdateRegistrationStatusIdle,
   setUpdateTestStatusIdle,
   clearSearchResults,
 } = labSlice.actions;

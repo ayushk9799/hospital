@@ -811,7 +811,7 @@ const Payments = () => {
                           <TableCell>{payment.paymentMethod}</TableCell>
                           <TableCell>
                             {payment.description ||
-                              payment.associatedInvoiceOrId ||
+                              (payment.associatedInvoiceOrId?payment.associatedInvoiceOrId:"") +" "+
                               payment.paymentType?.name}
                           </TableCell>
                           <TableCell className="font-medium">

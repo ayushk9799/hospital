@@ -128,7 +128,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   const [searchedPatient, setSearchedPatient] = useState(null);
 
   const [generatedRegNumber, setGeneratedRegNumber] = useState(null);
-console.log(searchedPatient)
   const handleInputChange = useCallback(
     (e) => {
       const { id, value } = e.target;

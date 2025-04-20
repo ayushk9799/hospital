@@ -60,7 +60,7 @@ import { labCategories } from "../../src/assets/Data";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Label } from "../components/ui/label";
 import LabPaymentDialog from "../components/custom/registration/LabPaymentDialog";
-import AddLabTestsDialog from "../components/custom/registration/AddLabTestsDialog";
+import LabEditDialog from "../components/custom/registration/LabEditDialog";
 
 export default function LabList() {
   const navigate = useNavigate();
@@ -79,6 +79,8 @@ export default function LabList() {
   const [openDropdownId, setOpenDropdownId] = useState(null);
   const [showAddTestsDialog, setShowAddTestsDialog] = useState(false);
   const [selectedLabForTests, setSelectedLabForTests] = useState(null);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [selectedLabForEdit, setSelectedLabForEdit] = useState(null);
 
   const {
     registrations,
@@ -254,6 +256,12 @@ export default function LabList() {
     setOpenDropdownId(null);
   };
 
+  const handleEdit = (test) => {
+    setSelectedLabForEdit(test);
+    setShowEditDialog(true);
+    setOpenDropdownId(null);
+  };
+
   const TestCard = ({ test, index }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
@@ -297,13 +305,9 @@ export default function LabList() {
                 >
                   Make Report
                 </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setSelectedLabForTests(test);
-                    setShowAddTestsDialog(true);
-                  }}
-                >
-                  Add Tests
+
+                <DropdownMenuItem onClick={() => handleEdit(test)}>
+                  Edit Registration
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -505,14 +509,11 @@ export default function LabList() {
           setIsOpen={setShowPaymentDialog}
           labData={selectedLabForPayment}
         />
-        <AddLabTestsDialog
-          isOpen={showAddTestsDialog}
-          onClose={() => {
-            setShowAddTestsDialog(false);
-            setSelectedLabForTests(null);
-          }}
-          labData={selectedLabForTests}
-          testsList={testsList}
+
+        <LabEditDialog
+          open={showEditDialog}
+          onOpenChange={setShowEditDialog}
+          labData={selectedLabForEdit}
         />
 
         <div className="flex flex-col space-y-4 mb-4">
@@ -631,7 +632,11 @@ export default function LabList() {
                       </span>
                     </TableCell>
                     <TableCell className="font-bold text-black">
-                      ₹{(test.paymentInfo?.totalAmount-test.paymentInfo?.additionalDiscount).toLocaleString("en-IN")}
+                      ₹
+                      {(
+                        test.paymentInfo?.totalAmount -
+                        test.paymentInfo?.additionalDiscount
+                      ).toLocaleString("en-IN")}
                     </TableCell>
                     <TableCell className="font-bold text-green-600">
                       ₹{test.paymentInfo.amountPaid?.toLocaleString("en-IN")}
@@ -664,13 +669,9 @@ export default function LabList() {
                           >
                             Make Report
                           </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedLabForTests(test);
-                              setShowAddTestsDialog(true);
-                            }}
-                          >
-                            Add Tests
+
+                          <DropdownMenuItem onClick={() => handleEdit(test)}>
+                            Edit Registration
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
