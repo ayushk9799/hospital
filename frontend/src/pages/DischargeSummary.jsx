@@ -305,7 +305,15 @@ const FormField = ({
               .map((v) => ({ name: v.trim() }))
               .filter((v) => v.name)
           : Array.isArray(value)
-          ? value.map((v) => (typeof v === "string" ? { name: v } : v))
+          ? value
+              .map((v) => {
+                if (typeof v === "string") {
+                  return v.trim();
+                }
+                return v.name;
+              })
+              .filter((c) => c?.trim() !== "")
+              .map((c) => ({ name: c }))
           : [];
 
       // Convert suggestions to proper format if needed
@@ -634,6 +642,7 @@ export default function DischargeSummary() {
   const [patient, setPatient] = useState(null);
   const ignoreList = location.state?.ignoreList || false;
   const dischargeData = location.state?.dischargeData || null;
+  const [hasDischarged, setHasDischarged] = useState(false);
   const dischargeSummaryTemplates = useSelector(
     (state) => state.templates.dischargeSummaryTemplateArray
   );
@@ -674,6 +683,7 @@ export default function DischargeSummary() {
   const patientFromStore = useSelector((state) =>
     state.patients.patientlist.find((p) => p._id === patientId)
   );
+
   const labTestsTemplate = useSelector(
     (state) => state.templates.labTestsTemplate
   );
@@ -699,7 +709,7 @@ export default function DischargeSummary() {
     conditionOnAdmission: "",
     conditionOnDischarge: "",
     comorbidityHandling: "separate",
-    
+
     vitals: {
       admission: {
         bloodPressure: "",
@@ -736,7 +746,6 @@ export default function DischargeSummary() {
     });
     return fieldIds;
   };
-
   // Helper function to merge data with form fields
   const mergeDataWithFormFields = (data, config) => {
     const fieldIds = getAllFieldIds(config);
@@ -812,13 +821,13 @@ export default function DischargeSummary() {
       const value = fieldId.includes(".")
         ? fieldId.split(".").reduce((obj, key) => obj?.[key], data)
         : data?.[fieldId];
-    
+
       if (value !== undefined && !standardFields.includes(fieldId)) {
         // Set value in mergedData, supporting nested paths
         if (fieldId.includes(".")) {
           const keys = fieldId.split(".");
           let temp = mergedData;
-    
+
           // Traverse or create nested structure
           keys.forEach((key, index) => {
             if (index === keys.length - 1) {
@@ -833,13 +842,13 @@ export default function DischargeSummary() {
         }
       }
     });
-    
 
     return mergedData;
   };
-
   useEffect(() => {
     const fetchPatient = async () => {
+      if (hasDischarged) return;
+
       if (!patientFromStore && !dischargeData) {
         try {
           if (patientId) {
@@ -906,6 +915,7 @@ export default function DischargeSummary() {
     dischargeData,
     ignoreList,
     formConfig,
+    hasDischarged,
   ]);
   const medicines = useSelector((state) => state.pharmacy.items);
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
@@ -936,7 +946,7 @@ export default function DischargeSummary() {
     ipdNumber: "",
   });
   useEffect(() => {
-    if (patient) {
+    if (patient && !hasDischarged) {
       setFormData((prevData) => ({
         ...prevData,
         admissionDate: patient.bookingDate
@@ -972,9 +982,11 @@ export default function DischargeSummary() {
           patient.labReports?.length > 0
             ? patient.labReports
             : [{ name: "", category: "" }],
-        medicineAdvice: patient.medicineAdvice || patient.medicineAdvice|| patient.dischargeData?.medicineAdvice||[
-          { name: "", dosage: "", duration: "" },
-        ],
+        medicineAdvice: patient.medicineAdvice ||
+          patient.medicineAdvice ||
+          patient.dischargeData?.medicineAdvice || [
+            { name: "", dosage: "", duration: "" },
+          ],
         notes: patient.notes || "",
         comorbidities: patient.comorbidities?.map((comorbidity) => ({
           name: comorbidity,
@@ -999,7 +1011,7 @@ export default function DischargeSummary() {
         ipdNumber: patient.ipdNumber || "",
       });
     }
-  }, [patient]);
+  }, [patient, hasDischarged]);
 
   const [selectedReport, setSelectedReport] = useState(null);
   const handlePatientInfoChange = (e) => {
@@ -1083,7 +1095,26 @@ export default function DischargeSummary() {
       patientId: patientId || patient._id,
       ...formData,
       formConfig,
-      comorbidities: formData.comorbidities.map((c) => c.name),
+      comorbidities: (() => {
+        const data = formData.comorbidities;
+        // If it's a string, split it into array
+        if (typeof data === "string") {
+          return data.split(",").map((item) => item.trim());
+        }
+        // If it's already an array, handle different formats
+        if (Array.isArray(data)) {
+          return data
+            .map((c) => {
+              if (typeof c === "string") {
+                return c.trim();
+              }
+              return c.name;
+            })
+            .filter((c) => c?.trim() !== "");
+        }
+        // Default to empty array if neither string nor array
+        return [];
+      })(),
       medicineAdvice: formData.medicineAdvice
         .filter((m) => m.name.trim() !== "")
         .map((m) => ({
@@ -1103,13 +1134,13 @@ export default function DischargeSummary() {
 
     try {
       await dispatch(dischargePatient(dischargePayload)).unwrap();
+      setHasDischarged(true);
       toast({
         title: "Success",
         description: "Patient discharged successfully",
         variant: "success",
       });
-
-      setIsPrintDialogOpen(true);
+    handlePrint();
     } catch (error) {
       toast({
         title: "Error",
@@ -1125,7 +1156,26 @@ export default function DischargeSummary() {
       patientId: patientId || patient._id,
       ...formData,
       formConfig,
-      comorbidities: formData.comorbidities.map((c) => c.name),
+      comorbidities: (() => {
+        const data = formData.comorbidities;
+        // If it's a string, split it into array
+        if (typeof data === "string") {
+          return data.split(",").map((item) => item.trim());
+        }
+        // If it's already an array, handle different formats
+        if (Array.isArray(data)) {
+          return data
+            .map((c) => {
+              if (typeof c === "string") {
+                return c.trim();
+              }
+              return c.name;
+            })
+            .filter((c) => c?.trim() !== "");
+        }
+        // Default to empty array if neither string nor array
+        return [];
+      })(),
       medicineAdvice: formData.medicineAdvice
         .filter((m) => m.name.trim() !== "")
         .map((m) => ({
@@ -1142,7 +1192,6 @@ export default function DischargeSummary() {
           date: i.date || new Date().toISOString(),
         })),
     };
-
 
     try {
       await dispatch(saveDischargeData(savePayload)).unwrap();
@@ -1476,13 +1525,7 @@ export default function DischargeSummary() {
   });
 
   // Add this function to handle print confirmation
-  const handlePrintConfirm = (shouldPrint) => {
-    setIsPrintDialogOpen(false);
-    if (shouldPrint) {
-      handlePrint();
-    }
-    navigate("/patients/admitted");
-  };
+ 
 
   // Get user role from Redux store or props
 
@@ -1566,7 +1609,6 @@ export default function DischargeSummary() {
                 Discharge Summary
               </CardTitle>
             </div>
-           
           </div>
         </CardHeader>
         <CardContent className="p-2 sm:p-4 md:p-6">
@@ -2002,6 +2044,26 @@ export default function DischargeSummary() {
                 report: inv.report,
                 date: inv.date || new Date().toISOString(),
               })),
+            comorbidities: (() => {
+              const data = formData.comorbidities;
+              // If it's a string, split it into array
+              if (typeof data === "string") {
+                return data.split(",").map((item) => item.trim());
+              }
+              // If it's already an array, handle different formats
+              if (Array.isArray(data)) {
+                return data
+                  .map((c) => {
+                    if (typeof c === "string") {
+                      return c.trim();
+                    }
+                    return c.name;
+                  })
+                  .filter((c) => c.trim() !== "");
+              }
+              // Default to empty array if neither string nor array
+              return [];
+            })(),
           }}
           formConfig={formConfig}
           patient={patientInfo}
@@ -2010,34 +2072,7 @@ export default function DischargeSummary() {
         />
       </div>
 
-      {/* Print Confirmation Dialog */}
-      {isPrintDialogOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-4 sm:p-6 w-[90%] max-w-md">
-            <h2 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4">
-              Print Confirmation
-            </h2>
-            <p className="mb-4 sm:mb-6 text-sm sm:text-base">
-              Would you like to print the discharge summary?
-            </p>
-            <div className="flex justify-end gap-2 sm:gap-3">
-              <Button
-                variant="outline"
-                onClick={() => handlePrintConfirm(false)}
-                className="text-sm sm:text-base py-2 px-4"
-              >
-                No
-              </Button>
-              <Button
-                onClick={() => handlePrintConfirm(true)}
-                className="text-sm sm:text-base py-2 px-4"
-              >
-                Yes
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+  
     </div>
   );
 }

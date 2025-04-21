@@ -278,16 +278,16 @@ router.post(
         let registrationNumber =
           await RegistrationNumber.getNextRegistrationNumber(session);
 
-        if (!patientData.registrationNumber) {
+      
           patientData.registrationNumber = registrationNumber;
-        }
+        
       }
       if (upgradegenIpd) {
         let ipdNumber = await IPDAdmission.getNextIpdNumber(session);
 
-        if (!admission.ipdNumber) {
+        
           admission.ipdNumber = ipdNumber;
-        }
+        
       }
 
       const patient = new Patient({
