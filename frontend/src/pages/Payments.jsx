@@ -52,6 +52,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useReactToPrint } from "react-to-print";
 import { fetchStaffMembers } from "../redux/slices/staffSlice";
 import { useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 const Payments = () => {
   const dispatch = useDispatch();
@@ -63,6 +64,7 @@ const Payments = () => {
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [paymentTypeFilter, setPaymentTypeFilter] = useState("All");
+  const [paymentCategoryFilter, setPaymentCategoryFilter] = useState("All");
   const [staffAccountFilter, setStaffAccountFilter] = useState({
     name: "All Staff",
     id: "",
@@ -72,6 +74,7 @@ const Payments = () => {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const componentRef = useRef();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const getDateRange = () => {
     const today = new Date();
@@ -142,6 +145,23 @@ const Payments = () => {
   }, [status]);
 
   useEffect(() => {
+    // Handle filters from Statistics page
+    if (location.state?.paymentCategoryFilter) {
+      setPaymentCategoryFilter(location.state.paymentCategoryFilter);
+    }
+    if (location.state?.paymentTypeFilter) {
+      setPaymentTypeFilter(location.state.paymentTypeFilter);
+    }
+    if (location.state?.dateFilter) {
+      setDateFilter(location.state.dateFilter);
+      if (location.state.dateRange && location.state.dateFilter === "Custom") {
+        setDateRange(location.state.dateRange);
+        setTempDateRange(location.state.dateRange);
+      }
+    }
+  }, [location.state]);
+
+  useEffect(() => {
     fetchPaymentsData();
   }, [dateFilter, dateRange, searchTerm]);
 
@@ -174,6 +194,7 @@ const Payments = () => {
       minute: "2-digit",
     });
   };
+  console.log(payments);
   const filteredPayments = useMemo(() => {
     return payments.filter((payment) => {
       const hasAllCollectionPermission = userData?.permissions?.includes(
@@ -199,13 +220,22 @@ const Payments = () => {
           }
         }
       }
+      console.log(paymentCategoryFilter);
+      console.log(payment.paymentType?.name);
+      // 2. Payment Category Filter
+      if (
+        paymentCategoryFilter !== "All" &&
+        payment.paymentType?.name !== paymentCategoryFilter
+      ) {
+        return false;
+      }
 
-      // 2. Payment Type Filter
+      // 3. Payment Type Filter
       if (paymentTypeFilter !== "All" && payment.type !== paymentTypeFilter) {
         return false;
       }
 
-      // 3. Staff Account Filter
+      // 4. Staff Account Filter
       if (
         staffAccountFilter.id &&
         payment.createdBy?._id !== staffAccountFilter.id
@@ -213,7 +243,7 @@ const Payments = () => {
         return false;
       }
 
-      // 4. Search Term Filter
+      // 5. Search Term Filter
       if (searchTerm) {
         const searchText = searchTerm.toLowerCase();
         const searchableFields = [
@@ -237,7 +267,14 @@ const Payments = () => {
 
       return true; // Payment passed all filters
     });
-  }, [payments, paymentTypeFilter, staffAccountFilter, searchTerm, userData]);
+  }, [
+    payments,
+    paymentTypeFilter,
+    staffAccountFilter,
+    searchTerm,
+    userData,
+    paymentCategoryFilter,
+  ]);
   // Calculate totals based on filtered payments
   const totalCredit = filteredPayments
     .filter((p) => p.type === "Income")
@@ -375,9 +412,9 @@ const Payments = () => {
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="w-full">
                             <ListFilter className="mr-2 h-4 w-4" />
-                            {paymentTypeFilter === "All"
-                              ? "Payment Type"
-                              : paymentTypeFilter}
+                            {paymentCategoryFilter === "All"
+                              ? "Payment Category"
+                              : paymentCategoryFilter}
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
@@ -385,23 +422,37 @@ const Payments = () => {
                           className="w-[200px]"
                         >
                           <DropdownMenuLabel>
-                            Filter by Payment Type
+                            Filter by Category
                           </DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
-                            onSelect={() => setPaymentTypeFilter("All")}
+                            onSelect={() => setPaymentCategoryFilter("All")}
                           >
                             All
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => setPaymentTypeFilter("Income")}
+                            onSelect={() => setPaymentCategoryFilter("IPD")}
                           >
-                            Credit
+                            IPD
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onSelect={() => setPaymentTypeFilter("Expense")}
+                            onSelect={() => setPaymentCategoryFilter("OPD")}
                           >
-                            Debit
+                            OPD
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              setPaymentCategoryFilter("OPDProcedure")
+                            }
+                          >
+                            OPD Procedure
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() =>
+                              setPaymentCategoryFilter("Laboratory")
+                            }
+                          >
+                            Laboratory
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -409,8 +460,10 @@ const Payments = () => {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="outline" className="w-full">
-                              <CalendarIcon className="mr-2 h-4 w-4" />
-                              {dateFilter}
+                              <ListFilter className="mr-2 h-4 w-4" />
+                              {paymentTypeFilter === "All"
+                                ? "Payment Type"
+                                : paymentTypeFilter}
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
@@ -418,28 +471,23 @@ const Payments = () => {
                             className="w-[200px]"
                           >
                             <DropdownMenuLabel>
-                              Time Filter Options
+                              Filter by Payment Type
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
-                              onSelect={() => setDateFilter("Today")}
+                              onSelect={() => setPaymentTypeFilter("All")}
                             >
-                              Today
+                              All
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onSelect={() => setDateFilter("Yesterday")}
+                              onSelect={() => setPaymentTypeFilter("Income")}
                             >
-                              Yesterday
+                              Credit
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onSelect={() => setDateFilter("This Week")}
+                              onSelect={() => setPaymentTypeFilter("Expense")}
                             >
-                              This Week
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onSelect={() => setDateFilter("Custom")}
-                            >
-                              Custom Range
+                              Debit
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -514,6 +562,46 @@ const Payments = () => {
               </AnimatePresence>
             ) : (
               <div className="flex gap-2">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <ListFilter className="mr-2 h-4 w-4" />
+                      {paymentCategoryFilter === "All"
+                        ? "Payment Category"
+                        : paymentCategoryFilter}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>Filter by Category</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentCategoryFilter("All")}
+                    >
+                      All
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentCategoryFilter("IPD")}
+                    >
+                      IPD
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentCategoryFilter("OPD")}
+                    >
+                      OPD
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentCategoryFilter("OPDProcedure")}
+                    >
+                      OPD Procedure
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentCategoryFilter("Laboratory")}
+                    >
+                      Laboratory
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline">
@@ -809,10 +897,13 @@ const Payments = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>{payment.paymentMethod}</TableCell>
-                          <TableCell>
+                          <TableCell className="font-medium">
                             {payment.description ||
-                              (payment.associatedInvoiceOrId?payment.associatedInvoiceOrId:"") +" "+
-                              payment.paymentType?.name}
+                              (payment.associatedInvoiceOrId
+                                ? payment.associatedInvoiceOrId
+                                : "") +
+                                " " +
+                                payment.paymentType?.name}
                           </TableCell>
                           <TableCell className="font-medium">
                             ₹{payment.amount?.toFixed(2)}

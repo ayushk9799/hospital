@@ -479,12 +479,12 @@ const Dashboard = () => {
   const handleCollectionClick = (type) => {
     const typeMapping = {
       "OPD Procedure": "OPDProcedure",
-      Laboratory: "Lab",
     };
 
-    navigate("/billings", {
+    navigate("/payments", {
       state: {
-        filterType: typeMapping[type] || type,
+        paymentCategoryFilter: typeMapping[type] || type,
+        paymentTypeFilter: "Income",
         dateFilter: dateFilter,
         dateRange: dateFilter === "Custom" ? selectedDateRange : null,
       },
@@ -590,6 +590,15 @@ const Dashboard = () => {
           <Card
             className="bg-purple-100 shadow-sm lg:col-span-3 transition-all duration-200 
             hover:shadow-lg hover:scale-[1.02] hover:bg-purple-200 cursor-pointer"
+            onClick={() =>
+              navigate("/payments", {
+                state: {
+                  paymentTypeFilter: "Income",
+                  dateFilter: dateFilter,
+                  dateRange: dateFilter === "Custom" ? selectedDateRange : null,
+                },
+              })
+            }
           >
             <CardContent className="p-3">
               <div className="flex gap-3">
@@ -637,6 +646,15 @@ const Dashboard = () => {
           <Card
             className="bg-blue-100 shadow-sm lg:col-span-3 transition-all duration-200 
             hover:shadow-lg hover:scale-[1.02] hover:bg-blue-200 cursor-pointer"
+            onClick={() =>
+              navigate("/payments", {
+                state: {
+                  paymentTypeFilter: "Expense",
+                  dateFilter: dateFilter,
+                  dateRange: dateFilter === "Custom" ? selectedDateRange : null,
+                },
+              })
+            }
           >
             <CardContent className="p-3">
               <div className="flex gap-3">

@@ -99,22 +99,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
           respiratoryRate: "",
         },
       },
-      bookingDate: new Date()
-        .toLocaleDateString("en-IN", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-        })
-        .split("/")
-        .reverse()
-        .join("-"),
-      bookingTime: convertTo12Hour(
-        new Date().toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        })
-      ),
+      bookingDate: "",
+      bookingTime: "",
       timeSlot: {
         start: "",
         end: "",
@@ -257,13 +243,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
           ...prev.admission,
           guardianName: tempGuardianName,
           relation: tempRelation,
-          bookingTime: convertTo12Hour(
-            new Date().toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: true,
-            })
-          ),
+          // bookingTime will be set by the dedicated effect below
         },
         paymentInfo: {
           ...prev.paymentInfo,
@@ -308,6 +288,34 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         });
     }
   }, [open, dispatch, patientData, searchedPatient]);
+
+  // Effect to set current time when dialog opens
+  useEffect(() => {
+    if (open) {
+      setFormData((prev) => ({
+        ...prev,
+        admission: {
+          ...prev.admission,
+          bookingDate: new Date()
+            .toLocaleDateString("en-IN", {
+              year: "numeric",
+              month: "2-digit",
+              day: "2-digit",
+            })
+            .split("/")
+            .reverse()
+            .join("-"),
+          bookingTime: convertTo12Hour(
+            new Date().toLocaleTimeString("en-US", {
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+            })
+          ),
+        },
+      }));
+    }
+  }, [open]);
 
   const handleInputChange = (e) => {
     const { id, value, type, checked } = e.target;

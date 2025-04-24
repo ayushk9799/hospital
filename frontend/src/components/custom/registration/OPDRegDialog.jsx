@@ -332,8 +332,8 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                 : "The new patient has been added.",
               variant: "success",
             });
-            if(response.visit && !response.admissionRecord){
-                  response={...response, admissionRecord:response.visit}
+            if (response.visit && !response.admissionRecord) {
+              response = { ...response, admissionRecord: response.visit };
             }
             setRegisteredPatient(response);
             setShowBillModal(true);
@@ -372,6 +372,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
 
   const handleDialogClose = useCallback(() => {
     onOpenChange(false);
+    console.log("hello");
     setTimeout(() => {
       document.body.style = "";
     }, 500);
@@ -519,6 +520,28 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     }
   }, [open, dispatch, patientData, searchedPatient]);
 
+  // Add this useEffect to update bookingDate when the dialog opens
+  useEffect(() => {
+    if (open) {
+      const today = new Date()
+        .toLocaleDateString("en-IN", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+        })
+        .split("/")
+        .reverse()
+        .join("-");
+      setFormData((prev) => ({
+        ...prev,
+        visit: {
+          ...prev.visit,
+          bookingDate: today,
+        },
+      }));
+    }
+  }, [open]);
+
   return (
     <>
       <Dialog
@@ -533,29 +556,49 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
               Patient Registration
             </DialogTitle>
             <DialogDescription className="hidden md:flex justify-between">
-              <p>Register new patient</p>
+              <span>Register new patient</span>
               {searchedPatient && searchedPatient.lastVisit && (
-                <p className="text-black font-semibold">
+                <span className="text-black font-semibold">
                   Last Visit:{" "}
                   {format(new Date(searchedPatient.lastVisit), "dd MMM yyyy")} [
                   <span
                     className={`capitalize ${
                       differenceInDays(
-                        new Date(),
-                        new Date(searchedPatient.lastVisit)
+                        new Date(
+                          new Date()
+                            .toLocaleDateString("en-IN", {
+                              year: "numeric",
+                              month: "2-digit",
+                              day: "2-digit",
+                            })
+                            .split("/")
+                            .reverse()
+                            .join("-")
+                        ).setHours(0, 0, 0, 0),
+                        new Date(searchedPatient.lastVisit).setHours(0, 0, 0, 0)
                       ) > 14
                         ? "text-red-500"
                         : "text-green-500"
                     }`}
                   >
                     {differenceInDays(
-                      new Date(),
-                      new Date(searchedPatient.lastVisit)
+                      new Date(
+                        new Date()
+                          .toLocaleDateString("en-IN", {
+                            year: "numeric",
+                            month: "2-digit",
+                            day: "2-digit",
+                          })
+                          .split("/")
+                          .reverse()
+                          .join("-")
+                      ).setHours(0, 0, 0, 0),
+                      new Date(searchedPatient.lastVisit).setHours(0, 0, 0, 0)
                     )}{" "}
                     days ago
                   </span>
                   ]
-                </p>
+                </span>
               )}
             </DialogDescription>
           </DialogHeader>
