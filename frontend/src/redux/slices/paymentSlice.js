@@ -5,7 +5,7 @@ import { Backend_URL } from "../../assets/Data";
 // Async thunk for fetching payments
 export const fetchPayments = createLoadingAsyncThunk(
   "payments/fetchPayments",
-  async ({  startDate, endDate }, { rejectWithValue }) => {
+  async ({ startDate, endDate }, { rejectWithValue }) => {
     try {
       const queryParams = new URLSearchParams({
         startDate,
@@ -66,6 +66,32 @@ export const fetchPaymentStats = createLoadingAsyncThunk(
   }
 );
 
+// Async thunk for deleting a payment
+export const deletePayment = createLoadingAsyncThunk(
+  "payments/deletePayment",
+  async (paymentId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/payments/${paymentId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete payment");
+      }
+
+      const data = await response.json(); // Contains { message: '...', deletedPaymentId: '...' }
+      return data.deletedPaymentId; // Return the ID of the deleted payment
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  {
+    useGlobalLoader: true, // Or false, depending on desired UX
+  }
+);
+
 const paymentSlice = createSlice({
   name: "payments",
   initialState: {
@@ -91,11 +117,47 @@ const paymentSlice = createSlice({
       })
       .addCase(fetchPayments.rejected, (state, action) => {
         state.status = "failed";
-        state.error = action.error.message;
+        state.error = action.payload;
       })
       // Handle fetchPaymentStats
       .addCase(fetchPaymentStats.fulfilled, (state, action) => {
         state.stats = action.payload;
+      })
+      // Handle deletePayment
+      .addCase(deletePayment.pending, (state) => {
+        state.status = "deleting";
+        state.error = null;
+      })
+      .addCase(deletePayment.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        // Remove the deleted payment from the state
+        state.payments = state.payments.filter(
+          (payment) => payment._id !== action.payload
+        );
+
+        // Update payment statistics if they exist
+        if (state.stats && state.payments.length > 0) {
+          // Recalculate totals
+          const income = state.payments
+            .filter((p) => p.type === "Income")
+            .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+          const expense = state.payments
+            .filter((p) => p.type === "Expense")
+            .reduce((sum, p) => sum + (p.amount || 0), 0);
+
+          state.stats = {
+            income,
+            expense,
+            net: income - expense,
+          };
+        }
+
+        state.error = null;
+      })
+      .addCase(deletePayment.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
       });
   },
 });

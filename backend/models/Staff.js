@@ -109,6 +109,7 @@ const staffSchema = new mongoose.Schema({
         "view_financial",
         "create_bills",
         "edit_bills",
+        "delete_payments",
         "delete_bills",
         "collect_payments",
         "view_reports",

@@ -1,6 +1,7 @@
 import { Backend_URL } from "../../assets/Data";
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
+import { updateStaffMember } from "./staffSlice";
 
 // Async thunk for user login
 export const loginUser = createLoadingAsyncThunk(
@@ -107,6 +108,12 @@ const userSlice = createSlice({
         state.status = "failed";
         state.error = action.payload;
         state.isAuthenticated = false;
+      })
+      // Handle staff update to potentially update current user data
+      .addCase(updateStaffMember.fulfilled, (state, action) => {
+        if (state.userData && state.userData._id === action.payload._id) {
+          state.userData = action.payload;
+        }
       });
   },
 });

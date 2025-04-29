@@ -234,7 +234,26 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                       <p>{billData.invoiceNumber}</p>
                     </div>
                   ) : null}
-                  {billData.createdAt ? (
+                  {billData.admissionDate ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Admit Date:</Label>
+                      <p>
+                        {format(new Date(billData.admissionDate), "dd/MM/yyyy")}
+                      </p>
+                    </div>
+                  ) : null}
+                  {billData.dischargeDate ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">
+                        Discharge Date:
+                      </Label>
+                      <p>
+                        {format(new Date(billData.dischargeDate), "dd/MM/yyyy")}
+                      </p>
+                    </div>
+                  ) : null}
+                  {billData.createdAt &&
+                  (!billData.admissionDate && !billData.dischargeDate) ? (
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Date:</Label>
                       <p>
@@ -253,12 +272,12 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                   ) : null}
                 </div>
                 <div>
-                      {billData.opdProcedure?.procedureName ?(
-                        <div className="flex items-center">
-                              <Label className="font-semibold mr-2">Proceudure:</Label>
-                              <p>{billData.opdProcedure?.procedureName}</p>
-                        </div>
-                      ):null}
+                  {billData.opdProcedure?.procedureName ? (
+                    <div className="flex items-center">
+                      <Label className="font-semibold mr-2">Proceudure:</Label>
+                      <p>{billData.opdProcedure?.procedureName}</p>
+                    </div>
+                  ) : null}
                 </div>
                 {services.length > 0 ? (
                   <div className="flex flex-col gap-4">

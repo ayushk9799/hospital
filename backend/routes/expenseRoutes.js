@@ -38,6 +38,7 @@ router.post("/create", verifyToken, async (req, res) => {
     if (amountPaid > 0) {
       const payment = new Payment({
         amount: amountPaid,
+        associatedId: newExpense._id,
         paymentMethod,
         paymentType: { name: "Expense", id: newExpense._id },
         type: "Expense",

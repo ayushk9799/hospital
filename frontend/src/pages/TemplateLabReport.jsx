@@ -325,7 +325,7 @@ const TemplateLabReport = ({
           onSave(labReportData, updatedData);
         }
 
-        handlePrint();
+        //handlePrint();
 
         // Don't close immediately to allow state updates to propagate
       } else {

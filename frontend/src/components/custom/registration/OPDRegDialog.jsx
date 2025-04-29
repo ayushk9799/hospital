@@ -372,7 +372,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
 
   const handleDialogClose = useCallback(() => {
     onOpenChange(false);
-    console.log("hello");
     setTimeout(() => {
       document.body.style = "";
     }, 500);

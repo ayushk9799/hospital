@@ -336,7 +336,7 @@ const Billings = () => {
       ...bill,
       services: filteredServices,
       printType: type,
-      operationName: operationName, // Add operation name to selected bill
+      operationName: operationName, 
     });
     setIsViewDialogOpen(true);
     setOpenDropdownId(null);

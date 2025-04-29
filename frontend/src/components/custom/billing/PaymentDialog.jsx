@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import {
   Dialog,
   DialogContent,
@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "../../ui/table";
-import { addPayment } from "../../../redux/slices/BillingSlice";
+import { addPayment, deletePayment } from "../../../redux/slices/BillingSlice";
 import { useToast } from "../../../hooks/use-toast";
 import {
   Select,
@@ -29,9 +29,20 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { Separator } from "../../ui/separator";
-import { AlertCircle, CreditCard } from "lucide-react";
+import { AlertCircle, CreditCard, Trash2 } from "lucide-react";
 import { useMediaQuery } from "../../../hooks/useMediaQuery";
 import PaymentReceipt from "../print/PaymentReceipt";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../../ui/alert-dialog";
 
 const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
   const dispatch = useDispatch();
@@ -41,6 +52,16 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
   const [isLoading, setIsLoading] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   const [amountError, setAmountError] = useState("");
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showPermissionErrorDialog, setShowPermissionErrorDialog] =
+    useState(false);
+
+  // Get user data from Redux store
+  const userData = useSelector((state) => state.user.userData);
+  // Check if user has delete_payments permission
+  const canDeletePayments = userData?.permissions?.includes("delete_payments");
 
   useEffect(() => {
     if (isOpen) {
@@ -67,6 +88,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
     }
 
     setIsLoading(true);
+    setIsDeleting(false);
 
     const payment = {
       amount: parseFloat(paymentAmount),
@@ -105,8 +127,49 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
   const handlePaymentAmountChange = (e) => {
     const amount = e.target.value;
     setPaymentAmount(amount);
+  };
 
-   
+  const handleDeleteClick = (payment) => {
+    setPaymentToDelete(payment);
+    if (canDeletePayments) {
+      setIsDeleteDialogOpen(true);
+    } else {
+      setShowPermissionErrorDialog(true);
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    if (!paymentToDelete || !billData) return;
+
+    setIsDeleting(true);
+    dispatch(
+      deletePayment({ billId: billData._id, paymentId: paymentToDelete._id })
+    )
+      .unwrap()
+      .then((updatedBill) => {
+        toast({
+          title: "Payment Deleted",
+          description: "The payment has been successfully deleted.",
+          variant: "success",
+        });
+
+        // Update the parent component with new bill data
+
+        setPaymentToDelete(null);
+        setIsDeleteDialogOpen(false);
+
+        setIsOpen(false);
+      })
+      .catch((error) => {
+        toast({
+          title: "Error Deleting Payment",
+          description: error.message || "Failed to delete the payment.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsDeleting(false);
+      });
   };
 
   const isPaymentValid =
@@ -121,7 +184,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="w-[90vw] max-w-[425px] max-h-[90vh] overflow-y-auto rounded-lg">
+      <DialogContent className="w-[90vw] max-w-[425px] max-h-[90vh] overflow-y-auto rounded-lg px-[14px]">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">
             Add Payment
@@ -249,6 +312,7 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                     <TableHead>Amount</TableHead>
                     <TableHead>Method</TableHead>
                     <TableHead>Receipt</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -279,6 +343,18 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
                       </TableCell>
                       <TableCell className="text-xs">
                         <PaymentReceipt payment={payment} billData={billData} />
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteClick(payment)}
+                          className="text-red-600 hover:text-red-800"
+                          disabled={isDeleting}
+                          title="Delete Payment"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -313,6 +389,74 @@ const PaymentDialog = ({ isOpen, setIsOpen, billData, onPaymentSuccess }) => {
           }
         </DialogFooter>
       </DialogContent>
+
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogTrigger className="hidden" />
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              payment of{" "}
+              <span className="font-semibold">
+                ₹
+                {paymentToDelete?.amount?.toLocaleString("en-IN", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>{" "}
+              made via{" "}
+              <span className="font-semibold">
+                {paymentToDelete?.paymentMethod}
+              </span>{" "}
+              on{" "}
+              <span className="font-semibold">
+                {paymentToDelete
+                  ? new Date(paymentToDelete.createdAt).toLocaleDateString(
+                      "en-IN"
+                    )
+                  : ""}
+                .
+              </span>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={isDeleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeleting ? "Deleting..." : "Yes, delete payment"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={showPermissionErrorDialog}
+        onOpenChange={setShowPermissionErrorDialog}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Permission Denied</AlertDialogTitle>
+            <AlertDialogDescription>
+              You do not have the required permissions to delete payments.
+              Please contact an administrator if you believe this is an error.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setShowPermissionErrorDialog(false)}
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 };

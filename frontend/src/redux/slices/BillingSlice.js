@@ -37,9 +37,9 @@ export const fetchBills = createLoadingAsyncThunk(
     try {
       // Build query parameters
       const queryParams = new URLSearchParams();
-       if(!filters.dateRange?.startDate && !filters.dateRange?.endDate){
+      if (!filters.dateRange?.startDate && !filters.dateRange?.endDate) {
         return rejectWithValue("Please select a date range");
-       }
+      }
       // Add date range filters if present
       if (filters.dateRange?.startDate) {
         const startDate = new Date(filters.dateRange.startDate + "T00:00:00");
@@ -159,7 +159,6 @@ export const addPayment = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
-
 // Add this new async thunk after the other thunks and before the slice definition
 export const createOPDProcedureBill = createLoadingAsyncThunk(
   "billing/createOPDProcedureBill",
@@ -229,7 +228,34 @@ export const searchBillByInvoice = createLoadingAsyncThunk(
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({invoiceNumber:invoiceNumber}),
+          body: JSON.stringify({ invoiceNumber: invoiceNumber }),
+          credentials: "include",
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+// Add this new thunk after other thunks
+export const deletePayment = createLoadingAsyncThunk(
+  "bills/deletePayment",
+  async ({ billId, paymentId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/billing/${billId}/payments/${paymentId}`,
+        {
+          method: "DELETE",
           credentials: "include",
         }
       );
@@ -264,6 +290,12 @@ const billingSlice = createSlice({
     setCreateBillStatusIdle: (state) => {
       state.createBillStatus = "idle";
       state.updateBillStatus = "idle";
+    },
+    updateBillAfterPayment: (state, action) => {
+      const updatedBill = action.payload;
+      state.bills = state.bills.map((bill) =>
+        bill._id === updatedBill._id ? updatedBill : bill
+      );
     },
   },
   extraReducers: (builder) => {
@@ -356,10 +388,22 @@ const billingSlice = createSlice({
       .addCase(searchBillByInvoice.rejected, (state, action) => {
         state.billsStatus = "failed";
         state.error = action.payload;
+      })
+      .addCase(deletePayment.fulfilled, (state, action) => {
+        const index = state.bills.findIndex(
+          (bill) => bill._id === action.payload._id
+        );
+        if (index !== -1) {
+          state.bills[index] = action.payload;
+        }
+      })
+      .addCase(deletePayment.rejected, (state, action) => {
+        state.error = action.payload;
       });
   },
 });
 
-export const { setCreateBillStatusIdle } = billingSlice.actions;
+export const { setCreateBillStatusIdle, updateBillAfterPayment } =
+  billingSlice.actions;
 
 export default billingSlice.reducer;

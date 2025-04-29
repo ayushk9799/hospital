@@ -574,6 +574,23 @@ export default function AddStaff() {
                   </label>
                 </div>
               ))}
+              <div
+                key="delete_payments"
+                className="flex items-center space-x-2"
+              >
+                <Checkbox
+                  id="delete_payments"
+                  checked={(formData.permissions || []).includes(
+                    "delete_payments"
+                  )}
+                  onCheckedChange={(checked) =>
+                    handlePermissionChange("delete_payments", checked)
+                  }
+                />
+                <label htmlFor="delete_payments" className="text-sm">
+                  Delete Payments
+                </label>
+              </div>
             </div>
             <div className="grid grid-cols-2 space-y-2">
               {permissionGroups["Expense/Return"]?.map((permission) => (

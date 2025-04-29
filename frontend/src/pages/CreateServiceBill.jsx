@@ -167,11 +167,12 @@ const CreateServiceBill = ({
         address: patientData.address,
         bloodGroup: patientData.bloodGroup,
         type: patientData.type,
+        admissionDate: patientData.admissionDate || null,
+        dischargeDate: patientData.dischargeDate || null,
         bookingDate: patientData.bookingDate || null,
         ipdNumber: patientData.ipdNumber || null,
       });
     } else if (billId) {
-      // Existing fetch logic for navigation scenario
       dispatch(fetchBillById(billId))
         .unwrap()
         .then((billData) => {
@@ -292,11 +293,11 @@ const CreateServiceBill = ({
 
     // Calculate the base amount (portion of original subtotal that wasn't from services)
     const baseAmount = Math.max(0, originalSubtotal - currentServicesTotal);
-   
+
     // If in break total mode, use target total as the main total
     if (breakTotalMode) {
       const targetTotalValue = parseFloat(targetTotal || 0);
-    
+
       let discountValue = 0;
       if (additionalDiscount !== "") {
         if (additionalDiscountType === "amount") {
@@ -354,7 +355,6 @@ const CreateServiceBill = ({
   ]);
 
   useEffect(() => {
-    
     if (calculateTotals.totalAmount) {
       setTargetTotal(calculateTotals.totalAmount);
     }
@@ -733,6 +733,8 @@ const CreateServiceBill = ({
       const viewBillData = {
         _id: firstBill._id || Date.now().toString(),
         createdAt: firstBill.createdAt || new Date(),
+        admissionDate: patientDetails?.admissionDate,
+        dischargeDate: patientDetails?.dischargeDate,
         patientInfo: {
           name: patientDetails?.name,
           age: patientDetails?.age,
@@ -826,8 +828,9 @@ const CreateServiceBill = ({
         <label htmlFor="breakTotalMode" className="text-sm font-medium">
           Break Total Mode{" "}
           <span className="text-xs text-gray-500">
-            (To be only used when <span className="font-bold text-black">net total</span>{" "}
-            has to be divided)
+            (To be only used when{" "}
+            <span className="font-bold text-black">net total</span> has to be
+            divided)
           </span>
         </label>
       </div>
@@ -954,21 +957,36 @@ const CreateServiceBill = ({
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
-              <div className="flex items-center gap-2">
-                <CalendarDays className="w-4 h-4 text-gray-400" />
-                <span>
-                  {patientDetails?.bookingDate
-                    ? format(
-                        new Date(patientDetails.bookingDate),
-                        "MMM dd, yyyy"
-                      )
-                    : "N/A"}
-                </span>
-              </div>
+             
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-gray-400" />
                 <span>{patientDetails?.contactNumber}</span>
               </div>
+              
+              {patientDetails?.admissionDate && (
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-gray-400" />
+                  <span>
+                    Admit Date:{" "}
+                    {format(
+                      new Date(patientDetails.admissionDate),
+                      "dd/MM/yyyy"
+                    )}
+                  </span>
+                </div>
+              )}
+              {patientDetails?.dischargeDate && (
+                <div className="flex items-center gap-2">
+                  <CalendarDays className="w-4 h-4 text-gray-400" />
+                  <span>
+                    Discharge:{" "}
+                    {format(
+                      new Date(patientDetails.dischargeDate),
+                      "dd/MM/yyyy"
+                    )}
+                  </span>
+                </div>
+              )}
 
               {patientDetails?.address && (
                 <div className="flex items-center gap-2">

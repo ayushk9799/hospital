@@ -126,6 +126,8 @@ export default function AdmittedPatients() {
         contactNumber: patient.patient.contactNumber,
         address: patient.patient.address,
         bookingDate: patient.bookingDate,
+        admissionDate: patient.dischargeData?.admissionDate || patient.bookingDate,
+        dischargeDate: patient.dischargeData?.dateDischarged,
         type: "IPD",
       },
       initialBillData: {

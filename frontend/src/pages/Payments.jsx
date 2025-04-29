@@ -194,7 +194,6 @@ const Payments = () => {
       minute: "2-digit",
     });
   };
-  console.log(payments);
   const filteredPayments = useMemo(() => {
     return payments.filter((payment) => {
       const hasAllCollectionPermission = userData?.permissions?.includes(
@@ -220,8 +219,6 @@ const Payments = () => {
           }
         }
       }
-      console.log(paymentCategoryFilter);
-      console.log(payment.paymentType?.name);
       // 2. Payment Category Filter
       if (
         paymentCategoryFilter !== "All" &&
