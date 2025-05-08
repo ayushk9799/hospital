@@ -42,6 +42,7 @@ router.post("/create-sales-bill", verifyToken, async (req, res) => {
         amount: totals.totalAmount,
         paymentMethod,
         paymentType: { name: "Pharmacy", id: newPharmacyBill._id },
+        description: patientInfo?.name,
         type: "Income",
         createdByName:user?.name,
         createdBy: user._id,

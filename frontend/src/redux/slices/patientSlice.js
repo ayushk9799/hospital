@@ -283,10 +283,12 @@ export const fetchVisitDetails = createLoadingAsyncThunk(
 // Add this new thunk after the other thunks
 export const searchPatients = createLoadingAsyncThunk(
   "patients/searchPatients",
-  async (searchQuery, { rejectWithValue }) => {
+  async ({ searchQuery, page, limit }, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `${Backend_URL}/api/dashboard/search?q=${searchQuery}`,
+        `${Backend_URL}/api/dashboard/search?q=${encodeURIComponent(
+          searchQuery
+        )}&page=${page || 1}&limit=${limit || 10}`,
         {
           method: "GET",
           credentials: "include",
@@ -299,7 +301,12 @@ export const searchPatients = createLoadingAsyncThunk(
       }
 
       const data = await response.json();
-      return { results: data, searchQuery };
+      return {
+        results: data,
+        searchQuery,
+        currentPage: page,
+        totalPages: data.totalPages,
+      };
     } catch (error) {
       return rejectWithValue(error.message);
     }

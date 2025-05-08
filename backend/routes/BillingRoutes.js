@@ -276,6 +276,7 @@ router.post("/:id/payments", verifyToken, async (req, res) => {
       amount: paymentAmount,
       paymentMethod,
       associatedInvoiceOrId: bill.invoiceNumber,
+      description: bill.patientInfo.name,
       paymentType: {
         name:
           bill.patientType === "Lab"

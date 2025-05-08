@@ -28,7 +28,7 @@ import { useSelector } from "react-redux";
 import OPDProcedureBillDialog from "./OPDProcedureBillDialog";
 import SearchSuggestion from "../registration/CustomSearchSuggestion";
 
-const OPDProcedureDialog = ({ open, onOpenChange }) => {
+const OPDProcedureDialog = ({ open, onOpenChange, initialPatientData }) => {
   const initialFormData = {
     name: "",
     registrationNumber: "",
@@ -79,6 +79,37 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
     [proceduresList]
   );
 
+  useEffect(() => {
+    if (open && initialPatientData) {
+      setFormData((prevFormData) => ({
+        ...prevFormData,
+        name: initialPatientData.name || "",
+        registrationNumber: initialPatientData.registrationNumber || "",
+        gender: initialPatientData.gender || "",
+        age: initialPatientData.age || "",
+        contactNumber: initialPatientData.contactNumber || "",
+        address: initialPatientData.address
+          ? typeof initialPatientData.address === "string"
+            ? initialPatientData.address
+            : `${initialPatientData.address.street || ""}, ${
+                initialPatientData.address.city || ""
+              }, ${initialPatientData.address.state || ""}, ${
+                initialPatientData.address.postalCode || ""
+              }`.replace(/(, )+$/, "")
+          : "",
+        // Reset procedure-specific fields unless they are also passed in initialPatientData
+        procedureName: initialPatientData.procedureName || "",
+        totalAmount: initialPatientData.totalAmount || "",
+        // Keep payment details if needed, or reset them
+        // amountPaid: initialPatientData.amountPaid || "",
+        // paymentMethod: initialPatientData.paymentMethod || [],
+      }));
+    } else if (!open) {
+      setFormData(initialFormData); // Reset form when dialog closes
+      setErrors({});
+    }
+  }, [open, initialPatientData]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -107,7 +138,7 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Required";
     if (!formData.age) newErrors.age = "Required";
-    if (!formData.gender) newErrors.gender="Required"
+    if (!formData.gender) newErrors.gender = "Required";
     if (!formData.contactNumber) newErrors.contactNumber = "Required";
     if (!formData.procedureName) newErrors.procedureName = "Required";
     if (!formData.totalAmount) newErrors.totalAmount = "Required";
@@ -211,10 +242,10 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
 
     try {
       const result = await dispatch(
-        searchPatients(formData.registrationNumber)
+        searchPatients({ searchQuery: formData.registrationNumber.trim() })
       ).unwrap();
-      if (result.results && result.results.length > 0) {
-        const patient = result.results[0];
+      if (result.results?.patients && result.results?.patients?.length > 0) {
+        const patient = result.results?.patients?.[0];
         setFormData({
           ...formData,
           name: patient.name,
@@ -354,7 +385,9 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
               <div
                 className={
                   formData.paymentMethod.length > 0
-                    ? `grid grid-cols-${formData.paymentMethod.length===1?"2":"3"} gap-2`
+                    ? `grid grid-cols-${
+                        formData.paymentMethod.length === 1 ? "2" : "3"
+                      } gap-2`
                     : "grid grid-cols-2 gap-2"
                 }
               >
@@ -396,7 +429,6 @@ const OPDProcedureDialog = ({ open, onOpenChange }) => {
                   ))
                 ) : (
                   <MemoizedInput
-                    
                     id={`paymentpaiddisabled`}
                     label={`Amount Paid`}
                     disabled

@@ -57,9 +57,12 @@ const VitalItem = ({ icon, label, value, unit }) => (
   </div>
 );
 
-export default function PatientDetails({ patientData }) {
+export default function PatientDetails({
+  patientData,
+  selectedVisit: selectedVisitProp,
+  onVisitSelect,
+}) {
   const { toast } = useToast();
-  const [selectedVisit, setSelectedVisit] = useState(null);
   const [activeTab, setActiveTab] = useState("");
   const [allDates, setAllDates] = useState([]);
   const navigate = useNavigate();
@@ -82,32 +85,42 @@ export default function PatientDetails({ patientData }) {
       setAllDates(dates);
 
       if (dates.length > 0) {
-        setSelectedVisit(dates[0]);
         setActiveTab(
-          dates[0].data.reasonForVisit
-            ? "reason"
-            : dates[0].data.diagnosis
-            ? "diagnosis"
+          selectedVisitProp
+            ? selectedVisitProp.reasonForVisit
+              ? "reason"
+              : selectedVisitProp.diagnosis
+              ? "diagnosis"
+              : "reason"
             : "reason"
         );
       }
     }
   }, [patientData]);
 
+  useEffect(() => {
+    if (selectedVisitProp) {
+      setActiveTab(
+        selectedVisitProp.reasonForVisit
+          ? "reason"
+          : selectedVisitProp.diagnosis
+          ? "diagnosis"
+          : "reason"
+      );
+    }
+  }, [selectedVisitProp]);
+
   if (!patientData) return null;
 
   const renderVisitDetails = () => {
-    if (!selectedVisit || !patientData) return null;
+    if (!selectedVisitProp || !patientData) return null;
 
-    const visitData =
-      patientData.visits?.find((v) => v.bookingDate === selectedVisit?.date) ||
-      patientData.admissionDetails?.find(
-        (a) => a.bookingDate === selectedVisit?.date
-      );
+    const visitData = selectedVisitProp;
 
-    if (!visitData) return null;
+    const isIPD = patientData.admissionDetails?.some(
+      (ad) => ad._id === visitData._id
+    );
 
-    const isIPD = selectedVisit?.type === "admission" ? true : false;
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="overflow-x-auto scrollbar-hide">
@@ -413,16 +426,9 @@ export default function PatientDetails({ patientData }) {
   };
 
   const handleEditClick = () => {
-    if (!selectedVisit || !patientData) return;
+    if (!selectedVisitProp || !patientData) return;
 
-    const visitData =
-      selectedVisit.type === "visit"
-        ? patientData.visits?.find((v) => v.bookingDate === selectedVisit.date)
-        : patientData.admissionDetails?.find(
-            (a) => a.bookingDate === selectedVisit.date
-          );
-
-    if (!visitData) return;
+    const visitData = selectedVisitProp;
 
     const patientDataForEdit = {
       ID: visitData._id,
@@ -437,7 +443,9 @@ export default function PatientDetails({ patientData }) {
       bookingDate: visitData.bookingDate,
       clinicalSummary: visitData.clinicalSummary,
       notes: visitData.notes,
-      type: selectedVisit.type === "visit" ? "OPD" : "IPD",
+      type: patientData.admissionDetails?.some((ad) => ad._id === visitData._id)
+        ? "IPD"
+        : "OPD",
       vitals: visitData.vitals,
       diagnosis: visitData.diagnosis,
       treatment: visitData.treatment,
@@ -509,7 +517,7 @@ export default function PatientDetails({ patientData }) {
             size="sm"
             className="hover:bg-gray-100"
             onClick={handleEditClick}
-            disabled={!selectedVisit}
+            disabled={!selectedVisitProp}
           >
             <Edit className="mr-2 h-4 w-4" /> Doctor's Section
           </Button>
@@ -517,21 +525,17 @@ export default function PatientDetails({ patientData }) {
         <div className="flex flex-wrap gap-2 mb-4">
           {allDates.map((item) => (
             <Button
-              key={`${item.date}-${item.type}`}
+              key={`${item.data._id}-${item.type}`}
               variant={
-                selectedVisit?.date === item.date &&
-                item.type === selectedVisit?.type
-                  ? "default"
-                  : "outline"
+                selectedVisitProp?._id === item.data._id ? "default" : "outline"
               }
               size="sm"
               className={`${
-                selectedVisit?.date === item.date &&
-                item.type === selectedVisit?.type
+                selectedVisitProp?._id === item.data._id
                   ? "ring-2 ring-primary"
                   : ""
               }`}
-              onClick={() => setSelectedVisit(item)}
+              onClick={() => onVisitSelect(item.data)}
             >
               <span className="mr-1">
                 {format(new Date(item.date), "dd MMM yyyy")}

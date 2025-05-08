@@ -110,6 +110,7 @@ router.post("/register", verifyToken, async (req, res) => {
             amount: pm.amount || 0,
             paymentMethod: pm.method,
             associatedInvoiceOrId: invoiceNumber,
+            description: name,
             paymentType: { name: "Laboratory", id: bill._id },
             type: "Income",
             createdBy: user._id,
@@ -554,7 +555,8 @@ router.post("/:id/payment", verifyToken, async (req, res) => {
       paymentType: { name: "Laboratory", id: labRegistration._id },
       type: "Income",
       createdBy: user._id,
-      associatedInvoiceOrId: labRegistration.invoiceNumber,
+      associatedInvoiceOrId: labRegistration?.billDetails?.invoiceNumber,
+      description: labRegistration?.patientName,
     });
 
     await payment.save({ session });
@@ -739,6 +741,7 @@ router.post("/add-tests/:id", verifyToken, async (req, res) => {
               type: "Income",
               createdBy: user._id,
               associatedInvoiceOrId: labRegistration.billDetails?.invoiceNumber,
+              description: labRegistration.patientName,
             });
             await payment.save({ session });
             labRegistration.payments.push(payment._id);
@@ -879,6 +882,7 @@ router.put("/update/:id", verifyToken, async (req, res) => {
           type: "Income",
           createdBy: user._id,
           associatedInvoiceOrId: labRegistration.billDetails?.invoiceNumber,
+          description: labRegistration.patientName,
         });
         await newPayment.save({ session });
         newPaymentDocs.push(newPayment);

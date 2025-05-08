@@ -77,8 +77,10 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
     if (!searchQuery.trim()) return;
 
     try {
-      const resultAction = await dispatch(searchPatients(searchQuery));
-
+      const resultAction = await dispatch(
+        searchPatients({ searchQuery:searchQuery.trim(), page: 1, limit: 10 })
+      );
+    
       if (searchPatients.fulfilled.match(resultAction)) {
         navigate("/search", {
           state: {

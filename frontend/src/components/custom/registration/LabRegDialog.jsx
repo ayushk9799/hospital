@@ -248,10 +248,10 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
 
     try {
       const response = await dispatch(
-        searchPatients(formData.registrationNumber)
+        searchPatients({searchQuery:formData.registrationNumber.trim()})
       ).unwrap();
-      let data = response.results?.[0];
-      if (response.results?.length > 0) {
+      let data = response.results?.patients[0];
+      if (response.results?.patients?.length > 0) {
         setSearchedPatient(data);
         const tempGuardianName =
           data.visits[0]?.guardianName ||
@@ -488,7 +488,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
             <DialogDescription className="hidden md:flex justify-between">
               <p>Register patient for laboratory tests</p>
               {searchedPatient && searchedPatient.lastVisit && (
-                <p className="text-black font-semibold">
+                <span className="text-black font-semibold">
                   Last Visit:{" "}
                   {format(new Date(searchedPatient.lastVisit), "dd MMM yyyy")} [
                   <span
@@ -508,7 +508,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
                     days ago
                   </span>
                   ]
-                </p>
+                </span>
               )}
             </DialogDescription>
           </DialogHeader>

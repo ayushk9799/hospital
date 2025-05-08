@@ -44,25 +44,75 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { useDispatch } from "react-redux";
+import { searchPatients } from "../redux/slices/patientSlice";
+import OPDProcedureDialog from "../components/custom/procedures/OPDProcedureDialog";
 
 export default function PatientSearch() {
   const location = useLocation();
   const navigate = useNavigate();
-  const patients = location.state?.searchResults || [];
+  const searchResultsData = location.state?.searchResults || {};
+  const patients = searchResultsData.patients || [];
+  const totalPatients = searchResultsData.totalPatients || 0;
+  const currentPage = searchResultsData.currentPage || 1;
+  const totalPages = searchResultsData.totalPages || 1;
+
   const searchQuery = location.state?.searchQuery || "";
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isOPDRegDialogOpen, setIsOPDRegDialogOpen] = useState(false);
   const [selectedPatientForFollowUp, setSelectedPatientForFollowUp] =
     useState(null);
   const [isIPDRegDialogOpen, setIsIPDRegDialogOpen] = useState(false);
+  const [isOPDProcedureDialogOpen, setIsOPDProcedureDialogOpen] =
+    useState(false);
+  const [patientDataForProcedureDialog, setPatientDataForProcedureDialog] =
+    useState(null);
+
+  const dispatch = useDispatch();
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
+
   useEffect(() => {
-    if (patients.length > 0) {
+    if (patients.length === 1) {
       setSelectedPatient(patients[0]);
+    } else {
+      setSelectedPatient(null);
     }
   }, [patients]);
+
+  const handlePageChange = async (newPage) => {
+    if (newPage >= 1 && newPage <= totalPages && searchQuery) {
+      try {
+        const limit = 10; // Assuming a default limit of 10, matches backend and thunk
+        const resultAction = await dispatch(
+          searchPatients({ searchQuery:searchQuery.trim(), page: newPage, limit })
+        );
+
+        if (searchPatients.fulfilled.match(resultAction)) {
+          const { results } = resultAction.payload;
+          // The thunk now returns a structure like: { results: { patients, totalPatients, currentPage, totalPages }, searchQuery, ... }
+          // We need to ensure `navigate` receives the searchResults in the expected format.
+          navigate(location.pathname, {
+            state: {
+              searchResults: results, // This should be { patients, totalPatients, currentPage, totalPages }
+              searchQuery: searchQuery,
+            },
+          });
+        } else {
+          // Handle rejected case if needed, e.g., show a toast
+          console.error(
+            "Failed to fetch new page:",
+            resultAction.payload || resultAction.error
+          );
+          // Optionally, add user-facing error handling here
+        }
+      } catch (error) {
+        console.error("Error dispatching searchPatients:", error);
+        // Optionally, add user-facing error handling here
+      }
+    }
+  };
 
   const actions = [
     {
@@ -89,25 +139,25 @@ export default function PatientSearch() {
     {
       name: "OPD Procedure",
       icon: FileText,
-      action: () =>
-        navigate(`/opd-procedure/${selectedPatient._id}`, {
-          state: { patient: selectedPatient },
-        }),
-    },
-    {
-      name: "Discharge Summary",
-      icon: ClipboardList,
-      action: () =>
-        navigate(
-          `/patients/discharge/${selectedPatient?.admissionDetails.at(-1)._id}`,
-          {
-            state: { patient: selectedPatient },
-          }
-        ),
-    },
+      action: () => {
+        setPatientDataForProcedureDialog({
+          name: selectedPatient.name,
+          registrationNumber: selectedPatient.registrationNumber,
+          gender: selectedPatient.gender,
+          age: selectedPatient.age,
+          contactNumber: selectedPatient.contactNumber,
+          address: selectedPatient.address,
+          _id: selectedPatient._id,
+        });
+        setIsOPDProcedureDialogOpen(true);
+      },
+    }
   ];
 
   const getLatestDate = (patient) => {
+    if (patient.lastVisit) {
+      return format(parseISO(patient.lastVisit), "dd-MM-yyyy");
+    }
     const dates = [
       ...(patient.visits || []).map((visit) => parseISO(visit.bookingDate)),
       ...(patient.admissionDetails || []).map((admission) =>
@@ -155,6 +205,12 @@ export default function PatientSearch() {
               <p className="text-sm text-muted-foreground">Last Visit:</p>
               <p className="text-sm font-medium">{getLatestDate(patient)}</p>
             </div>
+            {patient.lastVisitType && (
+              <div className="flex gap-2 items-center">
+                <p className="text-sm text-muted-foreground">Visit Type:</p>
+                <p className="text-sm font-medium">{patient.lastVisitType}</p>
+              </div>
+            )}
             <div className="flex gap-2 items-center">
               <p className="text-sm text-muted-foreground">Age:</p>
               <p className="text-sm font-medium">{patient.age}</p>
@@ -175,12 +231,37 @@ export default function PatientSearch() {
 
   return (
     <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Search Results for: {searchQuery}</CardTitle>
-        <CardDescription>
-          {patients.length} Registered patients found
-        </CardDescription>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>Search Results for: {searchQuery}</CardTitle>
+          <CardDescription>
+            Displaying {patients.length} of {totalPatients} Registered patients
+            found. Page {currentPage} of {totalPages}.
+          </CardDescription>
+        </div>
+        {patients.length > 0 && totalPages > 1 && (
+          <div className="flex items-center space-x-2">
+            <Button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage <= 1}
+              variant="outline"
+            >
+              Previous
+            </Button>
+            <span className="text-sm">
+              Page {currentPage} of {totalPages}
+            </span>
+            <Button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              variant="outline"
+            >
+              Next
+            </Button>
+          </div>
+        )}
       </CardHeader>
+
       <CardContent>
         {patients.length === 0 ? (
           <div className="text-center py-8">
@@ -206,11 +287,11 @@ export default function PatientSearch() {
                       <TableHead>Patient Name</TableHead>
                       <TableHead>Registration Number</TableHead>
                       <TableHead>Last Visit</TableHead>
+                      <TableHead>Last Visit Type</TableHead>
                       <TableHead>Address</TableHead>
                       <TableHead>Age</TableHead>
                       <TableHead>Gender</TableHead>
                       <TableHead>Mobile Number</TableHead>
-                      <TableHead>Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -220,8 +301,8 @@ export default function PatientSearch() {
                         key={patient._id}
                         className={`cursor-pointer ${
                           selectedPatient?._id === patient._id
-                            ? "bg-blue-100"
-                            : ""
+                            ? "bg-blue-100 hover:bg-blue-200"
+                            : "hover:bg-gray-100"
                         }`}
                         onClick={() => setSelectedPatient(patient)}
                       >
@@ -231,11 +312,12 @@ export default function PatientSearch() {
                         </TableCell>
                         <TableCell>{patient.registrationNumber}</TableCell>
                         <TableCell>{getLatestDate(patient)}</TableCell>
-                        <TableCell>{patient.address?.city || "-"}</TableCell>
+                        <TableCell>{patient.lastVisitType || "-"}</TableCell>
+                        <TableCell>{patient.address || "-"}</TableCell>
                         <TableCell>{patient.age}</TableCell>
                         <TableCell>{patient.gender}</TableCell>
                         <TableCell>{patient.contactNumber}</TableCell>
-                        <TableCell>{patient.status || "OP"}</TableCell>
+
                         <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -351,6 +433,12 @@ export default function PatientSearch() {
           open={isIPDRegDialogOpen}
           onOpenChange={setIsIPDRegDialogOpen}
           patientData={selectedPatient}
+        />
+
+        <OPDProcedureDialog
+          open={isOPDProcedureDialogOpen}
+          onOpenChange={setIsOPDProcedureDialogOpen}
+          initialPatientData={patientDataForProcedureDialog}
         />
       </CardContent>
     </Card>

@@ -112,9 +112,9 @@ export default function PatientInfoForm({
     if (!formData.registrationNumber) return;
     
     try {
-      const result = await dispatch(searchPatients(formData.registrationNumber)).unwrap();
-      if (result.results && result.results.length > 0) {
-        const patient = result.results[0];
+      const result = await dispatch(searchPatients({searchQuery:formData.registrationNumber.trim()})).unwrap();
+      if (result.results?.patients && result.results?.patients?.length > 0) {
+        const patient = result.results?.patients?.[0];
         setSearchedPatient({
           ...patient,
           isFromSearch: true

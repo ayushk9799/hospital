@@ -29,7 +29,7 @@ import {
   SelectValue,
 } from "../../ui/select";
 import { useToast } from "../../../hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2, MoreVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { Checkbox } from "../../ui/checkbox";
 import { useMediaQuery } from "../../../hooks/use-media-query";
@@ -37,7 +37,15 @@ import MemoizedInput from "./MemoizedInput";
 import { fetchServices } from "../../../redux/slices/serviceSlice";
 import OPDBillTokenModal from "./OPDBillTokenModal";
 import MultiSelectInput from "../MultiSelectInput";
-import { format, formatDistanceToNow, differenceInDays } from "date-fns";
+import { format, differenceInDays } from "date-fns";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../../ui/dropdown-menu";
 
 const paymentMethods = [
   { name: "Cash" },
@@ -382,12 +390,12 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       const sourceData = searchedPatient || patientData;
 
       const tempGuardianName =
-        sourceData?.visits[0]?.guardianName ||
-        sourceData?.admissionDetails[0]?.guardianName ||
+        sourceData?.visits?.[0]?.guardianName ||
+        sourceData?.admissionDetails?.[0]?.guardianName ||
         "";
       const tempRelation =
-        sourceData?.visits[0]?.relation ||
-        sourceData?.admissionDetails[0]?.relation ||
+        sourceData?.visits?.[0]?.relation ||
+        sourceData?.admissionDetails?.[0]?.relation ||
         "";
 
       setFormData((prev) => ({
@@ -554,50 +562,142 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
             <DialogTitle className="mb-2 md:mb-0">
               Patient Registration
             </DialogTitle>
-            <DialogDescription className="hidden md:flex justify-between">
+            <DialogDescription className="hidden md:flex justify-between items-center">
               <span>Register new patient</span>
-              {searchedPatient && searchedPatient.lastVisit && (
-                <span className="text-black font-semibold">
-                  Last Visit:{" "}
-                  {format(new Date(searchedPatient.lastVisit), "dd MMM yyyy")} [
-                  <span
-                    className={`capitalize ${
-                      differenceInDays(
-                        new Date(
-                          new Date()
-                            .toLocaleDateString("en-IN", {
-                              year: "numeric",
-                              month: "2-digit",
-                              day: "2-digit",
-                            })
-                            .split("/")
-                            .reverse()
-                            .join("-")
-                        ).setHours(0, 0, 0, 0),
-                        new Date(searchedPatient.lastVisit).setHours(0, 0, 0, 0)
-                      ) > 14
-                        ? "text-red-500"
-                        : "text-green-500"
-                    }`}
-                  >
-                    {differenceInDays(
-                      new Date(
-                        new Date()
-                          .toLocaleDateString("en-IN", {
-                            year: "numeric",
-                            month: "2-digit",
-                            day: "2-digit",
-                          })
-                          .split("/")
-                          .reverse()
-                          .join("-")
-                      ).setHours(0, 0, 0, 0),
-                      new Date(searchedPatient.lastVisit).setHours(0, 0, 0, 0)
-                    )}{" "}
-                    days ago
-                  </span>
-                  ]
-                </span>
+              {searchedPatient && (
+                <div className="flex items-center space-x-2">
+                  {searchedPatient.lastVisit && (
+                    <span className="text-black font-semibold">
+                      Last Visit:{" "}
+                      {format(
+                        new Date(searchedPatient.lastVisit),
+                        "dd MMM yyyy"
+                      )}{" "}
+                      [
+                      <span
+                        className={`capitalize ${
+                          differenceInDays(
+                            new Date(
+                              new Date()
+                                .toLocaleDateString("en-IN", {
+                                  year: "numeric",
+                                  month: "2-digit",
+                                  day: "2-digit",
+                                })
+                                .split("/")
+                                .reverse()
+                                .join("-")
+                            ).setHours(0, 0, 0, 0),
+                            new Date(searchedPatient.lastVisit).setHours(
+                              0,
+                              0,
+                              0,
+                              0
+                            )
+                          ) > 14
+                            ? "text-red-500"
+                            : "text-green-500"
+                        }`}
+                      >
+                        {differenceInDays(
+                          new Date(
+                            new Date()
+                              .toLocaleDateString("en-IN", {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                              })
+                              .split("/")
+                              .reverse()
+                              .join("-")
+                          ).setHours(0, 0, 0, 0),
+                          new Date(searchedPatient.lastVisit).setHours(
+                            0,
+                            0,
+                            0,
+                            0
+                          )
+                        )}{" "}
+                        days ago
+                      </span>{" "}
+                      ({searchedPatient.lastVisitType}) ]
+                    </span>
+                  )}
+                  {(searchedPatient.admissionDetails?.[0] ||
+                    searchedPatient.visits?.[0]) && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-[20px] w-[10px]"
+                        >
+                          <MoreVertical className="h-[12px] w-4" />
+                          <span className="sr-only">Open patient history</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuSeparator />
+                        {searchedPatient.admissionDetails?.length > 0 && (
+                          <>
+                            <DropdownMenuItem className="font-semibold text-sm pointer-events-none">
+                              Admission Details
+                            </DropdownMenuItem>
+                            {searchedPatient.admissionDetails.map(
+                              (admission, index) => (
+                                <DropdownMenuItem
+                                  key={index}
+                                  className="text-xs pl-4 pointer-events-none"
+                                >
+                                  Date:{" "}
+                                  {format(
+                                    new Date(admission.bookingDate),
+                                    "dd MMM yyyy"
+                                  )}
+                                  {" ("}
+                                  {differenceInDays(
+                                    new Date(),
+                                    new Date(admission.bookingDate)
+                                  )}{" "}
+                                  days ago)
+                                </DropdownMenuItem>
+                              )
+                            )}
+                          </>
+                        )}
+                        {searchedPatient.admissionDetails?.length > 0 &&
+                          searchedPatient.visits?.length > 0 && (
+                            <DropdownMenuSeparator />
+                          )}
+                        {searchedPatient.visits?.length > 0 && (
+                          <>
+                            <DropdownMenuItem className="font-semibold text-sm pointer-events-none">
+                              OPD Visit Details
+                            </DropdownMenuItem>
+                            {searchedPatient.visits.map((visit, index) => (
+                              <DropdownMenuItem
+                                key={index}
+                                className="text-xs pl-4 pointer-events-none"
+                              >
+                                Date:{" "}
+                                {format(
+                                  new Date(visit.bookingDate),
+                                  "dd MMM yyyy"
+                                )}
+                                {" ("}
+                                {differenceInDays(
+                                  new Date(),
+                                  new Date(visit.bookingDate)
+                                )}{" "}
+                                days ago)
+                              </DropdownMenuItem>
+                            ))}
+                          </>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                </div>
               )}
             </DialogDescription>
           </DialogHeader>

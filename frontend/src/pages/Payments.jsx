@@ -895,12 +895,15 @@ const Payments = () => {
                           </TableCell>
                           <TableCell>{payment.paymentMethod}</TableCell>
                           <TableCell className="font-medium">
-                            {payment.description ||
-                              (payment.associatedInvoiceOrId
-                                ? payment.associatedInvoiceOrId
-                                : "") +
-                                " " +
-                                payment.paymentType?.name}
+                            {payment.paymentType?.name === "OPDProcedure"
+                              ? ((payment.associatedInvoiceOrId?payment.associatedInvoiceOrId+" ":" ")+payment.description)
+                              : (payment.associatedInvoiceOrId
+                                  ? payment.associatedInvoiceOrId + " "
+                                  : "") +
+                                (payment.paymentType?.name || "") +
+                                (payment.description
+                                  ? " for patient " + payment.description
+                                  : "")}
                           </TableCell>
                           <TableCell className="font-medium">
                             ₹{payment.amount?.toFixed(2)}
@@ -951,9 +954,15 @@ const Payments = () => {
                         <div className="flex justify-between col-span-2">
                           <span className="text-gray-500">Description:</span>
                           <span className="text-right">
-                            {payment.description ||
-                              payment.associatedInvoiceOrId ||
-                              payment.paymentType?.name}
+                            {payment.paymentType?.name === "OPDProcedure"
+                              ? payment.description
+                              : (payment.associatedInvoiceOrId
+                                  ? payment.associatedInvoiceOrId + " "
+                                  : "") +
+                                (payment.paymentType?.name || "") +
+                                (payment.description
+                                  ? " " + payment.description
+                                  : "")}
                           </span>
                         </div>
                         <div className="flex justify-between col-span-2">

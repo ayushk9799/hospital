@@ -25,6 +25,7 @@ export default function PatientOverview() {
   const [activeTab, setActiveTab] = useState("visits");
   const { patientDetailsStatus } = useSelector((state) => state.patients);
   const [patientDetails, setPatientDetails] = useState(null);
+  const [selectedVisit, setSelectedVisit] = useState(null);
   const [billData, setBillData] = useState(null);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   // Fetch patient details when component mounts
@@ -38,16 +39,10 @@ export default function PatientOverview() {
           (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)
         );
         if (allvisits.length > 0) {
-          const selectedOne =
+          const initialSelectedVisit =
             allvisits.find((visit) => visit._id === location?.state?.ID) ||
             allvisits[0];
-
-          if (selectedOne?.bills?.services?.length > 0) {
-            setBillData({
-              billId: selectedOne.bills.services[0]._id,
-              billData: selectedOne.bills,
-            });
-          }
+          setSelectedVisit(initialSelectedVisit);
         }
       })
       .catch((error) => {
@@ -57,7 +52,19 @@ export default function PatientOverview() {
           variant: "destructive",
         });
       });
-  }, [dispatch, patientId]);
+  }, [dispatch, patientId, location?.state?.ID]);
+
+  // Effect to update billData when selectedVisit changes
+  useEffect(() => {
+    if (selectedVisit?.bills?.services?.length > 0) {
+      setBillData({
+        billId: selectedVisit.bills.services[0]._id,
+        billData: selectedVisit.bills,
+      });
+    } else {
+      setBillData(null);
+    }
+  }, [selectedVisit]);
 
   // Handle tab changes
   const handleTabChange = (value) => {
@@ -78,6 +85,11 @@ export default function PatientOverview() {
     return <div>Loading...</div>;
   }
 
+  // Handler for when a visit is selected in PatientDetails
+  const handleVisitSelect = (visit) => {
+    setSelectedVisit(visit);
+  };
+
   return (
     <Card className="min-h-screen border-none">
       <Tabs
@@ -87,7 +99,7 @@ export default function PatientOverview() {
       >
         <div className="border-b bg-white sticky top-0 z-10 shadow-sm">
           <div className="container mx-auto px-4">
-            <div className="flex items-center h-14">
+            <div className="flex items-center h-10">
               <button
                 className="flex items-center gap-2 hover:text-primary transition-colors mr-8"
                 onClick={() => navigate("/patients")}
@@ -120,9 +132,13 @@ export default function PatientOverview() {
           </div>
         </div>
 
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 ">
           <TabsContent value="visits" className="m-0">
-            <PatientDetails patientData={patientDetails} />
+            <PatientDetails
+              patientData={patientDetails}
+              selectedVisit={selectedVisit}
+              onVisitSelect={handleVisitSelect}
+            />
           </TabsContent>
 
           <TabsContent value="bills" className="m-0">

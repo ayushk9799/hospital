@@ -29,6 +29,8 @@ export const formatSubmissionData = (formData) => ({
   ...formData,
   age: Number(formData.age),
   patientType: "IPD",
+  lastVisit:formData.admission.bookingDate,
+  lastVisitType:"IPD",
   admission: {
     ...formData.admission,
     assignedRoom: formData.admission.assignedRoom || null,

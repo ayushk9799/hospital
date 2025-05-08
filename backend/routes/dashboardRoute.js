@@ -76,21 +76,13 @@ router.get("/daily-stats", async (req, res) => {
           totalCount: { $sum: "$count" },
           totalRevenue: {
             $sum: {
-              $cond: [
-                { $eq: ["$_id.type", "Income"] },
-                "$amount",
-                0
-              ]
-            }
+              $cond: [{ $eq: ["$_id.type", "Income"] }, "$amount", 0],
+            },
           },
           totalExpense: {
             $sum: {
-              $cond: [
-                { $eq: ["$_id.type", "Expense"] },
-                "$amount",
-                0
-              ]
-            }
+              $cond: [{ $eq: ["$_id.type", "Expense"] }, "$amount", 0],
+            },
           },
           details: {
             $push: {
@@ -110,7 +102,7 @@ router.get("/daily-stats", async (req, res) => {
           revenue: "$totalRevenue",
           expense: "$totalExpense",
           count: "$totalCount",
-          
+
           ipd: {
             $reduce: {
               input: {
@@ -251,7 +243,7 @@ router.get("/daily-stats", async (req, res) => {
               input: {
                 $filter: {
                   input: "$details",
-                  cond: { $eq: ["$$this.type", "Expense"] }
+                  cond: { $eq: ["$$this.type", "Expense"] },
                 },
               },
               initialValue: {
@@ -261,7 +253,7 @@ router.get("/daily-stats", async (req, res) => {
                 cheque: { total: 0, count: 0 },
                 bankTransfer: { total: 0, count: 0 },
                 other: { total: 0, count: 0 },
-                due: { total: 0, count: 0 }
+                due: { total: 0, count: 0 },
               },
               in: {
                 cash: {
@@ -269,73 +261,79 @@ router.get("/daily-stats", async (req, res) => {
                     { $eq: ["$$this.paymentMethod", "Cash"] },
                     {
                       total: { $add: ["$$value.cash.total", "$$this.amount"] },
-                      count: { $add: ["$$value.cash.count", "$$this.count"] }
+                      count: { $add: ["$$value.cash.count", "$$this.count"] },
                     },
-                    "$$value.cash"
-                  ]
+                    "$$value.cash",
+                  ],
                 },
                 upi: {
                   $cond: [
                     { $eq: ["$$this.paymentMethod", "UPI"] },
                     {
                       total: { $add: ["$$value.upi.total", "$$this.amount"] },
-                      count: { $add: ["$$value.upi.count", "$$this.count"] }
+                      count: { $add: ["$$value.upi.count", "$$this.count"] },
                     },
-                    "$$value.upi"
-                  ]
+                    "$$value.upi",
+                  ],
                 },
                 card: {
                   $cond: [
                     { $eq: ["$$this.paymentMethod", "Card"] },
                     {
                       total: { $add: ["$$value.card.total", "$$this.amount"] },
-                      count: { $add: ["$$value.card.count", "$$this.count"] }
+                      count: { $add: ["$$value.card.count", "$$this.count"] },
                     },
-                    "$$value.card"
-                  ]
+                    "$$value.card",
+                  ],
                 },
                 cheque: {
                   $cond: [
                     { $eq: ["$$this.paymentMethod", "Cheque"] },
                     {
-                      total: { $add: ["$$value.cheque.total", "$$this.amount"] },
-                      count: { $add: ["$$value.cheque.count", "$$this.count"] }
+                      total: {
+                        $add: ["$$value.cheque.total", "$$this.amount"],
+                      },
+                      count: { $add: ["$$value.cheque.count", "$$this.count"] },
                     },
-                    "$$value.cheque"
-                  ]
+                    "$$value.cheque",
+                  ],
                 },
                 bankTransfer: {
                   $cond: [
                     { $eq: ["$$this.paymentMethod", "Bank Transfer"] },
                     {
-                      total: { $add: ["$$value.bankTransfer.total", "$$this.amount"] },
-                      count: { $add: ["$$value.bankTransfer.count", "$$this.count"] }
+                      total: {
+                        $add: ["$$value.bankTransfer.total", "$$this.amount"],
+                      },
+                      count: {
+                        $add: ["$$value.bankTransfer.count", "$$this.count"],
+                      },
                     },
-                    "$$value.bankTransfer"
-                  ]
+                    "$$value.bankTransfer",
+                  ],
                 },
                 other: {
                   $cond: [
                     { $eq: ["$$this.paymentMethod", "Other"] },
                     {
                       total: { $add: ["$$value.other.total", "$$this.amount"] },
-                      count: { $add: ["$$value.other.count", "$$this.count"] }
+                      count: { $add: ["$$value.other.count", "$$this.count"] },
                     },
-                    "$$value.other"
-                  ]
+                    "$$value.other",
+                  ],
                 },
                 due: {
                   $cond: [
                     { $eq: ["$$this.paymentMethod", "Due"] },
                     {
                       total: { $add: ["$$value.due.total", "$$this.amount"] },
-                      count: { $add: ["$$value.due.count", "$$this.count"] }
+                      count: { $add: ["$$value.due.count", "$$this.count"] },
                     },
-                    "$$value.due"
-                  ]
-                }
-              }
-            }
+                    "$$value.due",
+                  ],
+                },
+              },
+            },
           },
         },
       },
@@ -439,10 +437,10 @@ router.get("/daily-stats", async (req, res) => {
           cheque: { total: 0, count: 0 },
           bankTransfer: { total: 0, count: 0 },
           other: { total: 0, count: 0 },
-          due: { total: 0, count: 0 }
-        }
+          due: { total: 0, count: 0 },
+        },
       };
-    
+
       const appStat = mergedAppointmentStats.find(
         (stat) => stat._id === date
       ) || {
@@ -483,19 +481,32 @@ router.get("/daily-stats", async (req, res) => {
 router.get("/search", async (req, res) => {
   try {
     const { q } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    const patients = await Patient.find({
+    const query = {
       $or: [
         { name: { $regex: `^${q}`, $options: "i" } },
         { contactNumber: q },
         { registrationNumber: { $regex: `^${q}$`, $options: "i" } },
       ],
-    })
+    };
+
+    const patients = await Patient.find(query)
       .populate("visits", "bookingDate guardianName relation")
       .populate("admissionDetails", "bookingDate guardianName relation")
-      .limit(10);
+      .skip(skip)
+      .limit(limit);
 
-    res.status(200).json(patients);
+    const totalPatients = await Patient.countDocuments(query);
+
+    res.status(200).json({
+      patients,
+      totalPatients,
+      currentPage: page,
+      totalPages: Math.ceil(totalPatients / limit),
+    });
   } catch (error) {
     console.error("Patient search route error:", error);
     res.status(500).json({ error: error.message });
