@@ -29,6 +29,7 @@ export const hospitalPlugin = (schema) => {
     "updateMany",
     "updateOne",
     "deleteOne",
+    "countDocuments",
     "deleteMany",
     "findByIdAndDelete",
     "findByIdAndUpdate",

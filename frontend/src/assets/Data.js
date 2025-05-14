@@ -812,10 +812,10 @@ export const labReportFields = {
         unit: "mg/dL",
         normalRange: "<130",
         calculationDetails: {
-          formula: "total_cholesterol - hdl_cholesterol - (triglycerides / 5)",
+          formula: "total_cholesterol - hdl - (triglycerides / 5)",
           dependencies: [
             "total_cholesterol",
-            "hdl_cholesterol",
+            "hdl",
             "triglycerides",
           ],
         },
@@ -848,8 +848,8 @@ export const labReportFields = {
         unit: "",
         normalRange: "<3.5",
         calculationDetails: {
-          formula: "total_cholesterol / hdl_cholesterol",
-          dependencies: ["total_cholesterol", "hdl_cholesterol"],
+          formula: "total_cholesterol / hdl",
+          dependencies: ["total_cholesterol", "hdl"],
         },
       },
     ],
@@ -948,8 +948,8 @@ export const labReportFields = {
         unit: "",
         normalRange: "6-22",
         calculationDetails: {
-          formula: "urea / creatinine",
-          dependencies: ["urea", "creatinine"],
+          formula: "urea_nitrogen / creatinine",
+          dependencies: ["urea_nitrogen", "creatinine"],
         },
       },
       {
