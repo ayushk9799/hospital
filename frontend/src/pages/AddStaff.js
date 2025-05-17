@@ -909,6 +909,9 @@ export default function AddStaff() {
                   "receptionist",
                   "doctor",
                   "technician",
+                  "lab technician",
+                  "manager",
+                  "accountant",
                 ].map((role) => (
                   <div key={role} className="flex items-center space-x-2">
                     <Checkbox
@@ -922,7 +925,7 @@ export default function AddStaff() {
                       htmlFor={role}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      {role.charAt(0).toUpperCase() + role.slice(1)}
+                      {role.split(" ")?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1))?.join(" ")}
                     </label>
                   </div>
                 ))}
