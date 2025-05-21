@@ -232,6 +232,55 @@ router.post("/template/create", identifyHospital, async (req, res) => {
   }
 });
 
+// New route for bulk template upload
+router.post("/template/bulk-upload", identifyHospital, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    let template = await Template.findOne().session(session);
+    if (!template) {
+      template = new Template({
+        labTestsTemplate: [],
+        headerTemplateArray: [],
+        diagnosisTemplate: [],
+        headerTemplate: "",
+        labReportUiTemplate: "",
+        dischargeSummaryTemplate: "",
+        opdPrescriptionTemplate: "",
+        opdRxTemplate: "",
+        opdBillTokenTemplate: "",
+        opdPrescriptionTemplateArray: [],
+        opdRxTemplateArray: [],
+        comorbidities: [],
+        medicinelist: [],
+        dischargeFormTemplateArray: [],
+        dischargeSummaryTemplateArray: [],
+        opdPrescriptionTemplateArray: [],
+        dischargeFormTemplates: {},
+      });
+    }
+
+    // Replace the entire labTestsTemplate array with the new data
+    if (req.body.labTestsTemplate && Array.isArray(req.body.labTestsTemplate)) {
+      template.labTestsTemplate = req.body.labTestsTemplate;
+    }
+
+    await template.save({ session });
+    await session.commitTransaction();
+    session.endSession();
+
+    res.status(200).json(template);
+  } catch (error) {
+    await session.abortTransaction();
+    session.endSession();
+    res.status(400).json({
+      message: "Error handling bulk template upload",
+      error: error.message,
+    });
+  }
+});
+
 // New route to get the template
 router.get("/template/read", identifyHospital, async (req, res) => {
   try {

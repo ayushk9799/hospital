@@ -1155,7 +1155,6 @@ export default function DischargeSummary() {
     const savePayload = {
       patientId: patientId || patient._id,
       ...formData,
-      ...patientInfo,
       formConfig,
       comorbidities: (() => {
         const data = formData.comorbidities;

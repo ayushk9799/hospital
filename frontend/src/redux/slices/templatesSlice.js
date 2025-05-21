@@ -57,6 +57,33 @@ export const updateTemplate = createLoadingAsyncThunk(
   }
 );
 
+// New async thunk for bulk template upload
+export const bulkUploadTemplates = createLoadingAsyncThunk(
+  "templates/bulkUpload",
+  async (templatesData, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/hospitals/template/bulk-upload`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(templatesData),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to bulk upload templates");
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 // Async thunk for updating service bill collections
 export const updateServiceBillCollections = createAsyncThunk(
   "templates/updateServiceBillCollections",
@@ -244,6 +271,19 @@ const templatesSlice = createSlice({
       })
       .addCase(deleteTemplate.fulfilled, (state, action) => {
         state.labTestsTemplate = action.payload.labTestsTemplate;
+      })
+      .addCase(bulkUploadTemplates.pending, (state) => {
+        state.updateTempleteStatus = "loading";
+      })
+      .addCase(bulkUploadTemplates.fulfilled, (state, action) => {
+        state.updateTempleteStatus = "succeeded";
+        if (action.payload.labTestsTemplate) {
+          state.labTestsTemplate = action.payload.labTestsTemplate;
+        }
+      })
+      .addCase(bulkUploadTemplates.rejected, (state, action) => {
+        state.updateTempleteStatus = "failed";
+        state.error = action.payload;
       });
   },
 });

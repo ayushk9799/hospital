@@ -333,7 +333,7 @@ const Lab = () => {
                                 {template.name.toUpperCase()}
                               </CardTitle>
                               <span className="text-gray-500 text-xs">
-                                ({Object.keys(template.fields).length} fields)
+                                ({Object.keys(template?.fields || {}).length} fields)
                               </span>
                             </div>
                             <div className="flex items-center gap-2">

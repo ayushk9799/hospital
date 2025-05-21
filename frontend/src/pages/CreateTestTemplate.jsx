@@ -1,14 +1,19 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useDispatch } from "react-redux";
-import { updateTemplate } from "../redux/slices/templatesSlice";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  updateTemplate,
+  fetchTemplates,
+  bulkUploadTemplates,
+  editTemplate,
+} from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Checkbox } from "../components/ui/checkbox";
 import { labCategories, labReportFields } from "../assets/Data";
-import { Settings, Search, ChevronLeft, Plus, X } from "lucide-react";
+import { Settings, Search, ChevronLeft, Plus, X, FileDown } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   Dialog,
   DialogContent,
@@ -16,11 +21,18 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../components/ui/dialog";
+import * as XLSX from "xlsx";
 
 export default function CreateTestTemplate() {
   const { toast } = useToast();
   const dispatch = useDispatch();
+  const { labTestsTemplate, status } = useSelector((state) => state.templates);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isEditMode = location.state?.editMode;
+  const editTemplateData = location.state?.templateData;
+
+
   const [selectedTests, setSelectedTests] = useState({});
   const [selectedFields, setSelectedFields] = useState({});
   const [templateName, setTemplateName] = useState("");
@@ -34,6 +46,8 @@ export default function CreateTestTemplate() {
   const leftScrollAreaRef = useRef(null);
   const rightScrollAreaRef = useRef(null);
   const [customFields, setCustomFields] = useState({});
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = React.useRef();
 
   const formatKey = (str) => {
     return str.toLowerCase().replace(/[()]/g, "").replace(/\s+/g, "-");
@@ -73,7 +87,7 @@ export default function CreateTestTemplate() {
   const handleSelectAllFields = (category, test) => {
     const formattedCategory = formatKey(category);
     const fields = labReportFields[formattedCategory]?.[test] || [];
-   
+
     const updatedFields = {};
     fields.forEach((field) => {
       updatedFields[field.name] = {
@@ -145,6 +159,24 @@ export default function CreateTestTemplate() {
     }));
   };
 
+  // Restore the useEffect for setting initial template data in edit mode
+  useEffect(() => {
+    if (isEditMode && editTemplateData) {
+      setTemplateName(editTemplateData.name);
+      setRate(editTemplateData.rate);
+      // Don't close the modal here as it might be needed for other purposes
+    }
+  }, [isEditMode, editTemplateData]);
+
+  // Reset errors when dialog closes
+  const handleDialogChange = (open) => {
+    setShowCreationModal(open);
+    if (!open) {
+      setNameError("");
+      setFieldErrors({});
+    }
+  };
+
   const handleCreateTemplate = async () => {
     let hasErrors = false;
     const errors = {};
@@ -156,22 +188,22 @@ export default function CreateTestTemplate() {
     }
 
     // Validate if any fields are selected
-    const hasSelectedFields =
-      Object.values(selectedFields).some((tests) =>
-        Object.values(tests).some((fields) =>
-          Object.values(fields).some((field) => field.isSelected)
-        )
-      ) || Object.values(customFields).some((field) => field.isSelected);
+    // const hasSelectedFields =
+    //   Object.values(selectedFields).some((tests) =>
+    //     Object.values(tests).some((fields) =>
+    //       Object.values(fields).some((field) => field.isSelected)
+    //     )
+    //   ) || Object.values(customFields).some((field) => field.isSelected);
 
-    if (!hasSelectedFields) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Please select at least one field",
-      });
-      hasErrors = true;
-      return;
-    }
+    // if (!hasSelectedFields) {
+    //   toast({
+    //     variant: "destructive",
+    //     title: "Validation Error",
+    //     description: "Please select at least one field",
+    //   });
+    //   hasErrors = true;
+    //   return;
+    // }
 
     // Validate selected fields
     Object.entries(selectedFields).forEach(([category, tests]) => {
@@ -194,77 +226,108 @@ export default function CreateTestTemplate() {
       return;
     }
 
-
-    const template = {
-      name: templateName,
-      rate: Number(rate) || 0,
-      fields: {
-        ...Object.entries(customFields)
-          .filter(([_, field]) => field.isSelected)
-          .reduce(
-            (acc, [fieldId, field]) => ({
-              ...acc,
-              [fieldId]: {
-                label: field.label,
-                value: field.value,
-                unit: field.unit,
-                normalRange: field.normalRange,
-                ...(field.options &&
-                  field.options.length > 0 && {
-                    options: field.options
-                      .split(",")
-                      .map((opt) => opt.trim())
-                      .filter((opt) => opt !== ""),
-                  }),
-                ...(field.calculationDetails && {
-                  calculationDetails: field.calculationDetails,
-                }),
-              },
-            }),
-            {}
-          ),
-        ...Object.entries(selectedFields).reduce((acc, [category, tests]) => {
-          Object.entries(tests).forEach(([test, fields]) => {
-            Object.entries(fields)
-              .filter(([_, field]) => field.isSelected)
-              .forEach(([fieldName, field]) => {
-                const processedOptions = !Array.isArray(field.options)
-                  ? field.options
-                      .split(",")
-                      .map((opt) => opt.trim())
-                      .filter((opt) => opt !== "")
-                  : field.options;
-
-                acc[`${fieldName}`] = {
+    try {
+      const template = {
+        name: templateName.trim(),
+        rate: Number(rate) || 0,
+        fields: {
+          ...Object.entries(customFields)
+            .filter(([_, field]) => field.isSelected)
+            .reduce(
+              (acc, [fieldId, field]) => ({
+                ...acc,
+                [field.name]: {
                   label: field.label,
                   value: field.value,
                   unit: field.unit,
                   normalRange: field.normalRange,
-                  ...(processedOptions.length > 0 && {
-                    options: processedOptions,
-                  }),
+                  ...(field.options &&
+                    field.options.length > 0 && {
+                      options: field.options
+                        .split(",")
+                        .map((opt) => opt.trim())
+                        .filter((opt) => opt !== ""),
+                    }),
                   ...(field.calculationDetails && {
                     calculationDetails: field.calculationDetails,
                   }),
-                };
-              });
-          });
-          return acc;
-        }, {}),
-      },
-    };
+                },
+              }),
+              {}
+            ),
+          ...Object.entries(selectedFields).reduce((acc, [category, tests]) => {
+            Object.entries(tests).forEach(([test, fields]) => {
+              Object.entries(fields)
+                .filter(([_, field]) => field.isSelected)
+                .forEach(([fieldName, field]) => {
+                  const processedOptions = !Array.isArray(field.options)
+                    ? field.options
+                        ?.split(",")
+                        ?.map((opt) => opt.trim())
+                        ?.filter((opt) => opt !== "")
+                    : field.options;
 
-    try {
-      await dispatch(updateTemplate({ labTestsTemplate: template })).unwrap();
-      // Reset form after successful creation
-      setSelectedTests({});
-      setSelectedFields({});
-      setTemplateName("");
+                  acc[`${fieldName}`] = {
+                    label: field.label,
+                    value: field.value,
+                    unit: field.unit,
+                    normalRange: field.normalRange,
+                    ...(processedOptions?.length > 0 && {
+                      options: processedOptions,
+                    }),
+                    ...(field.calculationDetails && {
+                      calculationDetails: field.calculationDetails,
+                    }),
+                  };
+                });
+            });
+            return acc;
+          }, {}),
+        },
+      };
+
+      if (isEditMode) {
+        const index = labTestsTemplate.findIndex(
+          (t) => t.name === editTemplateData.name
+        );
+        if (index !== -1) {
+          await dispatch(
+            editTemplate({
+              field: "labTestsTemplate",
+              index,
+              template,
+            })
+          ).unwrap();
+          toast({
+            title: "Success",
+            description: "Template updated successfully",
+          });
+        }
+      } else {
+        await dispatch(updateTemplate({ labTestsTemplate: template })).unwrap();
+        toast({
+          title: "Success",
+          description: "Template created successfully",
+        });
+      }
+
+      // Only reset if not in edit mode
+      if (!isEditMode) {
+        setSelectedTests({});
+        setSelectedFields({});
+        setTemplateName("");
+        setRate("");
+      }
       setNameError("");
-      setRate("");
       setShowCreationModal(false);
+      navigate("/settings/lab-templates");
     } catch (error) {
-      console.error("Error creating template:", error);
+      console.error("Error saving template:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to save template. Please try again.",
+      });
     }
   };
 
@@ -411,31 +474,34 @@ export default function CreateTestTemplate() {
     }, 100); // Small delay to ensure the parameter section is rendered
   };
 
-  // Add useEffect to update template name based on selection
+  // Modify the useEffect for template name auto-update
   useEffect(() => {
-    // Count selected tests
-    let selectedTestCount = 0;
-    let lastSelectedTest = null;
-    let lastSelectedCategory = null;
+    // Only auto-update name if not in edit mode
+    if (!isEditMode) {
+      // Count selected tests
+      let selectedTestCount = 0;
+      let lastSelectedTest = null;
+      let lastSelectedCategory = null;
 
-    Object.entries(selectedTests).forEach(([category, tests]) => {
-      Object.entries(tests).forEach(([test, isSelected]) => {
-        if (isSelected) {
-          selectedTestCount++;
-          lastSelectedTest = test;
-          lastSelectedCategory = categoryNameMap[category];
-        }
+      Object.entries(selectedTests).forEach(([category, tests]) => {
+        Object.entries(tests).forEach(([test, isSelected]) => {
+          if (isSelected) {
+            selectedTestCount++;
+            lastSelectedTest = test;
+            lastSelectedCategory = categoryNameMap[category];
+          }
+        });
       });
-    });
 
-    // Update template name only if exactly one test is selected
-    if (selectedTestCount === 1) {
-      setTemplateName(`${lastSelectedTest}`);
-    } else if (selectedTestCount > 1) {
-      // Clear template name if multiple tests are selected
-      setTemplateName("");
+      // Update template name only if exactly one test is selected
+      if (selectedTestCount === 1) {
+        setTemplateName(`${lastSelectedTest}`);
+      } else if (selectedTestCount > 1) {
+        // Clear template name if multiple tests are selected
+        setTemplateName("");
+      }
     }
-  }, [selectedTests, categoryNameMap]);
+  }, [selectedTests, categoryNameMap, isEditMode]);
 
   const handleBack = () => {
     navigate(-1);
@@ -497,6 +563,204 @@ export default function CreateTestTemplate() {
     }));
   };
 
+  const handleExportToExcel = () => {
+    // Get existing templates from Redux store
+    const existingTemplates = labTestsTemplate || [];
+
+    if (existingTemplates.length === 0) {
+      toast({
+        title: "No templates to export",
+        description: "Please create some templates first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Prepare data for export - create rows that Excel can display
+    const exportData = existingTemplates.flatMap((template) => {
+      const baseTemplateInfo = {
+        TemplateName: template.name || "",
+        Rate: template.rate || 0,
+        Notes: template.notes || "",
+        Sections: template.sections?.map((s) => s.name).join(", ") || "",
+        TemplateId: template._id || "",
+      };
+
+      // If template has no fields, return just the template info
+      if (!template.fields || Object.keys(template.fields).length === 0) {
+        return [baseTemplateInfo];
+      }
+
+      // For each field, create a row with template info and field details
+      return Object.entries(template.fields).map(
+        ([fieldName, field], index) => ({
+          ...baseTemplateInfo,
+          FieldName: fieldName,
+          Field: field.label || fieldName,
+          FieldId: field._id || "",
+          Unit: field.unit || "",
+          NormalRange: field.normalRange || "",
+          Options: Array.isArray(field.options)
+            ? field.options.join(", ")
+            : field.options || "",
+        })
+      );
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Test Templates");
+    XLSX.writeFile(workbook, "test_templates.xlsx");
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+
+      // Group fields by template ID or name to maintain relationships
+      const templatesByGroup = json.reduce((acc, row) => {
+        // Use TemplateId if available, otherwise use TemplateName as the key
+        const templateKey = row.TemplateId || row.TemplateName;
+
+        if (!acc[templateKey]) {
+          acc[templateKey] = {
+            _id: row.TemplateId || undefined, // Only include _id if it exists
+            name: row.TemplateName,
+            rate: Number(row.Rate) || 0,
+            notes: row.Notes || "",
+            sections: row.Sections
+              ? row.Sections.split(",").map((name, index) => ({
+                  name: name.trim(),
+                  position: index,
+                }))
+              : [],
+            fields: {},
+          };
+        }
+
+        // Add field to template using FieldName
+        const fieldId = row.FieldName;
+        if (fieldId) {
+          acc[templateKey].fields[fieldId] = {
+            label: row.Field,
+            value: "",
+            unit: row.Unit || "",
+            normalRange: row.NormalRange || "",
+            options: row.Options
+              ? row.Options.split(",").map((opt) => opt.trim())
+              : [],
+            isSelected: true,
+          };
+        }
+
+        return acc;
+      }, {});
+
+      // Convert to array format expected by the API
+      const templatesArray = Object.values(templatesByGroup);
+
+      // Use bulkUploadTemplates instead of updateTemplate
+      await dispatch(
+        bulkUploadTemplates({ labTestsTemplate: templatesArray })
+      ).unwrap();
+
+      toast({
+        title: "Import successful",
+        description: `${templatesArray.length} templates imported with ${json.length} fields.`,
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: error.message || "Could not import test templates.",
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+      event.target.value = "";
+    }
+  };
+
+  useEffect(() => {
+    if (status === "idle") {
+      dispatch(fetchTemplates());
+    }
+  }, [status, dispatch]);
+
+  // Add useEffect to handle pre-selected fields in edit mode
+  useEffect(() => {
+    if (isEditMode && editTemplateData) {
+      // Set template name and rate
+      setTemplateName(editTemplateData.name);
+      setRate(editTemplateData.rate);
+
+      // Process fields to set selected tests and fields
+      const newSelectedTests = {};
+      const newSelectedFields = {};
+      const newCustomFields = {};
+
+      Object.entries(editTemplateData.fields).forEach(([fieldName, field]) => {
+        // Check if field exists in labReportFields
+        let foundInLabReportFields = false;
+
+        for (const [categoryKey, tests] of Object.entries(labReportFields)) {
+          for (const [testName, fields] of Object.entries(tests)) {
+            const matchingField = fields.find((f) => f.name === fieldName);
+            if (matchingField) {
+              // Field exists in labReportFields, mark test as selected
+              if (!newSelectedTests[categoryKey]) {
+                newSelectedTests[categoryKey] = {};
+              }
+              newSelectedTests[categoryKey][testName] = true;
+
+              // Add field to selectedFields
+              if (!newSelectedFields[categoryKey]) {
+                newSelectedFields[categoryKey] = {};
+              }
+              if (!newSelectedFields[categoryKey][testName]) {
+                newSelectedFields[categoryKey][testName] = {};
+              }
+              newSelectedFields[categoryKey][testName][fieldName] = {
+                ...field,
+                isSelected: true,
+                fromLabReportFields: true,
+              };
+              foundInLabReportFields = true;
+              break;
+            }
+          }
+          if (foundInLabReportFields) break;
+        }
+
+        // If field not found in labReportFields, add as custom field
+        if (!foundInLabReportFields) {
+          const customFieldId = `custom-field-${fieldName}`;
+          newCustomFields[customFieldId] = {
+            ...field,
+            name: fieldName,
+            isSelected: true,
+            isCustom: true,
+          };
+        }
+      });
+
+      setSelectedTests(newSelectedTests);
+      setSelectedFields(newSelectedFields);
+      setCustomFields(newCustomFields);
+    }
+  }, [isEditMode, editTemplateData]);
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -511,9 +775,33 @@ export default function CreateTestTemplate() {
           </Button>
           <h1 className="text-2xl font-bold">Create Test Template</h1>
         </div>
-        <Button onClick={() => setShowCreationModal(true)}>
-          Create Template
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExportToExcel}
+            className="w-full md:w-auto"
+          >
+            <FileDown className="mr-2 h-4 w-4" /> Export
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleImportClick}
+            className="w-full md:w-auto"
+            disabled={importing}
+          >
+            Import
+          </Button>
+          <input
+            type="file"
+            accept=".xlsx, .xls"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            style={{ display: "none" }}
+          />
+          <Button onClick={() => setShowCreationModal(true)}>
+            Create Template
+          </Button>
+        </div>
       </div>
 
       {/* Add Search Section */}
@@ -554,10 +842,12 @@ export default function CreateTestTemplate() {
         )}
       </div>
 
-      <Dialog open={showCreationModal} onOpenChange={setShowCreationModal}>
+      <Dialog open={showCreationModal} onOpenChange={handleDialogChange}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Create New Test Template</DialogTitle>
+            <DialogTitle>
+              {isEditMode ? "Update Test Template" : "Create New Test Template"}
+            </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div>
@@ -583,13 +873,12 @@ export default function CreateTestTemplate() {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreationModal(false)}
-            >
+            <Button variant="outline" onClick={() => handleDialogChange(false)}>
               Cancel
             </Button>
-            <Button onClick={handleCreateTemplate}>Continue</Button>
+            <Button onClick={handleCreateTemplate}>
+              {isEditMode ? "Update Template" : "Create Template"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

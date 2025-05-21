@@ -105,14 +105,14 @@ export default function LabTemplatesManager() {
                   className="overflow-hidden"
                 >
                   <div className="space-y-2 pt-2 mt-2 border-t border-blue-200">
-                    {Object.entries(template.fields).map(
+                    {Object.entries(template?.fields||{}).map(
                       ([fieldName, field]) => (
                         <div key={fieldName} className="text-sm">
                           <span className="font-medium text-blue-700">
                             {field.label}:
                           </span>
                           <span className="ml-2 text-gray-600">
-                            {Array.isArray(field.options)
+                            {(field.options && Array.isArray(field.options))
                               ? field.options.join(", ")
                               : field.options ||
                                 field.unit ||

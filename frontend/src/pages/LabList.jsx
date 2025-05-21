@@ -125,7 +125,8 @@ export default function LabList() {
           test.registrationNumber
             ?.toLowerCase()
             .includes(searchTerm.toLowerCase()) ||
-          test.contactNumber?.includes(searchTerm)
+          test.contactNumber?.includes(searchTerm) ||
+          test.patientName?.toLowerCase().includes(searchTerm.toLowerCase())
       );
 
       if (filtered.length > 0) {

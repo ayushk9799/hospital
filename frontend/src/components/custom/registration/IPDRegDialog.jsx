@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Button } from "../../ui/button";
+import { FloatingLabelSelect } from "./PatientInfoForm";
 import {
   Dialog,
   DialogContent,
@@ -49,6 +50,9 @@ const paymentMethods = [
   { name: "Insurance" },
 ];
 
+
+
+
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const departments = useSelector((state) => state.departments.departments);
   const rooms = useSelector((state) => state.rooms.rooms);
@@ -60,7 +64,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     age: "",
     gender: "",
     contactNumber: "",
-    email: "",
     address: "",
     bloodType: "",
     patientType: "IPD",
@@ -78,6 +81,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       department: departments.length === 1 ? departments[0]._id : "",
       assignedDoctor: doctors.length === 1 ? doctors[0]._id : "",
       operationName: "",
+      referredBy: "",
 
       assignedRoom: "",
       assignedBed: "",
@@ -543,17 +547,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   // Add this function to get all services including room for display
   const getDisplayServices = useCallback(() => {
     // Get the selected room service if any
-    const selectedRoom = rooms.find(
-      (room) => room._id === formData.admission.assignedRoom
-    );
-    const roomService = selectedRoom
-      ? {
-          _id: "room-charge",
-          name: `Room: ${selectedRoom.roomNumber} - ${selectedRoom.type}`,
-          rate: selectedRoom.ratePerDay || 0,
-          isRoom: true,
-        }
-      : null;
+   
 
     // Get all available services from the services array
     const availableServices = services
@@ -564,10 +558,8 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       }));
 
     // Combine room service (if exists) with available services
-    return roomService
-      ? [roomService, ...availableServices]
-      : availableServices;
-  }, [formData.admission.assignedRoom, rooms, services]);
+    return availableServices;
+  }, [ services]);
 
   const handleSearch = async () => {
     if (!formData.registrationNumber) return;
@@ -1128,66 +1120,61 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                         </div>
                       </>
                     ) : (
-                      <>
-                        <Select
+                      <div className="grid grid-cols-2 gap-2">
+                        <FloatingLabelSelect
                           id="admission.department"
                           onValueChange={(value) =>
                             handleInputChange({
                               target: { id: "admission.department", value },
                             })
                           }
+                          value={formData.admission.department}
+                          label="Department"
+                          error={errors["admission.department"]}
                         >
-                          <SelectTrigger>
-                            <SelectValue
-                              placeholder={
-                                departments.length === 1
-                                  ? departments[0].name
-                                  : "Department"
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
+                        
                             {departments.map((dept) => (
                               <SelectItem key={dept._id} value={dept.name}>
                                 {dept.name}
                               </SelectItem>
                             ))}
-                          </SelectContent>
-                        </Select>
+                        </FloatingLabelSelect>
 
-                        <Select
+                        <FloatingLabelSelect
                           id="admission.assignedDoctor"
                           onValueChange={(value) =>
                             handleInputChange({
                               target: { id: "admission.assignedDoctor", value },
                             })
                           }
+                          value={formData.admission.assignedDoctor}
+                          label="Doctor"
+                          error={errors["admission.assignedDoctor"]}
                         >
-                          <SelectTrigger
-                            className={
-                              errors["admission.assignedDoctor"]
-                                ? "border-red-500"
-                                : ""
-                            }
-                          >
-                            <SelectValue
-                              placeholder={
-                                doctors.length === 1
-                                  ? `${doctors[0].name}`
-                                  : "Select Doctor"
-                              }
-                            />
-                          </SelectTrigger>
-                          <SelectContent>
+                          
                             {doctors.map((doctor) => (
                               <SelectItem key={doctor._id} value={doctor._id}>
                                 {doctor.name}
                               </SelectItem>
                             ))}
-                          </SelectContent>
-                        </Select>
-                      </>
+                        </FloatingLabelSelect>
+                        
+                      
+                          
+                      </div>
                     )}
+                    <div className="flex flex-col">
+                      <MemoizedInput
+                        id="admission.referredBy"
+                        label="Referred By"
+                        value={formData.admission.referredBy}
+                        onChange={(e) =>
+                          handleInputChange({
+                            target: { id: "admission.referredBy", value: e.target.value },
+                          })
+                        }
+                      />
+                    </div>
 
                     <div className="space-y-2">
                       <div className="flex items-center gap-1">

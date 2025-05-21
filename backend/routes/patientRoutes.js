@@ -278,16 +278,12 @@ router.post(
         let registrationNumber =
           await RegistrationNumber.getNextRegistrationNumber(session);
 
-      
-          patientData.registrationNumber = registrationNumber;
-        
+        patientData.registrationNumber = registrationNumber;
       }
       if (upgradegenIpd) {
         let ipdNumber = await IPDAdmission.getNextIpdNumber(session);
 
-        
-          admission.ipdNumber = ipdNumber;
-        
+        admission.ipdNumber = ipdNumber;
       }
 
       const patient = new Patient({
@@ -311,7 +307,7 @@ router.post(
           patientName: patient.name,
           contactNumber: patient.contactNumber,
           registrationNumber: patient.registrationNumber,
-          doctor: visit.doctor?.id || visit.doctor|| null,
+          doctor: visit.doctor?.id || visit.doctor || null,
         });
 
         // Create bill
@@ -523,14 +519,13 @@ router.post(
 
       // Add doctor's name for OPD cases
       if (admissionRecord && patientType === "OPD") {
-        admissionRecord=admissionRecord.toObject();
-        if(visit.doctor?.id && visit.doctor?.name){
-        admissionRecord.doctor = {
-          _id: visit.doctor?.id,
-          name: visit.doctor?.name,
-        };
-      }
-       
+        admissionRecord = admissionRecord.toObject();
+        if (visit.doctor?.id && visit.doctor?.name) {
+          admissionRecord.doctor = {
+            _id: visit.doctor?.id,
+            name: visit.doctor?.name,
+          };
+        }
       }
 
       res.status(201).json({
@@ -855,7 +850,8 @@ router.put("/:id", verifyToken, async (req, res) => {
   session.startTransaction();
 
   try {
-    const { visitID, type, ...patientData } = req.body;
+    const { visitID, type, visit, admission, ...patientData } = req.body;
+    const user = req.user;
 
     // Update patient data
     const patient = await Patient.findByIdAndUpdate(
@@ -876,48 +872,241 @@ router.put("/:id", verifyToken, async (req, res) => {
     // Update visit/admission data if visitID and type are provided
     if (visitID && type) {
       const Model = type === "OPD" ? Visit : IPDAdmission;
-      const visitData = {
-        patientName: patient.name,
-        contactNumber: patient.contactNumber,
-        guardianName: patientData?.guardianName,
-        relation: patientData?.relation,
-      };
+      let updateObj = {};
+      if (type === "OPD" && visit) {
+        // Update all visit fields
+        updateObj = {
+          ...visit,
+          doctor: patientData?.doctor?._id,
+          patientName: patient.name,
+          contactNumber: patient.contactNumber,
+          registrationNumber: patient.registrationNumber,
+        };
 
-      updatedVisit = await Model.findByIdAndUpdate(visitID, visitData, {
-        new: true,
-        runValidators: true,
-        session,
-      });
+        // Handle service bill update if payment details are present
+        if (visit.totalAmount !== undefined && visit.billId) {
+          const billId = visit.billId;
+          const existingBill = await ServicesBill.findById(billId).session(
+            session
+          );
 
-      if (!updatedVisit) {
-        throw new Error(`${type} record not found`);
+          if (existingBill) {
+            // Update bill details
+            existingBill.totalAmount = Number(visit.totalAmount);
+            existingBill.subtotal = Number(visit.totalAmount);
+            existingBill.additionalDiscount = 0;
+            existingBill.amountPaid = Number(visit.amountPaid) || 0;
+            existingBill.services = existingBill.services?.map((service) => {
+              if (service.category === "Consultation") {
+                return {
+                  ...service,
+                  rate: Number(visit.totalAmount),
+                };
+              } else {
+                return service;
+              }
+            });
+
+            // Update patient info in bill
+            existingBill.patientInfo = {
+              name: patient.name,
+              phone: patient.contactNumber,
+              registrationNumber: patient.registrationNumber,
+              age: patient.age,
+              gender: patient.gender,
+              address: patient.address,
+            };
+
+            // Handle payment updates
+            if (visit.paymentMethod && visit.paymentMethod.length > 0) {
+              // Get existing payment IDs
+              let existingPaymentIds = existingBill.payments || [];
+
+              // Handle deleted payments if any
+              if (visit.deletedPayments && visit.deletedPayments.length > 0) {
+                // Remove the deleted payments
+                await Payment.deleteMany({
+                  _id: { $in: visit.deletedPayments },
+                }).session(session);
+
+                // Update existingPaymentIds to exclude deleted ones
+                const remainingPaymentIds = existingPaymentIds.filter(
+                  (id) => !visit.deletedPayments.includes(id.toString())
+                );
+                existingPaymentIds = remainingPaymentIds;
+              }
+
+              // Handle updated payments if any
+              if (visit.updatedPayments && visit.updatedPayments.length > 0) {
+                for (const updatedPayment of visit.updatedPayments) {
+                  await Payment.findByIdAndUpdate(
+                    updatedPayment._id,
+                    {
+                      amount: Number(updatedPayment.amount),
+                      paymentMethod: updatedPayment.method,
+                    },
+                    { session }
+                  );
+                }
+              }
+
+              // Create new payments for any new payment methods
+              const newPayments = [];
+              for (const pm of visit.paymentMethod) {
+                // Skip if this is an existing payment (has _id)
+                if (pm._id) continue;
+
+                if (pm.amount && Number(pm.amount) > 0) {
+                  const payment = new Payment({
+                    amount: Number(pm.amount),
+                    paymentMethod: pm.method,
+                    associatedInvoiceOrId: existingBill.invoiceNumber,
+                    description: patient.name,
+                    paymentType: { name: "OPD", id: existingBill._id },
+                    type: "Income",
+                    createdByName: user?.name,
+                    createdBy: user._id,
+                  });
+                  await payment.save({ session });
+                  newPayments.push(payment._id);
+                }
+              }
+
+              // Update bill with remaining existing payments and new ones
+              existingBill.payments = [...existingPaymentIds, ...newPayments];
+            }
+
+            await existingBill.save({ session });
+          }
+        }
+      } else if (type === "IPD" && admission) {
+        // Update all admission fields
+        updateObj = {
+          ...admission,
+          patientName: patient.name,
+          contactNumber: patient.contactNumber,
+          registrationNumber: patient.registrationNumber,
+        };
+      } else {
+        // Fallback: update only basic fields
+        updateObj = {
+          patientName: patient.name,
+          contactNumber: patient.contactNumber,
+          guardianName: patientData?.guardianName,
+          relation: patientData?.relation,
+        };
       }
 
-      await ServicesBill.findByIdAndUpdate(
-        updatedVisit.bills.services[0],
-        {
-          patientInfo: {
-            name: patientData?.name,
-            phone: patientData.contactNumber,
-            age: patientData?.age,
-            address: patientData?.address,
-            gender: patientData?.gender,
-          },
-        },
-        {
-          new: true,
-          runValidators: true,
-          session,
-        }
-      );
-    }
+      let formattedData;
+      if (type === "OPD") {
+        updatedVisit = await Model.findByIdAndUpdate(
+          visitID,
+          { $set: updateObj },
+          {
+            new: true,
+            runValidators: true,
+            session,
+          }
+        )
+          .populate(
+            "patient",
+            "name dateOfBirth gender contactNumber email address bloodType age"
+          )
+          .populate("doctor", "name");
 
-    await session.commitTransaction();
-    res.json({
-      ...patient.toObject(),
-      guardianName: updatedVisit?.guardianName,
-      relation: updatedVisit?.relation,
-    });
+        if (!updatedVisit) {
+          throw new Error(`${type} record not found`);
+        }
+
+        // Format OPD data
+        formattedData = {
+          _id: updatedVisit._id,
+          bookingNumber: updatedVisit.bookingNumber,
+          patient: updatedVisit.patient,
+          registrationNumber: updatedVisit.registrationNumber,
+          bookingDate: updatedVisit.bookingDate,
+          doctor: updatedVisit.doctor,
+          reasonForVisit: updatedVisit.reasonForVisit,
+          status: updatedVisit.status,
+          department: updatedVisit.department,
+          guardianName: updatedVisit.guardianName,
+          relation: updatedVisit.relation,
+          comorbidities: updatedVisit.comorbidities,
+          vitals: updatedVisit.vitals,
+          diagnosis: updatedVisit.diagnosis,
+          consultationType: updatedVisit.consultationType,
+          treatment: updatedVisit.treatment,
+          medications: updatedVisit.medications,
+          labTests: updatedVisit.labTests,
+          timeSlot: updatedVisit.timeSlot,
+          additionalInstructions: updatedVisit.additionalInstructions,
+          type: "OPD",
+          createdAt: updatedVisit.createdAt,
+          bills: updatedVisit.bills,
+        };
+      } else {
+        updatedVisit = await Model.findByIdAndUpdate(
+          visitID,
+          { $set: updateObj },
+          {
+            new: true,
+            runValidators: true,
+            session,
+          }
+        )
+          .populate(
+            "patient",
+            "name dateOfBirth gender contactNumber email address bloodType age"
+          )
+          .populate("assignedDoctor", "name")
+          .populate("assignedRoom", "roomNumber type");
+
+        if (!updatedVisit) {
+          throw new Error(`${type} record not found`);
+        }
+
+        // Format IPD data
+        formattedData = {
+          _id: updatedVisit._id,
+          bookingNumber: updatedVisit.bookingNumber,
+          bookingTime: updatedVisit.bookingTime,
+          department: updatedVisit.department,
+          guardianName: updatedVisit.guardianName,
+          relation: updatedVisit.relation,
+          patient: updatedVisit.patient,
+          dischargeData: updatedVisit.dischargeData,
+          registrationNumber: updatedVisit.registrationNumber,
+          formConfig: updatedVisit.formConfig,
+          operationName: updatedVisit.operationName,
+          ipdNumber: updatedVisit.ipdNumber,
+          bookingDate: updatedVisit.bookingDate,
+          doctor: updatedVisit.assignedDoctor,
+          assignedRoom: updatedVisit.assignedRoom,
+          assignedBed: updatedVisit.assignedBed,
+          dateDischarged: updatedVisit.dateDischarged,
+          clinicalSummary: updatedVisit.clinicalSummary,
+          comorbidities: updatedVisit.comorbidities,
+          diagnosis: updatedVisit.diagnosis,
+          status: updatedVisit.status,
+          labReports: updatedVisit.labReports,
+          treatment: updatedVisit.treatment,
+          conditionOnAdmission: updatedVisit.conditionOnAdmission,
+          conditionOnDischarge: updatedVisit.conditionOnDischarge,
+          medications: updatedVisit.medications,
+          additionalInstructions: updatedVisit.additionalInstructions,
+          labTests: updatedVisit.labTests,
+          notes: updatedVisit.notes,
+          timeSlot: updatedVisit.timeSlot,
+          vitals: updatedVisit.vitals,
+          type: "IPD",
+          createdAt: updatedVisit.createdAt,
+          bills: updatedVisit.bills,
+        };
+      }
+
+      await session.commitTransaction();
+      res.json(formattedData);
+    }
   } catch (error) {
     if (session.inTransaction()) {
       await session.abortTransaction();
@@ -1074,7 +1263,7 @@ router.post(
         patientName: patient.name,
         contactNumber: patient.contactNumber,
         registrationNumber: patient.registrationNumber,
-        doctor: visit.doctor?.id || visit.doctor|| null,
+        doctor: visit.doctor?.id || visit.doctor || null,
       });
 
       // Create bill
@@ -1142,12 +1331,10 @@ router.post(
       await newVisit.save({ session });
       await patient.save({ session });
 
-      if(newVisit)
-      {    newVisit=newVisit.toObject();
-        if(visit.doctor?.id)
-        {
-          newVisit.doctor={_id:visit.doctor?.id,name:visit.doctor?.name}
-          
+      if (newVisit) {
+        newVisit = newVisit.toObject();
+        if (visit.doctor?.id) {
+          newVisit.doctor = { _id: visit.doctor?.id, name: visit.doctor?.name };
         }
       }
 
@@ -1724,7 +1911,7 @@ router.post(
 
 // ... remaining code ...
 
-// Get specific visit/admission details
+// Get specific visit/admission details (original, lightweight)
 router.post("/visit-details", verifyToken, async (req, res) => {
   try {
     const { id, type } = req.body;
@@ -1810,6 +1997,59 @@ router.post("/visit-details", verifyToken, async (req, res) => {
     }
 
     res.json(result);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// New route for full details (for edit)
+router.post("/visit-details-full", verifyToken, async (req, res) => {
+  try {
+    const { id, type } = req.body;
+    let result;
+    if (type === "OPD") {
+      result = await Visit.findById(id)
+        .populate(
+          "patient",
+          "name dateOfBirth gender contactNumber email address bloodType age"
+        )
+        .populate("doctor", "name")
+        .populate({
+          path: "bills.services",
+          populate: {
+            path: "payments",
+            model: "Payment",
+          },
+        });
+      if (!result) {
+        return res.status(404).json({ error: "Visit not found" });
+      }
+      res.json(result);
+      return;
+    } else if (type === "IPD") {
+      result = await IPDAdmission.findById(id)
+        .populate(
+          "patient",
+          "name dateOfBirth gender contactNumber email address bloodType age"
+        )
+        .populate("assignedDoctor", "name")
+        .populate("assignedRoom")
+        .populate({
+          path: "bills.services",
+          populate: {
+            path: "payments",
+            model: "Payment",
+          },
+        });
+
+      if (!result) {
+        return res.status(404).json({ error: "Admission not found" });
+      }
+      res.json(result);
+      return;
+    } else {
+      return res.status(400).json({ error: "Invalid type specified" });
+    }
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -2044,6 +2284,253 @@ router.post("/opd-details", verifyToken, async (req, res) => {
   } catch (error) {
     console.error("Error in opd-details route:", error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// New route for updating IPD Admission
+router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { admissionId } = req.params;
+    const {
+      patient: patientDataUpdates,
+      admission: admissionDataUpdates,
+      bill: billUpdates,
+      payments: paymentActions,
+    } = req.body;
+    const user = req.user;
+
+    // 1. Fetch the IPDAdmission record
+    const admission = await IPDAdmission.findById(admissionId).session(session);
+    if (!admission) {
+      throw new Error("IPD Admission not found");
+    }
+
+    // 2. Fetch and Update Patient details if any
+    let patient;
+    if (patientDataUpdates && Object.keys(patientDataUpdates).length > 0) {
+      patient = await Patient.findById(admission.patient).session(session);
+      if (!patient) {
+        throw new Error("Associated patient not found");
+      }
+      Object.assign(patient, patientDataUpdates);
+      await patient.save({ session });
+    } else {
+      patient = await Patient.findById(admission.patient).session(session); // Ensure patient is loaded
+    }
+
+    // 3. Update IPDAdmission details
+    // Ensure to preserve fields not explicitly being updated
+    const currentAdmissionData = admission.toObject();
+    const updatedAdmissionFields = {
+      ...currentAdmissionData,
+      ...admissionDataUpdates,
+    };
+
+    // Make sure sensitive or linked fields are handled correctly
+    updatedAdmissionFields.patientName = patient.name; // Always sync patientName
+    updatedAdmissionFields.contactNumber = patient.contactNumber; // Always sync contactNumber
+    updatedAdmissionFields.registrationNumber = patient.registrationNumber; // Always sync registrationNumber
+
+    // If assignedDoctor is an object with _id, use _id, otherwise use the direct value.
+    if (
+      updatedAdmissionFields.assignedDoctor &&
+      updatedAdmissionFields.assignedDoctor._id
+    ) {
+      updatedAdmissionFields.assignedDoctor =
+        updatedAdmissionFields.assignedDoctor._id;
+    }
+
+    Object.assign(admission, updatedAdmissionFields);
+
+    // 4. Handle Billing and Payments
+    if (billUpdates && billUpdates.billId) {
+      const existingBill = await ServicesBill.findById(
+        billUpdates.billId
+      ).session(session);
+      if (!existingBill) {
+        throw new Error("Associated bill not found");
+      }
+
+      // Update bill fields
+      existingBill.totalAmount =
+        Number(billUpdates.totalAmount) || existingBill.totalAmount;
+      existingBill.subtotal =
+        Number(billUpdates.subtotal) || existingBill.subtotal; // Or recalculate based on services
+      existingBill.additionalDiscount =
+        Number(billUpdates.additionalDiscount) || 0;
+      // existingBill.amountPaid = Number(billUpdates.amountPaid) || 0; // This will be recalculated based on payments
+
+      // If services are provided in the update, replace them and recalculate subtotal and total
+      if (billUpdates.services && Array.isArray(billUpdates.services)) {
+        existingBill.services = billUpdates.services.map((s) => ({
+          serviceId: s.serviceId, // Assuming frontend sends serviceId
+          name: s.name,
+          quantity: Number(s.quantity) || 1,
+          rate: Number(s.rate) || 0,
+          category: s.category || "Other",
+          date: s.date ? new Date(s.date) : new Date(), // Ensure date is stored
+          // _id: s._id // if you want to preserve existing service item _ids, handle this carefully
+        }));
+
+        // Recalculate subtotal based on new services
+        const newSubtotal = existingBill.services.reduce((sum, service) => {
+          return sum + Number(service.rate) * Number(service.quantity);
+        }, 0);
+        existingBill.subtotal = newSubtotal;
+
+        // Recalculate totalAmount: subtotal - discount
+        const discount = Number(billUpdates.additionalDiscount) || 0;
+        existingBill.additionalDiscount = discount; // Ensure discount is set before calculating total
+        existingBill.totalAmount = newSubtotal - discount;
+      } else {
+        // If services are not being updated, but discount might be, recalculate totalAmount
+        const currentSubtotal = Number(existingBill.subtotal) || 0;
+        const discount = Number(billUpdates.additionalDiscount);
+        if (!isNaN(discount)) {
+          // check if discount is a valid number
+          existingBill.additionalDiscount = discount;
+          existingBill.totalAmount = currentSubtotal - discount;
+        } else if (billUpdates.hasOwnProperty("additionalDiscount")) {
+          // if additionalDiscount was explicitly passed but not a number, default to 0
+          existingBill.additionalDiscount = 0;
+          existingBill.totalAmount = currentSubtotal;
+        }
+        // if additionalDiscount is not in billUpdates, totalAmount remains as is or based on previous logic
+      }
+
+      // Update patient info in bill
+      existingBill.patientInfo = {
+        name: patient.name,
+        phone: patient.contactNumber,
+        registrationNumber: patient.registrationNumber,
+        ipdNumber: admission.ipdNumber,
+        age: patient.age,
+        gender: patient.gender,
+        address: patient.address,
+      };
+
+      let currentBillAmountPaid = 0;
+
+      // Handle payment actions (deleted, updated, new)
+      if (paymentActions) {
+        const { deletedPayments, updatedPayments, newPayments } =
+          paymentActions;
+        let billPaymentIds = existingBill.payments.map((p) => p.toString());
+
+        // Deleted payments
+        if (deletedPayments && deletedPayments.length > 0) {
+          await Payment.deleteMany({ _id: { $in: deletedPayments } }).session(
+            session
+          );
+          billPaymentIds = billPaymentIds.filter(
+            (id) => !deletedPayments.includes(id)
+          );
+        }
+
+        // Updated payments
+        if (updatedPayments && updatedPayments.length > 0) {
+          for (const up of updatedPayments) {
+            const paymentDoc = await Payment.findById(up._id).session(session);
+            if (paymentDoc) {
+              paymentDoc.amount = Number(up.amount);
+              paymentDoc.paymentMethod = up.method;
+              await paymentDoc.save({ session });
+              currentBillAmountPaid += Number(up.amount);
+            }
+          }
+        } else {
+          // If no updated payments, sum amounts from existing non-deleted payments
+          const existingValidPayments = await Payment.find({
+            _id: { $in: billPaymentIds },
+          }).session(session);
+          currentBillAmountPaid += existingValidPayments.reduce(
+            (sum, p) => sum + p.amount,
+            0
+          );
+        }
+
+        // New payments
+        const createdPaymentIds = [];
+        if (newPayments && newPayments.length > 0) {
+          for (const np of newPayments) {
+            if (Number(np.amount) > 0) {
+              const payment = new Payment({
+                amount: Number(np.amount),
+                paymentMethod: np.method,
+                associatedInvoiceOrId: existingBill.invoiceNumber,
+                description: patient.name,
+                paymentType: { name: "IPD", id: existingBill._id },
+                type: "Income",
+                createdByName: user?.name,
+                createdBy: user._id,
+              });
+              await payment.save({ session });
+              createdPaymentIds.push(payment._id);
+              currentBillAmountPaid += Number(np.amount);
+            }
+          }
+        }
+        existingBill.payments = [
+          ...billPaymentIds.filter(
+            (id) => !updatedPayments?.find((up) => up._id === id)
+          ),
+          ...createdPaymentIds,
+          ...(updatedPayments?.map((up) => up._id) || []),
+        ];
+        existingBill.payments = [
+          ...new Set(existingBill.payments.map((id) => id.toString())),
+        ]; // Deduplicate
+      } else {
+        // If no paymentActions, recalculate amountPaid from existing payments
+        const paymentsForBill = await Payment.find({
+          _id: { $in: existingBill.payments },
+        }).session(session);
+        currentBillAmountPaid = paymentsForBill.reduce(
+          (sum, p) => sum + p.amount,
+          0
+        );
+      }
+
+      existingBill.amountPaid = currentBillAmountPaid;
+      await existingBill.save({ session });
+
+      // Ensure the bill is linked to the admission if not already
+      if (
+        !admission.bills.services
+          .map((s) => s.toString())
+          .includes(existingBill._id.toString())
+      ) {
+        admission.bills.services.push(existingBill._id);
+      }
+    }
+
+    // Save the admission record itself after all updates
+    await admission.save({ session });
+
+    await session.commitTransaction();
+
+    // Repopulate for response
+    const populatedAdmission = await IPDAdmission.findById(admission._id)
+      .populate("patient")
+      .populate("assignedDoctor", "name")
+      .populate("assignedRoom", "roomNumber type")
+      .populate({
+        path: "bills.services",
+        populate: { path: "payments" },
+      });
+
+    res.json(populatedAdmission);
+  } catch (error) {
+    if (session.inTransaction()) {
+      await session.abortTransaction();
+    }
+    console.error("Error updating IPD admission:", error);
+    res.status(400).json({ message: error.message, stack: error.stack });
+  } finally {
+    session.endSession();
   }
 });
 

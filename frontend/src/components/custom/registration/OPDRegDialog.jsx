@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "../../ui/button";
+import { Badge } from "../../ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { Checkbox } from "../../ui/checkbox";
 import { useMediaQuery } from "../../../hooks/use-media-query";
 import MemoizedInput from "./MemoizedInput";
+import { FloatingLabelSelect } from "./PatientInfoForm";
 import { fetchServices } from "../../../redux/slices/serviceSlice";
 import OPDBillTokenModal from "./OPDBillTokenModal";
 import MultiSelectInput from "../MultiSelectInput";
@@ -77,6 +79,7 @@ const initialFormData = {
       oxygenSaturation: "",
       respiratoryRate: "",
     },
+    referredBy: "",
     bookingDate: new Date()
       .toLocaleDateString("en-IN", {
         day: "2-digit",
@@ -549,6 +552,42 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     }
   }, [open]);
 
+  const getLatestVisitDate = (sourceData) => {
+    // Combine visits and admissions
+    const allVisits = [
+      ...(sourceData.visits || [])
+        .filter((visit) => visit.consultationType !== "follow-up") // Exclude follow-up visits
+        .map((visit) => ({
+          date: new Date(visit.bookingDate),
+          createdAt: new Date(visit.createdAt),
+          type: "OPD",
+        })),
+      ...(sourceData.admissionDetails || []).map((admission) => ({
+        date: new Date(admission.bookingDate),
+        createdAt: new Date(admission.createdAt),
+        type: "IPD",
+      })),
+    ];
+
+    // Sort by date in descending order, using createdAt as tiebreaker
+    allVisits.sort((a, b) => {
+      // First compare by booking date
+      const dateComparison = b.date - a.date;
+      if (dateComparison !== 0) return dateComparison;
+
+      // If dates are equal, use createdAt as tiebreaker
+      return b.createdAt - a.createdAt;
+    });
+
+    // Return the latest visit if exists
+    return allVisits.length > 0
+      ? {
+          date: allVisits[0].date,
+          type: allVisits[0].type,
+        }
+      : null;
+  };
+
   return (
     <>
       <Dialog
@@ -566,63 +605,55 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
               <span>Register new patient</span>
               {searchedPatient && (
                 <div className="flex items-center space-x-2">
-                  {searchedPatient.lastVisit && (
-                    <span className="text-black font-semibold">
-                      Last Visit:{" "}
-                      {format(
-                        new Date(searchedPatient.lastVisit),
-                        "dd MMM yyyy"
-                      )}{" "}
-                      [
-                      <span
-                        className={`capitalize ${
-                          differenceInDays(
-                            new Date(
-                              new Date()
-                                .toLocaleDateString("en-IN", {
-                                  year: "numeric",
-                                  month: "2-digit",
-                                  day: "2-digit",
-                                })
-                                .split("/")
-                                .reverse()
-                                .join("-")
-                            ).setHours(0, 0, 0, 0),
-                            new Date(searchedPatient.lastVisit).setHours(
-                              0,
-                              0,
-                              0,
-                              0
-                            )
-                          ) > 14
-                            ? "text-red-500"
-                            : "text-green-500"
-                        }`}
-                      >
-                        {differenceInDays(
-                          new Date(
-                            new Date()
-                              .toLocaleDateString("en-IN", {
-                                year: "numeric",
-                                month: "2-digit",
-                                day: "2-digit",
-                              })
-                              .split("/")
-                              .reverse()
-                              .join("-")
-                          ).setHours(0, 0, 0, 0),
-                          new Date(searchedPatient.lastVisit).setHours(
-                            0,
-                            0,
-                            0,
-                            0
-                          )
-                        )}{" "}
-                        days ago
-                      </span>{" "}
-                      ({searchedPatient.lastVisitType}) ]
-                    </span>
-                  )}
+                  {(() => {
+                    const latestVisit = getLatestVisitDate(searchedPatient);
+                    return (
+                      latestVisit && (
+                        <span className="text-black font-semibold">
+                          Last{" "}
+                          <span className="font-bold">{latestVisit.type}</span>{" "}
+                          Visit: {format(latestVisit.date, "dd MMM yyyy")} [
+                          <span
+                            className={`capitalize ${
+                              differenceInDays(
+                                new Date(
+                                  new Date()
+                                    .toLocaleDateString("en-IN", {
+                                      year: "numeric",
+                                      month: "2-digit",
+                                      day: "2-digit",
+                                    })
+                                    .split("/")
+                                    .reverse()
+                                    .join("-")
+                                ).setHours(0, 0, 0, 0),
+                                latestVisit.date.setHours(0, 0, 0, 0)
+                              ) > 14
+                                ? "text-red-500"
+                                : "text-green-500"
+                            }`}
+                          >
+                            {differenceInDays(
+                              new Date(
+                                new Date()
+                                  .toLocaleDateString("en-IN", {
+                                    year: "numeric",
+                                    month: "2-digit",
+                                    day: "2-digit",
+                                  })
+                                  .split("/")
+                                  .reverse()
+                                  .join("-")
+                              ).setHours(0, 0, 0, 0),
+                              latestVisit.date.setHours(0, 0, 0, 0)
+                            )}{" "}
+                            days ago
+                          </span>{" "}
+                          ({latestVisit.type}) ]
+                        </span>
+                      )
+                    );
+                  })()}
                   {(searchedPatient.admissionDetails?.[0] ||
                     searchedPatient.visits?.[0]) && (
                     <DropdownMenu>
@@ -739,45 +770,29 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
 
                   {/* Third column - Payment and Address section */}
                   <div className="space-y-4">
-                    <div className="relative hidden sm:block">
-                      <Select
+                    <div className="grid grid-cols-2 gap-2">
+                      <FloatingLabelSelect
                         id="visit.department"
                         value={formData.visit.department}
+                        label="Department"
                         onValueChange={(value) =>
                           handleSelectChange("visit.department", value)
                         }
+                        error={errors.department}
                       >
-                        <SelectTrigger
-                          className={errors.department ? "border-red-500" : ""}
-                        >
-                          <SelectValue
-                            placeholder={
-                              departments.length === 1
-                                ? departments[0].name
-                                : "Department"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {departments.map((department) => (
-                            <SelectItem
-                              key={department._id}
-                              value={department.name}
-                            >
-                              {department.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.department && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.department}
-                        </p>
-                      )}
-                    </div>
-                    <div className="relative hidden sm:block">
-                      <Select
+                        {departments.map((department) => (
+                          <SelectItem
+                            key={department._id}
+                            value={department.name}
+                          >
+                            {department.name}
+                          </SelectItem>
+                        ))}
+                      </FloatingLabelSelect>
+
+                      <FloatingLabelSelect
                         id="visit.doctor"
+                        label="Doctor"
                         value={formData.visit.doctor.id}
                         onValueChange={(value) => {
                           const selectedDoctor = doctors.find(
@@ -788,32 +803,26 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                             name: selectedDoctor?.name,
                           });
                         }}
+                        error={errors.doctor}
                       >
-                        <SelectTrigger
-                          className={errors.doctor ? "border-red-500" : ""}
-                        >
-                          <SelectValue
-                            placeholder={
-                              doctors.length === 1
-                                ? `${doctors[0].name}`
-                                : "Assigned Doctor"
-                            }
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {doctors.map((doctor) => (
-                            <SelectItem key={doctor._id} value={doctor._id}>
-                              {doctor.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {errors.doctor && (
-                        <p className="text-red-500 text-xs mt-1">
-                          {errors.doctor}
-                        </p>
-                      )}
+                        {doctors.map((doctor) => (
+                          <SelectItem key={doctor._id} value={doctor._id}>
+                            {doctor.name}
+                          </SelectItem>
+                        ))}
+                      </FloatingLabelSelect>
                     </div>
+
+                    <div className="flex flex-col gap-2">
+                      <MemoizedInput
+                        label="Referred By"
+                        id="visit.referredBy"
+                        value={formData.visit.referredBy}
+                        onChange={handleInputChange}
+                        error={errors.referredBy}
+                      />
+                    </div>
+
                     <div className="flex flex-col gap-6 pt-2 md:pt-1">
                       <div className="flex flex-col gap-2">
                         <div className="grid grid-cols-2 gap-4">

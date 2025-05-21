@@ -40,7 +40,7 @@ export const FloatingLabelSelect = ({
           }`}
         ><label
         htmlFor={id}
-        className={`absolute text-xs duration-300 transform -translate-y-1/2 left-3
+        className={`absolute text-xs duration-300 font-medium transform -translate-y-1/2 left-3
           peer-placeholder-shown:text-sm peer-placeholder-shown:top-1/2
           peer-focus:text-xs peer-focus:top-0 peer-focus:-translate-y-1/2
           ${value || isFocused ? "top-0 -translate-y-1/2 text-xs" : "top-1/2"}
@@ -69,6 +69,7 @@ export default function PatientInfoForm({
   errors,
   consultationFeeSettings,
   setSearchedPatient,
+  searchDisabled=false
 }) {
   const isMobile = useMediaQuery("(max-width: 640px)");
   const dispatch = useDispatch();
@@ -194,13 +195,15 @@ export default function PatientInfoForm({
           error={errors.registrationNumber}
           className="pr-10"
         />
-        <button
-          type="button"
-          onClick={handleSearch}
-          className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+        {!searchDisabled && (
+          <button
+            type="button"
+            onClick={handleSearch}
+            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
         >
-          <Search className="h-5 w-5" />
-        </button>
+            <Search className="h-5 w-5" />
+          </button>
+        )}
       </div>
 
       <FloatingLabelSelect

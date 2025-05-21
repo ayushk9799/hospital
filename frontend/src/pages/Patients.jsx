@@ -75,6 +75,7 @@ import ConsentFormPrint from "../components/custom/print/ConsentFormPrint";
 import EditPatientDialog from "../components/custom/patients/EditPatientDialog";
 import LabRegDialog from "../components/custom/registration/LabRegDialog";
 import OPDBillTokenModal from "../components/custom/registration/OPDBillTokenModal";
+import EditIPDPatientDialog from "../components/custom/patients/EditIPDPatientDialog";
 import {
   Select,
   SelectContent,
@@ -95,6 +96,7 @@ export default function Patients() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isEditIPDDialogOpen, setIsEditIPDDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [isLabDialogOpen, setIsLabDialogOpen] = useState(false);
   const [isOPDTokenModalOpen, setIsOPDTokenModalOpen] = useState(false);
@@ -191,11 +193,13 @@ export default function Patients() {
     navigate("/billings/create-service-bill");
   };
 
- 
-
   const handleEditPatient = (patient) => {
     setSelectedPatient(patient);
-    setIsEditDialogOpen(true);
+    if (patient.type === "OPD") {
+      setIsEditDialogOpen(true);
+    } else if (patient.type === "IPD") {
+      setIsEditIPDDialogOpen(true);
+    }
   };
 
   const handleLabRegistration = (patient) => {
@@ -249,15 +253,17 @@ export default function Patients() {
         const isDefault = template.isDefault;
         const doctorIds =
           template.associatedDoctors?.map((doc) => doc._id?.toString()) || [];
-        const patientDoctorId = patient.assignedDoctor?._id?.toString() || patient.doctor?._id||patient.dcotor;
+        const patientDoctorId =
+          patient.assignedDoctor?._id?.toString() ||
+          patient.doctor?._id ||
+          patient.dcotor;
         return isDefault || doctorIds.includes(patientDoctorId);
       }) || []
     );
   };
 
   const handleDischarge = (patient) => {
-     
-    const relevantTemplates= getRelevantTemplates(patient);
+    const relevantTemplates = getRelevantTemplates(patient);
     const selectedTemplate = relevantTemplates?.[0] || oldConfig;
     // if(!patient.assignedDoctor && patient.doctor){
     //   patient.assignedDoctor={_id:patient.doctor?._id, name :patient.doctor?.name}
@@ -265,24 +271,24 @@ export default function Patients() {
     // }
     const updatedPatient = {
       ...patient,
-      assignedDoctor: patient.assignedDoctor || 
+      assignedDoctor:
+        patient.assignedDoctor ||
         (patient.doctor && {
           _id: patient.doctor?._id,
-          name: patient.doctor?.name
+          name: patient.doctor?.name,
         }),
     };
-    
-     
+
     navigate(`/patients/discharge/${patient._id}`, {
-      state: { ignoreList: true, dischargeData: updatedPatient, selectedTemplate:selectedTemplate },
+      state: {
+        ignoreList: true,
+        dischargeData: updatedPatient,
+        selectedTemplate: selectedTemplate,
+      },
     });
   };
   const PatientTable = ({ patients, type }) => {
     const navigate = useNavigate();
-  
-
-
-   
 
     if (patients.length === 0) {
       return (
@@ -320,7 +326,7 @@ export default function Patients() {
             )}
             <TableHead>Mobile</TableHead>
             <TableHead>Address</TableHead>
-            <TableHead>Gender</TableHead>
+            <TableHead>Gender/Age</TableHead>
             <TableHead>Doctor</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -395,7 +401,7 @@ export default function Patients() {
                   {patient.patient.address || "--"}
                 </div>
               </TableCell>
-              <TableCell>{patient.patient.gender}</TableCell>
+              <TableCell>{`${patient.patient.gender}/(${patient.patient.age} yrs)`}</TableCell>
               <TableCell>{patient.doctor?.name || "--"}</TableCell>
 
               <TableCell>
@@ -668,33 +674,51 @@ export default function Patients() {
         </div>
       </CardHeader>
       <CardContent className="px-4">
-        <OPDRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-        <IPDRegDialog
-          open={isIPDDialogOpen}
-          onOpenChange={setIsIPDDialogOpen}
-        />
-        <EditPatientDialog
-          open={isEditDialogOpen}
-          setOpen={setIsEditDialogOpen}
-          patientData={{
-            ...selectedPatient?.patient,
-            registrationNumber: selectedPatient?.registrationNumber,
-            type: selectedPatient?.type,
-            visitID: selectedPatient?._id,
-            guardianName: selectedPatient?.guardianName,
-            relation: selectedPatient?.relation,
-          }}
-        />
-        <LabRegDialog
-          open={isLabDialogOpen}
-          onOpenChange={setIsLabDialogOpen}
-          patientData={selectedPatient}
-        />
-        <OPDBillTokenModal
-          isOpen={isOPDTokenModalOpen}
-          setIsOpen={setIsOPDTokenModalOpen}
-          patientData={opdDetails}
-        />
+        {isDialogOpen && (
+          <OPDRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+        )}
+        {isIPDDialogOpen && (
+          <IPDRegDialog
+            open={isIPDDialogOpen}
+            onOpenChange={setIsIPDDialogOpen}
+          />
+        )}
+        {isEditDialogOpen && (
+          <EditPatientDialog
+            open={isEditDialogOpen}
+            setOpen={setIsEditDialogOpen}
+            patientData={{
+              ...selectedPatient?.patient,
+              ...selectedPatient,
+              registrationNumber: selectedPatient?.registrationNumber,
+              type: selectedPatient?.type,
+              visitID: selectedPatient?._id,
+              guardianName: selectedPatient?.guardianName,
+              relation: selectedPatient?.relation,
+            }}
+          />
+        )}
+        {isEditIPDDialogOpen && (
+          <EditIPDPatientDialog
+            open={isEditIPDDialogOpen}
+            onOpenChange={setIsEditIPDDialogOpen}
+            admissionData={selectedPatient}
+          />
+        )}
+        {isLabDialogOpen && (
+          <LabRegDialog
+            open={isLabDialogOpen}
+            onOpenChange={setIsLabDialogOpen}
+            patientData={selectedPatient}
+          />
+        )}
+        {isOPDTokenModalOpen && (
+          <OPDBillTokenModal
+            isOpen={isOPDTokenModalOpen}
+            setIsOpen={setIsOPDTokenModalOpen}
+            patientData={opdDetails}
+          />
+        )}
         <Tabs
           defaultValue="OPD"
           className="w-full"

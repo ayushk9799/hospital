@@ -318,6 +318,13 @@ router.post("/:id/payments", verifyToken, async (req, res) => {
         await labRegistration.save({ session });
       }
     }
+    if (bill.patientType === "OPD") {
+      const visit = await Visit.findById(bill.visit).session(session);
+      if (visit) {
+        visit.billStatus = "Paid";
+        await visit.save({ session });
+      }
+    }
 
     const updatedBill = await ServicesBill.findById(bill._id)
       .populate("payments")
@@ -442,83 +449,130 @@ router.delete(
     const session = await mongoose.startSession();
     session.startTransaction();
 
+    try {
+      const { billId, paymentId } = req.params;
+
+      // Find the bill and payment
+      const bill = await ServicesBill.findById(billId)
+        .populate("payments")
+        .session(session);
+      if (!bill) {
+        throw new Error("Bill not found");
+      }
+
+      const payment = await Payment.findById(paymentId).session(session);
+      if (!payment) {
+        throw new Error("Payment not found");
+      }
+
+      // Remove payment from bill's payments array
+      bill.payments = bill.payments.filter(
+        (p) => p._id.toString() !== paymentId
+      );
+
+      // Update bill's amountPaid
+      bill.amountPaid = bill.amountPaid - payment.amount;
+
+      // If this is a Lab bill, update the corresponding LabRegistration record
+      if (bill.patientType === "Lab" && bill.labRegistration) {
+        const labRegistration = await LabRegistration.findById(
+          bill.labRegistration
+        ).session(session);
+        if (labRegistration) {
+          // Update payment information
+          labRegistration.paymentInfo.amountPaid =
+            (labRegistration.paymentInfo.amountPaid || 0) - payment.amount;
+
+          // Recalculate balance due
+          labRegistration.paymentInfo.balanceDue =
+            labRegistration.paymentInfo.totalAmount -
+            labRegistration.paymentInfo.additionalDiscount -
+            labRegistration.paymentInfo.amountPaid;
+
+          // Remove payment from the payments array
+          labRegistration.payments = labRegistration.payments.filter(
+            (p) => p.toString() !== paymentId
+          );
+
+          await labRegistration.save({ session });
+        }
+      }
+      // Update OPD Procedure if it exists
+      else if (bill.opdProcedure) {
+        const opdProcedure = await OPDProcedure.findById(
+          bill.opdProcedure
+        ).session(session);
+        if (opdProcedure) {
+          opdProcedure.amountPaid =
+            (opdProcedure.amountPaid || 0) - payment.amount;
+          await opdProcedure.save({ session });
+        }
+      }
+
+      // Delete the payment
+      await Payment.findByIdAndDelete(paymentId).session(session);
+      await bill.save({ session });
+
+      // Get updated bill with populated fields
+      const updatedBill = await ServicesBill.findById(billId)
+        .populate("payments")
+        .populate("patient", "name phone registrationNumber age gender address")
+        .populate("createdBy", "name")
+        .populate("opdProcedure", "procedureName")
+        .session(session);
+
+      await session.commitTransaction();
+      res.status(200).json(updatedBill);
+    } catch (error) {
+      await session.abortTransaction();
+      res.status(400).json({ message: error.message });
+    } finally {
+      session.endSession();
+    }
+  }
+);
+
+// Bulk import services (upsert by name)
+router.post("/services/bulk", async (req, res) => {
   try {
-    const { billId, paymentId } = req.params;
-
-    // Find the bill and payment
-    const bill = await ServicesBill.findById(billId)
-      .populate("payments")
-      .session(session);
-    if (!bill) {
-      throw new Error("Bill not found");
+    const { services } = req.body;
+    if (!Array.isArray(services) || services.length === 0) {
+      return res.status(400).json({ message: "No services provided" });
     }
-
-    const payment = await Payment.findById(paymentId).session(session);
-    if (!payment) {
-      throw new Error("Payment not found");
-    }
-
-    // Remove payment from bill's payments array
-    bill.payments = bill.payments.filter((p) => p._id.toString() !== paymentId);
-
-    // Update bill's amountPaid
-    bill.amountPaid = bill.amountPaid - payment.amount;
-
-    // If this is a Lab bill, update the corresponding LabRegistration record
-    if (bill.patientType === "Lab" && bill.labRegistration) {
-      const labRegistration = await LabRegistration.findById(
-        bill.labRegistration
-      ).session(session);
-      if (labRegistration) {
-        // Update payment information
-        labRegistration.paymentInfo.amountPaid =
-          (labRegistration.paymentInfo.amountPaid || 0) - payment.amount;
-
-        // Recalculate balance due
-        labRegistration.paymentInfo.balanceDue =
-          labRegistration.paymentInfo.totalAmount -
-          labRegistration.paymentInfo.additionalDiscount -
-          labRegistration.paymentInfo.amountPaid;
-
-        // Remove payment from the payments array
-        labRegistration.payments = labRegistration.payments.filter(
-          (p) => p.toString() !== paymentId
-        );
-
-        await labRegistration.save({ session });
+    const results = [];
+    for (const item of services) {
+      const { name, category, rate } = item;
+      if (!name || typeof rate === "undefined") {
+        results.push({
+          name,
+          status: "error",
+          message: "Name and rate are required",
+        });
+        continue;
+      }
+      try {
+        let service = await Service.findOne({ name });
+        if (service) {
+          service = await Service.findByIdAndUpdate(
+            service._id,
+            { name, category, rate },
+            { new: true }
+          );
+          results.push({ name, status: "updated", id: service._id });
+        } else {
+          service = new Service({ name, category, rate });
+          await service.save();
+          results.push({ name, status: "inserted", id: service._id });
+        }
+      } catch (err) {
+        results.push({ name, status: "error", message: err.message });
       }
     }
-    // Update OPD Procedure if it exists
-    else if (bill.opdProcedure) {
-      const opdProcedure = await OPDProcedure.findById(
-        bill.opdProcedure
-      ).session(session);
-      if (opdProcedure) {
-        opdProcedure.amountPaid =
-          (opdProcedure.amountPaid || 0) - payment.amount;
-        await opdProcedure.save({ session });
-      }
-    }
-
-    // Delete the payment
-    await Payment.findByIdAndDelete(paymentId).session(session);
-    await bill.save({ session });
-
-    // Get updated bill with populated fields
-    const updatedBill = await ServicesBill.findById(billId)
-      .populate("payments")
-      .populate("patient", "name phone registrationNumber age gender address")
-      .populate("createdBy", "name")
-      .populate("opdProcedure", "procedureName")
-      .session(session);
-
-    await session.commitTransaction();
-    res.status(200).json(updatedBill);
+    res.status(200).json({ results });
   } catch (error) {
-    await session.abortTransaction();
-    res.status(400).json({ message: error.message });
-  } finally {
-    session.endSession();
+    res
+      .status(500)
+      .json({ message: "Bulk import failed", error: error.message });
   }
 });
 

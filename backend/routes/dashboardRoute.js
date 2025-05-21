@@ -494,8 +494,8 @@ router.get("/search", async (req, res) => {
     };
 
     const patients = await Patient.find(query)
-      .populate("visits", "bookingDate guardianName relation")
-      .populate("admissionDetails", "bookingDate guardianName relation")
+      .populate("visits", "bookingDate guardianName relation consultationType createdAt")
+      .populate("admissionDetails", "bookingDate guardianName relation createdAt")
       .skip(skip)
       .limit(limit);
 

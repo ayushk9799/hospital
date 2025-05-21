@@ -33,7 +33,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
-import { fetchServices, deleteService } from "../redux/slices/serviceSlice";
+import {
+  fetchServices,
+  deleteService,
+  importServices,
+} from "../redux/slices/serviceSlice";
 import AddServiceDialog from "../components/custom/services/AddServiceDialog";
 import EditServiceDialog from "../components/custom/services/EditServiceDialog";
 import { useToast } from "../hooks/use-toast";
@@ -58,6 +62,7 @@ import {
 } from "../components/ui/select";
 import ManageServicesDialog from "../components/custom/services/ManageServicesDialog"; // Import the new dialog component
 import { useNavigate } from "react-router-dom";
+import * as XLSX from "xlsx";
 
 const Services = () => {
   const dispatch = useDispatch();
@@ -77,6 +82,8 @@ const Services = () => {
   const [isManageServicesDialogOpen, setIsManageServicesDialogOpen] =
     useState(false); // New state for manage dialog
   const navigate = useNavigate();
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = React.useRef();
 
   useEffect(() => {
     if (servicesStatus === "idle") {
@@ -145,6 +152,58 @@ const Services = () => {
     navigate(-1);
   };
 
+  const handleExportToExcel = () => {
+    // Prepare data for export
+    const exportData = filteredServices.map((service) => ({
+      Name: service.name,
+      Category: service.category,
+      Rate: service.rate,
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Services");
+    XLSX.writeFile(workbook, "services_list.xlsx");
+  };
+
+  const handleImportClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+      const json = XLSX.utils.sheet_to_json(worksheet);
+      // Expect columns: Name, Category, Rate
+      const services = json.map((row) => ({
+        name: row.Name,
+        category: row.Category,
+        rate: row.Rate,
+      }));
+      await dispatch(importServices(services)).unwrap();
+      toast({
+        title: "Import successful",
+        description: `${services.length} services imported.`,
+        variant: "success",
+      });
+      dispatch(fetchServices());
+    } catch (error) {
+      toast({
+        title: "Import failed",
+        description: error.message || "Could not import services.",
+        variant: "destructive",
+      });
+    } finally {
+      setImporting(false);
+      event.target.value = "";
+    }
+  };
+
   return (
     <Card className="w-full mx-auto border-0 shadow-none">
       <CardHeader>
@@ -179,6 +238,29 @@ const Services = () => {
                 onClick={() => setIsManageServicesDialogOpen(true)}
               >
                 <Settings className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={handleExportToExcel}
+              >
+                <FileDown className="h-4 w-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={handleImportClick}
+                disabled={importing}
+              >
+                <span className="sr-only">Import</span>
+                <input
+                  type="file"
+                  accept=".xlsx, .xls"
+                  ref={fileInputRef}
+                  onChange={handleFileChange}
+                  style={{ display: "none" }}
+                />
+                <FileDown className="h-4 w-4 rotate-180" />
               </Button>
             </div>
           )}
@@ -262,6 +344,28 @@ const Services = () => {
           </div>
           {!isSmallScreen && (
             <div className="flex-row-reverse space-x-2">
+              <Button
+                variant="outline"
+                onClick={handleExportToExcel}
+                className="w-full md:w-auto"
+              >
+                <FileDown className="mr-2 h-4 w-4" /> Export
+              </Button>
+              <Button
+                variant="outline"
+                onClick={handleImportClick}
+                className="w-full md:w-auto"
+                disabled={importing}
+              >
+                Import
+              </Button>
+              <input
+                type="file"
+                accept=".xlsx, .xls"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                style={{ display: "none" }}
+              />
               <Button
                 variant="outline"
                 onClick={() => setIsAddServiceDialogOpen(true)}

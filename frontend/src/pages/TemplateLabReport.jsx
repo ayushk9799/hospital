@@ -254,7 +254,7 @@ const TemplateLabReport = ({
           field.calculationDetails.dependencies.includes(fieldName)
         ) {
           const calculatedValue = calculateDependentValue(field, updatedFields);
-         
+
           // Always update the value, whether it's calculated or empty
           return { ...field, value: calculatedValue };
         }
@@ -472,7 +472,7 @@ const TemplateLabReport = ({
                                 />
                               </div>
                               <div>
-                                {field.options ? (
+                                {field.options?.length > 0 ? (
                                   <SearchSuggestion
                                     suggestions={field.options?.map(
                                       (option) => ({

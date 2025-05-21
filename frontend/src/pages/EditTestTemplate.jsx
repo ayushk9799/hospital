@@ -12,6 +12,7 @@ import {
   GripVertical,
   ChevronDown,
   ChevronRight,
+  Edit,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 
@@ -65,7 +66,7 @@ export default function EditTestTemplate() {
 
     if (existingTemplate) {
       // Convert fields and sections into order array based on section positions
-      const fieldEntries = Object.keys(existingTemplate.fields);
+      const fieldEntries = Object.keys(existingTemplate.fields || {});
       const sections = existingTemplate.sections || [];
 
       // Sort sections by position
@@ -121,26 +122,25 @@ export default function EditTestTemplate() {
       }
 
       // Process fields to include calculation details from labReportFields
-      const processedFields = Object.entries(existingTemplate.fields).reduce(
-        (acc, [key, val]) => {
-          const calculationDetails =
-            val.calculationDetails ||
-            findCalculationDetailsFromLabReportFields(key);
-          return {
-            ...acc,
-            [key]: {
-              ...val,
-              fieldName: key,
-              fromLabReportFields: val.calculationDetails ? false : true,
-              ...(calculationDetails && {
-                calculationDetails,
-                isFormulaVisible: false,
-              }),
-            },
-          };
-        },
-        {}
-      );
+      const processedFields = Object.entries(
+        existingTemplate?.fields || {}
+      ).reduce((acc, [key, val]) => {
+        const calculationDetails =
+          val.calculationDetails ||
+          findCalculationDetailsFromLabReportFields(key);
+        return {
+          ...acc,
+          [key]: {
+            ...val,
+            fieldName: key,
+            fromLabReportFields: val.calculationDetails ? false : true,
+            ...(calculationDetails && {
+              calculationDetails,
+              isFormulaVisible: false,
+            }),
+          },
+        };
+      }, {});
 
       // Process sections to ensure they all have IDs
       const processedSections = (existingTemplate.sections || []).map(
@@ -407,6 +407,22 @@ export default function EditTestTemplate() {
     }
   };
 
+  const handleOpenCreateTemplate = () => {
+    // Navigate to CreateTestTemplate with the current template data
+    navigate("/settings/create-test-template", {
+      state: {
+        editMode: true,
+        templateData: {
+          name: templateData.name,
+          rate: templateData.rate,
+          fields: templateData.fields,
+          notes: templateData.notes,
+          sections: templateData.sections,
+        },
+      },
+    });
+  };
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -421,9 +437,14 @@ export default function EditTestTemplate() {
           </Button>
           <h1 className="text-2xl font-bold">Edit Template: {templateName}</h1>
         </div>
-        <Button variant="destructive" onClick={handleDelete}>
-          Delete Template
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleOpenCreateTemplate} variant="outline">
+            <Edit className="mr-2 h-4 w-4" /> Edit in Template Builder
+          </Button>
+          <Button variant="destructive" onClick={handleDelete}>
+            Delete Template
+          </Button>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">

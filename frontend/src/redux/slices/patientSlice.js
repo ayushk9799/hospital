@@ -280,6 +280,33 @@ export const fetchVisitDetails = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new thunk for fetching full visit details (for edit)
+export const fetchVisitDetailsFull = createLoadingAsyncThunk(
+  "patients/fetchVisitDetailsFull",
+  async ({ id, type }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/patients/visit-details-full`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id, type }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 // Add this new thunk after the other thunks
 export const searchPatients = createLoadingAsyncThunk(
   "patients/searchPatients",
@@ -503,6 +530,62 @@ export const fetchOPDDetails = createLoadingAsyncThunk(
   }
 );
 
+// New thunk for fetching full IPD admission details for edit
+export const fetchIPDAdmissionDetailsFull = createLoadingAsyncThunk(
+  "patients/fetchIPDAdmissionDetailsFull",
+  async ({ admissionId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/patients/visit-details-full`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ id: admissionId, type: "IPD" }),
+        }
+      );
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+// New thunk for editing IPD admission
+export const editIPDAdmission = createLoadingAsyncThunk(
+  "patients/editIPDAdmission",
+  async ({ admissionId, data }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/patients/ipd-admission/${admissionId}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(data),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -530,6 +613,9 @@ const initialState = {
   editPatientStatus: "idle",
   opdDetails: null,
   opdDetailsStatus: "idle",
+  ipdAdmissionDetailsFull: null,
+  ipdAdmissionDetailsFullStatus: "idle",
+  editIPDAdmissionStatus: "idle",
 };
 
 const patientSlice = createSlice({
@@ -782,29 +868,7 @@ const patientSlice = createSlice({
             item.registrationNumber === updatedPatient.registrationNumber
         );
         if (index !== -1) {
-          state.patientlist[index] = {
-            ...state.patientlist[index],
-            guardianName: updatedPatient?.guardianName,
-            relation: updatedPatient?.relation,
-            patient: {
-              ...state.patientlist[index].patient,
-              ...updatedPatient,
-            },
-          };
-        }
-
-        // Update selectedPatient if it matches
-        if (
-          state.selectedPatient?.registrationNumber ===
-          updatedPatient.registrationNumber
-        ) {
-          state.selectedPatient = {
-            ...state.selectedPatient,
-            patient: {
-              ...state.selectedPatient.patient,
-              ...updatedPatient,
-            },
-          };
+          state.patientlist[index] = updatedPatient;
         }
       })
       .addCase(editPatient.rejected, (state) => {
@@ -821,6 +885,71 @@ const patientSlice = createSlice({
       .addCase(fetchOPDDetails.rejected, (state, action) => {
         state.opdDetailsStatus = "failed";
         state.opdDetails = null;
+        state.error = action.payload;
+      })
+      .addCase(fetchIPDAdmissionDetailsFull.pending, (state) => {
+        state.ipdAdmissionDetailsFullStatus = "loading";
+        state.ipdAdmissionDetailsFull = null;
+      })
+      .addCase(fetchIPDAdmissionDetailsFull.fulfilled, (state, action) => {
+        state.ipdAdmissionDetailsFullStatus = "succeeded";
+        state.ipdAdmissionDetailsFull = action.payload;
+      })
+      .addCase(fetchIPDAdmissionDetailsFull.rejected, (state, action) => {
+        state.ipdAdmissionDetailsFullStatus = "failed";
+        state.ipdAdmissionDetailsFull = null;
+        state.error = action.payload;
+      })
+      .addCase(editIPDAdmission.pending, (state) => {
+        state.editIPDAdmissionStatus = "loading";
+      })
+      .addCase(editIPDAdmission.fulfilled, (state, action) => {
+        state.editIPDAdmissionStatus = "succeeded";
+        const updatedAdmission = action.payload;
+        // Update in patientlist if it exists there (e.g., if patientlist shows all types)
+        const patientListIndex = state.patientlist.findIndex(
+          (item) => item._id === updatedAdmission._id && item.type === "IPD"
+        );
+        if (patientListIndex !== -1) {
+          state.patientlist[patientListIndex] = {
+            ...state.patientlist[patientListIndex], // Keep patient sub-object
+            ...updatedAdmission, // Spread all fields from updatedAdmission
+            doctor: updatedAdmission.assignedDoctor, // Map assignedDoctor to doctor for consistency if needed
+            patient: state.patientlist[patientListIndex].patient, // Preserve original patient object from list
+          };
+        }
+
+        // Update in admittedPatients list
+        const admittedIndex = state.admittedPatients.findIndex(
+          (item) => item._id === updatedAdmission._id
+        );
+        if (admittedIndex !== -1) {
+          state.admittedPatients[admittedIndex] = {
+            ...state.admittedPatients[admittedIndex],
+            ...updatedAdmission,
+            patient: {
+              ...state.admittedPatients[admittedIndex].patient, // Keep existing patient details
+              name: updatedAdmission.patientName, // Update name if changed
+              registrationNumber: updatedAdmission.registrationNumber, // Update reg number
+            },
+            doctor: updatedAdmission.assignedDoctor, // Update doctor
+          };
+        }
+        // If the edited admission is the currently selected patient, update it as well
+        if (
+          state.selectedPatient &&
+          state.selectedPatient._id === updatedAdmission._id
+        ) {
+          state.selectedPatient = {
+            ...state.selectedPatient,
+            ...updatedAdmission,
+            doctor: updatedAdmission.assignedDoctor,
+            patient: state.selectedPatient.patient, // or update with updatedAdmission.patient if it's fully populated
+          };
+        }
+      })
+      .addCase(editIPDAdmission.rejected, (state, action) => {
+        state.editIPDAdmissionStatus = "failed";
         state.error = action.payload;
       });
   },

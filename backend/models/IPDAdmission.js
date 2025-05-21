@@ -30,6 +30,7 @@ const ipdAdmissionSchema = new mongoose.Schema(
     relation: String,
     treatment: { type: String },
     medications: [{ name: String, duration: String, frequency: String }],
+    referredBy: String,
     labTests: [String],
     labReports: [
       {
