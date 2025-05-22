@@ -41,9 +41,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { fetchTemplates } from "../redux/slices/templatesSlice";
-import { labCategories } from "../assets/Data";
 import { SearchSuggestion } from "../components/custom/registration/CustomSearchSuggestion";
-import CreateLabReport from "./CreateLabReport";
 import { useReactToPrint } from "react-to-print";
 import DischargeSummaryPDF from "../components/custom/reports/DischargeSummaryPDF";
 import {
@@ -143,6 +141,7 @@ const FormField = ({
       },
     });
   };
+
 
   switch (field.type) {
     case "text":
@@ -658,6 +657,7 @@ export default function DischargeSummary() {
   const savedConfig = useSelector(
     (state) => state.templates.dischargeFormTemplateArray
   );
+
   const [formConfig, setFormConfig] = useState(() => {
     const baseConfig = getFormConfig();
 
@@ -689,9 +689,6 @@ export default function DischargeSummary() {
   );
 
   const allLabTests = [
-    ...labCategories.flatMap((category) =>
-      category.types.map((type) => ({ name: type }))
-    ),
     ...(labTestsTemplate?.map((template) => ({
       name: template.name,
       isTemplate: true,
@@ -855,7 +852,8 @@ export default function DischargeSummary() {
             const result = await dispatch(
               fetchVisitDetails({ id: patientId, type: "IPD" })
             ).unwrap();
-            setPatient(result);
+            const {labReport,...rest} = result
+            setPatient(rest);
 
             if (result.dischargeData && result.formConfig) {
               const mergedData = mergeDataWithFormFields(
@@ -870,12 +868,14 @@ export default function DischargeSummary() {
           console.error("Error fetching patient details:", error);
         }
       } else if (dischargeData) {
-        setPatient(dischargeData);
+        const {labReport,...rest} = dischargeData
+        setPatient(rest);
         if (dischargeData.formConfig || formConfig) {
           const mergedData = mergeDataWithFormFields(
             dischargeData.dischargeData || dischargeData,
             dischargeData.formConfig || formConfig
           );
+
           setFormData(mergedData);
         }
 
@@ -902,6 +902,7 @@ export default function DischargeSummary() {
             : {}),
         });
       } else if (!ignoreList) {
+        const {labReport,...rest} = patientFromStore;
         setPatient(patientFromStore);
       }
     };
@@ -947,6 +948,7 @@ export default function DischargeSummary() {
   });
   useEffect(() => {
     if (patient && !hasDischarged) {
+      
       setFormData((prevData) => ({
         ...prevData,
         admissionDate: patient.bookingDate
@@ -978,10 +980,10 @@ export default function DischargeSummary() {
             respiratoryRate: patient.vitals?.discharge?.respiratoryRate || "",
           },
         },
-        investigations:
-          patient.labReports?.length > 0
-            ? patient.labReports
-            : [{ name: "", category: "" }],
+        // investigations:
+        //   patient.labReports?.length > 0
+        //     ? patient.labReports
+        //     : [{ name: "", category: "" }],
         medicineAdvice: patient.medicineAdvice ||
           patient.medicineAdvice ||
           patient.dischargeData?.medicineAdvice || [
@@ -1327,18 +1329,7 @@ export default function DischargeSummary() {
     }));
   };
 
-  const getCategoryAndTypeForTest = (testName) => {
-    for (const category of labCategories) {
-      if (category.types.includes(testName)) {
-        const type = testName;
-        return { category: category.name.toLowerCase(), type };
-      }
-    }
-    return {
-      category: "other",
-      type: testName.toLowerCase().replace(/\s+/g, "-"),
-    };
-  };
+
 
   const renderVitalsInputs = (type) => (
     <div className="grid grid-cols-2 gap-2 text-sm">
@@ -2007,20 +1998,11 @@ export default function DischargeSummary() {
               />
             ) : (
               (() => {
-                const { category, type } = getCategoryAndTypeForTest(
-                  selectedInvestigation.name
-                );
+               
                 return (
-                  <CreateLabReport
-                    category={category}
-                    type={type}
-                    patientData={patient}
-                    formData={formData}
-                    onClose={handleCloseLabReport}
-                    onSave={handleSaveLabReport}
-                    onFindingsDisplay={true}
-                    component="DischargeSummary"
-                  />
+                  <div>
+                    <h1>No Template Found</h1>
+                  </div>
                 );
               })()
             )}

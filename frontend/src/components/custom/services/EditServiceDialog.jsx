@@ -15,6 +15,7 @@ const categoryOptions =  [
   "General",
   "OPD Procedure",
   "Surgery",
+  "Sub Category",
   "Other"
 ];
 

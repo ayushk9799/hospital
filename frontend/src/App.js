@@ -44,7 +44,6 @@ import { fetchUserData } from "./redux/slices/userSlice";
 import { fetchHospitalInfo } from "./redux/slices/HospitalSlice";
 import CreateBloodWork from "./pages/CreateBloodWork"; // Add this import
 import Lab from "./pages/Lab";
-import CreateLabReport from "./pages/CreateLabReport";
 import { setLoading } from "./redux/slices/loaderSlice";
 import DischargeSummary from "./pages/DischargeSummary";
 import HospitalInfo from "./pages/HospitalInfo";
@@ -192,10 +191,6 @@ const AppContent = () => {
                   <Route path="/lab/list" element={<LabList />} />
                   <Route path="/lab/registration" element={<LabRegDialog />} />
                   <Route path="/lab/all-tests" element={<AllLabTests />} />
-                  <Route
-                    path="/lab/create/:category/:type"
-                    element={<CreateLabReport />}
-                  />
                   <Route
                     path="/lab/blood-work/create"
                     element={<CreateBloodWork />}

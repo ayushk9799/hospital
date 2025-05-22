@@ -22,7 +22,6 @@ import { Textarea } from "../../ui/textarea";
 import {
   fetchIPDAdmissionDetailsFull,
   editIPDAdmission,
-  fetchPatients, // To refresh list after edit
 } from "../../../redux/slices/patientSlice";
 import { fetchRooms } from "../../../redux/slices/roomSlice";
 import { useToast } from "../../../hooks/use-toast";
@@ -330,42 +329,37 @@ export default function EditIPDPatientDialog({
 
     setFormData((prev) => {
       const newState = { ...prev };
-      let currentSection = newState[section];
+      let current = newState[section];
 
+      // Handle nested fields (e.g., admission.vitals.admission.bloodPressure)
       const keys = fieldName.split(".");
       for (let i = 0; i < keys.length - 1; i++) {
-        if (!currentSection[keys[i]]) currentSection[keys[i]] = {};
-        currentSection = currentSection[keys[i]];
+        if (!current[keys[i]]) current[keys[i]] = {};
+        current = current[keys[i]];
       }
-      currentSection[keys[keys.length - 1]] = type === "checkbox" ? checked : value;
+      current[keys[keys.length - 1]] = type === "checkbox" ? checked : value;
 
-      // Recalculations specific to the bill section
       if (section === "bill") {
         if (keys[0] === "totalAmount") {
           const newTotalAmountStr = value;
           const newTotalAmountNum = Number(newTotalAmountStr) || 0;
+          let currentSubtotalNum = newState.bill.services.reduce(
+            (sum, s) => sum + Number(s.rate) * Number(s.quantity),
+            0
+          );
 
-          // Calculate subtotal from services, excluding any "Room Charge" category items
-          const billableServicesSubtotal = newState.bill.services
-            .filter(s => s.category !== "Room Charge")
-            .reduce((sum, s) => sum + Number(s.rate) * Number(s.quantity), 0);
-          
-          // Get current room rate if a room is assigned
-          const assignedRoomId = newState.admission.assignedRoom; // Access from potentially updated newState
-          const roomRate = rooms.find(r => r._id === assignedRoomId)?.ratePerDay || 0;
-          
-          const grossBillableAmount = billableServicesSubtotal + roomRate;
-
-          if (newState.bill.services.filter(s => s.category !== "Room Charge").length === 0 && roomRate === 0) {
-            // If no billable services and no room rate, totalAmount sets subtotal, discount is 0
-            newState.bill.subtotal = newTotalAmountStr; // Or "0" if total should also be 0
+          if (newState.bill.services.length === 0) {
+            newState.bill.subtotal = newTotalAmountStr;
             newState.bill.additionalDiscount = "0";
           } else {
-            newState.bill.subtotal = billableServicesSubtotal.toString(); // Subtotal of actual listed services
-            const newDiscountNum = Math.max(0, grossBillableAmount - newTotalAmountNum);
+            newState.bill.subtotal = currentSubtotalNum.toString();
+            const newDiscountNum = Math.max(
+              0,
+              currentSubtotalNum - newTotalAmountNum
+            );
             newState.bill.additionalDiscount = newDiscountNum.toString();
           }
-          // totalAmount is already set by the generic handler above.
+          newState.bill.totalAmount = newTotalAmountStr; // Already set by generic handler, but ensure it is string
         }
 
         // Recalculate amountPaid if a payment amount changes
@@ -377,7 +371,7 @@ export default function EditIPDPatientDialog({
       }
       return newState;
     });
-  }, [rooms]); // Added rooms to dependency array for roomRate calculation
+  }, []);
 
   const handleSelectChange = useCallback(
     (id, value) => {
@@ -789,161 +783,41 @@ export default function EditIPDPatientDialog({
 
 
   const handleServicesChange = (selectedServicesFromDialog) => {
+    // selectedServicesFromDialog is an array of { id, rate }
     const allAvailableServices = services || [];
 
-    // 1. Extract new/updated Surgery services from the dialog's output.
-    const newSurgeryBillObjects = selectedServicesFromDialog
-      .map((selServiceWithRate) => {
-        const fullServiceDefinition = allAvailableServices.find(
-          (s) => s._id === selServiceWithRate.id
-        );
-        if (
-          fullServiceDefinition &&
-          fullServiceDefinition.category === "Surgery"
-        ) {
-          return {
-            serviceId: fullServiceDefinition._id,
-            name: fullServiceDefinition.name,
-            quantity: 1,
-            rate: selServiceWithRate.rate,
-            category: fullServiceDefinition.category,
-            date: new Date().toISOString().split("T")[0],
-          };
-        }
-        return null;
-      })
-      .filter(Boolean);
-
-    setFormData((prev) => {
-      // 2. Preserve non-Surgery and non-"Room Charge" services from the PREVIOUS bill state.
-      const preservedOtherCategoryServices = prev.bill.services.filter(
-        (billService) =>
-          billService.category !== "Surgery"
-          
+    const newBillServices = selectedServicesFromDialog.map((selService) => {
+      const fullService = allAvailableServices.find(
+        (s) => s._id === selService.id
       );
-
-      // 3. Final list for the bill: preserved other items + new Surgery items.
-      // Explicit "Room Charge" services from prev.bill.services are effectively removed here.
-      const finalBillServices = [
-        ...preservedOtherCategoryServices,
-        ...newSurgeryBillObjects,
-      ];
-
-      const surgeryServicesForOpName = finalBillServices.filter(
-        (s) => s.category === "Surgery"
-      );
-      const newOperationName = surgeryServicesForOpName
-        .map((s) => s.name)
-        .join(", ");
-
-      const servicesSubtotal = finalBillServices.reduce(
-        (sum, s) => sum + Number(s.rate) * Number(s.quantity),
-        0
-      );
-      const roomRate =
-        rooms.find((r) => r._id === prev.admission.assignedRoom)?.rate ||
-        0;
-      const grossTotal = servicesSubtotal + roomRate;
-
-      
-
-     
-
       return {
-        ...prev,
-        admission: {
-          ...prev.admission,
-          operationName: newOperationName,
-        },
-        bill: {
-          ...prev.bill,
-          services: finalBillServices,
-          subtotal: grossTotal.toString(), // Subtotal of items in bill.services
-          totalAmount: grossTotal.toString(),
-          additionalDiscount: "0",
-        },
+        serviceId: selService.id,
+        name: fullService?.name || "Unknown Service",
+        quantity: 1, // Default quantity
+        rate: selService.rate, // Use rate from dialog
+        category: fullService?.category || "Other",
+        date: new Date().toISOString().split("T")[0], // Default to today
       };
     });
+
+    const newSubtotal = newBillServices.reduce(
+      (sum, s) => sum + Number(s.rate) * Number(s.quantity),
+      0
+    );
+    const currentDiscount = Number(formData.bill.additionalDiscount) || 0;
+    const newTotalAmount = newSubtotal - currentDiscount;
+
+    setFormData((prev) => ({
+      ...prev,
+      bill: {
+        ...prev.bill,
+        services: newBillServices,
+        subtotal: newSubtotal.toString(),
+        totalAmount: newSubtotal.toString(), // Total amount defaults to subtotal
+        additionalDiscount: "0", // Discount is reset
+      },
+    }));
   };
-
-  useEffect(() => {
-    if (open && formData.admission.assignedRoom && rooms.length > 0) {
-      const selectedRoomObject = rooms.find(r => r._id === formData.admission.assignedRoom);
-      const newRoomRate = selectedRoomObject ? (selectedRoomObject.ratePerDay || 0) : 0;
-
-      setFormData(prev => {
-        // Remove any existing "Room Charge" category service items
-        const servicesWithoutRoomCharge = prev.bill.services.filter(
-          service => service.category !== "Room Rent"
-        );
-
-        const servicesSubtotal = servicesWithoutRoomCharge.reduce((sum, s) => sum + Number(s.rate) * Number(s.quantity), 0);
-        const grossTotal = servicesSubtotal + newRoomRate;
-        const prevTotalAmountNum = Number(prev.bill.totalAmount);
-
-      let servicesall=[
-        ...servicesWithoutRoomCharge,
-        {
-          name: "Room Charge",
-          quantity: 1,
-          rate: newRoomRate,
-          category: "Room Rent",
-          date: new Date().toISOString().split("T")[0],
-        },
-      ];
-
-        return {
-          ...prev,
-          bill: {
-            ...prev.bill,
-            services: servicesall, // Update services to remove explicit room charges
-            subtotal: grossTotal.toString(), // Subtotal of actual billable service items
-            totalAmount: grossTotal.toString(),
-            additionalDiscount: "0",
-          }
-        };
-      });
-    } else if (open && !formData.admission.assignedRoom && rooms.length > 0) {
-        // Room was de-selected, recalculate bill without room rate
-        // Ensure any "Room Charge" items that might have been there are still removed or absent
-        setFormData(prev => {
-            const servicesWithoutRoomCharge = prev.bill.services.filter(
-              service => service.category !== "Room Charge"
-            );
-            const servicesSubtotal = servicesWithoutRoomCharge.reduce((sum, s) => sum + Number(s.rate) * Number(s.quantity), 0);
-            const grossTotal = servicesSubtotal; // No room rate
-            const prevTotalAmountNum = Number(prev.bill.totalAmount);
-
-            let newTotalAmountStr;
-            let newAdditionalDiscountStr;
-
-            if (prev.bill.totalAmount && servicesWithoutRoomCharge.length > 0) {
-                newTotalAmountStr = prev.bill.totalAmount;
-                const discount = Math.max(0, grossTotal - prevTotalAmountNum);
-                newAdditionalDiscountStr = discount.toString();
-            } else {
-                newTotalAmountStr = grossTotal.toString();
-                newAdditionalDiscountStr = "0";
-            }
-
-            if (servicesWithoutRoomCharge.length === 0) {
-                newTotalAmountStr = "0";
-                newAdditionalDiscountStr = "0";
-            }
-
-            return {
-                ...prev,
-                bill: {
-                    ...prev.bill,
-                    services: servicesWithoutRoomCharge,
-                    subtotal: servicesSubtotal.toString(),
-                    totalAmount: newTotalAmountStr,
-                    additionalDiscount: newAdditionalDiscountStr,
-                }
-            };
-        });
-    }
-  }, [formData.admission.assignedRoom, rooms, open]);
 
   if (ipdAdmissionDetailsFullStatus === "loading" && open) {
     return (

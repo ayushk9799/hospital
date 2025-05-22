@@ -37,6 +37,7 @@ const ipdAdmissionSchema = new mongoose.Schema(
         date: { type: Date },
         name: { type: String },
         report: { type: mongoose.Schema.Types.Mixed },
+        category: { type: String },
       },
     ],
     vitals: {

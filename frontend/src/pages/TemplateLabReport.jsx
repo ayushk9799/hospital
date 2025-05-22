@@ -11,8 +11,6 @@ import {
   PopoverTrigger,
 } from "../components/ui/popover";
 import { format } from "date-fns";
-import { Backend_URL } from "../assets/Data";
-import { PDFViewer } from "@react-pdf/renderer";
 import LabReportPDF from "../components/custom/reports/LabReportPDF";
 import { Textarea } from "../components/ui/textarea";
 import SearchSuggestion from "../components/custom/registration/CustomSearchSuggestion";
@@ -306,7 +304,7 @@ const TemplateLabReport = ({
       const resultAction = await dispatch(
         addLabReport({
           _id: patientData._id,
-          labReport: labReportData,
+          labReport: {...labReportData},
           component: component,
         })
       );
@@ -318,7 +316,6 @@ const TemplateLabReport = ({
           variant: "success",
         });
 
-        // Update local state through onSave callback
         if (onSave) {
           const updatedData =
             resultAction.payload.visit || resultAction.payload.registration;
@@ -357,10 +354,11 @@ const TemplateLabReport = ({
     setFields(reorderedFields);
   };
 
-  const shouldeTextarea = (unit, normalRange) => {
+  const shouldeTextarea = (unit, normalRange,options) => {
     return (
       [undefined, "", null, "N/A", "-"].includes(unit) &&
-      [undefined, "", null, "N/A", "-"].includes(normalRange)
+      [undefined, "", null, "N/A", "-"].includes(normalRange) &&
+      options?.length === 0
     );
   };
   return (
@@ -423,8 +421,8 @@ const TemplateLabReport = ({
                           className={`${
                             field.label?.toLowerCase() === "findings" ||
                             field.label?.toLowerCase() === "impression" ||
-                            shouldeTextarea(field.unit, field.normalRange)
-                              ? "col-span-full"
+                            shouldeTextarea(field.unit, field.normalRange,field.options,field.options)
+                              ? "col-span-full" 
                               : "grid grid-cols-[4fr_2fr_1fr_3fr] gap-2 items-center border-b pb-2"
                           } ${
                             snapshot.isDragging
@@ -437,7 +435,7 @@ const TemplateLabReport = ({
                         >
                           {field.label?.toLowerCase() === "findings" ||
                           field.label?.toLowerCase() === "impression" ||
-                          shouldeTextarea(field.unit, field.normalRange) ? (
+                          shouldeTextarea(field.unit, field.normalRange,field.options) ? (
                             <div className="col-span-full space-y-1">
                               <Label htmlFor={field.name} className="mb-1">
                                 {field.label}

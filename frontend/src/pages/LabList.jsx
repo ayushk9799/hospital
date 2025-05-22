@@ -55,7 +55,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
-import { labCategories } from "../../src/assets/Data";
 
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Label } from "../components/ui/label";
@@ -97,15 +96,8 @@ export default function LabList() {
   const isUpdating = updateStatus === "loading";
 
   // Add testsList - you should replace this with your actual test list from your app's state/config
-  const labtestsTemplate = useSelector(
-    (state) => state.templates.labTestsTemplate
-  );
-  const readymadeTests = labCategories.flatMap((category) => category.types);
-
-  const testsList = [...labtestsTemplate, ...readymadeTests]?.map((test) => ({
-    name: test.name || test,
-    rate: test.rate,
-  }));
+ 
+ 
   useEffect(() => {
     fetchTests();
   }, [dateFilter, dateRange, dispatch]);

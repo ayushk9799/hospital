@@ -4,7 +4,9 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { editTemplate, deleteTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { labReportFields } from "../assets/Data";
+
+import { fetchLabData } from "../redux/slices/labSlice";
+
 import {
   X,
   Plus,
@@ -15,21 +17,6 @@ import {
   Edit,
 } from "lucide-react";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-
-const findCalculationDetailsFromLabReportFields = (fieldName) => {
-  // Search through all categories and their tests in labReportFields
-  for (const category of Object.values(labReportFields)) {
-    for (const tests of Object.values(category)) {
-      if (Array.isArray(tests)) {
-        const matchingField = tests.find((field) => field.name === fieldName);
-        if (matchingField?.calculationDetails) {
-          return matchingField.calculationDetails;
-        }
-      }
-    }
-  }
-  return null;
-};
 
 const checkMissingDependencies = (dependencies, fields) => {
   if (!dependencies) return [];
@@ -49,6 +36,27 @@ export default function EditTestTemplate() {
   const templateName = location.state.name;
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { labReportFields, fetchLabDataStatus } = useSelector(
+    (state) => state.lab
+  );
+  useEffect(() => {
+    if (fetchLabDataStatus === "idle") {
+      dispatch(fetchLabData());
+    }
+  }, [fetchLabDataStatus, dispatch]);
+  const findCalculationDetailsFromLabReportFields = (fieldName) => {
+    for (const category of Object.values(labReportFields)) {
+      for (const tests of Object.values(category)) {
+        if (Array.isArray(tests)) {
+          const matchingField = tests.find((field) => field.name === fieldName);
+          if (matchingField?.calculationDetails) {
+            return matchingField.calculationDetails;
+          }
+        }
+      }
+    }
+    return null;
+  };
   const { labTestsTemplate } = useSelector((state) => state.templates);
 
   const [templateData, setTemplateData] = useState({
@@ -315,19 +323,25 @@ export default function EditTestTemplate() {
     }));
   };
 
-  const processFieldsBeforeSave = (fields) => {
-    return Object.entries(fields).reduce((acc, [key, field]) => {
-      const processedOptions =
-        typeof field.options === "string"
-          ? field.options
-              .split(",")
-              .map((o) => o.trim())
-              .filter((o) => o)
-          : field.options;
+  const processFieldsBeforeSave = (fields, order) => {
+    // Filter out only field items from the order and map to their IDs
+    const fieldOrder = order
+      .filter((item) => item.type === "field")
+      .map((item) => item.id);
 
-      return {
-        ...acc,
-        [key]: {
+    // Process fields based on the determined order
+    return fieldOrder.reduce((acc, fieldId) => {
+      const field = fields[fieldId];
+      if (field) {
+        const processedOptions =
+          typeof field.options === "string"
+            ? field.options
+                .split(",")
+                .map((o) => o.trim())
+                .filter((o) => o)
+            : field.options;
+
+        acc[fieldId] = {
           label: field.label,
           value: field.value,
           unit: field.unit,
@@ -337,14 +351,18 @@ export default function EditTestTemplate() {
             field.calculationDetails?.formula && {
               calculationDetails: field.calculationDetails,
             }),
-        },
-      };
+        };
+      }
+      return acc;
     }, {});
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const processedFields = processFieldsBeforeSave(templateData.fields);
+      const processedFields = processFieldsBeforeSave(
+        templateData.fields,
+        templateData.order
+      );
 
       // Convert the visual order into section positions
       const allItems = templateData.order.map((item, index) => ({
@@ -456,7 +474,7 @@ export default function EditTestTemplate() {
               </label>
               <div className="flex-1 flex items-center">
                 <Input
-                  className="flex-1"
+                  className="flex-1 font-semibold"
                   value={templateData.name}
                   onChange={(e) =>
                     setTemplateData({ ...templateData, name: e.target.value })
@@ -468,7 +486,7 @@ export default function EditTestTemplate() {
                   </label>
                   <Input
                     type="number"
-                    className="w-[150px] text-right"
+                    className="w-[150px] text-right font-semibold"
                     value={templateData.rate}
                     onChange={(e) =>
                       setTemplateData({ ...templateData, rate: e.target.value })
@@ -527,6 +545,25 @@ export default function EditTestTemplate() {
                   {...provided.droppableProps}
                   className="space-y-2"
                 >
+                  {/* Header Row for Fields */}
+                  {templateData.order.some((item) => item.type === "field") && (
+                    <div className="pl-[20px]">
+                      <div className="flex items-center gap-4">
+                        <div className="w-4 h-4" />
+                        <div className="w-8 h-8" />
+                        <div className="grid grid-cols-[2fr,1fr,1fr,2fr,auto] gap-4 flex-1">
+                          <div className="text-sm font-medium">Name</div>
+                          <div className="text-sm font-medium">Unit</div>
+                          <div className="text-sm font-medium">
+                            Normal Range
+                          </div>
+                          <div className="text-sm font-medium">Options</div>
+                          <div className="w-8"></div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {templateData.order.map((item, index) => (
                     <Draggable
                       key={`${item.type}-${item.id}`}
@@ -579,7 +616,7 @@ export default function EditTestTemplate() {
                                 </Button>
                                 <div className="grid grid-cols-[2fr,1fr,1fr,2fr,auto] gap-4 flex-1">
                                   <Input
-                                    className="h-8"
+                                    className="h-8 font-semibold"
                                     value={
                                       templateData.fields[item.id]?.label || ""
                                     }

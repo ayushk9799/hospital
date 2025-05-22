@@ -896,7 +896,14 @@ const Payments = () => {
                           <TableCell>{payment.paymentMethod}</TableCell>
                           <TableCell className="font-medium">
                             {payment.paymentType?.name === "OPDProcedure"
-                              ? ((payment.associatedInvoiceOrId?payment.associatedInvoiceOrId+" ":" ")+payment.description)
+                              ? (payment.associatedInvoiceOrId
+                                  ? payment.associatedInvoiceOrId + " "
+                                  : " ") + payment.description
+                              : payment.type === "Expense"
+                              ? (payment.paymentType?.name || "") +
+                                (payment.description
+                                  ? " " + payment.description
+                                  : "")
                               : (payment.associatedInvoiceOrId
                                   ? payment.associatedInvoiceOrId + " "
                                   : "") +

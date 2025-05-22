@@ -1,11 +1,10 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
-import { updateTemplate } from "../redux/slices/templatesSlice";
+
+import { Backend_URL, labCategories, labReportFields } from "../assets/Data";
+
 import { Button } from "../components/ui/button";
-import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
-import HospitalHeader from "../utils/print/HospitalHeader";
-import { headerTemplateString } from "../templates/headertemplate";
+
 import { ChevronLeft } from "lucide-react";
 
 export default function Settings() {
@@ -26,6 +25,25 @@ export default function Settings() {
   const handleHospitalInfo = () => {
     navigate("/settings/hospital-info");
   };
+
+  // const handleLabData = async () => {
+  //   try{
+  //     const response = await fetch(`${Backend_URL}/api/superadmin/lab-data`,{
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       credentials: "include",
+  //       body: JSON.stringify({
+  //         labCategories: labCategories,
+  //         labReportFields: labReportFields,
+  //       }),
+  //     });
+  //     const data = await response.json();
+  //   }catch(error){
+  //     console.log(error);
+  //   }
+  // };
 
   const handleCustomization = () => {
     navigate("/settings/customization");
@@ -91,6 +109,9 @@ export default function Settings() {
         <Button onClick={handleDischargeFormTemplates}>
           Discharge Form Templates
         </Button>
+        {/* <Button onClick={handleLabData}>
+          Lab Data
+        </Button> */}
       </div>
 
       {/* <div className="mb-6 mt-6">

@@ -10,7 +10,8 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Checkbox } from "../components/ui/checkbox";
-import { labCategories, labReportFields } from "../assets/Data";
+import { fetchLabData } from "../redux/slices/labSlice";
+ //import { labCategories, labReportFields } from "../assets/Data";
 import { Settings, Search, ChevronLeft, Plus, X, FileDown } from "lucide-react";
 import { useToast } from "../hooks/use-toast";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -31,7 +32,14 @@ export default function CreateTestTemplate() {
   const location = useLocation();
   const isEditMode = location.state?.editMode;
   const editTemplateData = location.state?.templateData;
-
+  const { labCategories, labReportFields, fetchLabDataStatus } = useSelector(
+    (state) => state.lab
+  );
+  useEffect(() => {
+    if (fetchLabDataStatus === "idle") {
+      dispatch(fetchLabData());
+    }
+  }, [fetchLabDataStatus, dispatch]);
 
   const [selectedTests, setSelectedTests] = useState({});
   const [selectedFields, setSelectedFields] = useState({});
@@ -363,7 +371,7 @@ export default function CreateTestTemplate() {
       });
     });
     return parameters;
-  }, []);
+  }, [labCategories, labReportFields]);
 
   // Filter parameters based on search query
   const filteredParameters = useMemo(() => {
@@ -374,9 +382,10 @@ export default function CreateTestTemplate() {
       (param) =>
         param.field.label.toLowerCase().includes(query) ||
         param.field.name.toLowerCase().includes(query) ||
-        (param.field.unit && param.field.unit.toLowerCase().includes(query))
+        (param.field.unit && param.field.unit.toLowerCase().includes(query)) ||
+        param.test.toLowerCase().includes(query) 
     );
-  }, [searchQuery, allParameters]);
+  }, [searchQuery, allParameters, labCategories, labReportFields]);
 
   // Reset highlight after some time
   useEffect(() => {

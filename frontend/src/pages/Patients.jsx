@@ -401,7 +401,7 @@ export default function Patients() {
                   {patient.patient.address || "--"}
                 </div>
               </TableCell>
-              <TableCell>{`${patient.patient.gender}/(${patient.patient.age} yrs)`}</TableCell>
+              <TableCell>{`${patient.patient.gender?.charAt(0)} / ${patient.patient.age}Y`}</TableCell>
               <TableCell>{patient.doctor?.name || "--"}</TableCell>
 
               <TableCell>

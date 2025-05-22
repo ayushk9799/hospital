@@ -8,6 +8,7 @@ import { verifyToken, checkPermission } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 import { Visit } from "../models/Visits.js";
 import { IPDAdmission } from "../models/IPDAdmission.js";
+import { LabData } from "../models/LabData.js";
 
 const router = express.Router();
 
@@ -977,6 +978,28 @@ router.put("/update/:id", verifyToken, async (req, res) => {
     res.status(400).json({ success: false, error: error.message });
   } finally {
     session.endSession();
+  }
+});
+
+// Get Lab Data (Categories and Report Fields)
+router.get("/lab-data", verifyToken, async (req, res) => {
+  try {
+    const labData = await LabData.findOne();
+    if (!labData) {
+      // If no data is found, return default empty values
+      return res.json({
+        success: true,
+        labCategories: [],
+        labReportFields: {},
+      });
+    }
+    res.json({
+      success: true,
+      labCategories: labData.labCategories || [],
+      labReportFields: labData.labReportFields || {},
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 

@@ -5,7 +5,11 @@ const hospitalSettingsSchema = new mongoose.Schema({
   defaultBreakBillMode: {
     type: Boolean,
     default: true,
-  }
+  },
+  investigationDefaultInDischarge: {
+    type: Boolean,
+    default: true,
+  },
 
   // Add any other settings as needed
 });

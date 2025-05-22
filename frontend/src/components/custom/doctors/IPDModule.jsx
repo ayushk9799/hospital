@@ -9,17 +9,13 @@ import { useSelector, useDispatch } from "react-redux";
 import { savePrescription } from "../../../redux/slices/patientSlice";
 import { useToast } from "../../../hooks/use-toast";
 import { fetchItems } from "../../../redux/slices/pharmacySlice";
-import { labCategories } from "../../../assets/Data";
 import { Badge } from "../../ui/badge";
 import MultiSelectInput from "../MultiSelectInput";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 
-// Add this at the top of the file, outside the component
-const allLabTests = labCategories.flatMap((category) =>
-  category.types.map((type) => ({ name: type }))
-);
+
 
 
 export default function IPDModule({ patient }) {
@@ -77,6 +73,12 @@ export default function IPDModule({ patient }) {
       policyNumber: "",
       coverageType: "",
     },
+  });
+  const {labTestsTemplate} = useSelector((state) => state.templates);
+  const allLabTests = labTestsTemplate.map((test) =>{
+    return {
+      name: test.name
+    }
   });
 
   // Add this useEffect to update the state when the patient prop changes

@@ -27,10 +27,7 @@ import { Textarea } from "../../ui/textarea";
 import MultiSelectInput from "../MultiSelectInput";
 import { useMediaQuery } from "../../../hooks/use-media-query";
 import { Label } from "../../ui/label";
-import { ScrollArea } from "../../ui/scroll-area";
 import MemoizedInput from "./MemoizedInput";
-import { labCategories } from "../../../assets/Data";
-import { format } from "date-fns";
 import { Badge } from "../../ui/badge";
 import { X, Trash2 } from "lucide-react";
 import LabDetailsModal from "./LabDetailsModal";
@@ -50,11 +47,10 @@ export default function LabEditDialog({ open, onOpenChange, labData }) {
   const [showLabDetailsModal, setShowLabDetailsModal] = useState(false);
   const [updatedLabData, setUpdatedLabData] = useState(null);
   const { updateRegistrationStatus, error } = useSelector((state) => state.lab);
-  const readymadeTests = labCategories.flatMap((category) => category.types);
   const labtestsTemplate = useSelector(
     (state) => state.templates.labTestsTemplate
   );
-  const allLabTests = [...labtestsTemplate, ...readymadeTests]?.map((test) => ({
+  const allLabTests = [...labtestsTemplate]?.map((test) => ({
     name: test.name || test,
     rate: test.rate,
   }));

@@ -1,9 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { Backend_URL } from "../../assets/Data";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
-import { ChartNoAxesColumnDecreasing } from "lucide-react";
-import { createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 
 // Async thunks
 export const fetchLabRegistrations = createLoadingAsyncThunk(
@@ -203,6 +200,32 @@ export const updateLabRegistration = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+export const fetchLabData = createLoadingAsyncThunk(
+  "lab/fetchLabData",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/lab/lab-data`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      if (!response.ok) {
+        return rejectWithValue("Failed to fetch lab data");
+      }
+      const data = await response.json();
+      if (!data.success) {
+        return rejectWithValue(data.message || "Failed to fetch lab data");
+      }
+      return data; // This will contain labCategories and labReportFields
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   registrations: [],
   registrationsStatus: "idle",
@@ -212,6 +235,9 @@ const initialState = {
   error: null,
   searchResults: [],
   searchStatus: "idle",
+  labCategories: [],
+  labReportFields: {},
+  fetchLabDataStatus: "idle",
 };
 
 const labSlice = createSlice({
@@ -350,6 +376,20 @@ const labSlice = createSlice({
       })
       .addCase(updateLabRegistration.rejected, (state, action) => {
         state.updateRegistrationStatus = "failed";
+        state.error = action.payload;
+      })
+      // Fetch Lab Data
+      .addCase(fetchLabData.pending, (state) => {
+        state.fetchLabDataStatus = "loading";
+        state.error = null;
+      })
+      .addCase(fetchLabData.fulfilled, (state, action) => {
+        state.fetchLabDataStatus = "succeeded";
+        state.labCategories = action.payload.labCategories;
+        state.labReportFields = action.payload.labReportFields;
+      })
+      .addCase(fetchLabData.rejected, (state, action) => {
+        state.fetchLabDataStatus = "failed";
         state.error = action.payload;
       });
   },

@@ -6,12 +6,15 @@ import { deleteTemplate } from "../redux/slices/templatesSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronLeft } from "lucide-react";
 import { cn } from "../lib/utils";
+import { Input } from "../components/ui/input";
 
 export default function LabTemplatesManager() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { labTestsTemplate } = useSelector((state) => state.templates);
   const [expandedTemplates, setExpandedTemplates] = useState({});
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterNoParameters, setFilterNoParameters] = useState(false);
 
   const handleBack = () => {
     navigate(-1);
@@ -35,6 +38,23 @@ export default function LabTemplatesManager() {
     }));
   };
 
+  const filteredTemplates = labTestsTemplate?.filter((template) => {
+    const matchesSearchQuery = template.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    if (filterNoParameters) {
+      return (
+        matchesSearchQuery &&
+        (!template.fields || Object.keys(template.fields).length === 0)
+      );
+    }
+    return matchesSearchQuery;
+  });
+
+  const templatesWithNoParametersCount = labTestsTemplate?.filter(
+    (template) => !template.fields || Object.keys(template.fields).length === 0
+  ).length;
+
   return (
     <div className="p-6">
       <div className="flex items-center justify-between mb-6">
@@ -49,13 +69,29 @@ export default function LabTemplatesManager() {
           </Button>
           <h1 className="text-2xl font-bold">Lab Templates</h1>
         </div>
+        <div className="flex items-center gap-4">
+          <Input
+            type="text"
+            placeholder="Search by template name..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="max-w-sm font-semibold"
+          />
+          <Button
+            variant={filterNoParameters ? "secondary" : "outline"}
+            onClick={() => setFilterNoParameters(!filterNoParameters)}
+            className="whitespace-nowrap text-red-500 font-bold"
+          >
+            No Parameters ({templatesWithNoParametersCount})
+          </Button>
+        </div>
         <Button onClick={() => navigate("/settings/create-test-template")}>
           Create New Template
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {labTestsTemplate?.map((template) => (
+        {filteredTemplates?.map((template) => (
           <div
             key={template.name}
             className={cn(
@@ -76,6 +112,12 @@ export default function LabTemplatesManager() {
                   ₹{template.rate}
                 </span>
               </div>
+              {(!template.fields ||
+                Object.keys(template.fields).length === 0) && (
+                <div className="text-sm font-bold text-red-500 mt-1">
+                  No parameters
+                </div>
+              )}
               <div className="flex justify-center">
                 <motion.div
                   animate={{
@@ -105,14 +147,14 @@ export default function LabTemplatesManager() {
                   className="overflow-hidden"
                 >
                   <div className="space-y-2 pt-2 mt-2 border-t border-blue-200">
-                    {Object.entries(template?.fields||{}).map(
+                    {Object.entries(template?.fields || {}).map(
                       ([fieldName, field]) => (
                         <div key={fieldName} className="text-sm">
                           <span className="font-medium text-blue-700">
                             {field.label}:
                           </span>
                           <span className="ml-2 text-gray-600">
-                            {(field.options && Array.isArray(field.options))
+                            {field.options && Array.isArray(field.options)
                               ? field.options.join(", ")
                               : field.options ||
                                 field.unit ||
@@ -128,9 +170,9 @@ export default function LabTemplatesManager() {
                       size="sm"
                       variant="outline"
                       onClick={() =>
-                        navigate(
-                          `/settings/edit-test-template`,{state:{name:template.name}}
-                        )
+                        navigate(`/settings/edit-test-template`, {
+                          state: { name: template.name },
+                        })
                       }
                       className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300"
                     >

@@ -5,28 +5,21 @@ import { Label } from "../../ui/label";
 import { ScrollArea } from "../../ui/scroll-area";
 import { Textarea } from "../../ui/textarea";
 import { PlusCircle, Trash2 } from "lucide-react";
-import { labCategories } from "../../../assets/Data";
 import SearchSuggestion from "../registration/CustomSearchSuggestion";
 import { useSelector, useDispatch } from "react-redux";
 import { fetchItems } from "../../../redux/slices/pharmacySlice";
 import { savePrescription } from "../../../redux/slices/patientSlice";
 import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 import { useToast } from "../../../hooks/use-toast";
-import { PDFViewer } from "@react-pdf/renderer";
-import OPDPrescriptionPDF from "../reports/OPDPrescriptionPDF";
 import OPDPrescriptionTemplate from "../../../templates/opdPrescription";
-import { comorbidities } from "../../../assets/Data";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
 import MultiSelectInput from "../MultiSelectInput";
-import { Separator } from "../../ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { useReactToPrint } from "react-to-print";
 
 // Flatten the lab categories
-const allLabTests = labCategories.flatMap((category) =>
-  category.types.map((type) => ({ name: type }))
-);
+
 
 export default function OPDModule({ patient }) {
   const [vitals, setVitals] = useState({
@@ -39,6 +32,12 @@ export default function OPDModule({ patient }) {
     oxygenSaturation: "",
   });
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
+  const {labTestsTemplate} = useSelector((state) => state.templates);
+  const allLabTests = labTestsTemplate.map((test) => {
+    return {
+      name:test.name
+    }
+  });
   const [prescription, setPrescription] = useState({
     diagnosis: "",
     treatment: "",

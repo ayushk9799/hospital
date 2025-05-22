@@ -44,7 +44,7 @@ router.post("/create", verifyToken, async (req, res) => {
         type: "Expense",
         createdByName: req.user?.name,
         createdBy: req.user._id,
-        description: description || "Payment for Expense",
+        description: category + " paid to " + description || "Payment for Expense",
       });
       await payment.save({ session });
       newExpense.payments.push(payment._id);

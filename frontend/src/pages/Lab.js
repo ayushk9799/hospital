@@ -9,16 +9,13 @@ import {
   CardContent,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
-import { Backend_URL, labCategories } from "../assets/Data";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTemplates } from "../redux/slices/templatesSlice";
-import CreateLabReport from "./CreateLabReport";
 import TemplateLabReport from "./TemplateLabReport";
 import { ChevronLeft } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Checkbox } from "../components/ui/checkbox";
-import { labReportFields } from "../assets/Data";
 import MergedLabReportPDF from "../components/custom/reports/MergedLabReportPDF";
 import { useReactToPrint } from "react-to-print";
 
@@ -62,20 +59,7 @@ const Lab = () => {
     }
   }, [location.state]);
 
-  const filteredCategories = React.useMemo(() => {
-    // Convert labReportFields object into array structure similar to labCategories
-    return Object.entries(labReportFields)
-      .map(([categoryName, tests]) => ({
-        name: categoryName.charAt(0).toUpperCase() + categoryName.slice(1), // Capitalize first letter
-        description: `${categoryName} related tests`,
-        types: Object.keys(tests),
-      }))
-      .filter((category) =>
-        category.types.some((type) =>
-          type.toLowerCase().includes(searchTerm.toLowerCase())
-        )
-      );
-  }, [searchTerm]);
+ 
 
   const highlightMatch = (text, term) => {
     if (!term) return text;
@@ -91,31 +75,7 @@ const Lab = () => {
     );
   };
 
-  const handleTestSelection = (category, type) => {
-    setSelectedTemplate(null);
-    // Convert category name to match labReportFields key format
-    const categoryKey = category.toLowerCase().replace(/\s+/g, "-");
-
-    // Get the fields for this test from labReportFields
-    const testFields = labReportFields[categoryKey][type];
-
-    // Create a template object in the format expected by TemplateLabReport
-    const template = {
-      name: type,
-      fields: testFields.reduce((acc, field) => {
-        acc[field.name] = {
-          label: field.label,
-          unit: field.unit,
-          normalRange: field.normalRange,
-          options: field.options,
-        };
-        return acc;
-      }, {}),
-    };
-
-    setSelectedTemplate(template);
-    setSelectedTest(null);
-  };
+ 
 
   const handleTemplateSelection = (template) => {
     setSelectedTemplate(template);
@@ -134,26 +94,10 @@ const Lab = () => {
   };
 
   const sortedLabTestsTemplate = React.useMemo(() => {
-    // Convert labReportFields into template format
-    const readyMadeTemplates = Object.entries(labReportFields).flatMap(
-      ([category, tests]) =>
-        Object.entries(tests).map(([testName, fields]) => ({
-          name: testName,
-          fields: fields.reduce((acc, field) => {
-            acc[field.name] = {
-              label: field.label,
-              unit: field.unit,
-              normalRange: field.normalRange,
-              options: field.options,
-            };
-            return acc;
-          }, {}),
-          category: category,
-        }))
-    );
+   
 
     // If no patient data or lab tests, return all templates
-    let templates = [...(labTestsTemplate || []), ...readyMadeTemplates];
+    let templates = [...(labTestsTemplate || [])];
 
     // Filter templates based on search term
     if (searchTerm) {
@@ -375,7 +319,7 @@ const Lab = () => {
               )}
 
               {/* Display filtered lab categories */}
-              {filteredCategories.map((category) => (
+              {/* {filteredCategories.map((category) => (
                 <Card key={category.name}>
                   <CardHeader>
                     <CardTitle>
@@ -401,7 +345,7 @@ const Lab = () => {
                     </ul>
                   </CardContent>
                 </Card>
-              ))}
+              ))} */}
             </div>
           </ScrollArea>
         </div>

@@ -705,22 +705,25 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                             <DropdownMenuItem className="font-semibold text-sm pointer-events-none">
                               OPD Visit Details
                             </DropdownMenuItem>
-                            {searchedPatient.visits.map((visit, index) => (
+                            {[...searchedPatient.visits]?.reverse()?.map((visit, index) => (
                               <DropdownMenuItem
                                 key={index}
                                 className="text-xs pl-4 pointer-events-none"
                               >
-                                Date:{" "}
+                               
                                 {format(
                                   new Date(visit.bookingDate),
                                   "dd MMM yyyy"
                                 )}
                                 {" ("}
-                                {differenceInDays(
-                                  new Date(),
-                                  new Date(visit.bookingDate)
-                                )}{" "}
-                                days ago)
+                                <span className="font-semibold">
+                                  {differenceInDays(
+                                    new Date(),
+                                    new Date(visit.bookingDate)
+                                  )}{" "}
+                                  days ago
+                                </span>
+                                {")"}
                               </DropdownMenuItem>
                             ))}
                           </>

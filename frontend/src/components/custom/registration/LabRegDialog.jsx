@@ -34,7 +34,6 @@ import { ScrollArea } from "../../ui/scroll-area";
 import { Separator } from "../../ui/separator";
 import { searchPatients } from "../../../redux/slices/patientSlice";
 import MemoizedInput from "./MemoizedInput";
-import { labCategories } from "../../../assets/Data";
 import { format, differenceInDays } from "date-fns";
 import { Badge } from "../../ui/badge";
 import { X } from "lucide-react";
@@ -57,11 +56,10 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
   const [isSearching, setIsSearching] = useState(false);
   const [searchedPatient, setSearchedPatient] = useState(null);
   const { createRegistrationStatus, error } = useSelector((state) => state.lab);
-  const readymadeTests = labCategories.flatMap((category) => category.types);
   const labtestsTemplate = useSelector(
     (state) => state.templates.labTestsTemplate
   );
-  const allLabTests = [...labtestsTemplate, ...readymadeTests]?.map((test) => ({
+  const allLabTests = [...labtestsTemplate]?.map((test) => ({
     name: test.name || test,
     rate: test.rate,
   }));
