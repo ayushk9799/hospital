@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useMemo } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import { format } from "date-fns";
@@ -31,7 +31,7 @@ import { headerTemplateString as headerTemplateStringDefault } from "../../../te
 import { X } from "lucide-react";
 import PaymentReceipt from "../print/PaymentReceipt";
 
-const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
+const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode }) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
@@ -48,6 +48,34 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
     headerTemplateString || headerTemplateStringDefault
   );
   const [printPaymentHistory, setPrintPaymentHistory] = useState(true);
+
+  const services = billData?.services || [];
+
+  const servicesGroupedByDate = useMemo(() => {
+    if (!services || !Array.isArray(services)) return [];
+    if (viewMode !== "datewise") return [];
+
+    const grouped = services.reduce((acc, service, index) => {
+      const date = service.date
+        ? format(new Date(service.date), "yyyy-MM-dd")
+        : "No Date";
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push({ ...service, originalIndex: index });
+      return acc;
+    }, {});
+
+    return Object.entries(grouped)
+      .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+      .map(([date, services]) => ({
+        date,
+        services: services.sort((a, b) => {
+          if (!a.date || !b.date) return 0;
+          return new Date(a.date) - new Date(b.date);
+        }),
+      }));
+  }, [services, viewMode]);
 
   React.useEffect(() => {
     if (billData?.services) {
@@ -115,8 +143,6 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
 
   if (!billData) return null;
 
-  const services = billData.services || [];
-
   const getBillStatus = (bill) => {
     if (!bill) return "N/A";
     return bill.amountPaid === bill.totalAmount ? "Paid" : "Due";
@@ -135,29 +161,109 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
     };
   };
 
-  const renderServices = () => {
-    if (!billData?.showServiceBreakup) {
-      // Return simplified total without service breakup
+  const renderTableBody = () => {
+    if (viewMode === "datewise" && servicesGroupedByDate.length > 0) {
       return (
-        <tr>
-          <td colSpan="2">Total Services</td>
-          <td className="text-right">
-            ₹{billData?.totalAmount.toLocaleString("en-IN")}
-          </td>
-        </tr>
+        <TableBody>
+          {servicesGroupedByDate.map(({ date, services: dateServices }) => (
+            <React.Fragment key={date}>
+              <TableRow className="bg-gray-50 ">
+                <TableCell
+                  colSpan={4}
+                  className="font-semibold  text-[13px] h-[25px] py-0"
+                >
+                  {date === "No Date"
+                    ? "No Date"
+                    : format(new Date(date), "dd/MM/yyyy")}
+                </TableCell>
+              </TableRow>
+              {dateServices.map((service) => (
+                <TableRow
+                  key={service.originalIndex}
+                  className={`border-b border-gray-200 ${
+                    !selectedServices.includes(service.originalIndex) &&
+                    isPrinting
+                      ? "hidden"
+                      : ""
+                  }`}
+                >
+                  <TableCell className="border-r border-gray-200 no-print h-[25px] py-1">
+                    <Checkbox
+                      checked={selectedServices.includes(service.originalIndex)}
+                      onCheckedChange={(checked) =>
+                        toggleService(service.originalIndex, checked)
+                      }
+                    />
+                  </TableCell>
+                  <TableCell className="border-r border-gray-200 hidden print:table-cell h-[25px] py-1">
+                    {selectedServices.includes(service.originalIndex)
+                      ? selectedServices.filter(
+                          (i) => i <= service.originalIndex
+                        ).length
+                      : ""}
+                  </TableCell>
+                  <TableCell className="border-r border-gray-200 h-[25px] py-1">
+                    {service.name || "N/A"}
+                  </TableCell>
+                  <TableCell className="border-r border-gray-200 h-[25px] py-1">
+                    {service.quantity || 0}
+                  </TableCell>
+                  <TableCell className="border-r border-gray-200 h-[25px] py-1 text-right">
+                    {(service.rate || 0).toFixed(2)}
+                  </TableCell>
+                  <TableCell className="border-r border-gray-200 h-[25px] py-1 text-right">
+                    {((service.quantity || 0) * (service.rate || 0)).toFixed(2)}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </React.Fragment>
+          ))}
+        </TableBody>
       );
     }
 
-    // Return detailed service breakup
-    return billData?.services?.map((service, index) => (
-      <tr key={index}>
-        <td>{service.name}</td>
-        <td>{service.quantity}</td>
-        <td className="text-right">
-          ₹{service.amount.toLocaleString("en-IN")}
-        </td>
-      </tr>
-    ));
+    return (
+      <TableBody>
+        {services.map((service, index) => (
+          <TableRow
+            key={index}
+            className={`border-b border-gray-200 ${
+              !selectedServices.includes(index) && isPrinting ? "hidden" : ""
+            }`}
+          >
+            <TableCell className="border-r border-gray-200 no-print h-[25px] py-1">
+              <Checkbox
+                checked={selectedServices.includes(index)}
+                onCheckedChange={(checked) => toggleService(index, checked)}
+              />
+            </TableCell>
+            <TableCell className="border-r border-gray-200 hidden print:table-cell h-[25px] py-1">
+              {selectedServices.includes(index)
+                ? selectedServices.filter((i) => i <= index).length
+                : ""}
+            </TableCell>
+            <TableCell className="border-r border-gray-200 h-[25px] py-1">
+              {service.name || "N/A"}
+            </TableCell>
+            <TableCell className="border-r border-gray-200 h-[25px] py-1">
+              {service.date
+                ? format(new Date(service.date), "dd/MM/yyyy")
+                : "N/A"}
+            </TableCell>
+
+            <TableCell className="border-r border-gray-200 h-[25px] py-1 text-center">
+              {service.quantity || 0}
+            </TableCell>
+            <TableCell className="border-r border-gray-200 h-[25px] py-1 text-right">
+              {(service.rate || 0).toFixed(2)}
+            </TableCell>
+            <TableCell className="border-r border-gray-200 h-[25px] py-1 text-right">
+              {((service.quantity || 0) * (service.rate || 0)).toFixed(2)}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    );
   };
 
   return (
@@ -175,7 +281,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                 </DialogHeader>
               </div>
               <div className="grid gap-2 py-1">
-                <div className="flex flex-wrap gap-x-4 gap-y-2">
+                <div className="flex flex-wrap gap-x-4 gap-y-1">
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Name:</Label>
                     <p>{billData.patientInfo?.name || "N/A"}</p>
@@ -253,7 +359,8 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                     </div>
                   ) : null}
                   {billData.createdAt &&
-                  (!billData.admissionDate && !billData.dischargeDate) ? (
+                  !billData.admissionDate &&
+                  !billData.dischargeDate ? (
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Date:</Label>
                       <p>
@@ -287,8 +394,8 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                       </h3>
                       <Table className="border-2 border-gray-200">
                         <TableHeader>
-                          <TableRow className="border-b border-gray-200 bg-gray-200">
-                            <TableHead className="border-r border-gray-300 w-16 no-print">
+                          <TableRow className="border-b border-gray-200 bg-gray-200 ">
+                            <TableHead className="border-r border-gray-300 w-16 no-print h-[30px] py-1">
                               <Checkbox
                                 checked={
                                   selectedServices.length === services.length
@@ -296,95 +403,57 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                                 onCheckedChange={toggleAllServices}
                               />
                             </TableHead>
-                            <TableHead className="border-r border-gray-300 w-16 hidden print:table-cell">
+                            <TableHead className="border-r border-gray-300 w-16 hidden print:table-cell h-[30px] py-1">
                               No.
                             </TableHead>
-                            <TableHead className="border-r border-gray-300 w-1/2">
+                            <TableHead className="border-r border-gray-300 w-1/3 h-[30px] py-1">
                               Service Name
                             </TableHead>
-                            <TableHead className="border-r border-gray-300 w-24">
+
+                            {(viewMode === "list" || !viewMode) && (
+                              <TableHead className="border-r border-gray-300 w-24 h-[30px] py-1">
+                                Date
+                              </TableHead>
+                            )}
+                            <TableHead className="border-r border-gray-300 w-24 h-[30px] py-1">
                               Quantity
                             </TableHead>
-                            <TableHead className="border-r border-gray-300 w-24">
+                            <TableHead className="border-r border-gray-300 w-24 h-[30px] py-1">
                               Price (INR)
                             </TableHead>
-                            <TableHead className="w-24">Total (INR)</TableHead>
+                            <TableHead className="w-24 h-[30px]">
+                              Total (INR)
+                            </TableHead>
                           </TableRow>
                         </TableHeader>
-                        <TableBody>
-                          {services.map((service, index) => (
-                            <TableRow
-                              key={index}
-                              className={`border-b border-gray-200 ${
-                                !selectedServices.includes(index) && isPrinting
-                                  ? "hidden"
-                                  : ""
-                              }`}
-                            >
-                              <TableCell className="border-r border-gray-200 no-print">
-                                <Checkbox
-                                  checked={selectedServices.includes(index)}
-                                  onCheckedChange={(checked) =>
-                                    toggleService(index, checked)
-                                  }
-                                />
-                              </TableCell>
-                              <TableCell className="border-r border-gray-200 hidden print:table-cell">
-                                {selectedServices.includes(index)
-                                  ? selectedServices.filter((i) => i <= index)
-                                      .length
-                                  : ""}
-                              </TableCell>
-                              <TableCell className="border-r border-gray-200">
-                                {service.name || "N/A"}
-                              </TableCell>
-                              <TableCell className="border-r border-gray-200">
-                                {service.quantity || 0}
-                              </TableCell>
-                              <TableCell className="border-r border-gray-200">
-                                {(service.rate || 0).toFixed(2)}
-                              </TableCell>
-                              <TableCell>
-                                {(
-                                  (service.quantity || 0) * (service.rate || 0)
-                                ).toFixed(2)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
+                        {renderTableBody()}
                       </Table>
                     </div>
 
                     <div className="flex justify-end">
                       <div className="w-64">
-                        <div className="border rounded p-3 space-y-2 bg-white text-sm">
+                        <div className="border rounded px-3 space-y-2 bg-white text-sm">
                           <h3 className="font-semibold text-base border-b pb-1">
                             Payment Summary
                           </h3>
 
-                          <div className="flex flex-col items-end space-y-0.5">
-                            <div className="flex justify-end w-full items-center">
-                              <span className="text-gray-600 mr-3">
-                                Sub Total:
-                              </span>
+                          <div className="flex flex-col space-y-0.5">
+                            <div className="flex justify-between w-full items-center">
+                              <span className="text-gray-600">Sub Total:</span>
                               <span>
                                 ₹{calculateSelectedTotals().subTotal.toFixed(2)}
                               </span>
                             </div>
 
-                            <div className="flex justify-end w-full items-center">
-                              <span className="text-gray-600 mr-3">
-                                Discount:
-                              </span>
+                            <div className="flex justify-between w-full items-center">
+                              <span className="text-gray-600">Discount:</span>
                               <span>
                                 ₹{(billData.additionalDiscount || 0).toFixed(2)}
                               </span>
                             </div>
 
-                            <div className="flex justify-end w-full items-center border-t border-gray-200 pt-0.5">
-                              <span className="font-medium mr-3">
-                                Net Total:
-                              </span>
+                            <div className="flex justify-between w-full items-center border-t border-gray-200 pt-0.5">
+                              <span className="font-medium">Net Total:</span>
                               <span className="font-medium">
                                 ₹
                                 {(
@@ -394,18 +463,18 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                               </span>
                             </div>
 
-                            <div className="flex justify-end w-full items-center">
-                              <span className="text-gray-600 mr-3">Paid:</span>
+                            <div className="flex justify-between w-full items-center">
+                              <span className="text-gray-600">Paid:</span>
                               <span className="text-green-600">
                                 ₹{(billData.amountPaid || 0).toFixed(2)}
                               </span>
                             </div>
 
-                            <div className="flex justify-end w-full items-center border-t border-gray-200 pt-0.5">
-                              <span className="text-gray-600 mr-3">
+                            <div className="flex justify-between w-full items-center border-t border-gray-200 pt-0.5">
+                              <span className="text-gray-600 font-semibold">
                                 Balance:
                               </span>
-                              <span className="text-red-600">
+                              <span className="text-red-600 font-semibold">
                                 ₹
                                 {(
                                   (billData.totalAmount || 0) -
@@ -414,13 +483,13 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                               </span>
                             </div>
 
-                            <div className="w-full text-right text-xs mt-0.5">
-                              <span className="font-medium">Status: </span>
+                            <div className="w-full flex justify-between text-xs mt-0.5">
+                              <span className="font-medium">Status:</span>
                               <span
                                 className={
                                   getBillStatus(billData) === "Paid"
-                                    ? "text-green-600"
-                                    : "text-red-600"
+                                    ? "text-green-600 font-semibold"
+                                    : "text-red-600 font-semibold"
                                 }
                               >
                                 {getBillStatus(billData)}
@@ -524,7 +593,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                   </div>
                 )}
                 <p>Invoice generated By: {billData?.createdBy?.name}</p>
-                <div className="mt-1">
+                <div className="">
                   <div className={`${!printPaymentHistory ? "no-print" : ""}`}>
                     <div className="flex flex-row items-center mb-2 w-auto gap-2">
                       <Checkbox
@@ -548,28 +617,36 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-[80px]">Date</TableHead>
+                              <TableHead className="w-[80px] h-[30px]">
+                                Date
+                              </TableHead>
                               {!isMobile && (
-                                <TableHead className="w-[80px]">Time</TableHead>
+                                <TableHead className="w-[80px] h-[30px]">
+                                  Time
+                                </TableHead>
                               )}
-                              <TableHead>Amount</TableHead>
-                              <TableHead>Method</TableHead>
-                              <TableHead>Collected By</TableHead>
-                              <TableHead className="no-print">
+                              <TableHead className="h-[30px]">
+                                Amount (₹)
+                              </TableHead>
+                              <TableHead className="h-[30px]">Method</TableHead>
+                              <TableHead className="h-[30px]">
+                                Collected By
+                              </TableHead>
+                              <TableHead className="no-print h-[30px]">
                                 Receipt
                               </TableHead>
                             </TableRow>
                           </TableHeader>
                           <TableBody>
                             {billData.payments.map((payment, index) => (
-                              <TableRow key={index}>
-                                <TableCell className="text-xs">
+                              <TableRow key={index} className=" h-[25px] py-1">
+                                <TableCell className="text-xs h-[25px] py-1">
                                   {new Date(
                                     payment.createdAt
                                   ).toLocaleDateString("en-IN")}
                                 </TableCell>
                                 {!isMobile && (
-                                  <TableCell className="text-xs">
+                                  <TableCell className="text-xs h-[25px] py-1">
                                     {new Date(
                                       payment.createdAt
                                     ).toLocaleTimeString("en-IN", {
@@ -579,20 +656,19 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData }) => {
                                     })}
                                   </TableCell>
                                 )}
-                                <TableCell className="text-xs font-medium">
-                                  ₹
+                                <TableCell className="text-xs font-medium h-[25px] py-1">
                                   {payment?.amount?.toLocaleString("en-IN", {
                                     minimumFractionDigits: 2,
                                     maximumFractionDigits: 2,
                                   })}
                                 </TableCell>
-                                <TableCell className="text-xs">
+                                <TableCell className="text-xs h-[25px] py-1">
                                   {payment.paymentMethod}
                                 </TableCell>
-                                <TableCell className="text-xs">
+                                <TableCell className="text-xs h-[25px] py-1">
                                   {payment.createdByName || "--"}
                                 </TableCell>
-                                <TableCell className="text-xs no-print">
+                                <TableCell className="text-xs no-print h-[25px] py-1">
                                   <PaymentReceipt
                                     payment={payment}
                                     billData={billData}

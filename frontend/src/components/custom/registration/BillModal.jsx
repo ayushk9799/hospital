@@ -178,7 +178,10 @@ const BillModal = ({
                   </div>
                 </div>
                 <div className="flex items-center">
-                  <Label className="font-semibold mr-2">Operation:</Label>
+                  {(completedBill.admissionRecord?.operationName ||
+                    completedBill.admission?.operationName) && (
+                      <Label className="font-semibold mr-2">Operation:</Label>
+                    )}
 
                   {completedBill.admissionRecord?.operationName ||
                     completedBill.admission?.operationName}
@@ -289,11 +292,11 @@ const BillModal = ({
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="w-[80px]">Date</TableHead>
-                          <TableHead className="w-[80px]">Time</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Method</TableHead>
-                          <TableHead className="no-print">Receipt</TableHead>
+                          <TableHead className="w-[80px] h-[30px]">Date</TableHead>
+                          <TableHead className="w-[80px] h-[30px]">Time</TableHead>
+                          <TableHead className="h-[30px]">Amount</TableHead>
+                          <TableHead className="h-[30px]">Method</TableHead>
+                          <TableHead className="no-print h-[30px]">Receipt</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>

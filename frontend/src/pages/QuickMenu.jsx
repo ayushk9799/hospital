@@ -211,7 +211,7 @@ const QuickMenu = () => {
                 </div>
                 <div>
                   <h2 className="text-lg font-semibold">{action.title}</h2>
-                  <p className="text-sm opacity-90">{action.description}</p>
+                  <p className={`text-sm opacity-90 ${index===0? "font-semibold" : ""}`}>{action.description}</p>
                 </div>
               </div>
             </CardContent>

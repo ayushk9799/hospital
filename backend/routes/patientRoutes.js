@@ -385,8 +385,8 @@ router.post(
           patient: patient._id,
           patientName: patient.name,
           contactNumber: patient.contactNumber,
+          registrationNumber: patient.registrationNumber || null,
           ipdNumber: admission.ipdNumber || null,
-          registrationNumber: patient.registrationNumber,
           doctor: admission.doctor || null,
           department: admission.department || null,
         });
@@ -427,35 +427,69 @@ router.post(
             (sum, service) => sum + service.rate,
             0
           );
-          bill = new ServicesBill({
-            invoiceNumber: invoiceNumber || null,
-            services: [
-              ...services.map((service) => {
-                const serviceInfo = paymentInfo.services.find(
-                  (s) => s.id === service._id?.toString()
-                );
-                return {
-                  name: service.name,
+
+          // Process services and their subdivisions
+          const processedServices = [];
+          let surgeryServices = [];
+          for (const service of services) {
+            const serviceInfo = paymentInfo.services.find(
+              (s) => s.id === service._id?.toString()
+            );
+
+            // Check if service has subdivisions and rate hasn't been manipulated
+            if (
+              service.subdivisions &&
+              service.subdivisions.length > 0 &&
+              serviceInfo?.rate === service.rate
+            ) {
+              // Add each subdivision as a separate service
+              service.subdivisions.forEach((subdivision) => {
+                processedServices.push({
+                  name: `${subdivision.name}`,
                   quantity: 1,
-                  rate: serviceInfo?.rate || 0,
+                  rate: subdivision.rate,
                   category: service?.category || "Other",
                   date: new Date(),
                   type: "additional",
-                };
-              }),
-              // Add room charge if room is assigned
-              ...(roomCharge > 0
-                ? [
-                    {
-                      name: "Room Charge",
-                      quantity: 1,
-                      rate: roomCharge,
-                      category: "Room Rent",
-                      date: new Date(),
-                    },
-                  ]
-                : []),
-            ],
+                });
+              });
+            } else {
+              // Add the service as is
+              processedServices.push({
+                name: service.name,
+                quantity: 1,
+                rate: serviceInfo?.rate || 0,
+                category: service?.category || "Other",
+                date: new Date(),
+                type: "additional",
+              });
+
+              // If this is a surgery service, add it to the array
+              if (service.category === "Surgery") {
+                surgeryServices.push(service.name);
+              }
+            }
+          }
+
+          // Add room charge if applicable
+          if (roomCharge > 0) {
+            processedServices.push({
+              name: "Room Charge -- (" + room.type + ")",
+              quantity: 1,
+              rate: roomCharge,
+              category: "Room Rent",
+              date: new Date(),
+            });
+          }
+
+          // If we found any surgery services, join them with commas and set as operationName
+          if (surgeryServices.length > 0) {
+            admissionRecord.operationName = surgeryServices.join(", ");
+          }
+
+          bill = new ServicesBill({
+            invoiceNumber: invoiceNumber || null,
+            services: processedServices,
             patient: patient._id,
             patientInfo: {
               name: patient.name,
@@ -465,6 +499,7 @@ router.post(
               age: patient.age,
               gender: patient.gender,
             },
+            operationName: admissionRecord.operationName,
             admission: admissionRecord._id,
             totalAmount: Number(paymentInfo.totalAmount),
             subtotal: userProvided
@@ -472,16 +507,17 @@ router.post(
               : Number(paymentInfo.totalAmount),
             additionalDiscount:
               paymentInfo.additionalDiscount ||
-              Number(userProvided + roomCharge) -
+              (Number(userProvided + roomCharge) -
                 Number(paymentInfo.totalAmount) >
-                0
+              0
                 ? Number(userProvided + roomCharge) -
                   Number(paymentInfo.totalAmount)
-                : 0,
+                : 0),
             amountPaid: Number(paymentInfo.amountPaid) || 0,
             patientType: "IPD",
             createdBy: user._id,
           });
+
           if (
             paymentInfo?.paymentMethod.length > 0 &&
             paymentInfo.amountPaid > 0
@@ -1747,6 +1783,7 @@ router.post(
 
       let bill;
       let payment = [];
+      let room;
 
       // Handle initial services bill if any
       if (paymentInfo?.includeServices) {
@@ -1757,54 +1794,91 @@ router.post(
         // Get room rate if room is assigned
         let roomCharge = 0;
         if (admission.assignedRoom) {
-          const room = await Room.findById(admission.assignedRoom).session(
-            session
-          );
+          room = await Room.findById(admission.assignedRoom).session(session);
           if (room) {
             roomCharge = room.ratePerDay || 0;
           }
         }
+
         let invoiceNumber = await BillCounter.getNextBillNumber(session);
         let userProvided = paymentInfo.services.reduce(
           (sum, service) => sum + service.rate,
           0
         );
-        bill = new ServicesBill({
-          invoiceNumber: invoiceNumber || null,
-          services: [
-            ...services.map((service) => {
-              const serviceInfo = paymentInfo.services.find(
-                (s) => s.id === service._id.toString()
-              );
-              return {
-                name: service.name,
+
+        // Process services and their subdivisions
+        const processedServices = [];
+        let surgeryServices = [];
+        for (const service of services) {
+          const serviceInfo = paymentInfo.services.find(
+            (s) => s.id === service._id?.toString()
+          );
+
+          // Check if service has subdivisions and rate hasn't been manipulated
+          if (
+            service.subdivisions &&
+            service.subdivisions.length > 0 &&
+            serviceInfo?.rate === service.rate
+          ) {
+            // Add each subdivision as a separate service
+            service.subdivisions.forEach((subdivision) => {
+              processedServices.push({
+                name: `${subdivision.name}`,
                 quantity: 1,
-                rate: serviceInfo?.rate || 0,
+                rate: subdivision.rate,
                 category: service?.category || "Other",
                 date: new Date(),
                 type: "additional",
-              };
-            }),
-            // Add room charge if room is assigned
-            ...(roomCharge > 0
-              ? [
-                  {
-                    name: "Room Charge",
-                    quantity: 1,
-                    rate: roomCharge,
-                    category: "Room Rent",
-                    date: new Date(),
-                  },
-                ]
-              : []),
-          ],
+              });
+            });
+          } else {
+            // Add the service as is
+            processedServices.push({
+              name: service.name,
+              quantity: 1,
+              rate: serviceInfo?.rate || 0,
+              category: service?.category || "Other",
+              date: new Date(),
+              type: "additional",
+            });
+
+            // If this is a surgery service, add it to the array
+            if (service.category === "Surgery") {
+              surgeryServices.push(service.name);
+            }
+          }
+        }
+
+        // Add room charge if applicable
+        if (roomCharge > 0) {
+          processedServices.push({
+            name: "Room Charge -- (" + room.type + ")",
+            quantity: 1,
+            rate: roomCharge,
+            category: "Room Rent",
+            date: new Date(),
+          });
+        }
+
+        // If we found any surgery services, join them with commas and set as operationName
+        if (surgeryServices.length > 0) {
+          newAdmission.operationName = surgeryServices.join(", ");
+        }
+
+        bill = new ServicesBill({
+          invoiceNumber: invoiceNumber || null,
+          services: processedServices,
           patient: patient._id,
           patientInfo: {
             name: patient.name,
             phone: patient?.contactNumber,
             registrationNumber: patient.registrationNumber,
             ipdNumber: admission.ipdNumber,
+            age: patient.age,
+            gender: patient.gender,
           },
+          operationName: newAdmission.operationName,
+          admission: newAdmission._id,
           totalAmount: Number(paymentInfo.totalAmount),
           subtotal: userProvided
             ? userProvided + roomCharge
@@ -1820,7 +1894,6 @@ router.post(
           amountPaid: Number(paymentInfo.amountPaid) || 0,
           patientType: "IPD",
           createdBy: user._id,
-          admission: newAdmission._id,
         });
 
         if (
@@ -2361,6 +2434,9 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
         Number(billUpdates.subtotal) || existingBill.subtotal; // Or recalculate based on services
       existingBill.additionalDiscount =
         Number(billUpdates.additionalDiscount) || 0;
+      existingBill.operationName = updatedAdmissionFields.operationName;
+      cons;
+
       // existingBill.amountPaid = Number(billUpdates.amountPaid) || 0; // This will be recalculated based on payments
 
       // If services are provided in the update, replace them and recalculate subtotal and total
@@ -2533,5 +2609,108 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
     session.endSession();
   }
 });
+
+// ... existing code ...
+
+// Add this new route before the export default
+router.put(
+  "/ipd-admission/:admissionId/operation",
+  verifyToken,
+  async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+      const { admissionId } = req.params;
+      const { operationName, billId, includeInBill, serviceDetails } = req.body;
+
+      const admission = await IPDAdmission.findById(admissionId).session(
+        session
+      );
+      if (!admission) {
+        throw new Error("IPD Admission not found");
+      }
+
+      const bill = await ServicesBill.findById(billId)
+      .populate("patient")
+      .populate({
+        path: "visit",
+        populate: {
+          path: "doctor",
+          select: "name",
+        },
+      })
+      .populate({
+        path: "admission",
+        populate: {
+          path: "assignedDoctor",
+          select: "name",
+        },
+      })
+      .populate("payments")
+      .populate("createdBy", "name")
+      .session(session);
+      if (!bill) {
+        throw new Error("Bill not found");
+      }
+
+      // Update operation name in both admission and bill
+      admission.operationName = operationName;
+      bill.operationName = operationName;
+
+      // If includeInBill is true and serviceDetails is an array, add the services to the bill
+      if (
+        includeInBill &&
+        Array.isArray(serviceDetails) &&
+        serviceDetails.length > 0
+      ) {
+        // Add new services to the bill
+        const newServices = serviceDetails.map((service) => ({
+          name: service.service,
+          quantity: service.quantity,
+          rate: service.rate,
+          category: service.category,
+          date: new Date(),
+          type: service.type,
+        }));
+
+        bill.services.push(...newServices);
+
+        // Recalculate bill totals
+        const newSubtotal = bill.services.filter(service => service.type !== "breakup").reduce(
+          (sum, service) => sum + service.rate * service.quantity,
+          0
+        );
+
+        bill.subtotal = newSubtotal;
+        bill.totalAmount = newSubtotal - (bill.additionalDiscount || 0);
+      }
+
+      await admission.save({ session });
+      await bill.save({ session });
+
+      await session.commitTransaction();
+
+      // Repopulate for response
+      // const populatedAdmission = await IPDAdmission.findById(admission._id)
+      //   .populate("patient")
+      //   .populate("assignedDoctor", "name")
+      //   .populate("assignedRoom", "roomNumber type")
+      //   .populate({
+      //     path: "bills.services",
+      //     populate: { path: "payments" },
+      //   });
+
+      res.json(bill);
+    } catch (error) {
+      if (session.inTransaction()) {
+        await session.abortTransaction();
+      }
+      res.status(400).json({ message: error.message });
+    } finally {
+      session.endSession();
+    }
+  }
+);
 
 export default router;

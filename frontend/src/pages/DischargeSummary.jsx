@@ -24,7 +24,7 @@ import {
   Plus,
   Search,
   ArrowLeft,
-  ChartNoAxesColumnDecreasingIcon,
+  Check,
 } from "lucide-react";
 import TemplateLabReport from "./TemplateLabReport";
 import {
@@ -65,19 +65,6 @@ import {
 import FormCustomizer from "../components/custom/FormCustomizer";
 import { searchBabyByNumber } from "../redux/slices/babySlice";
 import { ScrollArea, ScrollBar } from "../components/ui/scroll-area";
-
-// Time conversion helper functions
-// const convertTo12Hour = (time24) => {
-//   if (!time24) return "";
-//   const [hours24, minutes] = time24.split(":");
-//   let hours12 = parseInt(hours24);
-//   const meridiem = hours12 >= 12 ? "PM" : "AM";
-
-//   if (hours12 === 0) hours12 = 12;
-//   else if (hours12 > 12) hours12 -= 12;
-
-//   return `${hours12.toString().padStart(2, "0")}:${minutes} ${meridiem}`;
-// };
 
 const convertTo24Hour = (time12, meridiem) => {
   if (!time12) return "";
@@ -141,7 +128,6 @@ const FormField = ({
       },
     });
   };
-
 
   switch (field.type) {
     case "text":
@@ -723,7 +709,7 @@ export default function DischargeSummary() {
         respiratoryRate: "",
       },
     },
-    investigations: [{ name: "", category: "" }],
+    investigations: [{ name: "", category: "", isIncluded: true }],
     medicineAdvice: [{ name: "", dosage: "", duration: "" }],
     notes: "",
     comorbidities: [{ name: "" }],
@@ -852,7 +838,7 @@ export default function DischargeSummary() {
             const result = await dispatch(
               fetchVisitDetails({ id: patientId, type: "IPD" })
             ).unwrap();
-            const {labReport,...rest} = result
+            const { labReport, ...rest } = result;
             setPatient(rest);
 
             if (result.dischargeData && result.formConfig) {
@@ -868,7 +854,7 @@ export default function DischargeSummary() {
           console.error("Error fetching patient details:", error);
         }
       } else if (dischargeData) {
-        const {labReport,...rest} = dischargeData
+        const { labReport, ...rest } = dischargeData;
         setPatient(rest);
         if (dischargeData.formConfig || formConfig) {
           const mergedData = mergeDataWithFormFields(
@@ -902,7 +888,7 @@ export default function DischargeSummary() {
             : {}),
         });
       } else if (!ignoreList) {
-        const {labReport,...rest} = patientFromStore;
+        const { labReport, ...rest } = patientFromStore;
         setPatient(patientFromStore);
       }
     };
@@ -948,7 +934,6 @@ export default function DischargeSummary() {
   });
   useEffect(() => {
     if (patient && !hasDischarged) {
-      
       setFormData((prevData) => ({
         ...prevData,
         admissionDate: patient.bookingDate
@@ -980,10 +965,13 @@ export default function DischargeSummary() {
             respiratoryRate: patient.vitals?.discharge?.respiratoryRate || "",
           },
         },
-        // investigations:
-        //   patient.labReports?.length > 0
-        //     ? patient.labReports
-        //     : [{ name: "", category: "" }],
+        investigations:
+          patient.labReports?.length > 0
+            ? patient.labReports.map((report) => ({
+                ...report,
+                isIncluded: true,
+              }))
+            : [{ name: "", category: "", isIncluded: true }],
         medicineAdvice: patient.medicineAdvice ||
           patient.medicineAdvice ||
           patient.dischargeData?.medicineAdvice || [
@@ -1034,6 +1022,7 @@ export default function DischargeSummary() {
     updatedInvestigations[index] = {
       name: suggestion.name,
       category: suggestion.category || "",
+      isIncluded: true, // Add default value for new investigations
     };
     setFormData((prev) => ({ ...prev, investigations: updatedInvestigations }));
   };
@@ -1041,7 +1030,19 @@ export default function DischargeSummary() {
   const handleAddInvestigation = () => {
     setFormData((prev) => ({
       ...prev,
-      investigations: [...prev.investigations, { name: "", category: "" }],
+      investigations: [
+        ...prev.investigations,
+        { name: "", category: "", isIncluded: true },
+      ],
+    }));
+  };
+
+  const toggleInvestigation = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      investigations: prev.investigations.map((inv, i) =>
+        i === index ? { ...inv, isIncluded: !inv.isIncluded } : inv
+      ),
     }));
   };
 
@@ -1125,7 +1126,7 @@ export default function DischargeSummary() {
           dosage: m.dosage,
         })),
       investigations: formData.investigations
-        .filter((inv) => inv.name.trim() !== "")
+        .filter((inv) => inv.name.trim() !== "" && inv.isIncluded)
         .map((i) => ({
           name: i.name,
           category: i.category,
@@ -1142,7 +1143,7 @@ export default function DischargeSummary() {
         description: "Patient discharged successfully",
         variant: "success",
       });
-    handlePrint();
+      handlePrint();
     } catch (error) {
       toast({
         title: "Error",
@@ -1186,7 +1187,7 @@ export default function DischargeSummary() {
           dosage: m.dosage,
         })),
       investigations: formData.investigations
-        .filter((inv) => inv.name.trim() !== "")
+        .filter((inv) => inv.name.trim() !== "" && inv.isIncluded)
         .map((i) => ({
           name: i.name,
           category: i.category,
@@ -1328,8 +1329,6 @@ export default function DischargeSummary() {
       },
     }));
   };
-
-
 
   const renderVitalsInputs = (type) => (
     <div className="grid grid-cols-2 gap-2 text-sm">
@@ -1517,6 +1516,9 @@ export default function DischargeSummary() {
 
   // Add this function to handle print confirmation
  
+ 
+
+
 
   // Get user role from Redux store or props
 
@@ -1634,7 +1636,7 @@ export default function DischargeSummary() {
                               (investigation, index) => (
                                 <div
                                   key={index}
-                                  className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                                  className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-2"
                                 >
                                   <div className="sm:col-span-3">
                                     <SearchSuggestion
@@ -1655,6 +1657,30 @@ export default function DischargeSummary() {
                                     />
                                   </div>
                                   <div className="flex space-x-2">
+                                    <Button
+                                      type="button"
+                                      variant={
+                                        investigation.isIncluded
+                                          ? "default"
+                                          : "outline"
+                                      }
+                                      size="icon"
+                                      onClick={() => toggleInvestigation(index)}
+                                      aria-label="Toggle Investigation"
+                                      disabled={!investigation.name}
+                                    >
+                                      {investigation.isIncluded ? (
+                                        <Check
+                                          className="h-4 w-4 text-white-500"
+                                          strokeWidth={4}
+                                        />
+                                      ) : (
+                                        <X
+                                          className="h-4 w-4 text-red-500 font-bold"
+                                          strokeWidth={4}
+                                        />
+                                      )}
+                                    </Button>
                                     <Button
                                       type="button"
                                       variant="ghost"
@@ -1998,7 +2024,6 @@ export default function DischargeSummary() {
               />
             ) : (
               (() => {
-               
                 return (
                   <div>
                     <h1>No Template Found</h1>
@@ -2019,7 +2044,9 @@ export default function DischargeSummary() {
             admittedTime:
               formData.admittedTime || convertTo12Hour(formData.bookingTime),
             investigations: formData.investigations
-              .filter((inv) => inv.name.trim() !== "" && inv.report)
+              .filter(
+                (inv) => inv.name.trim() !== "" && inv.report && inv.isIncluded
+              )
               .map((inv) => ({
                 name: inv.name,
                 report: inv.report,
@@ -2052,8 +2079,6 @@ export default function DischargeSummary() {
           templateString={selectedTemplateDischargeSummary?.value}
         />
       </div>
-
-  
     </div>
   );
 }

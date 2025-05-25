@@ -81,7 +81,7 @@ router.post("/update-bill/:id", async (req, res) => {
     }
     // Create a map of existing services with their dates
     const existingServiceDates = new Map(
-      bill.services.map((service) => [service._id.toString(), service.date])
+      bill.services.map((service) => [service._id?.toString(), service.date])
     );
     // Update services array while preserving dates for existing services
     if (services && Array.isArray(services)) {
@@ -89,7 +89,7 @@ router.post("/update-bill/:id", async (req, res) => {
         ...service,
         // If service exists in old bill, use its date, otherwise use current date
         date: service.isExisting
-          ? existingServiceDates.get(service._id)
+          ? existingServiceDates.get(service._id?.toString()) || new Date()
           : new Date(),
       }));
     }
@@ -195,21 +195,59 @@ router.delete("/service/:id", async (req, res) => {
 router.put("/service/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, category, rate } = req.body;
-    if (!name || !rate)
-      return res.status(400).json({ message: "Name and rate are required" });
+    const { name, category, rate, subdivisions, isRecurring, recurringLogic } =
+      req.body;
 
-    const updatedService = await Service.findByIdAndUpdate(
-      id,
-      { name, category, rate },
-      { new: true }
-    );
-    if (!updatedService)
+    if (!name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    // Create the update object with the basic fields
+    const updateData = {
+      name,
+      category,
+      rate: parseFloat(rate),
+    };
+
+    // Add subdivisions if provided
+    if (subdivisions) {
+      updateData.subdivisions = subdivisions;
+    }
+
+    // Add recurring fields if isRecurring is true
+    if (isRecurring) {
+      updateData.isRecurring = true;
+      updateData.recurringLogic = recurringLogic;
+    } else {
+      updateData.isRecurring = false;
+      updateData.recurringLogic = undefined;
+    }
+
+    // Validate subdivisions if they exist
+    if (subdivisions && subdivisions.length > 0) {
+      const sumOfRates = subdivisions.reduce(
+        (sum, sub) => sum + (sub.rate || 0),
+        0
+      );
+      if (Math.abs(sumOfRates - parseFloat(rate)) >= 0.01) {
+        return res.status(400).json({
+          message: "Sum of subdivision rates must equal the service rate",
+        });
+      }
+    }
+
+    const updatedService = await Service.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    });
+
+    if (!updatedService) {
       return res.status(404).json({ message: "Service not found" });
+    }
 
     res.status(200).json(updatedService);
   } catch (error) {
-    res.status(500).json({ message: "Server error", error });
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 });
 

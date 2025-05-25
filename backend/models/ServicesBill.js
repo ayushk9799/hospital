@@ -19,6 +19,8 @@ const servicesBillSchema = new mongoose.Schema(
     additionalDiscount: { type: Number, default: 0 },
     amountPaid: { type: Number, default: 0 },
     payments: [{ type: mongoose.Schema.Types.ObjectId, ref: "Payment" }],
+    procedureName: { type: String },
+    operationName: { type: String },
     patientType: {
       type: String,
       enum: ["OPD", "IPD", "OPDProcedure", "Lab"],

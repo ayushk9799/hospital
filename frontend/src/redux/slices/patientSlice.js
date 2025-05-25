@@ -586,6 +586,42 @@ export const editIPDAdmission = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add this new thunk after other thunks
+export const updateOperationName = createLoadingAsyncThunk(
+  "patients/updateOperationName",
+  async (
+    { admissionId, operationName, billId, includeInBill, serviceDetails },
+    { rejectWithValue }
+  ) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/patients/ipd-admission/${admissionId}/operation`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            operationName,
+            billId,
+            includeInBill,
+            serviceDetails,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -950,6 +986,43 @@ const patientSlice = createSlice({
       })
       .addCase(editIPDAdmission.rejected, (state, action) => {
         state.editIPDAdmissionStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(updateOperationName.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(updateOperationName.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        const updatedAdmission = action.payload;
+
+        // Update in patientlist if exists
+        const patientListIndex = state.patientlist.findIndex(
+          (item) => item._id === updatedAdmission._id && item.type === "IPD"
+        );
+        if (patientListIndex !== -1) {
+          state.patientlist[patientListIndex].operationName =
+            updatedAdmission.operationName;
+        }
+
+        // Update in admittedPatients list
+        const admittedIndex = state.admittedPatients.findIndex(
+          (item) => item._id === updatedAdmission._id
+        );
+        if (admittedIndex !== -1) {
+          state.admittedPatients[admittedIndex].operationName =
+            updatedAdmission.operationName;
+        }
+
+        // Update selected patient if it matches
+        if (
+          state.selectedPatient &&
+          state.selectedPatient._id === updatedAdmission._id
+        ) {
+          state.selectedPatient.operationName = updatedAdmission.operationName;
+        }
+      })
+      .addCase(updateOperationName.rejected, (state, action) => {
+        state.status = "failed";
         state.error = action.payload;
       });
   },

@@ -327,11 +327,9 @@ const Billings = () => {
     });
 
     // Find operation name from services
-    const operationService = bill.services?.find((service) =>
-      service.category?.toLowerCase().includes("surgery")
-    );
-    const operationName = operationService?.name || "";
-
+  
+    const operationName = bill.operationName || "";
+   
     setSelectedBill({
       ...bill,
       services: filteredServices,

@@ -63,6 +63,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../components/ui/tooltip";
+import { updateOperationName } from "../redux/slices/patientSlice";
+
+import SelectServicesDialog from "../components/custom/registration/SelectServicesDialog";
 
 const CreateServiceBill = ({
   initialBillId,
@@ -146,6 +149,7 @@ const CreateServiceBill = ({
             quantity: service.quantity,
             date: service.date,
             rate: service.rate,
+            _id: service._id,
             total: service.rate * service.quantity,
             isExisting: true,
             billId: bill._id,
@@ -198,12 +202,10 @@ const CreateServiceBill = ({
                   name: service.name,
                   category: service.category,
                   quantity: service.quantity,
+                  _id: service._id,
                   type: service.type,
                   date: service.date,
-                  rate:
-                    service.category === "Surgery"
-                      ? service.rate - billData.additionalDiscount
-                      : service.rate,
+                  rate: service.rate,
                 })),
                 createdAt: billData.createdAt,
                 totalAmount: billData.totalAmount,
@@ -215,11 +217,12 @@ const CreateServiceBill = ({
               },
             ],
             visit: billData?.visit,
-            operationName: billData.services
-              .filter((ser) => ser.category === "Surgery")
-              .map((ser) => ser.name)
-              .join(","),
+            admission: billData?.admission,
+            operationName: billData.operationName,
+            procedureName: billData.procedureName,
+            createdBy: billData.createdBy,
           };
+
 
           const formattedServices = services.map((service, index) => {
             return {
@@ -310,6 +313,7 @@ const CreateServiceBill = ({
 
       // Ensure discount doesn't exceed target total
       discountValue = Math.min(discountValue, targetTotalValue);
+      
 
       return {
         subtotal: originalSubtotal, // Adjust subtotal to match target total after discount
@@ -353,6 +357,7 @@ const CreateServiceBill = ({
     targetTotal,
     manualSubtotal,
   ]);
+
 
   useEffect(() => {
     if (calculateTotals.totalAmount) {
@@ -492,19 +497,23 @@ const CreateServiceBill = ({
     // Update target total based on existing services
   };
 
+
+
   const handleAddService = (e) => {
     e.preventDefault();
 
     const totalValue = parseFloat(newService.total);
     const quantityValue = parseFloat(newService.quantity);
 
-    if (breakTotalMode && targetTotal) {
+    if (breakTotalMode) {
       // Check if adding this service would exceed target total
       const currentBreakupTotal = addedServices
         .filter((ser) => ser.type === "breakup" || ser.category === "Room Rent")
         .reduce((sum, service) => sum + service.total, 0);
 
-      if (currentBreakupTotal + totalValue > parseFloat(targetTotal)) {
+      
+
+      if (currentBreakupTotal + totalValue > parseFloat(targetTotal||0)) {
         toast({
           title: "Exceeds Target Total",
           description: "This service would exceed the target total amount.",
@@ -523,7 +532,7 @@ const CreateServiceBill = ({
       total: totalValue,
       isExisting: false,
       date: new Date().toISOString(),
-      type: breakTotalMode ? "breakup" : "additional", // Add service type based on mode
+      type: breakTotalMode ? "breakup" : "additional",
     };
 
     setAddedServices((prev) => [...prev, newServiceWithoutDiscount]);
@@ -616,6 +625,7 @@ const CreateServiceBill = ({
       additionalDiscountAmount =
         (additionalDiscountAmount / 100) * calculateTotals.subtotal;
     }
+
     const billData = {
       services: addedServices.map((service) => ({
         name: service.service,
@@ -623,9 +633,10 @@ const CreateServiceBill = ({
         rate: service.rate,
         _id: service._id,
         discount: service.discAmt,
+        date: service.date,
         category: service.category,
         isExisting: service.isExisting || false,
-        type: service.type, // Include the service type
+        type: service.type,
       })),
       patient: patientDetails._id,
       patientType: patientDetails.type,
@@ -748,6 +759,7 @@ const CreateServiceBill = ({
           name: service.service,
           quantity: service.quantity,
           rate: service.rate,
+          date: service.date,
         })),
         totalAmount: calculateTotals.totalAmount,
         invoiceNumber: firstBill.invoiceNumber || null,
@@ -756,6 +768,7 @@ const CreateServiceBill = ({
         amountPaid: calculateTotals.totalAmountPaid,
         payments: firstBill.payments || billData.payments || [],
         operationName: billData?.operationName,
+        createdBy: billData?.createdBy,
       };
       setBillDataForPrint(viewBillData);
       if (patientDetails?.name) {
@@ -796,9 +809,9 @@ const CreateServiceBill = ({
             onClick={() => navigate(-1)}
           >
             <ArrowLeft className="mr-2" />
-            <h1 className="text-lg font-bold">
+            <h3 className=" font-bold">
               {isEditing ? "Edit Bill" : "Add Bill"}
-            </h1>
+            </h3>
           </div>
         </div>
       );
@@ -910,6 +923,177 @@ const CreateServiceBill = ({
     setIsPaymentDialogOpen(true);
   };
 
+  const [viewMode, setViewMode] = useState("list");
+
+  // Add memoized values for filtered services and date grouping
+  const filteredServicesForDisplay = useMemo(() => {
+    return addedServices.filter(
+      (service) =>
+        (breakTotalMode
+          ? service.type === "breakup"
+          : service.type !== "breakup") || service.category === "Room Rent"
+    );
+  }, [addedServices, breakTotalMode]);
+
+  const servicesGroupedByDate = useMemo(() => {
+    if (breakTotalMode || viewMode !== "datewise") return null;
+
+    const grouped = filteredServicesForDisplay.reduce((acc, service) => {
+      const date = service.date
+        ? format(new Date(service.date), "yyyy-MM-dd")
+        : "No Date";
+      if (!acc[date]) {
+        acc[date] = [];
+      }
+      acc[date].push(service);
+      return acc;
+    }, {});
+
+    // Sort dates in descending order
+    return Object.entries(grouped)
+      .sort(([dateA], [dateB]) => new Date(dateA) - new Date(dateB))
+      .map(([date, services]) => ({
+        date,
+        services: services.sort((a, b) => new Date(a.date) - new Date(b.date)),
+      }));
+  }, [filteredServicesForDisplay, breakTotalMode, viewMode]);
+
+  // Add this inside the component before the return statement
+  const [isEditingOperation, setIsEditingOperation] = useState(false);
+  const [operationNameInput, setOperationNameInput] = useState("");
+
+  const handleOperationNameEdit = async () => {
+    if (!operationNameInput.trim()) return;
+
+    try {
+      await dispatch(
+        updateOperationName({
+          admissionId: billData?.services?.[0]?._id || billId,
+          operationName: operationNameInput,
+        })
+      ).unwrap();
+
+      setBillData((prev) => ({
+        ...prev,
+        operationName: operationNameInput,
+      }));
+
+      setIsEditingOperation(false);
+      toast({
+        title: "Success",
+        description: "Operation name updated successfully",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update operation name",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // Add these state variables inside the component
+  const [isOperationDialogOpen, setIsOperationDialogOpen] = useState(false);
+  const [selectedOperationServices, setSelectedOperationServices] = useState(
+    []
+  );
+
+  // Add this handler inside the component
+  const handleOperationSelect = async (selectedServices) => {
+    if (selectedServices.length === 0) return;
+
+    // Store the selected services and show the choice modal
+    setPendingOperationServices(selectedServices);
+    setIsOperationChoiceModalOpen(true);
+    setIsOperationDialogOpen(false);
+  };
+
+
+  const handleOperationChoice = async (includeInBill) => {
+    if (!pendingOperationServices) return;
+
+
+    // Get all selected services
+    const selectedOperations = pendingOperationServices.map(
+      (selectedService) => {
+        const operationService = services.find(
+          (s) => s._id === selectedService.id
+        );
+        return {
+          service: operationService?.name,
+          category: operationService?.category,
+          quantity: 1,
+          rate: selectedService.rate,
+          total: selectedService.rate,
+          type: "additional",
+        };
+      }
+    );
+
+    console.log(selectedOperations)
+
+    try {
+      const result = await dispatch(
+        updateOperationName({
+          admissionId:
+            billData?.admission?._id || billData?.services?.[0]?.admission,
+          operationName: selectedOperations.map((op) => op.service).join(", "),
+          billId: billId || initialBillData.services[0]._id,
+          includeInBill,
+          serviceDetails: includeInBill ? selectedOperations : null,
+        })
+      ).unwrap();
+
+      setBillData(result);
+
+      // If includeInBill is true, add all selected services to the bill
+      if (includeInBill) {
+        const newServices = selectedOperations.map((operation) => ({
+          id: Date.now() + Math.random(), // Ensure unique IDs
+          service: operation.service,
+          category: operation.category,
+          quantity: operation.quantity,
+          rate: operation.rate,
+          total: operation.total,
+          isExisting: true,
+          date: new Date().toISOString(),
+          type: operation.type,
+        }));
+
+        setAddedServices((prev) => [...prev, ...newServices]);
+        setNewlyAddedServices((prev) => [...prev, ...newServices]);
+        setSelectedServices((prev) => [
+          ...prev,
+          ...newServices.map((s) => s.id),
+        ]);
+        setPendingOperationServices(null);
+        setSelectedOperationServices([])
+        
+      }
+
+      toast({
+        title: "Success",
+        description: "Operation name updated successfully",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update operation name",
+        variant: "destructive",
+      });
+    } finally {
+      setIsOperationChoiceModalOpen(false);
+      setPendingOperationServices(null);
+    }
+  };
+
+  const [isOperationChoiceModalOpen, setIsOperationChoiceModalOpen] =
+    useState(false);
+  const [pendingOperationServices, setPendingOperationServices] =
+    useState(null);
+
   return (
     <div className="w-full  max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
       {renderHeader()}
@@ -945,24 +1129,28 @@ const CreateServiceBill = ({
                       IPD No: {patientDetails.ipdNumber}
                     </Badge>
                   )}
-                  {(billData?.operationName ||
-                    initialBillData?.operationName) && (
-                    <Badge variant="outline">
-                      Operation :{" "}
-                      {billData?.operationName ||
-                        initialBillData?.operationName}
+                  {patientDetails?.type === "IPD" && (
+                    <Badge
+                      variant="bluish"
+                      className="cursor-pointer "
+                      onClick={() => setIsOperationDialogOpen(true)}
+                    >
+                      <span className="flex items-center gap-1 text-xs">
+                        Operation:{" "}
+                        {billData?.operationName || "Select Operation"}
+                        <Pencil className="ml-1 h-3 w-3" />
+                      </span>
                     </Badge>
                   )}
                 </div>
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-sm">
-             
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-gray-400" />
                 <span>{patientDetails?.contactNumber}</span>
               </div>
-              
+
               {patientDetails?.admissionDate && (
                 <div className="flex items-center gap-2">
                   <CalendarDays className="w-4 h-4 text-gray-400" />
@@ -1002,6 +1190,8 @@ const CreateServiceBill = ({
       <Card>
         <CardContent className="p-3">
           <BreakTotalModeToggle />
+          {/* Add view mode toggle buttons */}
+
           <form
             onSubmit={handleAddService}
             className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 items-end mb-2"
@@ -1099,112 +1289,83 @@ const CreateServiceBill = ({
             </div>
           </form>
           <Separator className="my-2" />
+
+          {/* Mobile View */}
           <div className="sm:hidden space-y-1">
-            {addedServices.map((service) => (
-              <Card key={service.id} className="mb-1">
-                <CardContent className="p-2">
-                  <div className="flex justify-between items-center mb-2">
-                    <span className="font-semibold">{service.service}</span>
-                    <div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0 mr-2"
-                        onClick={() => handleEditService(service.id)}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => handleRemoveService(service.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
+            {viewMode === "datewise" && !breakTotalMode
+              ? servicesGroupedByDate?.map(({ date, services }) => (
+                  <div key={date} className="mb-4">
+                    <h3 className="font-semibold text-gray-700 mb-2">
+                      {date === "No Date"
+                        ? "No Date"
+                        : format(new Date(date), "dd MMMM yyyy")}
+                    </h3>
+                    {services.map((service) => (
+                      <Card key={service.id} className="mb-1">
+                        <CardContent className="p-2">
+                          <div className="flex justify-between items-center mb-2">
+                            <div className="flex items-center">
+                              <input
+                                type="checkbox"
+                                className="h-4 w-4 mr-2"
+                                checked={selectedServices.includes(service.id)}
+                                onChange={() => handleSelectService(service.id)}
+                              />
+                              <span className="font-semibold">
+                                {service.service}
+                              </span>
+                            </div>
+                            <div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0 mr-2"
+                                onClick={() => handleEditService(service.id)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={() => handleRemoveService(service.id)}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              Time:{" "}
+                              {service.date
+                                ? format(new Date(service.date), "hh:mm a")
+                                : "-"}
+                            </div>
+                            <div>Quantity: {service.quantity}</div>
+                            <div>
+                              Rate: {service.rate.toLocaleString("en-IN")}
+                            </div>
+                            <div>
+                              Total: ₹{service.total.toLocaleString("en-IN")}
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div>
-                      Date:{" "}
-                      {service.date
-                        ? format(new Date(service.date), "dd/MM/yyyy  HH:MM:SS")
-                        : "-"}
-                    </div>
-                    <div>Quantity: {service.quantity}</div>
-                    <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
-                    <div>Total: ₹{service.total.toLocaleString("en-IN")}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-          <div className="hidden sm:block">
-            <ScrollArea className="h-[250px] w-full">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px]">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4"
-                        checked={
-                          selectedServices.length === addedServices.length
-                        }
-                        onChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead>Service</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Quantity</TableHead>
-                    <TableHead className="text-right">Rate</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="text-right">Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {addedServices
-                    .filter(
-                      (service) =>
-                        (breakTotalMode
-                          ? service.type === "breakup"
-                          : service.type !== "breakup") ||
-                        service.category === "Room Rent"
-                    )
-                    .map((service) => (
-                      <TableRow key={service.id}>
-                        <TableCell>
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4"
-                            checked={selectedServices.includes(service.id)}
-                            onChange={() => handleSelectService(service.id)}
-                          />
-                        </TableCell>
-                        <TableCell>{service.service}</TableCell>
-                        <TableCell>
-                          {service.date
-                            ? format(
-                                new Date(service.date),
-                                "dd/MM/yyyy hh:mm:ss a"
-                              )
-                            : "-"}
-                        </TableCell>
-                        <TableCell>{service.quantity}</TableCell>
-                        <TableCell className="text-right">
-                          {service.rate.toLocaleString("en-IN")}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {service.total.toLocaleString("en-IN")}
-                        </TableCell>
-                        <TableCell className="text-right">
+                ))
+              : filteredServicesForDisplay.map((service) => (
+                  <Card key={service.id} className="mb-1">
+                    <CardContent className="p-2">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">{service.service}</span>
+                        <div>
                           <Button
                             variant="outline"
                             size="sm"
                             className="h-8 w-8 p-0 mr-2"
                             onClick={() => handleEditService(service.id)}
                           >
-                            <span className="sr-only">Edit</span>
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
@@ -1213,12 +1374,177 @@ const CreateServiceBill = ({
                             className="h-8 w-8 p-0"
                             onClick={() => handleRemoveService(service.id)}
                           >
-                            <span className="sr-only">Remove</span>
                             <Trash2 className="h-4 w-4" />
                           </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          Date:{" "}
+                          {service.date
+                            ? format(
+                                new Date(service.date),
+                                "dd/MM/yyyy  hh:mm a"
+                              )
+                            : "-"}
+                        </div>
+                        <div>Quantity: {service.quantity}</div>
+                        <div>Rate: {service.rate.toLocaleString("en-IN")}</div>
+                        <div>
+                          Total: ₹{service.total.toLocaleString("en-IN")}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+          </div>
+
+          {/* Desktop View */}
+          <div className="hidden sm:block">
+            <ScrollArea className="h-[250px] w-full">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[50px] h-[35px]">
+                      <input
+                        type="checkbox"
+                        className="h-4 w-4"
+                        checked={
+                          selectedServices.length ===
+                            filteredServicesForDisplay.length &&
+                          filteredServicesForDisplay.length > 0
+                        }
+                        onChange={handleSelectAll}
+                      />
+                    </TableHead>
+                    <TableHead className="h-[35px]">Service</TableHead>
+                    <TableHead className="h-[35px]">Date</TableHead>
+                    <TableHead className="h-[35px]">Quantity</TableHead>
+                    <TableHead className="text-right h-[35px]">Rate</TableHead>
+                    <TableHead className="text-right h-[35px]">Total</TableHead>
+                    <TableHead className="text-right h-[20px]">
+                      Action
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {viewMode === "datewise" && !breakTotalMode
+                    ? servicesGroupedByDate?.map(({ date, services }) => (
+                        <>
+                          <TableRow key={`date-${date}`}>
+                            <TableCell colSpan={7} className="bg-gray-50">
+                              <span className="font-semibold">
+                                {date === "No Date"
+                                  ? "No Date"
+                                  : format(new Date(date), "dd MMMM yyyy")}
+                              </span>
+                            </TableCell>
+                          </TableRow>
+                          {services.map((service) => (
+                            <TableRow key={service.id}>
+                              <TableCell>
+                                <input
+                                  type="checkbox"
+                                  className="h-3 w-3"
+                                  checked={selectedServices.includes(
+                                    service.id
+                                  )}
+                                  onChange={() =>
+                                    handleSelectService(service.id)
+                                  }
+                                />
+                              </TableCell>
+                              <TableCell className="font-medium">
+                                {service.service}
+                              </TableCell>
+                              <TableCell>
+                                {service.date
+                                  ? format(new Date(service.date), "hh:mm a")
+                                  : "-"}
+                              </TableCell>
+                              <TableCell>{service.quantity}</TableCell>
+                              <TableCell className="text-right">
+                                {service.rate.toLocaleString("en-IN")}
+                              </TableCell>
+                              <TableCell className="text-right font-semibold">
+                                {service.total.toLocaleString("en-IN")}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 w-6 p-0 mr-2"
+                                  onClick={() => handleEditService(service.id)}
+                                >
+                                  <span className="sr-only">Edit</span>
+                                  <Pencil className="h-3 w-3" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="h-6 w-6 p-0"
+                                  onClick={() =>
+                                    handleRemoveService(service.id)
+                                  }
+                                >
+                                  <span className="sr-only">Remove</span>
+                                  <Trash2 className="h-3 w-3 text-red-600" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </>
+                      ))
+                    : filteredServicesForDisplay.map((service) => (
+                        <TableRow key={service.id}>
+                          <TableCell>
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4"
+                              checked={selectedServices.includes(service.id)}
+                              onChange={() => handleSelectService(service.id)}
+                            />
+                          </TableCell>
+                          <TableCell className="font-medium">
+                            {service.service}
+                          </TableCell>
+                          <TableCell>
+                            {service.date
+                              ? format(
+                                  new Date(service.date),
+                                  "dd/MM/yyyy hh:mm a"
+                                )
+                              : "-"}
+                          </TableCell>
+                          <TableCell>{service.quantity}</TableCell>
+                          <TableCell className="text-right">
+                            {service.rate.toLocaleString("en-IN")}
+                          </TableCell>
+                          <TableCell className="text-right font-semibold">
+                            {service.total.toLocaleString("en-IN")}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 w-6 p-0 mr-2"
+                              onClick={() => handleEditService(service.id)}
+                            >
+                              <span className="sr-only">Edit</span>
+                              <Pencil className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 w-6 p-0"
+                              onClick={() => handleRemoveService(service.id)}
+                            >
+                              <span className="sr-only">Remove</span>
+                              <Trash2 className="h-3 w-3 text-red-600" />
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
                 </TableBody>
               </Table>
             </ScrollArea>
@@ -1227,65 +1553,105 @@ const CreateServiceBill = ({
       </Card>
 
       <Card>
-        <CardContent className="p-1">
-          <div className="flex flex-col items-end space-y-0.5">
+        <CardContent
+          className={`p-1 grid grid-cols-${!breakTotalMode ? "2" : "1"}`}
+        >
+          {!breakTotalMode && (
+            <div className="flex  mb-2 space-x-2">
+              <Button
+                variant={viewMode === "list" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className="h-8"
+              >
+                List View
+              </Button>
+              <Button
+                variant={viewMode === "datewise" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("datewise")}
+                className="h-8"
+              >
+                Date-wise View
+              </Button>
+            </div>
+          )}
+          <div className="flex flex-col items-end space-y-0.5 text-sm">
             {/* Subtotal */}
-            <div className="flex justify-end w-48 items-center text-[14px]">
-              <span className="text-gray-600 mr-3 ">Subtotal(₹):</span>
-              <div className="flex items-center">
-                <span className="text-right font-medium">
+            <div className="flex justify-end items-center w-full">
+              <span className="text-gray-600 mr-4 min-w-[100px] text-right">
+                Subtotal(₹):
+              </span>
+              <div className="w-32 text-right">
+                <span className="font-medium">
                   {parseFloat(calculateTotals.subtotal || 0).toFixed(2)}
                 </span>
               </div>
             </div>
 
             {/* Discount */}
-            <div className="flex justify-end w-48 items-center text-sm">
-              <span className="text-gray-600 mr-3">Discount(₹):</span>
-              <div className="flex items-center">
+            <div className="flex justify-end items-center w-full ">
+              <span className="text-gray-600 mr-4 min-w-[100px] text-right">
+                Discount(₹):
+              </span>
+              <div className="w-32">
                 <Input
                   value={(parseFloat(additionalDiscount) || 0).toFixed(2)}
-                  onChange={(e) => setAdditionalDiscount(e.target.value)}
-                  className="w-20 h-7 text-right text-red-600 font-medium border-0 p-0 focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent"
-                  placeholder="0.00"
+                  onChange={(e) => {
+                    setAdditionalDiscount(e.target.value);
+                  }}
+                  className="w-full h-7 text-right text-red-600 font-medium border-0 p-0 focus:ring-1 focus-visible:ring-1 focus-visible:ring-offset-1 bg-transparent"
+                  placeholder=""
                 />
               </div>
             </div>
 
             {/* Total */}
-            <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
-              <span className="font-medium mr-3">Net Total(₹):</span>
-              <span className="font-medium">
-                {calculateTotals.totalAmount?.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+            <div className="flex justify-end items-center w-full border-t border-gray-200 ">
+              <span className="font-medium mr-4 min-w-[100px] text-right">
+                Net Total(₹):
               </span>
+              <div className="w-32 text-right">
+                <span className="font-medium">
+                  {calculateTotals.totalAmount?.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
             </div>
 
             {/* Amount Paid */}
-            <div className="flex justify-end w-48 items-center text-sm">
-              <span className="text-gray-600 mr-3">Paid(₹):</span>
-              <span className="text-green-600 font-bold">
-                {calculateTotals.totalAmountPaid?.toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+            <div className="flex justify-end items-center w-full">
+              <span className="text-gray-600 mr-4 min-w-[100px] text-right">
+                Paid(₹):
               </span>
+              <div className="w-32 text-right">
+                <span className="text-green-600 font-bold">
+                  {calculateTotals.totalAmountPaid?.toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
             </div>
 
             {/* Amount Due */}
-            <div className="flex justify-end w-48 items-center text-sm border-t border-gray-200 pt-0.5">
-              <span className="text-gray-600 mr-3">Balance Due(₹):</span>
-              <span className="text-red-600 font-bold">
-                {(
-                  calculateTotals.totalAmount -
-                  (calculateTotals.totalAmountPaid || 0)
-                ).toLocaleString("en-IN", {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
+            <div className="flex justify-end items-center w-full border-t border-gray-200 ">
+              <span className="text-gray-600 mr-4 min-w-[100px] text-right">
+                Balance Due(₹):
               </span>
+              <div className="w-32 text-right">
+                <span className="text-red-600 font-bold">
+                  {(
+                    calculateTotals.totalAmount -
+                    (calculateTotals.totalAmountPaid || 0)
+                  ).toLocaleString("en-IN", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </span>
+              </div>
             </div>
           </div>
         </CardContent>
@@ -1364,6 +1730,7 @@ const CreateServiceBill = ({
         selectedServices={selectedServices}
         onSelectService={handleSelectService}
         onSelectAll={handleSelectAll}
+        viewMode={viewMode}
       />
 
       <PaymentDialog
@@ -1404,6 +1771,46 @@ const CreateServiceBill = ({
               Proceed
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <SelectServicesDialog
+        isOpen={isOperationDialogOpen}
+        onClose={() => setIsOperationDialogOpen(false)}
+        services={services.filter((service) => service.category === "Surgery")}
+        selectedServices={selectedOperationServices}
+        onServicesChange={(services) => {
+          setSelectedOperationServices(services);
+          handleOperationSelect(services);
+        }}
+      />
+
+      <Dialog
+        open={isOperationChoiceModalOpen}
+        onOpenChange={setIsOperationChoiceModalOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Operation Options</DialogTitle>
+            <DialogDescription>
+              How would you like to add the selected operation?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <Button
+              variant="outline"
+              onClick={() => handleOperationChoice(false)}
+              className="w-full"
+            >
+              Add Operation Name Only
+            </Button>
+            <Button
+              onClick={() => handleOperationChoice(true)}
+              className="w-full"
+            >
+              Add Operation Name with Charges in Bill
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

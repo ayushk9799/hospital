@@ -39,6 +39,7 @@ import Pharmacy from "./pages/Pharmacy";
 import PharmacyAllBills from "./pages/PharmacyAllBills";
 import AddStaff from "./pages/AddStaff";
 import { fetchDepartments } from "./redux/slices/departmentSlice";
+import { fetchServices } from "./redux/slices/serviceSlice";
 import { fetchRooms } from "./redux/slices/roomSlice";
 import { fetchUserData } from "./redux/slices/userSlice";
 import { fetchHospitalInfo } from "./redux/slices/HospitalSlice";
@@ -108,6 +109,7 @@ const AppContent = () => {
             dispatch(fetchDepartments()),
             dispatch(fetchRooms()),
             dispatch(fetchHospitalInfo()),
+            dispatch(fetchServices()),
             dispatch(fetchTemplates()),
             dispatch(fetchHospitalSettings()),
           ]);
