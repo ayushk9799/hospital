@@ -35,7 +35,6 @@ const BillModal = ({
 }) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
-
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {

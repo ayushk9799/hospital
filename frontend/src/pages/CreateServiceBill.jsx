@@ -81,6 +81,8 @@ const CreateServiceBill = ({
   const hospitalSettings = useSelector(
     (state) => state.hospitalSettings.settings
   );
+  const {settings} = useSelector((state) => state.hospitalSettings);
+
 
   const [billDataForPrint, setBillDataForPrint] = useState(null);
   const [newlyAddedServices, setNewlyAddedServices] = useState([]);
@@ -923,7 +925,12 @@ const CreateServiceBill = ({
     setIsPaymentDialogOpen(true);
   };
 
-  const [viewMode, setViewMode] = useState("list");
+  const [viewMode, setViewMode] = useState(settings.defaultBillPrintView || "list");
+  useEffect(() => {
+    if (settings) {
+      setViewMode(settings.defaultBillPrintView || "list");
+    }
+  }, [settings]);
 
   // Add memoized values for filtered services and date grouping
   const filteredServicesForDisplay = useMemo(() => {
@@ -1031,7 +1038,6 @@ const CreateServiceBill = ({
       }
     );
 
-    console.log(selectedOperations)
 
     try {
       const result = await dispatch(
@@ -1574,6 +1580,15 @@ const CreateServiceBill = ({
               >
                 Date-wise View
               </Button>
+              <Button
+                variant={viewMode === "listwithoutdate" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setViewMode("listwithoutdate")}
+                className="h-8"
+              >
+                List without Date
+              </Button>
+
             </div>
           )}
           <div className="flex flex-col items-end space-y-0.5 text-sm">

@@ -52,7 +52,7 @@ export default function OPDBillTokenPreview() {
   // const handleSaveTemplate = () => {
   //   dispatch(
   //     updateTemplate({
-  //       opdBillTokenTemplate: newlifeline,
+  //       opdBillTokenTemplate: medbharat,
   //     })
   //   ).then((result) => {
   //     if (!result.error) {

@@ -10,6 +10,11 @@ const hospitalSettingsSchema = new mongoose.Schema({
     type: Boolean,
     default: true,
   },
+  defaultBillPrintView: {
+    type: String,
+    default: "listwithoutdate",
+    enum: ["datewise", "list","listwithoutdate"],
+  }
 
   // Add any other settings as needed
 });

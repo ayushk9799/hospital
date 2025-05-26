@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo } from "react";
+import React, { useRef, useState, useMemo, useEffect } from "react";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import { format } from "date-fns";
@@ -31,10 +31,19 @@ import { headerTemplateString as headerTemplateStringDefault } from "../../../te
 import { X } from "lucide-react";
 import PaymentReceipt from "../print/PaymentReceipt";
 
-const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode }) => {
+const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp }) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
+  const {settings} = useSelector((state) => state.hospitalSettings);
+  const [viewMode, setViewMode] = useState(viewModeProp); 
+  
+  useEffect(() => {
+    if (settings) {
+      setViewMode(viewModeProp || settings.defaultBillPrintView || "list");
+      
+    }
+  }, [settings, viewModeProp]);
   const [selectedServices, setSelectedServices] = useState([]);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const headerTemplateStrings = useSelector(
@@ -245,11 +254,12 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode }) => {
             <TableCell className="border-r border-gray-200 h-[25px] py-1">
               {service.name || "N/A"}
             </TableCell>
-            <TableCell className="border-r border-gray-200 h-[25px] py-1">
+            {viewMode==="list" && <TableCell className="border-r border-gray-200 h-[25px] py-1">
               {service.date
                 ? format(new Date(service.date), "dd/MM/yyyy")
                 : "N/A"}
             </TableCell>
+  }
 
             <TableCell className="border-r border-gray-200 h-[25px] py-1 text-center">
               {service.quantity || 0}

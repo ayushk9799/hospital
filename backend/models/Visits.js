@@ -43,6 +43,7 @@ const visitSchema = new mongoose.Schema(
         name: String,
         frequency: String,
         duration: String,
+        remarks: String,
       },
     ],
     labTests: [String],

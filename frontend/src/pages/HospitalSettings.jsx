@@ -5,6 +5,8 @@ import { Checkbox } from "../components/ui/checkbox";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft } from "lucide-react";
 import { updateHospitalSettings } from "../redux/slices/hospitalSettingsSlice";
+import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
+import { Label } from "../components/ui/label";
 
 export default function HospitalSettings() {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ export default function HospitalSettings() {
   // Local state to track changes
   const [localSettings, setLocalSettings] = useState({
     defaultBreakBillMode: false,
+    defaultBillPrintView: "list",
   });
 
   // Initialize local state with current settings
@@ -21,6 +24,7 @@ export default function HospitalSettings() {
     if (settings) {
       setLocalSettings({
         defaultBreakBillMode: settings.defaultBreakBillMode || false,
+        defaultBillPrintView: settings.defaultBillPrintView || "list",
       });
     }
   }, [settings]);
@@ -36,6 +40,13 @@ export default function HospitalSettings() {
     }));
   };
 
+  const handlePrintViewChange = (value) => {
+    setLocalSettings((prev) => ({
+      ...prev,
+      defaultBillPrintView: value,
+    }));
+  };
+
   const handleSave = async () => {
     try {
       await dispatch(updateHospitalSettings(localSettings)).unwrap();
@@ -48,7 +59,8 @@ export default function HospitalSettings() {
 
   const hasChanges =
     settings &&
-    settings.defaultBreakBillMode !== localSettings.defaultBreakBillMode;
+    (settings.defaultBreakBillMode !== localSettings.defaultBreakBillMode ||
+      settings.defaultBillPrintView !== localSettings.defaultBillPrintView);
 
   return (
     <div className="p-4 sm:p-6">
@@ -77,6 +89,28 @@ export default function HospitalSettings() {
           >
             Default Break Bill Mode
           </label>
+        </div>
+
+        <div className="space-y-2">
+          <Label className="text-sm font-medium">Default Bill Print View</Label>
+          <RadioGroup
+            value={localSettings.defaultBillPrintView}
+            onValueChange={handlePrintViewChange}
+            className="flex flex-col space-y-1"
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="datewise" id="datewise" />
+              <Label htmlFor="datewise">Datewise</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="list" id="list" />
+              <Label htmlFor="list">List</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="listwithoutdate" id="listwithoutdate" />
+              <Label htmlFor="listwithoutdate">List Without Date</Label>
+            </div>
+          </RadioGroup>
         </div>
 
         <Button
