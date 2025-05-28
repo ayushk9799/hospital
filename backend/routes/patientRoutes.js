@@ -2435,7 +2435,6 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
       existingBill.additionalDiscount =
         Number(billUpdates.additionalDiscount) || 0;
       existingBill.operationName = updatedAdmissionFields.operationName;
-      cons;
 
       // existingBill.amountPaid = Number(billUpdates.amountPaid) || 0; // This will be recalculated based on payments
 

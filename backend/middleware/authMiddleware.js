@@ -75,7 +75,7 @@ export const verifyToken = async (req, res, next) => {
 
     req.user = await Staff.findById(decoded._id);
     if (!req.user) {
-      next(new Error("user not found"));
+      return next(new Error("user not found"));
     }
     const isMatch = decoded.password === req.user.password;
     if (!isMatch) {
