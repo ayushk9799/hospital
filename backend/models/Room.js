@@ -42,7 +42,6 @@ roomSchema.pre("save", function (next) {
   const totalBeds = this.beds.length;
 
   // Ensure currentOccupancy matches actual occupied beds count
- 
 
   //Validate that occupancy doesn't exceed capacity
   if (occupiedBeds > this.capacity) {

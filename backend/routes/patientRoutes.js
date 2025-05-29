@@ -2423,7 +2423,6 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
                 oldRoom.currentOccupancy - 1
               );
 
-
               await oldRoom.save({ session });
             }
           }
@@ -2446,9 +2445,6 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
         newRoom.beds[newBedIndex].currentPatient = patient._id;
         newRoom.currentOccupancy = newRoom.currentOccupancy + 1;
         await newRoom.save({ session });
-
-       
-      
       }
     }
 
