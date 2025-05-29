@@ -405,6 +405,11 @@ router.post(
             throw new Error("Bed not available");
           }
 
+          // Validate that adding another patient won't exceed capacity
+          if (room.currentOccupancy >= room.capacity) {
+            throw new Error("Room is at full capacity");
+          }
+
           room.beds[bedIndex].status = "Occupied";
           room.beds[bedIndex].currentPatient = patient._id;
           room.currentOccupancy += 1;
@@ -2391,7 +2396,60 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
       Object.assign(patient, patientDataUpdates);
       await patient.save({ session });
     } else {
-      patient = await Patient.findById(admission.patient).session(session); // Ensure patient is loaded
+      patient = await Patient.findById(admission.patient).session(session);
+    }
+
+    // 3. Handle Room Changes if any
+    if (admissionDataUpdates.assignedRoom && admissionDataUpdates.assignedBed) {
+      const currentRoomId = admission.assignedRoom?.toString();
+      const newRoomId = admissionDataUpdates.assignedRoom?.toString();
+      const currentBedId = admission.assignedBed?.toString();
+      const newBedId = admissionDataUpdates.assignedBed?.toString();
+
+      // If there's a room/bed change
+      if (currentRoomId !== newRoomId || currentBedId !== newBedId) {
+        // First, free up the old room/bed if it exists
+        if (currentRoomId && currentBedId) {
+          const oldRoom = await Room.findById(currentRoomId).session(session);
+          if (oldRoom) {
+            const oldBedIndex = oldRoom.beds.findIndex(
+              (bed) => bed._id.toString() === currentBedId
+            );
+            if (oldBedIndex !== -1) {
+              oldRoom.beds[oldBedIndex].status = "Available";
+              oldRoom.beds[oldBedIndex].currentPatient = null;
+              oldRoom.currentOccupancy = Math.max(
+                0,
+                oldRoom.currentOccupancy - 1
+              );
+
+
+              await oldRoom.save({ session });
+            }
+          }
+        }
+
+        // Then, assign the new room/bed
+        const newRoom = await Room.findById(newRoomId).session(session);
+        if (!newRoom) {
+          throw new Error("New room or bed not available");
+        }
+
+        const newBedIndex = newRoom.beds.findIndex(
+          (bed) => bed._id.toString() === newBedId && bed.status === "Available"
+        );
+        if (newBedIndex === -1) {
+          throw new Error("New bed not available");
+        }
+
+        newRoom.beds[newBedIndex].status = "Occupied";
+        newRoom.beds[newBedIndex].currentPatient = patient._id;
+        newRoom.currentOccupancy = newRoom.currentOccupancy + 1;
+        await newRoom.save({ session });
+
+       
+      
+      }
     }
 
     // 3. Update IPDAdmission details
@@ -2431,7 +2489,7 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
       existingBill.totalAmount =
         Number(billUpdates.totalAmount) || existingBill.totalAmount;
       existingBill.subtotal =
-        Number(billUpdates.subtotal) || existingBill.subtotal; // Or recalculate based on services
+        Number(billUpdates.subtotal) || existingBill.subtotal;
       existingBill.additionalDiscount =
         Number(billUpdates.additionalDiscount) || 0;
       existingBill.operationName = updatedAdmissionFields.operationName;
@@ -2631,24 +2689,24 @@ router.put(
       }
 
       const bill = await ServicesBill.findById(billId)
-      .populate("patient")
-      .populate({
-        path: "visit",
-        populate: {
-          path: "doctor",
-          select: "name",
-        },
-      })
-      .populate({
-        path: "admission",
-        populate: {
-          path: "assignedDoctor",
-          select: "name",
-        },
-      })
-      .populate("payments")
-      .populate("createdBy", "name")
-      .session(session);
+        .populate("patient")
+        .populate({
+          path: "visit",
+          populate: {
+            path: "doctor",
+            select: "name",
+          },
+        })
+        .populate({
+          path: "admission",
+          populate: {
+            path: "assignedDoctor",
+            select: "name",
+          },
+        })
+        .populate("payments")
+        .populate("createdBy", "name")
+        .session(session);
       if (!bill) {
         throw new Error("Bill not found");
       }
@@ -2676,10 +2734,9 @@ router.put(
         bill.services.push(...newServices);
 
         // Recalculate bill totals
-        const newSubtotal = bill.services.filter(service => service.type !== "breakup").reduce(
-          (sum, service) => sum + service.rate * service.quantity,
-          0
-        );
+        const newSubtotal = bill.services
+          .filter((service) => service.type !== "breakup")
+          .reduce((sum, service) => sum + service.rate * service.quantity, 0);
 
         bill.subtotal = newSubtotal;
         bill.totalAmount = newSubtotal - (bill.additionalDiscount || 0);

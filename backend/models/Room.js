@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 
 const roomSchema = new mongoose.Schema({
-  roomNumber: { type: String, required: true},
+  roomNumber: { type: String, required: true },
   type: { type: String },
   floor: Number,
   capacity: { type: Number, required: true },
@@ -40,6 +40,14 @@ roomSchema.pre("save", function (next) {
     (bed) => bed.status === "Occupied"
   ).length;
   const totalBeds = this.beds.length;
+
+  // Ensure currentOccupancy matches actual occupied beds count
+ 
+
+  //Validate that occupancy doesn't exceed capacity
+  if (occupiedBeds > this.capacity) {
+    return next(new Error("Room occupancy cannot exceed capacity"));
+  }
 
   if (occupiedBeds === 0) {
     this.status = "Available";

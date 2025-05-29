@@ -930,6 +930,7 @@ const patientSlice = createSlice({
       .addCase(fetchIPDAdmissionDetailsFull.fulfilled, (state, action) => {
         state.ipdAdmissionDetailsFullStatus = "succeeded";
         state.ipdAdmissionDetailsFull = action.payload;
+       
       })
       .addCase(fetchIPDAdmissionDetailsFull.rejected, (state, action) => {
         state.ipdAdmissionDetailsFullStatus = "failed";
@@ -942,16 +943,19 @@ const patientSlice = createSlice({
       .addCase(editIPDAdmission.fulfilled, (state, action) => {
         state.editIPDAdmissionStatus = "succeeded";
         const updatedAdmission = action.payload;
+
+       
         // Update in patientlist if it exists there (e.g., if patientlist shows all types)
         const patientListIndex = state.patientlist.findIndex(
           (item) => item._id === updatedAdmission._id && item.type === "IPD"
         );
+        
         if (patientListIndex !== -1) {
           state.patientlist[patientListIndex] = {
             ...state.patientlist[patientListIndex], // Keep patient sub-object
             ...updatedAdmission, // Spread all fields from updatedAdmission
             doctor: updatedAdmission.assignedDoctor, // Map assignedDoctor to doctor for consistency if needed
-            patient: state.patientlist[patientListIndex].patient, // Preserve original patient object from list
+            patient: updatedAdmission.patient, // Preserve original patient object from list
           };
         }
 

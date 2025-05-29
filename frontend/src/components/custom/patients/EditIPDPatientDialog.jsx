@@ -182,12 +182,9 @@ export default function EditIPDPatientDialog({
         address: patientFromData.address || "",
         bloodType: patientFromData.bloodType || "",
       };
-
+    
       // Admission Form Data - Reconstruct carefully to avoid direct mutation of frozen state
       const admissionDetails = {
-        ...initialFormData.admission, // Start with a fresh copy of the initial structure
-
-        // Overwrite with values from 'data', ensuring new objects for nested structures
         department: data.department || "",
         assignedDoctor: data.assignedDoctor
           ? { _id: data.assignedDoctor._id, name: data.assignedDoctor.name }
@@ -301,10 +298,9 @@ export default function EditIPDPatientDialog({
         billDetails.additionalDiscount = "0";
         billDetails.totalAmount = "0";
       }
-
       setFormData({
         patient: patientForm,
-        admission: admissionDetails,
+        admission: { ...admissionDetails},
         bill: billDetails,
       });
       setDeletedPayments([]);
@@ -326,7 +322,7 @@ export default function EditIPDPatientDialog({
     const { id, value, type, checked } = e.target;
     const [section, ...fieldParts] = id.split(".");
     const fieldName = fieldParts.join(".");
-
+   
     setFormData((prev) => {
       const newState = { ...prev };
       let current = newState[section];
@@ -477,7 +473,6 @@ export default function EditIPDPatientDialog({
       (sum, pm) => sum + (Number(pm.amount) || 0),
       0
     );
-
     setFormData((prev) => ({
       ...prev,
       bill: {
@@ -546,11 +541,12 @@ export default function EditIPDPatientDialog({
       newErrors.department = "Department is required";
     if (!formData.admission.assignedDoctor?._id)
       newErrors.doctor = "Doctor is required";
+    if (formData.admission.assignedRoom && !formData.admission.assignedBed)
+      newErrors["admission.assignedBed"] = "Bed is required";
     // Add more IPD specific validations if necessary
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
@@ -750,11 +746,10 @@ export default function EditIPDPatientDialog({
         billDetailsInit.additionalDiscount = "0";
         billDetailsInit.totalAmount = "0";
       }
-
       setFormData({
         patient: patientForm,
-        admission: admissionDetailsInit, // Use renamed variable
-        bill: billDetailsInit, // Use renamed variable
+        admission: {...admissionDetailsInit}, 
+        bill: billDetailsInit, 
       });
       setErrors({});
       setDeletedPayments([]);
@@ -781,7 +776,6 @@ export default function EditIPDPatientDialog({
     return availableServices;
   }, [services]);
 
-
   const handleServicesChange = (selectedServicesFromDialog) => {
     // selectedServicesFromDialog is an array of { id, rate }
     const allAvailableServices = services || [];
@@ -806,7 +800,6 @@ export default function EditIPDPatientDialog({
     );
     const currentDiscount = Number(formData.bill.additionalDiscount) || 0;
     const newTotalAmount = newSubtotal - currentDiscount;
-
     setFormData((prev) => ({
       ...prev,
       bill: {
@@ -852,7 +845,7 @@ export default function EditIPDPatientDialog({
           <Tabs defaultValue="basic-info" className="w-full">
             <TabsList
               className={`grid w-full ${
-                isMobile ? "grid-cols-3" : "grid-cols-3" // Changed from 4 to 3
+                isMobile ? "grid-cols-3" : "grid-cols-3" 
               }`}
             >
               <TabsTrigger value="basic-info">
@@ -1015,7 +1008,9 @@ export default function EditIPDPatientDialog({
                       label="Assigned Room"
                       value={formData.admission.assignedRoom}
                       onValueChange={(value) =>
-                        handleSelectChange("admission.assignedRoom", value)
+                        {
+                          handleSelectChange("admission.assignedRoom", value)
+                        }
                       }
                     >
                       {rooms.map((room) => (
@@ -1029,14 +1024,18 @@ export default function EditIPDPatientDialog({
                       label="Assigned Bed"
                       value={formData.admission.assignedBed}
                       onValueChange={(value) =>
-                        handleSelectChange("admission.assignedBed", value)
+                      {
+                        if(value){
+                          handleSelectChange("admission.assignedBed", value)
+                        }
+                      }
                       }
                       disabled={!formData.admission.assignedRoom}
                     >
                       {formData.admission.assignedRoom &&
                         rooms
                           .find(
-                            (r) => r._id === formData.admission.assignedRoom
+                            (r) => r._id?.toString() === formData.admission?.assignedRoom?.toString()
                           )
                           ?.beds.filter(
                             (b) =>
