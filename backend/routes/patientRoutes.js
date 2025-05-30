@@ -2448,6 +2448,16 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
       }
     }
 
+    if (admissionDataUpdates) {
+      if (admissionDataUpdates.assignedRoom === "") {
+          admissionDataUpdates.assignedRoom = null;
+      }
+      if (admissionDataUpdates.assignedBed === "") {
+          admissionDataUpdates.assignedBed = null;
+      }
+      
+  }
+
     // 3. Update IPDAdmission details
     // Ensure to preserve fields not explicitly being updated
     const currentAdmissionData = admission.toObject();
