@@ -200,6 +200,31 @@ export const updateLabRegistration = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+export const deleteLabRegistration = createLoadingAsyncThunk(
+  "lab/deleteRegistration",
+  async (registrationId, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/lab/delete/${registrationId}`,
+        {
+          method: "DELETE",
+          credentials: "include",
+        }
+      );
+      const data = await response.json();
+      if (!data.success) {
+        return rejectWithValue(
+          data.error || "Failed to delete lab registration"
+        );
+      }
+      return { registrationId };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 export const fetchLabData = createLoadingAsyncThunk(
   "lab/fetchLabData",
   async (_, { rejectWithValue }) => {
@@ -231,6 +256,7 @@ const initialState = {
   registrationsStatus: "idle",
   createRegistrationStatus: "idle",
   updateRegistrationStatus: "idle",
+  deleteRegistrationStatus: "idle",
   updateTestStatus: "idle",
   error: null,
   searchResults: [],
@@ -249,6 +275,9 @@ const labSlice = createSlice({
     },
     setUpdateRegistrationStatusIdle: (state) => {
       state.updateRegistrationStatus = "idle";
+    },
+    setDeleteRegistrationStatusIdle: (state) => {
+      state.deleteRegistrationStatus = "idle";
     },
     setUpdateTestStatusIdle: (state) => {
       state.updateTestStatus = "idle";
@@ -378,6 +407,24 @@ const labSlice = createSlice({
         state.updateRegistrationStatus = "failed";
         state.error = action.payload;
       })
+      // Delete lab registration
+      .addCase(deleteLabRegistration.pending, (state) => {
+        state.deleteRegistrationStatus = "loading";
+        state.error = null;
+      })
+      .addCase(deleteLabRegistration.fulfilled, (state, action) => {
+        state.deleteRegistrationStatus = "succeeded";
+        state.registrations = state.registrations.filter(
+          (reg) => reg._id !== action.payload.registrationId
+        );
+        state.searchResults = state.searchResults.filter(
+          (reg) => reg._id !== action.payload.registrationId
+        );
+      })
+      .addCase(deleteLabRegistration.rejected, (state, action) => {
+        state.deleteRegistrationStatus = "failed";
+        state.error = action.payload;
+      })
       // Fetch Lab Data
       .addCase(fetchLabData.pending, (state) => {
         state.fetchLabDataStatus = "loading";
@@ -400,5 +447,6 @@ export const {
   setUpdateRegistrationStatusIdle,
   setUpdateTestStatusIdle,
   clearSearchResults,
+  setDeleteRegistrationStatusIdle,
 } = labSlice.actions;
 export default labSlice.reducer;

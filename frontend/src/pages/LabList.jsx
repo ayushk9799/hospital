@@ -6,6 +6,7 @@ import {
   updateTestStatus,
   searchLabRegistrations,
   clearSearchResults,
+  deleteLabRegistration,
 } from "../redux/slices/labSlice";
 import {
   Table,
@@ -33,7 +34,6 @@ import {
 import {
   Search,
   Plus,
-  Filter,
   Calendar as CalendarIcon,
   X,
   UserX,
@@ -43,7 +43,6 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { useMediaQuery } from "../hooks/use-media-query";
-import { motion, AnimatePresence } from "framer-motion";
 import { Badge } from "../components/ui/badge";
 import { DateRangePicker } from "../assets/Data";
 import LabRegDialog from "../components/custom/registration/LabRegDialog";
@@ -55,11 +54,22 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
 
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Label } from "../components/ui/label";
 import LabPaymentDialog from "../components/custom/registration/LabPaymentDialog";
 import LabEditDialog from "../components/custom/registration/LabEditDialog";
+import { useToast } from "../hooks/use-toast";
 
 export default function LabList() {
   const navigate = useNavigate();
@@ -76,22 +86,20 @@ export default function LabList() {
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedLabForPayment, setSelectedLabForPayment] = useState(null);
   const [openDropdownId, setOpenDropdownId] = useState(null);
-  const [showAddTestsDialog, setShowAddTestsDialog] = useState(false);
-  const [selectedLabForTests, setSelectedLabForTests] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedLabForEdit, setSelectedLabForEdit] = useState(null);
-
+  const [labToDelete, setLabToDelete] = useState(null);
+  const { toast } = useToast();
   const {
     registrations,
-    registrationsStatus,
-    error,
-    updateTestStatus: updateStatus,
     searchResults,
-    searchStatus,
+    updateTestStatus: updateStatus,
+    error,
   } = useSelector((state) => state.lab);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [filteredTests, setFilteredTests] = useState([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const isUpdating = updateStatus === "loading";
 
@@ -255,6 +263,33 @@ export default function LabList() {
     setOpenDropdownId(null);
   };
 
+  const handleDeleteClick = (test) => {
+    setLabToDelete(test);
+    setOpenDropdownId(null);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (labToDelete) {
+        setIsDeleting(true);
+       dispatch(deleteLabRegistration(labToDelete._id)).unwrap().then(() => {
+          toast({
+            title: "Success",
+            description: "Lab registration deleted successfully",
+            variant: "success",
+          });
+        }).catch((er) => {
+        toast({
+          title: "Error",
+          description: er.message || "Something went wrong",
+          variant: "destructive",
+        });
+      }).finally(() => {
+        setIsDeleting(false);
+        setLabToDelete(null);
+      });
+    }
+  };
+
   const TestCard = ({ test, index }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
@@ -301,6 +336,12 @@ export default function LabList() {
 
                 <DropdownMenuItem onClick={() => handleEdit(test)}>
                   Edit Registration
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleDeleteClick(test)}
+                  className="text-red-500"
+                >
+                  Delete Registration
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -509,6 +550,41 @@ export default function LabList() {
           labData={selectedLabForEdit}
         />
 
+        <AlertDialog
+          open={!!labToDelete}
+          onOpenChange={(open) => {
+            if (!isDeleting && !open) {
+              setLabToDelete(null);
+            }
+          }}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the
+                lab registration for {labToDelete?.patientName} (Lab No:{" "}
+                {labToDelete?.labNumber}) and all associated payment records.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel
+                onClick={() => setLabToDelete(null)}
+                disabled={isDeleting}
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteConfirm}
+                className="bg-red-600 hover:bg-red-700"
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <div className="flex flex-col space-y-4 mb-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="w-full md:w-1/2 relative">
@@ -665,6 +741,12 @@ export default function LabList() {
 
                           <DropdownMenuItem onClick={() => handleEdit(test)}>
                             Edit Registration
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => handleDeleteClick(test)}
+                            className="text-red-500"
+                          >
+                            Delete Registration
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>

@@ -76,6 +76,8 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
     contactNumber: "",
     email: "",
     address: "",
+    guardianName: "",
+    relation: "",
     bloodType: "",
     patientType: "LAB",
     paymentInfo: {
@@ -254,9 +256,12 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
         const tempGuardianName =
           data.visits[0]?.guardianName ||
           data.admissionDetails[0]?.guardianName ||
+          data.guardianDetails?.guardianName ||
           "";
         const tempRelation =
-          data.visits[0]?.relation || data.admissionDetails[0]?.relation || "";
+          data.visits[0]?.relation || data.admissionDetails[0]?.relation ||
+          data.guardianDetails?.relation ||
+          "";
 
         setFormData((prev) => ({
           ...prev,
@@ -460,7 +465,8 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
         gender: patientData.patient.gender,
         contactNumber: patientData.patient.contactNumber,
         address: patientData.patient.address,
-        // Pre-fill other relevant fields from patientData
+        guardianName: patientData.patient.guardianDetails?.guardianName || "",
+        relation: patientData.patient.guardianDetails?.relation || "",
         lastVisitType: patientData.type,
         lastVisit: patientData.bookingDate,
         lastVisitId: patientData._id,
@@ -588,6 +594,34 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
                   onChange={handleInputChange}
                   className="min-h-9 h-9 no-scrollbar"
                 />
+                <div className="grid grid-cols-[1fr_2fr] gap-2">
+                  <Select
+                    id="relation"
+                    value={formData.relation}
+                    onValueChange={(value) =>
+                      handleInputChange({
+                        target: { id: "relation", value },
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Relation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Father">Father</SelectItem>
+                      <SelectItem value="Husband">Husband</SelectItem>
+                      <SelectItem value="Mother">Mother</SelectItem>
+                      <SelectItem value="Wife">Wife</SelectItem>
+                      <SelectItem value="Guardian">Guardian</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <MemoizedInput
+                    id="guardianName"
+                    label={formData.relation ? `${formData.relation}'s Name` : "Guardian's Name"}
+                    value={formData.guardianName}
+                    onChange={handleInputChange}
+                  />
+                </div>
                 <SearchSuggestion
                   suggestions={doctors.map((doctor) => ({
                     name: doctor.name,

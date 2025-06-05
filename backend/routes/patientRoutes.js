@@ -7,6 +7,7 @@ import { ServicesBill } from "../models/ServicesBill.js";
 import { BillCounter } from "../models/BillCounter.js";
 import { Service } from "../models/Services.js";
 import { Payment } from "../models/Payment.js";
+import { PharmacyBill } from "../models/PharmacyBill.js";
 import { checkPermission, verifyToken } from "../middleware/authMiddleware.js";
 import mongoose from "mongoose";
 import { RegistrationNumber } from "../models/RegistrationNumber.js";
@@ -1163,14 +1164,239 @@ router.delete(
   verifyToken,
   checkPermission("delete_patients"),
   async (req, res) => {
+    const session = await mongoose.startSession();
+    session.startTransaction();
     try {
-      const patient = await Patient.findByIdAndDelete(req.params.id);
-      if (!patient) {
-        return res.status(404).json({ error: "Patient not found" });
+      const { id } = req.params;
+      const { visitId, admissionId } = req.body;
+
+      // Case 1: Delete a specific Visit
+      if (visitId) {
+        const visit = await Visit.findById(visitId).session(session);
+        if (!visit || visit.patient.toString() !== id) {
+          throw new Error("Visit not found or does not belong to this patient.");
+        }
+
+        const serviceBillIds = visit.bills?.services || [];
+        const paymentIds = new Set();
+
+        if (serviceBillIds.length > 0) {
+          const serviceBills = await ServicesBill.find({
+            _id: { $in: serviceBillIds },
+          }).session(session);
+          for (const bill of serviceBills) {
+            if (bill.payments?.length > 0) {
+              bill.payments.forEach((pid) => paymentIds.add(pid.toString()));
+            }
+          }
+        }
+
+        const paymentIdArray = Array.from(paymentIds);
+        if (paymentIdArray.length > 0) {
+          await Payment.deleteMany({ _id: { $in: paymentIdArray } }).session(
+            session
+          );
+        }
+        if (serviceBillIds.length > 0) {
+          await ServicesBill.deleteMany({
+            _id: { $in: serviceBillIds },
+          }).session(session);
+        }
+
+        // Remove from patient's visits array
+        const patientData = await Patient.findByIdAndUpdate(id, { $pull: { visits: visitId } }, { new: true }).session(
+          session
+        );
+
+        if (patientData.visits.length === 0 && patientData.admissionDetails.length === 0) {
+          await Patient.findByIdAndDelete(id).session(session);
+        }
+
+        // Delete the visit itself
+        await Visit.findByIdAndDelete(visitId).session(session);
+
+        await session.commitTransaction();
+        return res.json({
+          message: "Visit and related data deleted successfully",
+        });
       }
-      res.json({ message: "Patient deleted successfully" });
+
+      // Case 2: Delete a specific IPD Admission
+      if (admissionId) {
+        const admission = await IPDAdmission.findById(admissionId).session(
+          session
+        );
+        if (!admission || admission.patient.toString() !== id) {
+          throw new Error(
+            "IPD Admission not found or does not belong to this patient."
+          );
+        }
+
+        const serviceBillIds = admission.bills?.services || [];
+        const paymentIds = new Set();
+
+        if (serviceBillIds.length > 0) {
+          const serviceBills = await ServicesBill.find({
+            _id: { $in: serviceBillIds },
+          }).session(session);
+          for (const bill of serviceBills) {
+            if (bill.payments?.length > 0) {
+              bill.payments.forEach((pid) => paymentIds.add(pid.toString()));
+            }
+          }
+        }
+
+        // De-allocate room
+        if (
+          admission.status === "Admitted" &&
+          admission.assignedRoom &&
+          admission.assignedBed
+        ) {
+          const room = await Room.findById(admission.assignedRoom).session(
+            session
+          );
+          if (room) {
+            const bedIndex = room.beds.findIndex(
+              (bed) => bed._id.toString() === admission.assignedBed.toString()
+            );
+            if (
+              bedIndex !== -1 &&
+              room.beds[bedIndex].currentPatient?.toString() === id
+            ) {
+              room.beds[bedIndex].status = "Available";
+              room.beds[bedIndex].currentPatient = null;
+              room.currentOccupancy = Math.max(0, room.currentOccupancy - 1);
+              await room.save({ session });
+            }
+          }
+        }
+
+        const paymentIdArray = Array.from(paymentIds);
+        if (paymentIdArray.length > 0) {
+          await Payment.deleteMany({ _id: { $in: paymentIdArray } }).session(
+            session
+          );
+        }
+        if (serviceBillIds.length > 0) {
+          await ServicesBill.deleteMany({
+            _id: { $in: serviceBillIds },
+          }).session(session);
+        }
+
+        // Remove from patient's admissionDetails array
+        const patientData = await Patient.findByIdAndUpdate(id, {
+          $pull: { admissionDetails: admissionId },
+        }, { new: true }).session(session);
+
+        // Delete the admission itself
+       await IPDAdmission.findByIdAndDelete(admissionId).session(session);
+
+        if (patientData.admissionDetails.length === 0 && patientData.visits.length === 0) {
+          await Patient.findByIdAndDelete(id).session(session);
+        }
+
+        await session.commitTransaction();
+        return res.json({
+          message: "IPD Admission and related data deleted successfully",
+        });
+      }
+
+      // Case 3: Delete the entire patient record (original functionality)
+      const patient = await Patient.findById(id).session(session);
+      if (!patient) {
+        throw new Error("Patient not found");
+      }
+
+      // Find all related documents
+      const visits = await Visit.find({ patient: patient._id }).session(session);
+      const ipdAdmissions = await IPDAdmission.find({
+        patient: patient._id,
+      }).session(session);
+
+      const serviceBillIds = [];
+      const paymentIds = new Set();
+
+      // Collect bills from visits
+      for (const visit of visits) {
+        if (visit.bills?.services) serviceBillIds.push(...visit.bills.services);
+      }
+
+      // Collect bills from IPD admissions and de-allocate rooms
+      for (const admission of ipdAdmissions) {
+        if (admission.bills?.services)
+          serviceBillIds.push(...admission.bills.services);
+
+        // De-allocate room if patient is currently admitted
+        if (
+          admission.status === "Admitted" &&
+          admission.assignedRoom &&
+          admission.assignedBed
+        ) {
+          const room = await Room.findById(admission.assignedRoom).session(
+            session
+          );
+          if (room) {
+            const bedIndex = room.beds.findIndex(
+              (bed) => bed._id.toString() === admission.assignedBed.toString()
+            );
+            if (
+              bedIndex !== -1 &&
+              room.beds[bedIndex].currentPatient?.toString() ===
+                patient._id.toString()
+            ) {
+              room.beds[bedIndex].status = "Available";
+              room.beds[bedIndex].currentPatient = null;
+              room.currentOccupancy = Math.max(0, room.currentOccupancy - 1);
+              await room.save({ session });
+            }
+          }
+        }
+      }
+
+      // Collect payment IDs from Service Bills
+      if (serviceBillIds.length > 0) {
+        const serviceBills = await ServicesBill.find({
+          _id: { $in: serviceBillIds },
+        }).session(session);
+        for (const bill of serviceBills) {
+          if (bill.payments?.length > 0) {
+            bill.payments.forEach((pid) => paymentIds.add(pid.toString()));
+          }
+        }
+      }
+
+      const paymentIdArray = Array.from(paymentIds);
+      if (paymentIdArray.length > 0) {
+        await Payment.deleteMany({ _id: { $in: paymentIdArray } }).session(
+          session
+        );
+      }
+      if (serviceBillIds.length > 0) {
+        await ServicesBill.deleteMany({
+          _id: { $in: serviceBillIds },
+        }).session(session);
+      }
+      if (visits.length > 0) {
+        await Visit.deleteMany({ patient: patient._id }).session(session);
+      }
+      if (ipdAdmissions.length > 0) {
+        await IPDAdmission.deleteMany({ patient: patient._id }).session(
+          session
+        );
+      }
+
+      // Finally, delete the patient
+      await Patient.findByIdAndDelete(id).session(session);
+
+      await session.commitTransaction();
+      res.json({
+        message: "Patient and all associated data deleted successfully",
+      });
     } catch (error) {
+      await session.abortTransaction();
       res.status(500).json({ error: error.message });
+    } finally {
+      session.endSession();
     }
   }
 );
@@ -1442,9 +1668,6 @@ router.put(
     }
   }
 );
-// ... existing code ...
-
-// Update visit details
 
 // Update IPD admission details
 router.put(

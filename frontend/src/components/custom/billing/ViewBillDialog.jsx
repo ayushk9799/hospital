@@ -30,10 +30,12 @@ import { Checkbox } from "../../ui/checkbox";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { X } from "lucide-react";
 import PaymentReceipt from "../print/PaymentReceipt";
+import RenewalAlertDlg from "../renewal/RenewalAlertDlg";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp }) => {
   const componentRef = useRef();
   const [isPrinting, setIsPrinting] = useState(false);
+  const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
   const isMobile = useMediaQuery("(max-width: 640px)");
   const {settings} = useSelector((state) => state.hospitalSettings);
   const [viewMode, setViewMode] = useState(viewModeProp); 
@@ -112,6 +114,14 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
         return prev.filter((i) => i !== index);
       }
     });
+  };
+
+  const handlePrintMethod = () => {
+    if (hospitalInfo.discontinuedDaysLeft < 0) {
+      setIsRenewalDialogOpen(true);
+    } else {
+      handlePrint();
+    }
   };
 
   const handlePrint = useReactToPrint({
@@ -439,6 +449,10 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                         {renderTableBody()}
                       </Table>
                     </div>
+                    <RenewalAlertDlg
+                      isOpen={isRenewalDialogOpen}
+                      setIsOpen={setIsRenewalDialogOpen}
+                    />
 
                     <div className="flex justify-end">
                       <div className="w-64">
@@ -709,7 +723,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
             >
               Close
             </Button>
-            <Button type="button" variant="outline" onClick={handlePrint}>
+            <Button type="button" variant="outline" onClick={handlePrintMethod}>
               <PrinterIcon className="mr-2 h-4 w-4" />
               Print Bill
             </Button>

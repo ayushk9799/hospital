@@ -76,19 +76,16 @@ import EditPatientDialog from "../components/custom/patients/EditPatientDialog";
 import LabRegDialog from "../components/custom/registration/LabRegDialog";
 import OPDBillTokenModal from "../components/custom/registration/OPDBillTokenModal";
 import EditIPDPatientDialog from "../components/custom/patients/EditIPDPatientDialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
+import RenewalAlertDlg from "../components/custom/renewal/RenewalAlertDlg";
+import DeletePatientDialog from "../components/custom/patients/DeletePatientDialog";
+
 
 export default function Patients() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
+  const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
   const [dateFilter, setDateFilter] = useState("Today");
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
@@ -98,6 +95,8 @@ export default function Patients() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditIPDDialogOpen, setIsEditIPDDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [patientToDelete, setPatientToDelete] = useState(null);
   const [isLabDialogOpen, setIsLabDialogOpen] = useState(false);
   const [isOPDTokenModalOpen, setIsOPDTokenModalOpen] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState("All");
@@ -105,6 +104,7 @@ export default function Patients() {
     (state) => state.patients
   );
   const { doctors } = useSelector((state) => state.staff);
+  const { hospitalInfo } = useSelector((state) => state.hospital);
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const isMediumScreen = useMediaQuery("(max-width: 1024px)");
@@ -200,6 +200,11 @@ export default function Patients() {
     } else if (patient.type === "IPD") {
       setIsEditIPDDialogOpen(true);
     }
+  };
+
+  const handleDeletePatient = (patient) => {
+    setPatientToDelete(patient);
+    setIsDeleteDialogOpen(true);
   };
 
   const handleLabRegistration = (patient) => {
@@ -458,6 +463,13 @@ export default function Patients() {
                     >
                       Register Lab
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleDeletePatient(patient)}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      Delete Patient
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -563,6 +575,13 @@ export default function Patients() {
                       onClick={() => handleLabRegistration(patient)}
                     >
                       Register Lab
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleDeletePatient(patient)}
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                    >
+                      Delete Patient
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -717,6 +736,16 @@ export default function Patients() {
             isOpen={isOPDTokenModalOpen}
             setIsOpen={setIsOPDTokenModalOpen}
             patientData={opdDetails}
+          />
+        )}
+        {isDeleteDialogOpen && (
+          <DeletePatientDialog
+            isOpen={isDeleteDialogOpen}
+            onOpenChange={setIsDeleteDialogOpen}
+            patient={patientToDelete}
+            onDeleted={() => {
+              setPatientToDelete(null);
+            }}
           />
         )}
         <Tabs
@@ -979,11 +1008,24 @@ export default function Patients() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent>
-                      <DropdownMenuItem onSelect={() => setIsDialogOpen(true)}>
+                      <DropdownMenuItem onSelect={() => {
+                        if (hospitalInfo.discontinuedDaysLeft < 0) {
+                          setIsRenewalDialogOpen(true);
+                        } else {
+                          setIsDialogOpen(true);
+                        }
+                      }}
+                      >
                         OPD
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        onSelect={() => setIsIPDDialogOpen(true)}
+                        onSelect={() => {
+                          if (hospitalInfo.discontinuedDaysLeft < 0) {
+                            setIsRenewalDialogOpen(true);
+                          } else {
+                            setIsIPDDialogOpen(true);
+                          }
+                        }}
                       >
                         IPD
                       </DropdownMenuItem>
@@ -993,6 +1035,10 @@ export default function Patients() {
               )}
             </div>
           </div>
+          <RenewalAlertDlg
+            isOpen={isRenewalDialogOpen}
+            setIsOpen={setIsRenewalDialogOpen}
+          />
           <TabsContent value="OPD">
             {isSmallScreen ? (
               filteredPatients.filter((p) => p.type === "OPD").length > 0 ? (

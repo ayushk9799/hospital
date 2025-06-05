@@ -35,6 +35,8 @@ router.post("/register", verifyToken, async (req, res) => {
       lastVisitType,
       lastVisit,
       lastVisitId,
+      guardianName,
+      relation,
     } = req.body;
 
     const user = req.user;
@@ -70,6 +72,8 @@ router.post("/register", verifyToken, async (req, res) => {
       lastVisit: lastVisit,
       lastVisitId: lastVisitId,
       bookingDate: bookingDate || new Date(),
+      guardianName,
+      relation,
     });
 
     // Create services bill
@@ -819,6 +823,8 @@ router.put("/update/:id", verifyToken, async (req, res) => {
     labRegistration.referredByName = updateData.referredByName;
     labRegistration.department = updateData.department;
     labRegistration.notes = updateData.notes;
+    labRegistration.guardianName = updateData.guardianName;
+    labRegistration.relation = updateData.relation;
 
     // Handle payments
     const existingPaymentIds = labRegistration.payments.map((p) =>
@@ -1000,6 +1006,83 @@ router.get("/lab-data", verifyToken, async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Delete a lab registration
+router.delete("/delete/:id", verifyToken,checkPermission("delete_patient"), async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
+  try {
+    const { id } = req.params;
+
+    const labRegistration = await LabRegistration.findById(id).session(session);
+    if (!labRegistration) {
+      throw new Error("Lab registration not found");
+    }
+
+    const hasCompletedTest = labRegistration.labTests.some(
+      (test) => test.reportStatus === "Completed"
+    );
+    if (hasCompletedTest) {
+      throw new Error("Cannot delete registration with completed tests.");
+    }
+
+    // Delete associated payments
+    if (labRegistration.payments && labRegistration.payments.length > 0) {
+      await Payment.deleteMany({
+        _id: { $in: labRegistration.payments },
+      }).session(session);
+    }
+
+    // Delete associated bill
+    if (labRegistration.billDetails?.billId) {
+      await ServicesBill.findByIdAndDelete(labRegistration.billDetails.billId, {
+        session,
+      });
+    }
+
+    // Clean up from Visit or IPD record
+    if (labRegistration.lastVisitId) {
+      const Model =
+        labRegistration.lastVisitType === "OPD" ? Visit : IPDAdmission;
+      const record = await Model.findById(labRegistration.lastVisitId).session(
+        session
+      );
+
+      if (record) {
+        const labTestNames = labRegistration.labTests.map((t) => t.name);
+
+        if (record.labTests) {
+          record.labTests = record.labTests.filter(
+            (t) => !labTestNames.includes(t.name)
+          );
+        }
+        if (record.labReports) {
+          record.labReports = record.labReports.filter(
+            (r) => !labTestNames.includes(r.name)
+          );
+        }
+
+        await record.save({ session });
+      }
+    }
+
+    // Delete the lab registration itself
+    await LabRegistration.findByIdAndDelete(id, { session });
+
+    await session.commitTransaction();
+
+    res.json({
+      success: true,
+      message: "Lab registration deleted successfully",
+    });
+  } catch (error) {
+    await session.abortTransaction();
+    res.status(400).json({ message: error.message });
+  } finally {
+    session.endSession();
   }
 });
 

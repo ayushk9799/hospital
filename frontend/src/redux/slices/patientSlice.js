@@ -622,6 +622,31 @@ export const updateOperationName = createLoadingAsyncThunk(
   }
 );
 
+export const deletePatient = createLoadingAsyncThunk(
+  "patients/deletePatient",
+  async ({ patientId, visitId, admissionId }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/patients/${patientId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ visitId, admissionId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        return rejectWithValue(errorData);
+      }
+
+      const result = await response.json();
+      return { result }; // Only need success, data is in meta.arg
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
 const initialState = {
   patientlist: [],
   patientsStatus: "idle",
@@ -1026,6 +1051,28 @@ const patientSlice = createSlice({
         }
       })
       .addCase(updateOperationName.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload;
+      })
+      .addCase(deletePatient.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(deletePatient.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        const { patientId, visitId, admissionId } = action.meta.arg;
+        if (visitId || admissionId) {
+          // A single visit/admission was deleted
+          state.patientlist = state.patientlist.filter(
+            (item) => item._id !== (visitId || admissionId)
+          );
+        } else {
+          // The entire patient was deleted
+          state.patientlist = state.patientlist.filter(
+            (item) => item.patient._id !== patientId
+          );
+        }
+      })
+      .addCase(deletePatient.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload;
       });

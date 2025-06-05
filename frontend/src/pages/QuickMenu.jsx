@@ -27,16 +27,19 @@ import OPDProcedureDialog from "../components/custom/procedures/OPDProcedureDial
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { fetchDepartments } from "../redux/slices/departmentSlice";
+import RenewalAlertDlg from "../components/custom/renewal/RenewalAlertDlg";
 
 const QuickMenu = () => {
   const [isOPDDialogOpen, setIsOPDDialogOpen] = useState(false);
   const [isIPDDialogOpen, setIsIPDDialogOpen] = useState(false);
   const [isOPDProcedureOpen, setIsOPDProcedureOpen] = useState(false);
+  const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
   const dispatch = useDispatch();
   const todaysPatient = useSelector(
     (state) => state.patients.todaysPatientList
   );
   const { departments, status } = useSelector((state) => state.departments);
+  const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
 
   const hasObstetrics = useMemo(() => {
     if (departments.length === 0) return false;
@@ -80,14 +83,26 @@ const QuickMenu = () => {
       title: "Book OPD",
       description: "Register a new OPD patient",
       icon: UserPlus,
-      action: () => setIsOPDDialogOpen(true),
+      action: () =>{
+        if(hospitalInfo?.discontinuedDaysLeft < 0){
+          setIsRenewalDialogOpen(true);
+        }else{
+          setIsOPDDialogOpen(true);
+        }
+      },
       color: "bg-blue-200 text-blue-800 hover:bg-blue-300",
     },
     {
       title: "Book IPD",
       description: "Register a new IPD patient",
       icon: Bed,
-      action: () => setIsIPDDialogOpen(true),
+      action: () =>{
+        if(hospitalInfo?.discontinuedDaysLeft < 0){
+          setIsRenewalDialogOpen(true);
+        }else{
+          setIsIPDDialogOpen(true);
+        }
+      },
       color: "bg-green-200 text-green-800 hover:bg-green-300",
     },
     {
@@ -227,6 +242,7 @@ const QuickMenu = () => {
         open={isOPDProcedureOpen}
         onOpenChange={setIsOPDProcedureOpen}
       />
+      <RenewalAlertDlg isOpen={isRenewalDialogOpen} setIsOpen={setIsRenewalDialogOpen} />
     </div>
   );
 };

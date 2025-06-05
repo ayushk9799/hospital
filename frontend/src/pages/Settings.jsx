@@ -81,6 +81,10 @@ export default function Settings() {
     navigate("/settings/discharge-form-templates");
   };
 
+  const handleSubscription = () => {
+    navigate("/settings/subscription");
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -109,6 +113,7 @@ export default function Settings() {
         <Button onClick={handleDischargeFormTemplates}>
           Discharge Form Templates
         </Button>
+        <Button onClick={handleSubscription}>Subscription</Button>
         {/* <Button onClick={handleLabData}>
           Lab Data
         </Button> */}

@@ -6,7 +6,7 @@ import { Input } from "../components/ui/input";
 import { updateTemplate } from "../redux/slices/templatesSlice";
 import { cn } from "../lib/utils";
 import { consentFormTemplateStringDefault } from "../components/custom/print/ConsentFormPrint";
-import { consentFormTemplateStringExperimentation , consentFormTemplateStringAnesthesia} from "../templatesExperiments/consentFromExperimentation";
+// import { consentFormTemplateStringExperimentation , consentFormTemplateStringAnesthesia} from "../templatesExperiments/consentFromExperimentation";
 import ConsentDynamicForm from "../components/custom/print/ConsentDynamicForm";
 
 // const consentFormTemplateStringDefault = `(patient, hospitalInfo, ref) => {
@@ -142,10 +142,10 @@ export default function ConsentTemplatePreview() {
   // Define available templates
   const [availableTemplates, setAvailableTemplates] = useState([
     { name: "System Default", value: consentFormTemplateStringDefault },
-    {
-      name: "Experimentation",
-      value: consentFormTemplateStringExperimentation,
-    },
+    // {
+    //   name: "Experimentation",
+    //   value: consentFormTemplateStringExperimentation,
+    // },
     ...(consentFormTemplates || []),
   ]);
 

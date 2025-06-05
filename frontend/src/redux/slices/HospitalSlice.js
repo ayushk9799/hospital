@@ -53,6 +53,17 @@ export const fetchHospitalInfo = createLoadingAsyncThunk(
       }
     }
 
+    // Handle serviceDiscontinuedDate
+    if (hospitalData.serviceDiscontinuedDate) {
+      const disDate = new Date(hospitalData.serviceDiscontinuedDate);
+      const today = new Date();
+      disDate.setHours(0, 0, 0, 0);
+      today.setHours(0, 0, 0, 0);
+      hospitalData.serviceDiscontinuedDate = disDate;
+      const daysLeft = Math.ceil((disDate - today) / (1000 * 60 * 60 * 24));
+      hospitalData.discontinuedDaysLeft = daysLeft;
+    }
+
     return hospitalData;
   },
   { useGlobalLoading: true }

@@ -82,6 +82,7 @@ import { fetchHospitalSettings } from "./redux/slices/hospitalSettingsSlice";
 import HospitalSettings from "./pages/HospitalSettings";
 import ConsultationFees from "./pages/ConsultationFees";
 import { fetchConsultationFees } from "./redux/slices/consultationFeeSlice";
+import Subscription from "./pages/Subscription";
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
@@ -313,7 +314,9 @@ const AppContent = () => {
                     path="/settings/consultation-fees"
                     element={<ConsultationFees />}
                   />
+                  <Route path="/settings/subscription" element={<Subscription />} />
                 </>
+
               )}
             </Routes>
           </main>

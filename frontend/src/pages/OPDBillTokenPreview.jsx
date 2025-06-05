@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { updateTemplate } from "../redux/slices/templatesSlice";
-import { opdBillTokenTemplateSingle , opdBillTokenTemplateaad} from "../templatesExperiments/opdBilltokenExperiment";
+// import { opdBillTokenTemplateSingle , opdBillTokenTemplateaad} from "../templatesExperiments/opdBilltokenExperiment";
 import { opdBillTokenTemplateDefault } from "../templates/opdBillTokenTemplate";
 import OPDBillTokenPrint from "../components/custom/registration/OPDBillTokenPrint";
 import { Button } from "../components/ui/button";

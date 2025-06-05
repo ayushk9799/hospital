@@ -21,9 +21,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "../../ui/popover";
 import { Separator } from "../../ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "../../ui/sheet";
 import { searchPatients } from "../../../redux/slices/patientSlice";
+import RenewalAlertDlg from "../renewal/RenewalAlertDlg";
 
 const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const user = useSelector((state) => state.user.userData);
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -31,6 +33,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -65,6 +68,18 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
         variant: "destructive",
       });
     }
+  };
+
+  const getDaysLeft = (renewalDate) => {
+    if (!renewalDate) return null;
+    const today = new Date();
+    const renewal = new Date(renewalDate);
+    // Set hours, minutes, seconds, and milliseconds to 0 for accurate day comparison
+    today.setHours(0, 0, 0, 0);
+    renewal.setHours(0, 0, 0, 0);
+    const diffTime = renewal.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
   };
 
   const handleNavigation = (path) => {
@@ -188,7 +203,36 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
           </Button>
         </form>
       </div>
+     
       <div className="flex items-center">
+      {hospital?.renewalDate &&
+      getDaysLeft(hospital.renewalDate) !== null &&
+      (getDaysLeft(hospital.renewalDate) < 0 || getDaysLeft(hospital.renewalDate) < 15) ? (
+        <>
+          <button 
+            onClick={() => setIsRenewalDialogOpen(true)}
+            className="ml-2 from-[#ff0f0f] to-[#ff8383] bg-gradient-to-r pl-5 pr-2  py-1 rounded-md mr-5 relative hover:bg-pink-600 transition-all duration-300"
+          >
+            <div className="h-2 w-2 bg-red-800 rounded-full absolute top-0 right-0 animate-ping"></div>
+            <div className="flex items-center justify-between gap-2" >
+             <div>
+                <p className="text-xs text-white">Buy Premium Now</p>
+                <p className="text-[10px] text-white">
+                  {getDaysLeft(hospital.renewalDate) < 0
+                    ? "Free trails has expired"
+                    : `Renewal in: ${getDaysLeft(hospital.renewalDate)} days`}
+                </p>
+             </div>
+             <ChevronDown className="h-5 w-5 text-white" />
+            </div>
+          </button>
+          <RenewalAlertDlg 
+            isOpen={isRenewalDialogOpen}
+            setIsOpen={setIsRenewalDialogOpen}
+            daysLeft={getDaysLeft(hospital.renewalDate)}
+          />
+        </>
+      ) : null}
         <Popover>
           <PopoverTrigger asChild>
             <Button

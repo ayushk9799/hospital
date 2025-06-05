@@ -3,7 +3,7 @@ import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
-import { opdBillTokenTemplateSingle ,opdBillTokenTemplateaad} from "../../../templatesExperiments/opdBilltokenExperiment";
+// import { opdBillTokenTemplateSingle ,opdBillTokenTemplateaad} from "../../../templatesExperiments/opdBilltokenExperiment";
 import { opdBillTokenTemplateDefault } from "../../../templates/opdBillTokenTemplate";
 // Define styles
 

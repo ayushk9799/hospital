@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import ConsentDynamicForm from "./ConsentDynamicForm";
-import {consentFormTemplateStringExperimentation, consentFormTemplateStringAnesthesia }from "../../../templatesExperiments/consentFromExperimentation";
+// import {consentFormTemplateStringExperimentation, consentFormTemplateStringAnesthesia }from "../../../templatesExperiments/consentFromExperimentation";
 import { Printer } from "lucide-react";
 import {
   DropdownMenuSub,

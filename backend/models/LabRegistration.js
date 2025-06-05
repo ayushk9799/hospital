@@ -18,6 +18,8 @@ const labRegistrationSchema = new mongoose.Schema(
     gender: { type: String, enum: ["Male", "Female", "Other"] },
     contactNumber: { type: String },
     address: { type: String },
+    guardianName: { type: String },
+    relation: { type: String },
 
     // Registration Details
     bookingDate: { type: Date, default: Date.now },
