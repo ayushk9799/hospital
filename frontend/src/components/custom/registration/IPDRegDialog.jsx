@@ -611,6 +611,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     <>
       <Dialog open={open} onOpenChange={handleDialogClose}>
         <DialogContent
+          onInteractOutside={(e) => e.preventDefault()}
           className={` ${
             isMobile ? "w-[95vw] p-4 rounded-lg gap-0 " : "max-w-[1000px]"
           } h-[${isMobile ? "70vh" : "60vh"}] overflow-y-auto px-4`}

@@ -273,7 +273,7 @@ const OPDProcedureDialog = ({ open, onOpenChange, initialPatientData }) => {
   return (
     <>
       <Dialog open={open} onOpenChange={handleDialogClose}>
-        <DialogContent className="sm:max-w-[700px] w-[95%] max-h-[90vh] overflow-y-auto">
+        <DialogContent onInteractOutside={(e) => e.preventDefault()} className="sm:max-w-[700px] w-[95%] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-xl sm:text-2xl font-bold text-center">
               Register OPD Procedure

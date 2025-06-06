@@ -596,7 +596,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           handleDialogClose(ev);
         }}
       >
-        <DialogContent className="md:max-w-[1000px] md:min-h-[60vh] md:max-h-[60vh] overflow-y-auto md:overflow-y-hidden w-[95vw] p-4 md:p-6 gap-0 md:gap-4 rounded-lg">
+          <DialogContent onInteractOutside={(e) => e.preventDefault()} className="md:max-w-[1000px] md:min-h-[60vh] md:max-h-[60vh] overflow-y-auto md:overflow-y-hidden w-[95vw] p-4 md:p-6 gap-0 md:gap-4 rounded-lg">
           <DialogHeader>
             <DialogTitle className="mb-2 md:mb-0">
               Patient Registration

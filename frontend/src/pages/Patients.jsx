@@ -466,7 +466,7 @@ export default function Patients() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => handleDeletePatient(patient)}
-                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50 font-semibold"
                     >
                       Delete Patient
                     </DropdownMenuItem>
@@ -579,7 +579,7 @@ export default function Patients() {
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => handleDeletePatient(patient)}
-                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50 font-semibold"
                     >
                       Delete Patient
                     </DropdownMenuItem>

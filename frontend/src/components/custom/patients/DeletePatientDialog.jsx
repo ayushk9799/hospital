@@ -66,14 +66,14 @@ const DeletePatientDialog = ({ isOpen, onOpenChange, patient, onDeleted }) => {
 
   return (
     <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
-      <AlertDialogContent>
+      <AlertDialogContent  >
         <AlertDialogHeader>
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone and will permanently delete data.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="my-4 space-y-4">
+        {/* <div className="my-4 space-y-4">
           <div className="flex items-start space-x-3 rounded-md border p-4">
             <Checkbox
               id="delete-full"
@@ -97,7 +97,7 @@ const DeletePatientDialog = ({ isOpen, onOpenChange, patient, onDeleted }) => {
             {new Date(patient.bookingDate).toLocaleDateString()} will be
             deleted.
           </p>
-        </div>
+        </div> */}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
           <Button

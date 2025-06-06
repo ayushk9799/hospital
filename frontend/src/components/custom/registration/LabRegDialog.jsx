@@ -483,6 +483,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
     <>
       <Dialog open={open} onOpenChange={handleDialogClose}>
         <DialogContent
+          onInteractOutside={(e) => e.preventDefault()}
           className={`${isMobile ? "w-[95vw] p-4" : "max-w-[1000px]"} h-[${
             isMobile ? "70vh" : "60vh"
           }] overflow-visible px-4`}

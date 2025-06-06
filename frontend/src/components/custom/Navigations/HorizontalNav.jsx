@@ -211,7 +211,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
         <>
           <button 
             onClick={() => setIsRenewalDialogOpen(true)}
-            className="ml-2 from-[#ff0f0f] to-[#ff8383] bg-gradient-to-r pl-5 pr-2  py-1 rounded-md mr-5 relative hover:bg-pink-600 transition-all duration-300"
+            className="ml-2 from-[#ff0f0f] to-[#ff8383] bg-gradient-to-r pl-5 pr-2  py-1 rounded-md mr-5 relative hover:shadow-lg transition-all duration-300"
           >
             <div className="h-2 w-2 bg-red-800 rounded-full absolute top-0 right-0 animate-ping"></div>
             <div className="flex items-center justify-between gap-2" >
