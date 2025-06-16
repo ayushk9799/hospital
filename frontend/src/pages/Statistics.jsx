@@ -15,18 +15,7 @@ import {
   CardDescription,
   CardTitle,
 } from "../components/ui/card";
-import { Avatar, AvatarFallback } from "../components/ui/avatar";
-import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Legend,
-  ResponsiveContainer,
-  Tooltip,
-} from "recharts";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -50,12 +39,9 @@ import {
   format,
   eachDayOfInterval,
   isSameDay,
-  formatDistanceToNow,
 } from "date-fns";
-import { Pill } from "lucide-react";
-import { PieChart, Pie, Cell, Label } from "recharts";
-import { useMediaQuery } from "../hooks/use-media-query";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "../assets/Data";
 
 const hasFinancialViewPermission = (userData) => {
   return userData?.permissions?.includes("view_financial") || false;
@@ -614,9 +600,7 @@ const Dashboard = () => {
                         }`}
                       >
                         {hasFinancialViewPermission(userData)
-                          ? `₹${parseInt(
-                              dashboardTotals.totalRevenue
-                            ).toLocaleString()}`
+                          ? formatCurrency(dashboardTotals.totalRevenue)
                           : "₹XXXXX"}
                       </p>
                       <p className="text-sm text-gray-600">Total Revenue</p>
@@ -632,7 +616,7 @@ const Dashboard = () => {
                               {payment.method}
                             </p>
                             <p className="text-sm font-bold text-gray-700">
-                              ₹{parseInt(payment.value).toLocaleString()}
+                              {formatCurrency(payment.value)}
                             </p>
                           </div>
                         ))}
@@ -670,9 +654,7 @@ const Dashboard = () => {
                         }`}
                       >
                         {hasFinancialViewPermission(userData)
-                          ? `₹${parseInt(
-                              dashboardTotals.totalExpense
-                            ).toLocaleString()}`
+                          ? formatCurrency(dashboardTotals.totalExpense)
                           : "₹XXXXX"}
                       </p>
                       <p className="text-sm text-gray-600">Total Expense</p>
@@ -695,7 +677,7 @@ const Dashboard = () => {
                                     method.slice(1)}
                                 </p>
                                 <p className="text-sm font-bold text-gray-700">
-                                  ₹{parseInt(details.total).toLocaleString()}
+                                  {formatCurrency(details.total)}
                                 </p>
                               </div>
                             )
@@ -738,13 +720,13 @@ const Dashboard = () => {
                         }`}
                       >
                         {hasFinancialViewPermission(userData)
-                          ? `₹${parseInt(
+                          ? formatCurrency(
                               calculateCollections[
                                 `${type
                                   .toLowerCase()
                                   .replace(/\s+/g, "")}Collection`
                               ]
-                            ).toLocaleString()}`
+                            )
                           : "₹XXXXX"}
                       </p>
                       <p className="text-xs text-gray-600">{type} Collection</p>
@@ -789,7 +771,7 @@ const Dashboard = () => {
                               {method.method}
                             </span>
                             <span className="text-sm font-bold">
-                              ₹{parseInt(method.value).toLocaleString()}
+                              {formatCurrency(method.value)}
                             </span>
                           </div>
                         </div>
@@ -818,31 +800,24 @@ const Dashboard = () => {
                     <div className="space-y-1">
                       <p className="text-sm text-gray-600">Total Revenue</p>
                       <p className="text-lg font-bold text-green-600">
-                        ₹
-                        {parseInt(
-                          dashboardTotals.totalRevenue
-                        ).toLocaleString()}
+                        {formatCurrency(dashboardTotals.totalRevenue)}
                       </p>
                     </div>
                     <div className="text-xl">-</div>
                     <div className="space-y-1 text-right">
                       <p className="text-sm text-gray-600">Total Expense</p>
                       <p className="text-lg font-bold text-red-600">
-                        ₹
-                        {parseInt(
-                          dashboardTotals.totalExpense
-                        ).toLocaleString()}
+                        {formatCurrency(dashboardTotals.totalExpense)}
                       </p>
                     </div>
                     <div className="text-xl">=</div>
                     <div className="space-y-1 text-right">
                       <p className="text-sm text-gray-600">Net Revenue</p>
                       <p className="text-lg font-bold text-blue-600">
-                        ₹
-                        {parseInt(
+                        {formatCurrency(
                           dashboardTotals.totalRevenue -
                             dashboardTotals.totalExpense
-                        ).toLocaleString()}
+                        )}
                       </p>
                     </div>
                   </div>

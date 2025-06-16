@@ -7,13 +7,6 @@ import {
   CardDescription,
 } from "../components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -45,6 +38,7 @@ import {
 } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchPayments } from "../redux/slices/paymentSlice";
+import { fetchDashboardData } from "../redux/slices/dashboardSlice";
 import { setLoading } from "../redux/slices/loaderSlice";
 import { Input } from "../components/ui/input";
 import { useMediaQuery } from "../hooks/useMediaQuery";
@@ -53,10 +47,12 @@ import { useReactToPrint } from "react-to-print";
 import { fetchStaffMembers } from "../redux/slices/staffSlice";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { formatCurrency } from "../assets/Data";
 
 const Payments = () => {
   const dispatch = useDispatch();
   const { payments, status } = useSelector((state) => state.payments);
+  const { dashboardData } = useSelector((state) => state.dashboard);
   const { userData } = useSelector((state) => state.user);
   const { staffMembers } = useSelector((state) => state.staff);
   const [searchTerm, setSearchTerm] = useState("");
@@ -120,17 +116,25 @@ const Payments = () => {
       dispatch(setLoading(true));
       const dateRangeParams = getDateRange();
       if (dateRangeParams?.startDate && dateRangeParams?.endDate) {
-        await dispatch(
-          fetchPayments({
-            startDate: dateRangeParams?.startDate,
-            endDate: dateRangeParams?.endDate,
-          })
-        ).unwrap();
+        await Promise.all([
+          dispatch(
+            fetchPayments({
+              startDate: dateRangeParams?.startDate,
+              endDate: dateRangeParams?.endDate,
+            })
+          ).unwrap(),
+          dispatch(
+            fetchDashboardData({
+              startDate: dateRangeParams?.startDate,
+              endDate: dateRangeParams?.endDate,
+            })
+          ).unwrap(),
+        ]);
       }
     } catch (error) {
       toast({
         title: "Error",
-        description: error.message || "Failed to fetch payments",
+        description: error.message || "Failed to fetch data",
         variant: "destructive",
       });
     } finally {
@@ -298,6 +302,85 @@ const Payments = () => {
     return methods;
   }, [filteredPayments]);
 
+  // Calculate collections by payment type
+  const calculateCollections = useMemo(() => {
+    const collections = {
+      ipdCollection: 0,
+      opdCollection: 0,
+      opdprocedureCollection: 0,
+      pharmacyCollection: 0,
+      laboratoryCollection: 0
+    };
+
+    filteredPayments.forEach((payment) => {
+      if (payment.type === "Income") {
+        switch (payment.paymentType?.name) {
+          case "IPD":
+            collections.ipdCollection += payment.amount;
+            break;
+          case "OPD":
+            collections.opdCollection += payment.amount;
+            break;
+          case "OPDProcedure":
+            collections.opdprocedureCollection += payment.amount;
+            break;
+          case "Pharmacy":
+            collections.pharmacyCollection += payment.amount;
+            break;
+          case "Laboratory":
+            collections.laboratoryCollection += payment.amount;
+            break;
+          default:
+            break;
+        }
+      }
+    });
+
+    return collections;
+  }, [filteredPayments]);
+
+  // Calculate dashboard totals
+  const dashboardTotals = useMemo(() => {
+    if (!dashboardData || typeof dashboardData !== 'object') {
+      return {
+        totalPatients: 0,
+        totalAppointments: 0
+      };
+    }
+
+    return Object.values(dashboardData).reduce((acc, curr) => {
+      acc.totalPatients = (acc.totalPatients || 0) + (curr.visitCount || 0);
+      acc.totalAppointments = (acc.totalAppointments || 0) + (curr.ipdCount || 0);
+      return acc;
+    }, {
+      totalPatients: 0,
+      totalAppointments: 0
+    });
+  }, [dashboardData]);
+
+  const getDisplayDateRange = () => {
+    const today = new Date();
+    switch (dateFilter) {
+      case "Today":
+        return `${formatDate(today)}`;
+      case "Yesterday":
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return `${formatDate(yesterday)}`;
+      case "This Week":
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - 7);
+        return `${formatDate(weekStart)} - ${formatDate(today)}`;
+      case "Custom":
+        if (dateRange.from && dateRange.to) {
+          return `${formatDate(dateRange.from)} - ${formatDate(dateRange.to)}`;
+        }
+        return "";
+      default:
+        return "";
+    }
+  };
+
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
     onBeforeGetContent: () => {
@@ -314,6 +397,7 @@ const Payments = () => {
         body {
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
+          font-size: 80%; /* Reduce overall font size */
         }
         .print-section {
           display: block !important;
@@ -324,8 +408,45 @@ const Payments = () => {
         }
         .print-content {
           position: relative;
-          min-height: 100vh;
           padding: 10px;
+        }
+        /* Make cards more compact */
+        .grid {
+          gap: 0.5rem !important;
+        }
+        .p-4 {
+          padding: 0.5rem !important;
+        }
+        .p-3 {
+          padding: 0.375rem !important;
+        }
+        .text-xl {
+          font-size: 1rem !important;
+        }
+        .text-2xl {
+          font-size: 1.25rem !important;
+        }
+        .mb-4 {
+          margin-bottom: 0.5rem !important;
+        }
+        .mb-6 {
+          margin-bottom: 0.75rem !important;
+        }
+        /* Reduce table text size */
+        table {
+          font-size: 75% !important;
+        }
+        th, td {
+          padding: 4px !important;
+        }
+        /* Make table more compact */
+        .border {
+          border-width: 1px !important;
+        }
+        /* Ensure table headers are distinct */
+        th {
+          font-weight: bold !important;
+          background-color: #f3f4f6 !important;
         }
       }
     `,
@@ -652,7 +773,7 @@ const Payments = () => {
                     <DropdownMenuItem
                       onSelect={() => setDateFilter("This Week")}
                     >
-                      This Week
+                      Last 7 Days
                     </DropdownMenuItem>
                     <DropdownMenuItem onSelect={() => setDateFilter("Custom")}>
                       Custom Range
@@ -722,10 +843,19 @@ const Payments = () => {
 
         <div ref={componentRef} className="print-content">
           <div className="print-section">
-            <h2 className="text-2xl font-bold mb-4 print:block hidden">
-              Payments Report
-            </h2>
-            <div className="grid grid-cols-1 gap-4 mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold print:block hidden">
+                Payments Report
+              </h2>
+              <div className="print:block hidden text-right">
+                <span className="font-semibold">
+                  {getDisplayDateRange()}
+                </span>
+              </div>
+            </div>
+            
+            {/* Summary section */}
+            <div className="grid grid-cols-1 gap-4 mb-6 print:hidden">
               <div
                 className="hidden md:grid gap-4"
                 style={{
@@ -738,8 +868,7 @@ const Payments = () => {
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Total Credit</h3>
                     <p className="text-xl">
-                      ₹
-                      {Number(totalCredit?.toFixed(2))?.toLocaleString("en-IN")}
+                      {formatCurrency(totalCredit)}
                     </p>
                   </CardContent>
                 </Card>
@@ -748,7 +877,7 @@ const Payments = () => {
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Total Debit</h3>
                     <p className="text-xl">
-                      ₹{Number(totalDebit?.toFixed(2))?.toLocaleString("en-IN")}
+                      {formatCurrency(totalDebit)}
                     </p>
                   </CardContent>
                 </Card>
@@ -757,7 +886,7 @@ const Payments = () => {
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Net Amount</h3>
                     <p className="text-xl">
-                      ₹{Number(netAmount?.toFixed(2))?.toLocaleString("en-IN")}
+                      {formatCurrency(netAmount)}
                     </p>
                   </CardContent>
                 </Card>
@@ -768,40 +897,28 @@ const Payments = () => {
                       <h3 className="font-semibold text-sm mb-1">{method}</h3>
                       <div className="flex justify-between text-sm">
                         <div className="text-green-600 font-bold text-xl">
-                          +₹
-                          {Number(totals.credit.toFixed(2)).toLocaleString(
-                            "en-IN"
-                          )}
+                          +{formatCurrency(totals.credit)}
                         </div>
                         <div className="text-red-600 font-bold text-xl">
-                          -₹
-                          {Number(totals.debit.toFixed(2)).toLocaleString(
-                            "en-IN"
-                          )}
+                          -{formatCurrency(totals.debit)}
                         </div>
                       </div>
                       <div className="text-xl text-center font-bold mt-1">
-                        Net: ₹
-                        {Number(
-                          (totals.credit - totals.debit).toFixed(2)
-                        ).toLocaleString("en-IN")}
+                        Net: {formatCurrency(totals.credit - totals.debit)}
                       </div>
                     </CardContent>
                   </Card>
                 ))}
               </div>
 
-              {/* Mobile view for summary cards */}
+              {/* Mobile view cards - also hidden in print */}
               <div className="grid md:hidden gap-4">
                 <div className="grid grid-cols-2 gap-4">
                   <Card className="bg-blue-100">
                     <CardContent className="p-4">
                       <h3 className="font-semibold text-sm">Total Credit</h3>
                       <p className="text-xl">
-                        ₹
-                        {Number(totalCredit?.toFixed(2))?.toLocaleString(
-                          "en-IN"
-                        )}
+                        {formatCurrency(totalCredit)}
                       </p>
                     </CardContent>
                   </Card>
@@ -810,10 +927,7 @@ const Payments = () => {
                     <CardContent className="p-4">
                       <h3 className="font-semibold text-sm">Total Debit</h3>
                       <p className="text-xl">
-                        ₹
-                        {Number(totalDebit?.toFixed(2))?.toLocaleString(
-                          "en-IN"
-                        )}
+                        {formatCurrency(totalDebit)}
                       </p>
                     </CardContent>
                   </Card>
@@ -823,7 +937,7 @@ const Payments = () => {
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Net Amount</h3>
                     <p className="text-xl">
-                      ₹{Number(netAmount?.toFixed(2))?.toLocaleString("en-IN")}
+                      {formatCurrency(netAmount)}
                     </p>
                   </CardContent>
                 </Card>
@@ -835,23 +949,14 @@ const Payments = () => {
                         <h3 className="font-semibold text-sm mb-1">{method}</h3>
                         <div className="flex justify-between text-sm">
                           <div className="text-green-600 font-bold text-xl">
-                            +₹
-                            {Number(totals.credit.toFixed(2)).toLocaleString(
-                              "en-IN"
-                            )}
+                            +{formatCurrency(totals.credit)}
                           </div>
                           <div className="text-red-600 font-bold text-xl">
-                            -₹
-                            {Number(totals.debit.toFixed(2)).toLocaleString(
-                              "en-IN"
-                            )}
+                            -{formatCurrency(totals.debit)}
                           </div>
                         </div>
                         <div className="text-xl text-center font-bold mt-1">
-                          Net: ₹
-                          {Number(
-                            (totals.credit - totals.debit).toFixed(2)
-                          ).toLocaleString("en-IN")}
+                          Net: {formatCurrency(totals.credit - totals.debit)}
                         </div>
                       </CardContent>
                     </Card>
@@ -860,6 +965,88 @@ const Payments = () => {
               </div>
             </div>
 
+            {/* Print-only summary table */}
+            <div className="hidden print:block mb-4">
+              <div className="flex gap-4">
+                <div className="w-1/2">
+                  <table className="w-full border-collapse border">
+                    <tbody>
+                      <tr className="border">
+                        <td className="border p-2 font-semibold w-[200px]">Total Credit:</td>
+                        <td className="border p-2">{formatCurrency(totalCredit)}</td>
+                      </tr>
+                      <tr className="border">
+                        <td className="border p-2 font-semibold">Total Debit:</td>
+                        <td className="border p-2">{formatCurrency(totalDebit)}</td>
+                      </tr>
+                      <tr className="border">
+                        <td className="border p-2 font-semibold">Net Amount:</td>
+                        <td className="border p-2 font-bold">{formatCurrency(netAmount)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="w-1/2">
+                  <table className="w-full border-collapse border">
+                    <thead>
+                      <tr>
+                        <th className="border p-2">Payment Method</th>
+                        <th className="border p-2">Credit</th>
+                        <th className="border p-2">Debit</th>
+                        <th className="border p-2">Net</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(methodTotals).map(([method, totals]) => (
+                        <tr key={method}>
+                          <td className="border p-2">{method}</td>
+                          <td className="border p-2 text-green-600">{formatCurrency(totals.credit)}</td>
+                          <td className="border p-2 text-red-600">{formatCurrency(totals.debit)}</td>
+                          <td className="border p-2">{formatCurrency(totals.credit - totals.debit)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Print-only Dashboard Summary Table */}
+            {staffAccountFilter.name === "All Staff" && (
+              <div className="hidden print:block mb-4">
+                <table className="w-full border-collapse border text-sm">
+                  <thead>
+                    <tr>
+                      <th className="border p-1 text-left bg-gray-50 w-1/4">Patient Count</th>
+                      <th className="border p-1 text-left bg-gray-50 w-1/4">Collection Type</th>
+                      <th className="border p-1 text-left bg-gray-50 w-1/4">Collection Type</th>
+                      <th className="border p-1 text-left bg-gray-50 w-1/4">Collection Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="border p-1">
+                        OPD Visits: {dashboardTotals.totalPatients}<br/>
+                        IPD Admissions: {dashboardTotals.totalAppointments}
+                      </td>
+                      <td className="border p-1">
+                        OPD Collection: {formatCurrency(calculateCollections.opdCollection)}<br/>
+                        IPD Collection: {formatCurrency(calculateCollections.ipdCollection)}
+                      </td>
+                      <td className="border p-1">
+                        OPD Procedure Collection: {formatCurrency(calculateCollections.opdprocedureCollection)}<br/>
+                        Pharmacy Collection: {formatCurrency(calculateCollections.pharmacyCollection)}
+                      </td>
+                      <td className="border p-1">
+                        Laboratory Collection: {formatCurrency(calculateCollections.laboratoryCollection)}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            )}
+
             {filteredPayments.length > 0 ? (
               <>
                 {/* Table view for larger screens */}
@@ -867,22 +1054,25 @@ const Payments = () => {
                   <Table className="border-2 border-gray-200">
                     <TableHeader>
                       <TableRow>
+                        <TableHead className="w-[50px]">S.No</TableHead>
                         <TableHead>Date & Time</TableHead>
-                        <TableHead>Type</TableHead>
+                        <TableHead className="print:hidden">Payment Type</TableHead>
                         <TableHead>Method</TableHead>
+                        <TableHead>Type</TableHead>
                         <TableHead>Description</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Created By</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredPayments.map((payment) => (
+                      {filteredPayments.map((payment, index) => (
                         <TableRow key={payment._id}>
+                          <TableCell>{index + 1}</TableCell>
                           <TableCell>
                             {formatDate(payment.createdAt)}{" "}
                             {formatTime(payment.createdAt)}
                           </TableCell>
-                          <TableCell>
+                          <TableCell className="print:hidden">
                             <Badge
                               variant={
                                 payment.type === "Income"
@@ -894,26 +1084,19 @@ const Payments = () => {
                             </Badge>
                           </TableCell>
                           <TableCell>{payment.paymentMethod}</TableCell>
+                          <TableCell>{payment.paymentType?.name || "--"}</TableCell>
                           <TableCell className="font-medium">
-                            {payment.paymentType?.name === "OPDProcedure"
-                              ? (payment.associatedInvoiceOrId
-                                  ? payment.associatedInvoiceOrId + " "
-                                  : " ") + payment.description
-                              : payment.type === "Expense"
-                              ? (payment.paymentType?.name || "") +
-                                (payment.description
-                                  ? " " + payment.description
-                                  : "")
-                              : (payment.associatedInvoiceOrId
-                                  ? payment.associatedInvoiceOrId + " "
+                            {payment.type === "Expense"
+                              ? payment.description || ""
+                              : (payment.description
+                                  ? payment.description
                                   : "") +
-                                (payment.paymentType?.name || "") +
-                                (payment.description
-                                  ? " for patient " + payment.description
+                                (payment.associatedInvoiceOrId
+                                  ? " - " + payment.associatedInvoiceOrId
                                   : "")}
                           </TableCell>
                           <TableCell className="font-medium">
-                            ₹{payment.amount?.toFixed(2)}
+                            {payment.type === "Income" ? "+" : "-"}{formatCurrency(payment.amount)}
                           </TableCell>
                           <TableCell>
                             {payment.createdByName ||
@@ -928,10 +1111,11 @@ const Payments = () => {
 
                 {/* Card view for mobile screens */}
                 <div className="grid grid-cols-1 gap-3 md:hidden">
-                  {filteredPayments.map((payment) => (
+                  {filteredPayments.map((payment, index) => (
                     <Card key={payment._id} className="p-3">
                       <div className="flex justify-between items-center mb-1">
                         <div className="flex items-center gap-2">
+                          <span className="text-sm text-gray-500">#{index + 1}</span>
                           <Badge
                             variant={
                               payment.type === "Income"
@@ -947,10 +1131,7 @@ const Payments = () => {
                           </p>
                         </div>
                         <p className="text-base font-bold">
-                          ₹
-                          {Number(payment.amount?.toFixed(2)).toLocaleString(
-                            "en-IN"
-                          )}
+                          {formatCurrency(payment.amount)}
                         </p>
                       </div>
                       <div className="grid grid-cols-2 gap-x-4 text-sm">
@@ -959,16 +1140,19 @@ const Payments = () => {
                           <span>{payment.paymentMethod}</span>
                         </div>
                         <div className="flex justify-between col-span-2">
+                          <span className="text-gray-500">Visit Type:</span>
+                          <span>{payment.paymentType?.name || "--"}</span>
+                        </div>
+                        <div className="flex justify-between col-span-2">
                           <span className="text-gray-500">Description:</span>
                           <span className="text-right">
-                            {payment.paymentType?.name === "OPDProcedure"
-                              ? payment.description
-                              : (payment.associatedInvoiceOrId
-                                  ? payment.associatedInvoiceOrId + " "
+                            {payment.type === "Expense"
+                              ? payment.description || ""
+                              : (payment.description
+                                  ? payment.description
                                   : "") +
-                                (payment.paymentType?.name || "") +
-                                (payment.description
-                                  ? " " + payment.description
+                                (payment.associatedInvoiceOrId
+                                  ? " (" + payment.associatedInvoiceOrId + ")"
                                   : "")}
                           </span>
                         </div>

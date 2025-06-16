@@ -25,6 +25,19 @@ import { cn } from "../lib/utils";
 export const Backend_URL = "https://thehospital.in";
 // export const Backend_URL = "http://localhost:3000";
 
+export const formatCurrency = (amount) => {
+  const hasDecimal = amount % 1 !== 0;
+  const formattedAmount = new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: hasDecimal ? 2 : 0,
+  })
+    .format(Math.abs(amount))
+    .replace(/^(\D+)/, "₹");
+  
+  return amount < 0 ? `-${formattedAmount}` : formattedAmount;
+};
+
 export const formatDate = (dateString) => {
   if (!dateString) return "N/A";
   const date = new Date(dateString);
