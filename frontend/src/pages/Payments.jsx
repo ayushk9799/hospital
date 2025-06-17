@@ -65,6 +65,18 @@ const Payments = () => {
     name: "All Staff",
     id: "",
   });
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState("All");
+
+  const paymentMethods = useMemo(() => {
+    const methodsSet = new Set();
+    payments.forEach((payment) => {
+      if (payment.paymentMethod) {
+        methodsSet.add(payment.paymentMethod);
+      }
+    });
+    return Array.from(methodsSet);
+  }, [payments]);
+
   const { toast } = useToast();
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
@@ -236,7 +248,15 @@ const Payments = () => {
         return false;
       }
 
-      // 4. Staff Account Filter
+      // 4. Payment Method Filter
+      if (
+        paymentMethodFilter !== "All" &&
+        payment.paymentMethod !== paymentMethodFilter
+      ) {
+        return false;
+      }
+
+      // 5. Staff Account Filter
       if (
         staffAccountFilter.id &&
         payment.createdBy?._id !== staffAccountFilter.id
@@ -244,7 +264,7 @@ const Payments = () => {
         return false;
       }
 
-      // 5. Search Term Filter
+      // 6. Search Term Filter
       if (searchTerm) {
         const searchText = searchTerm.toLowerCase();
         const searchableFields = [
@@ -271,6 +291,7 @@ const Payments = () => {
   }, [
     payments,
     paymentTypeFilter,
+    paymentMethodFilter,
     staffAccountFilter,
     searchTerm,
     userData,
@@ -526,6 +547,39 @@ const Payments = () => {
                     className="overflow-hidden w-full"
                   >
                     <div className="space-y-2">
+                      {/* Payment Method Filter (mobile) */}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <ListFilter className="mr-2 h-4 w-4" />
+                            {paymentMethodFilter === "All"
+                              ? "Payment Method"
+                              : paymentMethodFilter}
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align="start"
+                          className="w-[200px]"
+                        >
+                          <DropdownMenuLabel>
+                            Filter by Payment Method
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onSelect={() => setPaymentMethodFilter("All")}
+                          >
+                            All
+                          </DropdownMenuItem>
+                          {paymentMethods.map((method) => (
+                            <DropdownMenuItem
+                              key={method}
+                              onSelect={() => setPaymentMethodFilter(method)}
+                            >
+                              {method}
+                            </DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="outline" className="w-full">
@@ -680,6 +734,36 @@ const Payments = () => {
               </AnimatePresence>
             ) : (
               <div className="flex gap-2">
+                {/* Payment Method Filter (desktop) */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline">
+                      <ListFilter className="mr-2 h-4 w-4" />
+                      {paymentMethodFilter === "All"
+                        ? "Payment Method"
+                        : paymentMethodFilter}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start" className="w-[200px]">
+                    <DropdownMenuLabel>
+                      Filter by Payment Method
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onSelect={() => setPaymentMethodFilter("All")}
+                    >
+                      All
+                    </DropdownMenuItem>
+                    {paymentMethods.map((method) => (
+                      <DropdownMenuItem
+                        key={method}
+                        onSelect={() => setPaymentMethodFilter(method)}
+                      >
+                        {method}
+                      </DropdownMenuItem>
+                    ))}
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline">

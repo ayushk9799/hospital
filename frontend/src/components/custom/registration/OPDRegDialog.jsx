@@ -596,7 +596,10 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           handleDialogClose(ev);
         }}
       >
-          <DialogContent onInteractOutside={(e) => e.preventDefault()} className="md:max-w-[1000px] md:min-h-[60vh] md:max-h-[60vh] overflow-y-auto md:overflow-y-hidden w-[95vw] p-4 md:p-6 gap-0 md:gap-4 rounded-lg">
+        <DialogContent
+          onInteractOutside={(e) => e.preventDefault()}
+          className="md:max-w-[1000px] md:min-h-[60vh] md:max-h-[60vh] overflow-y-auto md:overflow-y-hidden w-[95vw] p-4 md:p-6 gap-0 md:gap-4 rounded-lg"
+        >
           <DialogHeader>
             <DialogTitle className="mb-2 md:mb-0">
               Patient Registration
@@ -687,8 +690,13 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                                   )}
                                   {" ("}
                                   {differenceInDays(
-                                    new Date(),
-                                    new Date(admission.bookingDate)
+                                    new Date().setHours(0, 0, 0, 0),
+                                    new Date(admission.bookingDate).setHours(
+                                      0,
+                                      0,
+                                      0,
+                                      0
+                                    )
                                   )}{" "}
                                   days ago)
                                 </DropdownMenuItem>
@@ -705,27 +713,43 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
                             <DropdownMenuItem className="font-semibold text-sm pointer-events-none">
                               OPD Visit Details
                             </DropdownMenuItem>
-                            {[...searchedPatient.visits]?.reverse()?.map((visit, index) => (
-                              <DropdownMenuItem
-                                key={index}
-                                className="text-xs pl-4 pointer-events-none"
-                              >
-                               
-                                {format(
-                                  new Date(visit.bookingDate),
-                                  "dd MMM yyyy"
-                                )}
-                                {" ("}
-                                <span className="font-semibold">
-                                  {differenceInDays(
-                                    new Date(),
-                                    new Date(visit.bookingDate)
-                                  )}{" "}
-                                  days ago
-                                </span>
-                                {")"}
-                              </DropdownMenuItem>
-                            ))}
+                            {[...searchedPatient.visits]
+                              ?.reverse()
+                              ?.map((visit, index) => (
+                                <DropdownMenuItem
+                                  key={index}
+                                  className="text-xs pl-4 pointer-events-none"
+                                >
+                                  {/* Colored bullet indicating consultation type (green for "new", gray other, transparent if missing) */}
+                                  <span
+                                    className={`inline-block w-2 h-2 rounded-full mr-2 ${
+                                      visit.consultationType === "new"
+                                        ? "bg-green-500"
+                                        : visit.consultationType
+                                        ? "bg-gray-400"
+                                        : "bg-transparent"
+                                    }`}
+                                  />
+                                  {format(
+                                    new Date(visit.bookingDate),
+                                    "dd MMM yyyy"
+                                  )}
+                                  {" ("}
+                                  <span className="font-semibold">
+                                    {differenceInDays(
+                                      new Date().setHours(0, 0, 0, 0),
+                                      new Date(visit.bookingDate).setHours(
+                                        0,
+                                        0,
+                                        0,
+                                        0
+                                      )
+                                    )}{" "}
+                                    days ago
+                                  </span>
+                                  {")"}
+                                </DropdownMenuItem>
+                              ))}
                           </>
                         )}
                       </DropdownMenuContent>

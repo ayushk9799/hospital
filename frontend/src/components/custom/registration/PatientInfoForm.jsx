@@ -96,11 +96,13 @@ export default function PatientInfoForm({
   );
   const checkFollowUpDate = (patient, formData, consultationFeeSettings) => {
     try{
-    const lastVisitDate = new Date(new Date(patient.lastVisit).toDateString())
+    let lastVisitDate = patient?.visits.filter(visit=>visit.consultationType!=="follow-up")?.sort((a,b)=>new Date(b.bookingDate)-new Date(a.bookingDate))[0]?.bookingDate;
+    if(lastVisitDate){
+      lastVisitDate = new Date(lastVisitDate);
+    }
     const bookingDate = new Date(new Date(formData.visit.bookingDate).toDateString())
     const followUpLimitDate = new Date(lastVisitDate);
     followUpLimitDate.setDate(followUpLimitDate.getDate() + (consultationFeeSettings.masterFollowup===-1?14:consultationFeeSettings.masterFollowup));
-    
    
     return bookingDate >= lastVisitDate && bookingDate <= followUpLimitDate;
     }catch(error){
