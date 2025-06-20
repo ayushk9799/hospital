@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Calendar,
@@ -7,6 +7,7 @@ import {
   Activity,
   CalendarIcon,
   AlertCircle,
+  Printer,
 } from "lucide-react";
 import {
   Card,
@@ -42,6 +43,7 @@ import {
 } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { formatCurrency } from "../assets/Data";
+import { useReactToPrint } from "react-to-print";
 
 const hasFinancialViewPermission = (userData) => {
   return userData?.permissions?.includes("view_financial") || false;
@@ -63,7 +65,73 @@ const Dashboard = () => {
     to: null,
   });
 
-  //
+  // Ref and print handler for react-to-print
+  const componentRef = useRef(null);
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+    pageStyle: `
+    @media print {
+      @page {
+        size: A4;
+        margin: 5mm;
+      }
+      body {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+        font-size: 90%; /* Reduce overall font size */
+      }
+      .print-section {
+        display: block !important;
+        padding: 5px;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .print-content {
+        position: relative;
+        padding: 10px;
+      }
+      /* Make cards more compact */
+      .grid {
+        gap: 0.5rem !important;
+      }
+      .p-4 {
+        padding: 0.5rem !important;
+      }
+      .p-3 {
+        padding: 0.375rem !important;
+      }
+      .text-xl {
+        font-size: 1rem !important;
+      }
+      .text-2xl {
+        font-size: 1.25rem !important;
+      }
+      .mb-4 {
+        margin-bottom: 0.5rem !important;
+      }
+      .mb-6 {
+        margin-bottom: 0.75rem !important;
+      }
+      /* Reduce table text size */
+      table {
+        font-size: 75% !important;
+      }
+      th, td {
+        padding: 4px !important;
+      }
+      /* Make table more compact */
+      .border {
+        border-width: 1px !important;
+      }
+      /* Ensure table headers are distinct */
+      th {
+        font-weight: bold !important;
+        background-color: #f3f4f6 !important;
+      }
+    }
+  `,
+  });
 
   const filteredData = useMemo(() => {
     if (typeof dashboardData !== "object" || dashboardData === null) {
@@ -477,52 +545,98 @@ const Dashboard = () => {
     });
   };
 
+  // Helper to format date for print header
+  const formatDate = (date) => {
+    const d = new Date(date);
+    return d.toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  };
+
+  // Display date range string for print view
+  const getDisplayDateRange = () => {
+    const today = new Date();
+    switch (dateFilter) {
+      case "Today":
+        return `${formatDate(today)}`;
+      case "Yesterday":
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+        return `${formatDate(yesterday)}`;
+      case "This Week":
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - 7);
+        return `${formatDate(weekStart)} - ${formatDate(today)}`;
+      case "This Month":
+        const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+        return `${formatDate(monthStart)} - ${formatDate(today)}`;
+      case "Custom":
+        if (selectedDateRange.from && selectedDateRange.to) {
+          return `${formatDate(selectedDateRange.from)} - ${formatDate(
+            selectedDateRange.to
+          )}`;
+        }
+        return "";
+      default:
+        return "";
+    }
+  };
+
   return (
-    <div className="container mx-auto p-4">
-      {/* Header Section - More compact */}
-      <div className="flex flex-col gap-4 mb-4">
+    <div ref={componentRef} className="container mx-auto p-4 print-content">
+      {/* Header Section - More compact, hidden during print */}
+      <div className="flex flex-col gap-4 mb-4 no-print">
         <div className="flex flex-row sm:flex-row justify-between items-start sm:items-center gap-2">
           <h2 className="font-bold text-xl text-gray-800">
             {getStatsHeaderText()}
           </h2>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {dateFilter}
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
-              <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={() => handleDateFilterChange("Today")}
-              >
-                Today
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleDateFilterChange("Yesterday")}
-              >
-                Yesterday
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleDateFilterChange("This Week")}
-              >
-                This Week
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onSelect={() => handleDateFilterChange("This Month")}
-              >
-                This Month
-              </DropdownMenuItem>
+          <div className=" gap-2 flex flex-row">
+            <Button size="sm" onClick={handlePrint} className="print:hidden">
+              <Printer className="mr-2 h-4 w-4" />
+              Print
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {dateFilter}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuLabel>Time Filter Options</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => handleDateFilterChange("Today")}
+                >
+                  Today
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => handleDateFilterChange("Yesterday")}
+                >
+                  Yesterday
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => handleDateFilterChange("This Week")}
+                >
+                  This Week
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => handleDateFilterChange("This Month")}
+                >
+                  This Month
+                </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onSelect={() => handleDateFilterChange("Custom")}
-              >
-                Custom Range
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+                <DropdownMenuItem
+                  onSelect={() => handleDateFilterChange("Custom")}
+                >
+                  Custom Range
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {/* Print Button */}
+          </div>
         </div>
         {dateFilter === "Custom" && (
           <div className="w-full sm:w-auto">
@@ -537,10 +651,109 @@ const Dashboard = () => {
         )}
       </div>
 
+      {/* Print-only header & summary */}
+      <div className="hidden print:block mb-4">
+        <h2 className="text-xl font-bold mb-1">{getStatsHeaderText()}</h2>
+        <p className="text-sm mb-2">{getDisplayDateRange()}</p>
+
+        {hasFinancialViewPermission(userData) && (
+          <table className="w-full border-collapse border text-sm mb-2">
+            <tbody>
+              <tr className="border">
+                <td className="border p-2 font-semibold w-[200px]">
+                  Total Revenue
+                </td>
+                <td className="border p-2">
+                  {formatCurrency(dashboardTotals.totalRevenue)}
+                </td>
+              </tr>
+              <tr className="border">
+                <td className="border p-2 font-semibold">Total Expense</td>
+                <td className="border p-2">
+                  {formatCurrency(dashboardTotals.totalExpense)}
+                </td>
+              </tr>
+              <tr className="border">
+                <td className="border p-2 font-semibold">Net Revenue</td>
+                <td className="border p-2 font-bold">
+                  {formatCurrency(
+                    dashboardTotals.totalRevenue - dashboardTotals.totalExpense
+                  )}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        )}
+
+        {/* Collection summary table */}
+        <table className="w-full border-collapse border text-sm">
+          <thead>
+            <tr className="border bg-gray-50">
+              <th className="border p-2">Collection Type</th>
+              <th className="border p-2">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border p-2">IPD</td>
+              <td className="border p-2">
+                {formatCurrency(calculateCollections.ipdCollection)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border p-2">OPD</td>
+              <td className="border p-2">
+                {formatCurrency(calculateCollections.opdCollection)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border p-2">OPD Procedure</td>
+              <td className="border p-2">
+                {formatCurrency(calculateCollections.opdprocedureCollection)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border p-2">Pharmacy</td>
+              <td className="border p-2">
+                {formatCurrency(calculateCollections.pharmacyCollection)}
+              </td>
+            </tr>
+            <tr>
+              <td className="border p-2">Laboratory</td>
+              <td className="border p-2">
+                {formatCurrency(calculateCollections.laboratoryCollection)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        {/* Patient summary table */}
+        <table className="w-full border-collapse border text-sm mt-2">
+          <thead>
+            <tr className="border bg-gray-50">
+              <th className="border p-2">Patient Type</th>
+              <th className="border p-2">Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td className="border p-2">OPD Patients</td>
+              <td className="border p-2">{dashboardTotals.totalPatients}</td>
+            </tr>
+            <tr>
+              <td className="border p-2">IPD Patients</td>
+              <td className="border p-2">
+                {dashboardTotals.totalAppointments}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
       {/* Main Stats Grid - More efficient layout */}
       <div className="grid gap-4">
         {/* Patient Stats Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-10 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-10 gap-4 print:hidden">
           <Card
             className="bg-pink-100 shadow-sm lg:col-span-2 transition-all duration-200 
             hover:shadow-lg hover:scale-[1.02] hover:bg-pink-200 cursor-pointer"
@@ -692,7 +905,7 @@ const Dashboard = () => {
         </div>
 
         {/* Collections Stats Row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 print:hidden">
           {["IPD", "OPD", "OPD Procedure", "Pharmacy", "Laboratory"].map(
             (type, index) => (
               <Card
@@ -739,7 +952,7 @@ const Dashboard = () => {
         </div>
 
         {/* Payment Methods Grid - More compact and efficient */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 print:hidden">
           {["IPD", "OPD", "OPD Procedure", "Pharmacy", "Laboratory"].map(
             (type) => (
               <Card
