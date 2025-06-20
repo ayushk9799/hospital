@@ -1087,13 +1087,13 @@ const Payments = () => {
                       {Object.entries(methodTotals).map(([method, totals]) => (
                         <tr key={method}>
                           <td className="border p-2">{method}</td>
-                          <td className="border p-2 text-green-600">
+                          <td className="border p-2 text-green-600 font-semibold">
                             {formatCurrency(totals.credit)}
                           </td>
-                          <td className="border p-2 text-red-600">
+                          <td className="border p-2 text-red-600 font-semibold">
                             {formatCurrency(totals.debit)}
                           </td>
-                          <td className="border p-2">
+                          <td className="border p-2 font-semibold">
                             {formatCurrency(totals.credit - totals.debit)}
                           </td>
                         </tr>
@@ -1168,18 +1168,18 @@ const Payments = () => {
                   <Table className="border-2 border-gray-200">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[30px] h-[30px]">
-                          S.No
+                        <TableHead className="w-[25px] h-[30px]">
+                          No.
                         </TableHead>
-                        <TableHead className="h-[30px]">Date & Time</TableHead>
+                        <TableHead className="h-[30px]">Date&Time</TableHead>
                         <TableHead className="print:hidden h-[30px]">
                           Payment Type
                         </TableHead>
-                        <TableHead className="h-[30px]">Method</TableHead>
+                        <TableHead className="h-[30px]">Mode</TableHead>
                         <TableHead className="h-[30px]">Type</TableHead>
-                        <TableHead className="h-[30px]">Description</TableHead>
+                        <TableHead className="h-[30px] ">Description</TableHead>
                         <TableHead className="h-[30px]">Amount</TableHead>
-                        <TableHead className="h-[30px]">Created By</TableHead>
+                        <TableHead className="h-[30px]">User</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
