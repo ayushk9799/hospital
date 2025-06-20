@@ -330,7 +330,7 @@ const Payments = () => {
       opdCollection: 0,
       opdprocedureCollection: 0,
       pharmacyCollection: 0,
-      laboratoryCollection: 0
+      laboratoryCollection: 0,
     };
 
     filteredPayments.forEach((payment) => {
@@ -362,21 +362,25 @@ const Payments = () => {
 
   // Calculate dashboard totals
   const dashboardTotals = useMemo(() => {
-    if (!dashboardData || typeof dashboardData !== 'object') {
+    if (!dashboardData || typeof dashboardData !== "object") {
       return {
         totalPatients: 0,
-        totalAppointments: 0
+        totalAppointments: 0,
       };
     }
 
-    return Object.values(dashboardData).reduce((acc, curr) => {
-      acc.totalPatients = (acc.totalPatients || 0) + (curr.visitCount || 0);
-      acc.totalAppointments = (acc.totalAppointments || 0) + (curr.ipdCount || 0);
-      return acc;
-    }, {
-      totalPatients: 0,
-      totalAppointments: 0
-    });
+    return Object.values(dashboardData).reduce(
+      (acc, curr) => {
+        acc.totalPatients = (acc.totalPatients || 0) + (curr.visitCount || 0);
+        acc.totalAppointments =
+          (acc.totalAppointments || 0) + (curr.ipdCount || 0);
+        return acc;
+      },
+      {
+        totalPatients: 0,
+        totalAppointments: 0,
+      }
+    );
   }, [dashboardData]);
 
   const getDisplayDateRange = () => {
@@ -418,7 +422,7 @@ const Payments = () => {
         body {
           -webkit-print-color-adjust: exact;
           print-color-adjust: exact;
-          font-size: 80%; /* Reduce overall font size */
+          font-size: 90%; /* Reduce overall font size */
         }
         .print-section {
           display: block !important;
@@ -932,12 +936,10 @@ const Payments = () => {
                 Payments Report
               </h2>
               <div className="print:block hidden text-right">
-                <span className="font-semibold">
-                  {getDisplayDateRange()}
-                </span>
+                <span className="font-semibold">{getDisplayDateRange()}</span>
               </div>
             </div>
-            
+
             {/* Summary section */}
             <div className="grid grid-cols-1 gap-4 mb-6 print:hidden">
               <div
@@ -951,27 +953,21 @@ const Payments = () => {
                 <Card className="bg-blue-100">
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Total Credit</h3>
-                    <p className="text-xl">
-                      {formatCurrency(totalCredit)}
-                    </p>
+                    <p className="text-xl">{formatCurrency(totalCredit)}</p>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-red-100">
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Total Debit</h3>
-                    <p className="text-xl">
-                      {formatCurrency(totalDebit)}
-                    </p>
+                    <p className="text-xl">{formatCurrency(totalDebit)}</p>
                   </CardContent>
                 </Card>
 
                 <Card className="bg-green-100">
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Net Amount</h3>
-                    <p className="text-xl">
-                      {formatCurrency(netAmount)}
-                    </p>
+                    <p className="text-xl">{formatCurrency(netAmount)}</p>
                   </CardContent>
                 </Card>
 
@@ -1001,18 +997,14 @@ const Payments = () => {
                   <Card className="bg-blue-100">
                     <CardContent className="p-4">
                       <h3 className="font-semibold text-sm">Total Credit</h3>
-                      <p className="text-xl">
-                        {formatCurrency(totalCredit)}
-                      </p>
+                      <p className="text-xl">{formatCurrency(totalCredit)}</p>
                     </CardContent>
                   </Card>
 
                   <Card className="bg-red-100">
                     <CardContent className="p-4">
                       <h3 className="font-semibold text-sm">Total Debit</h3>
-                      <p className="text-xl">
-                        {formatCurrency(totalDebit)}
-                      </p>
+                      <p className="text-xl">{formatCurrency(totalDebit)}</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -1020,9 +1012,7 @@ const Payments = () => {
                 <Card className="bg-green-100">
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm">Net Amount</h3>
-                    <p className="text-xl">
-                      {formatCurrency(netAmount)}
-                    </p>
+                    <p className="text-xl">{formatCurrency(netAmount)}</p>
                   </CardContent>
                 </Card>
 
@@ -1056,16 +1046,28 @@ const Payments = () => {
                   <table className="w-full border-collapse border">
                     <tbody>
                       <tr className="border">
-                        <td className="border p-2 font-semibold w-[200px]">Total Credit:</td>
-                        <td className="border p-2">{formatCurrency(totalCredit)}</td>
+                        <td className="border p-2 font-semibold w-[200px]">
+                          Total Credit:
+                        </td>
+                        <td className="border p-2">
+                          {formatCurrency(totalCredit)}
+                        </td>
                       </tr>
                       <tr className="border">
-                        <td className="border p-2 font-semibold">Total Debit:</td>
-                        <td className="border p-2">{formatCurrency(totalDebit)}</td>
+                        <td className="border p-2 font-semibold">
+                          Total Debit:
+                        </td>
+                        <td className="border p-2">
+                          {formatCurrency(totalDebit)}
+                        </td>
                       </tr>
                       <tr className="border">
-                        <td className="border p-2 font-semibold">Net Amount:</td>
-                        <td className="border p-2 font-bold">{formatCurrency(netAmount)}</td>
+                        <td className="border p-2 font-semibold">
+                          Net Amount:
+                        </td>
+                        <td className="border p-2 font-bold">
+                          {formatCurrency(netAmount)}
+                        </td>
                       </tr>
                     </tbody>
                   </table>
@@ -1085,9 +1087,15 @@ const Payments = () => {
                       {Object.entries(methodTotals).map(([method, totals]) => (
                         <tr key={method}>
                           <td className="border p-2">{method}</td>
-                          <td className="border p-2 text-green-600">{formatCurrency(totals.credit)}</td>
-                          <td className="border p-2 text-red-600">{formatCurrency(totals.debit)}</td>
-                          <td className="border p-2">{formatCurrency(totals.credit - totals.debit)}</td>
+                          <td className="border p-2 text-green-600">
+                            {formatCurrency(totals.credit)}
+                          </td>
+                          <td className="border p-2 text-red-600">
+                            {formatCurrency(totals.debit)}
+                          </td>
+                          <td className="border p-2">
+                            {formatCurrency(totals.credit - totals.debit)}
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -1102,28 +1110,50 @@ const Payments = () => {
                 <table className="w-full border-collapse border text-sm">
                   <thead>
                     <tr>
-                      <th className="border p-1 text-left bg-gray-50 w-1/4">Patient Count</th>
-                      <th className="border p-1 text-left bg-gray-50 w-1/4">Collection Type</th>
-                      <th className="border p-1 text-left bg-gray-50 w-1/4">Collection Type</th>
-                      <th className="border p-1 text-left bg-gray-50 w-1/4">Collection Type</th>
+                      <th className="border p-1 text-left bg-gray-50 w-1/4">
+                        Patient Count
+                      </th>
+                      <th className="border p-1 text-left bg-gray-50 w-1/4">
+                        Collection Type
+                      </th>
+                      <th className="border p-1 text-left bg-gray-50 w-1/4">
+                        Collection Type
+                      </th>
+                      <th className="border p-1 text-left bg-gray-50 w-1/4">
+                        Collection Type
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr>
                       <td className="border p-1">
-                        OPD Visits: {dashboardTotals.totalPatients}<br/>
+                        OPD Visits: {dashboardTotals.totalPatients}
+                        <br />
                         IPD Admissions: {dashboardTotals.totalAppointments}
                       </td>
                       <td className="border p-1">
-                        OPD Collection: {formatCurrency(calculateCollections.opdCollection)}<br/>
-                        IPD Collection: {formatCurrency(calculateCollections.ipdCollection)}
+                        OPD Collection:{" "}
+                        {formatCurrency(calculateCollections.opdCollection)}
+                        <br />
+                        IPD Collection:{" "}
+                        {formatCurrency(calculateCollections.ipdCollection)}
                       </td>
                       <td className="border p-1">
-                        OPD Procedure Collection: {formatCurrency(calculateCollections.opdprocedureCollection)}<br/>
-                        Pharmacy Collection: {formatCurrency(calculateCollections.pharmacyCollection)}
+                        OPD Procedure Collection:{" "}
+                        {formatCurrency(
+                          calculateCollections.opdprocedureCollection
+                        )}
+                        <br />
+                        Pharmacy Collection:{" "}
+                        {formatCurrency(
+                          calculateCollections.pharmacyCollection
+                        )}
                       </td>
                       <td className="border p-1">
-                        Laboratory Collection: {formatCurrency(calculateCollections.laboratoryCollection)}
+                        Laboratory Collection:{" "}
+                        {formatCurrency(
+                          calculateCollections.laboratoryCollection
+                        )}
                       </td>
                     </tr>
                   </tbody>
@@ -1134,18 +1164,22 @@ const Payments = () => {
             {filteredPayments.length > 0 ? (
               <>
                 {/* Table view for larger screens */}
-                <div className="hidden md:block rounded-md border">
+                <div className="hidden md:block print:block rounded-md border">
                   <Table className="border-2 border-gray-200">
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="w-[50px]">S.No</TableHead>
-                        <TableHead>Date & Time</TableHead>
-                        <TableHead className="print:hidden">Payment Type</TableHead>
-                        <TableHead>Method</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Created By</TableHead>
+                        <TableHead className="w-[30px] h-[30px]">
+                          S.No
+                        </TableHead>
+                        <TableHead className="h-[30px]">Date & Time</TableHead>
+                        <TableHead className="print:hidden h-[30px]">
+                          Payment Type
+                        </TableHead>
+                        <TableHead className="h-[30px]">Method</TableHead>
+                        <TableHead className="h-[30px]">Type</TableHead>
+                        <TableHead className="h-[30px]">Description</TableHead>
+                        <TableHead className="h-[30px]">Amount</TableHead>
+                        <TableHead className="h-[30px]">Created By</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1167,8 +1201,12 @@ const Payments = () => {
                               {payment.type}
                             </Badge>
                           </TableCell>
-                          <TableCell>{payment.paymentMethod}</TableCell>
-                          <TableCell>{payment.paymentType?.name || "--"}</TableCell>
+                          <TableCell className="print:text-center">
+                            {payment.paymentMethod}
+                          </TableCell>
+                          <TableCell>
+                            {payment.paymentType?.name || "--"}
+                          </TableCell>
                           <TableCell className="font-medium">
                             {payment.type === "Expense"
                               ? payment.description || ""
@@ -1180,7 +1218,8 @@ const Payments = () => {
                                   : "")}
                           </TableCell>
                           <TableCell className="font-medium">
-                            {payment.type === "Income" ? "+" : "-"}{formatCurrency(payment.amount)}
+                            {payment.type === "Income" ? "+" : "-"}
+                            {formatCurrency(payment.amount)}
                           </TableCell>
                           <TableCell>
                             {payment.createdByName ||
@@ -1194,12 +1233,14 @@ const Payments = () => {
                 </div>
 
                 {/* Card view for mobile screens */}
-                <div className="grid grid-cols-1 gap-3 md:hidden">
+                <div className="grid grid-cols-1 gap-3 md:hidden print:hidden">
                   {filteredPayments.map((payment, index) => (
                     <Card key={payment._id} className="p-3">
                       <div className="flex justify-between items-center mb-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm text-gray-500">#{index + 1}</span>
+                          <span className="text-sm text-gray-500">
+                            #{index + 1}
+                          </span>
                           <Badge
                             variant={
                               payment.type === "Income"
