@@ -2,6 +2,7 @@ import React from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { labReportTemplateStringExperiment2 } from "../../../templatesExperiments/labtemplateExperiment";
+import { labRemarksTemplateString, lipidProfileNotes } from "../../../templatesExperiments/labRemarksExperiment";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { labReportTemplateStringDefault } from "../../../templates/labReportTemplate";
@@ -214,7 +215,7 @@ const LabReportPDF = React.forwardRef(
       "React",
       "HospitalHeader",
       "styles",
-      `return (${labReportTemplate||labReportTemplateStringDefault});`
+      `return (${lipidProfileNotes||labReportTemplateStringDefault});`
     );
 
     try {

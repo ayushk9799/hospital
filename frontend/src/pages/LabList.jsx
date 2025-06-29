@@ -40,6 +40,7 @@ import {
   MoreVertical,
   ChevronLeft,
   Loader2,
+  ListChecks,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useMediaQuery } from "../hooks/use-media-query";
@@ -53,6 +54,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "../components/ui/dialog";
 import {
   AlertDialog,
@@ -89,6 +91,8 @@ export default function LabList() {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedLabForEdit, setSelectedLabForEdit] = useState(null);
   const [labToDelete, setLabToDelete] = useState(null);
+  const [showTestCountDialog, setShowTestCountDialog] = useState(false);
+  const [testCounts, setTestCounts] = useState({});
   const { toast } = useToast();
   const {
     registrations,
@@ -290,6 +294,19 @@ export default function LabList() {
     }
   };
 
+  const handleShowTestCounts = () => {
+    const counts = filteredTests.reduce((acc, registration) => {
+      if (registration.labTests) {
+        registration.labTests.forEach((test) => {
+          acc[test.name] = (acc[test.name] || 0) + 1;
+        });
+      }
+      return acc;
+    }, {});
+    setTestCounts(counts);
+    setShowTestCountDialog(true);
+  };
+
   const TestCard = ({ test, index }) => (
     <Card className="mb-4">
       <CardContent className="p-4">
@@ -459,6 +476,39 @@ export default function LabList() {
     </Dialog>
   );
 
+  const TestCountDialog = () => (
+    <Dialog open={showTestCountDialog} onOpenChange={setShowTestCountDialog}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Test Counts</DialogTitle>
+          <DialogDescription>
+            The number of times each test appears list.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="max-h-[60vh] overflow-y-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Test Name</TableHead>
+                <TableHead className="text-right">Count</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(testCounts)
+                .sort(([, a], [, b]) => b - a)
+                .map(([name, count]) => (
+                  <TableRow key={name}>
+                    <TableCell className="font-medium">{name}</TableCell>
+                    <TableCell className="text-right">{count}</TableCell>
+                  </TableRow>
+                ))}
+            </TableBody>
+          </Table>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   return (
     <Card className="w-full border-none shadow-none">
       <CardHeader className="pb-2">
@@ -489,6 +539,15 @@ export default function LabList() {
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">New Registration</span>
               <span className="sm:hidden">New</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleShowTestCounts}
+              className="w-full sm:w-auto"
+            >
+              <ListChecks className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Test Counts</span>
+              <span className="sm:hidden">Counts</span>
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -538,6 +597,7 @@ export default function LabList() {
           hospitalInfo={hospitalInfo}
         />
         <TestStatusModal />
+        <TestCountDialog />
         <LabPaymentDialog
           isOpen={showPaymentDialog}
           setIsOpen={setShowPaymentDialog}

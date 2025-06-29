@@ -8,6 +8,12 @@ const templateSchema = new mongoose.Schema({
       fields: mongoose.Schema.Types.Mixed,
       rate: Number,
       notes: String,
+      remarksArray : Array,
+      status : {
+        type: String,
+        enum: ["active", "inactive"],
+        default: "active",
+      },
       sections: [
         {
           name: String,

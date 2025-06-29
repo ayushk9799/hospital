@@ -112,7 +112,7 @@ export const updateServiceBillCollections = createAsyncThunk(
 // Add new async thunks
 export const editTemplate = createLoadingAsyncThunk(
   "templates/editTemplate",
-  async ({ field, index, template }, { rejectWithValue }) => {
+  async ({ field, index, newValue }, { rejectWithValue }) => {
     try {
       const response = await fetch(
         `${Backend_URL}/api/hospitals/template/edit`,
@@ -123,7 +123,7 @@ export const editTemplate = createLoadingAsyncThunk(
           body: JSON.stringify({
             field,
             index,
-            newValue: template,
+            newValue,
           }),
         }
       );
@@ -262,27 +262,62 @@ const templatesSlice = createSlice({
       })
       .addCase(updateTemplate.rejected, (state, action) => {
         state.updateTempleteStatus = "failed";
+        state.error = action.payload.message || "Failed to update template";
       })
       .addCase(updateServiceBillCollections.fulfilled, (state, action) => {
         state.serviceBillCollections = action.payload;
       })
-      .addCase(editTemplate.fulfilled, (state, action) => {
-        state.labTestsTemplate = action.payload.labTestsTemplate;
-      })
-      .addCase(deleteTemplate.fulfilled, (state, action) => {
-        state.labTestsTemplate = action.payload.labTestsTemplate;
-      })
-      .addCase(bulkUploadTemplates.pending, (state) => {
+      .addCase(editTemplate.pending, (state) => {
         state.updateTempleteStatus = "loading";
       })
-      .addCase(bulkUploadTemplates.fulfilled, (state, action) => {
+      .addCase(editTemplate.fulfilled, (state, action) => {
         state.updateTempleteStatus = "succeeded";
+        state.labTestsTemplate = action.payload.labTestsTemplate;
+        state.headerTemplateArray = action.payload.headerTemplateArray || [];
+        state.dischargeSummaryTemplateArray =
+          action.payload.dischargeSummaryTemplateArray || [];
+        state.dischargeFormTemplateArray =
+          action.payload.dischargeFormTemplateArray || [];
+        state.opdPrescriptionTemplateArray =
+          action.payload.opdPrescriptionTemplateArray || [];
+        state.opdRxTemplateArray = action.payload.opdRxTemplateArray || [];
+        state.consentFormTemplateArray = action.payload.consentFormArray;
+      })
+      .addCase(editTemplate.rejected, (state, action) => {
+        state.updateTempleteStatus = "failed";
+        state.error = action.payload.message || "Failed to update template";
+      })
+      .addCase(deleteTemplate.pending, (state) => {
+        state.updateTempleteStatus = "loading";
+      })
+      .addCase(deleteTemplate.fulfilled, (state, action) => {
+        state.updateTempleteStatus = "succeeded";
+        state.labTestsTemplate = action.payload.labTestsTemplate;
+        state.headerTemplateArray = action.payload.headerTemplateArray || [];
+        state.dischargeSummaryTemplateArray =
+          action.payload.dischargeSummaryTemplateArray || [];
+        state.dischargeFormTemplateArray =
+          action.payload.dischargeFormTemplateArray || [];
+        state.opdPrescriptionTemplateArray =
+          action.payload.opdPrescriptionTemplateArray || [];
+        state.opdRxTemplateArray = action.payload.opdRxTemplateArray || [];
+        state.consentFormTemplateArray = action.payload.consentFormArray;
+      })
+      .addCase(deleteTemplate.rejected, (state, action) => {
+        state.updateTempleteStatus = "failed";
+        state.error = action.payload.message || "Failed to delete template";
+      })
+      .addCase(bulkUploadTemplates.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(bulkUploadTemplates.fulfilled, (state, action) => {
+        state.status = "succeeded";
         if (action.payload.labTestsTemplate) {
           state.labTestsTemplate = action.payload.labTestsTemplate;
         }
       })
       .addCase(bulkUploadTemplates.rejected, (state, action) => {
-        state.updateTempleteStatus = "failed";
+        state.status = "failed";
         state.error = action.payload;
       });
   },

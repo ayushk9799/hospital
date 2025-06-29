@@ -12,7 +12,6 @@ import { Input } from "../../ui/input";
 import { Label } from "../../ui/label";
 import MultiSelectInput from "../MultiSelectInput";
 import { toast } from "../../../hooks/use-toast";
-import axios from "axios";
 import {
   Select,
   SelectContent,
