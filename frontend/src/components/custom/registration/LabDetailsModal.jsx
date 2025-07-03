@@ -29,6 +29,7 @@ import { useMediaQuery } from "../../../hooks/use-media-query";
 import { Checkbox } from "../../ui/checkbox";
 import PaymentReceipt from "../print/PaymentReceipt";
 import BillingTemplate from "../../../pages/BillingTemplate";
+import { formatCurrency } from "../../../assets/Data";
 
 const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
   const componentRef = useRef();
@@ -223,7 +224,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              ₹{test.price?.toFixed(2) || "0.00"}
+                              {formatCurrency(test.price)}
                             </TableCell>
                           </TableRow>
                         ))}
@@ -233,13 +234,13 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                             Sub Total:
                           </TableCell>
                           <TableCell className="text-right">
-                            ₹
-                            {labData?.labTests
+                            {formatCurrency(
+                            labData?.labTests
                               ?.reduce(
                                 (sum, test) => sum + (test.price || 0),
                                 0
                               )
-                              ?.toFixed(2)}
+                            )}
                           </TableCell>
                         </TableRow>
                       </TableBody>
@@ -260,32 +261,30 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                           <div className="flex justify-between text-gray-600">
                             <span>Discount:</span>
                             <span>
-                              ₹
-                              {labData.paymentInfo.additionalDiscount?.toFixed(
-                                2
+                              {formatCurrency(
+                                labData.paymentInfo.additionalDiscount
                               )}
                             </span>
                           </div>
                           <div className="flex justify-between font-medium border-t pt-2">
                             <span>Net Amount:</span>
                             <span>
-                              ₹
-                              {(
+                              {formatCurrency(
                                 labData.paymentInfo.totalAmount -
                                 labData.paymentInfo.additionalDiscount
-                              )?.toFixed(2)}
+                              )}
                             </span>
                           </div>
                           <div className="flex justify-between text-green-600">
                             <span>Amount Paid:</span>
                             <span>
-                              ₹{labData.paymentInfo.amountPaid?.toFixed(2)}
+                              {formatCurrency(labData.paymentInfo.amountPaid)}
                             </span>
                           </div>
                           <div className="flex justify-between text-red-600 font-medium border-t pt-2">
                             <span>Balance Due:</span>
                             <span>
-                              ₹{labData.paymentInfo.balanceDue?.toFixed(2)}
+                              {formatCurrency(labData.paymentInfo.balanceDue)}
                             </span>
                           </div>
                         </div>
@@ -348,7 +347,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                                   </TableCell>
                                 )}
                                 <TableCell>
-                                  ₹{payment.amount?.toFixed(2)}
+                                  {formatCurrency(payment.amount)}
                                 </TableCell>
                                 <TableCell>{payment.paymentMethod}</TableCell>
                                 <TableCell className="no-print">

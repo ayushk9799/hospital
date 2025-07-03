@@ -57,7 +57,6 @@ const Dashboard = () => {
   const { dashboardData, dashboardDataStatus } = useSelector(
     (state) => state.dashboard
   );
-  const { patientlist } = useSelector((state) => state.patients);
   const [dateFilter, setDateFilter] = useState("Today");
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [selectedDateRange, setSelectedDateRange] = useState({
@@ -593,10 +592,12 @@ const Dashboard = () => {
             {getStatsHeaderText()}
           </h2>
           <div className=" gap-2 flex flex-row">
-            <Button size="sm" onClick={handlePrint} className="print:hidden">
-              <Printer className="mr-2 h-4 w-4" />
-              Print
-            </Button>
+            {hasFinancialViewPermission(userData) && (
+              <Button size="sm" onClick={handlePrint} className="print:hidden">
+                <Printer className="mr-2 h-4 w-4" />
+                Print
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">

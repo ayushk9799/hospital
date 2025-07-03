@@ -2,11 +2,24 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { deleteTemplate } from "../redux/slices/templatesSlice";
+import { deleteTemplate, editTemplate } from "../redux/slices/templatesSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, ChevronLeft } from "lucide-react";
 import { cn } from "../lib/utils";
 import { Input } from "../components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../components/ui/alert-dialog";
+import { Checkbox } from "../components/ui/checkbox";
+import { Label } from "../components/ui/label";
+import { Switch } from "../components/ui/switch";
 
 export default function LabTemplatesManager() {
   const navigate = useNavigate();
@@ -15,20 +28,60 @@ export default function LabTemplatesManager() {
   const [expandedTemplates, setExpandedTemplates] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [filterNoParameters, setFilterNoParameters] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState(null);
+  const [showInactive, setShowInactive] = useState(false);
+  const [actionToConfirm, setActionToConfirm] = useState(null);
 
   const handleBack = () => {
     navigate(-1);
   };
 
-  const handleDeleteTemplate = async (templateName) => {
-    if (
-      window.confirm(`Are you sure you want to delete ${templateName.name}?`)
-    ) {
-      const index = labTestsTemplate.findIndex(
-        (t) => t.name === templateName.name
-      );
-      await dispatch(deleteTemplate({ field: "labTestsTemplate", index }));
-    }
+  const handleActivate = (template) => {
+    setActionToConfirm({ action: "activate", template });
+  };
+
+  const handleDeactivate = (template) => {
+    setActionToConfirm({ action: "deactivate", template });
+  };
+
+  const confirmAction = async () => {
+    if (!actionToConfirm) return;
+
+    const { action, template } = actionToConfirm;
+    const index = labTestsTemplate.findIndex((t) => t.name === template.name);
+    if (index === -1) return;
+
+    const newStatus = action === "activate" ? "active" : "inactive";
+    const updatedTemplate = { ...template, status: newStatus };
+
+    await dispatch(
+      editTemplate({
+        field: "labTestsTemplate",
+        index,
+        newValue: updatedTemplate,
+      })
+    );
+    setActionToConfirm(null);
+  };
+
+  const handleDelete = (template) => {
+    setTemplateToDelete(template);
+    setIsAlertOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!templateToDelete) return;
+
+    const index = labTestsTemplate.findIndex(
+      (t) => t.name === templateToDelete.name
+    );
+
+    if (index === -1) return;
+
+    await dispatch(deleteTemplate({ field: "labTestsTemplate", index }));
+    setIsAlertOpen(false);
+    setTemplateToDelete(null);
   };
 
   const toggleTemplate = (templateName) => {
@@ -39,20 +92,23 @@ export default function LabTemplatesManager() {
   };
 
   const filteredTemplates = labTestsTemplate?.filter((template) => {
-    const matchesSearchQuery = template.name
+    const matchesActivity = showInactive ? true : template?.status !== "inactive";
+    if (!matchesActivity) return false;
+
+    const matchesSearchQuery = template?.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     if (filterNoParameters) {
       return (
         matchesSearchQuery &&
-        (!template.fields || Object.keys(template.fields).length === 0)
+        (!template?.fields || Object.keys(template?.fields).length === 0)
       );
     }
     return matchesSearchQuery;
   });
 
   const templatesWithNoParametersCount = labTestsTemplate?.filter(
-    (template) => !template.fields || Object.keys(template.fields).length === 0
+    (template) => !template?.fields || Object.keys(template?.fields).length === 0
   ).length;
 
   return (
@@ -84,6 +140,14 @@ export default function LabTemplatesManager() {
           >
             No Parameters ({templatesWithNoParametersCount})
           </Button>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="show-inactive"
+              checked={showInactive}
+              onCheckedChange={setShowInactive}
+            />
+            <Label htmlFor="show-inactive">Show Inactive</Label>
+          </div>
         </div>
         <Button onClick={() => navigate("/settings/create-test-template")}>
           Create New Template
@@ -108,9 +172,16 @@ export default function LabTemplatesManager() {
             >
               <div className="flex justify-between items-center mb-2">
                 <h3 className="text-lg font-semibold">{template.name}</h3>
-                <span className="text-sm font-medium text-blue-600">
-                  ₹{template.rate}
-                </span>
+                <div className="flex items-center gap-2">
+                  {template.status === "inactive" && (
+                    <span className="text-xs font-bold text-yellow-500">
+                      (Inactive)
+                    </span>
+                  )}
+                  <span className="text-sm font-medium text-blue-600">
+                    ₹{template.rate}
+                  </span>
+                </div>
               </div>
               {(!template.fields ||
                 Object.keys(template.fields).length === 0) && (
@@ -178,10 +249,29 @@ export default function LabTemplatesManager() {
                     >
                       Edit
                     </Button>
+                    {template.status === "inactive" ? (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleActivate(template)}
+                        className="text-green-600 border-green-300 hover:bg-green-50 hover:text-green-700"
+                      >
+                        Activate
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeactivate(template)}
+                        className="text-yellow-600 border-yellow-300 hover:bg-yellow-50 hover:text-yellow-700"
+                      >
+                        Deactivate
+                      </Button>
+                    )}
                     <Button
                       size="sm"
                       variant="destructive"
-                      onClick={() => handleDeleteTemplate(template)}
+                      onClick={() => handleDelete(template)}
                       className="hover:bg-red-600"
                     >
                       Delete
@@ -193,6 +283,46 @@ export default function LabTemplatesManager() {
           </div>
         ))}
       </div>
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              template from the database.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog
+        open={!!actionToConfirm}
+        onOpenChange={(isOpen) => !isOpen && setActionToConfirm(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              Are you sure you want to {actionToConfirm?.action} this template?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {actionToConfirm?.action === "activate"
+                ? `This will make "${actionToConfirm?.template.name}" active and available for use.`
+                : `This will deactivate "${actionToConfirm?.template.name}". It will be hidden from the default list but not permanently deleted.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setActionToConfirm(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmAction}>Confirm</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

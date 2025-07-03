@@ -87,6 +87,10 @@ import DoctorPrescriptionSettings from "./pages/DoctorPrescriptionSettings";
 import DoctorWiseData from "./pages/DoctorWiseData";
 import DoctorDetails from "./pages/DoctorDetails";
 
+import PrivacyPage from "./pages/Privacy";
+import TermsPage from "./pages/Terms";
+import ManageRecords from "./pages/ManageRecords";
+
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
@@ -163,6 +167,8 @@ const AppContent = () => {
               />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
 
               {isAuthenticated && (
                 <>
@@ -181,6 +187,7 @@ const AppContent = () => {
                   <Route path="/rooms" element={<Rooms />} />
                   <Route path="/staff" element={<Reports />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/settings/manage-records" element={<ManageRecords />} />
                   <Route path="/staff/:staffId" element={<StaffProfile />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route

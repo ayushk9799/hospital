@@ -284,8 +284,8 @@ router.post(
         patientData.registrationNumber = registrationNumber;
       }
       if (upgradegenIpd) {
-        let ipdNumber = await IPDAdmission.getNextIpdNumber(session);
-
+        const Counter = mongoose.model("IPDCounter");
+        const ipdNumber = await Counter.getNextIPDNumber(session);
         admission.ipdNumber = ipdNumber;
       }
 
@@ -919,10 +919,36 @@ router.put("/:id", verifyToken, async (req, res) => {
       const Model = type === "OPD" ? Visit : IPDAdmission;
       let updateObj = {};
       if (type === "OPD" && visit) {
+        const existingVisit = await Visit.findById(visitID).session(session);
+        if (!existingVisit) {
+          throw new Error("Visit not found");
+        }
+
+        const oldDoctor = existingVisit.doctor;
+        const oldDoctorId = oldDoctor ? oldDoctor.toString() : null;
+
+        const newDoctor = visit.doctor?.id || visit.doctor;
+        const newDoctorId = newDoctor ? newDoctor.toString() : null;
+
+        if (oldDoctorId !== newDoctorId) {
+          const Counter = mongoose.model("Counter");
+          const query = {
+            date: visit.bookingDate,
+            doctor: newDoctorId
+              ? new mongoose.Types.ObjectId(newDoctorId)
+              : null,
+          };
+          const counter = await Counter.findOneAndUpdate(
+            query,
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true, setDefaultsOnInsert: true, session }
+          );
+          visit.bookingNumber = counter.seq;
+        }
         // Update all visit fields
         updateObj = {
           ...visit,
-          doctor: patientData?.doctor?._id,
+          doctor: visit.doctor?.id || visit.doctor,
           patientName: patient.name,
           contactNumber: patient.contactNumber,
           registrationNumber: patient.registrationNumber,
@@ -1986,8 +2012,8 @@ router.post(
         await patient.save({ session });
       }
       if (upgradegenIpd) {
-        let ipdNumber = await IPDAdmission.getNextIpdNumber(session);
-
+        const Counter = mongoose.model("IPDCounter");
+        const ipdNumber = await Counter.getNextIPDNumber(session);
         if (!admission.ipdNumber) {
           admission.ipdNumber = ipdNumber;
         }

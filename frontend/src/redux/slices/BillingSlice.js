@@ -274,6 +274,36 @@ export const deletePayment = createLoadingAsyncThunk(
   { useGlobalLoader: true }
 );
 
+// Add edit payment thunk
+export const editPayment = createLoadingAsyncThunk(
+  "billing/editPayment",
+  async ({ billId, paymentId, paymentData }, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/billing/${billId}/payments/${paymentId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify(paymentData),
+        }
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to edit payment");
+      }
+
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const billingSlice = createSlice({
   name: "bills",
   initialState: {
@@ -285,6 +315,8 @@ const billingSlice = createSlice({
     createOPDProcedureBillStatus: "idle",
     currentBill: null,
     currentBillStatus: "idle",
+    editPaymentStatus: "idle",
+    editPaymentError: null,
   },
   reducers: {
     setCreateBillStatusIdle: (state) => {
@@ -398,6 +430,24 @@ const billingSlice = createSlice({
         }
       })
       .addCase(deletePayment.rejected, (state, action) => {
+        state.error = action.payload;
+      })
+      .addCase(editPayment.pending, (state) => {
+        state.editPaymentStatus = "loading";
+        state.error = null;
+      })
+      .addCase(editPayment.fulfilled, (state, action) => {
+        state.editPaymentStatus = "succeeded";
+        const index = state.bills.findIndex((bill) => bill._id === action.payload._id);
+        if (index !== -1) {
+          state.bills[index] = action.payload;
+        }
+        if (state.currentBill?._id === action.payload._id) {
+          state.currentBill = action.payload;
+        }
+      })
+      .addCase(editPayment.rejected, (state, action) => {
+        state.editPaymentStatus = "failed";
         state.error = action.payload;
       });
   },

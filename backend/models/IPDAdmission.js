@@ -1,11 +1,44 @@
 import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 import { Patient } from "./Patient.js";
+
+// IPD Counter Schema
 const CounterSchema = new mongoose.Schema({
-  year: { type: Number },
+  department: { type: String, required: true, default: 'IPD' },
+  year: { type: Number, required: true },
   sequence: { type: Number, default: 0 },
-});
+  prefix: { type: String, default: 'IPD' },
+  useYearSuffix: { type: Boolean, default: true }
+}, { timestamps: true });
+
 CounterSchema.plugin(hospitalPlugin);
+
+CounterSchema.statics.getNextIPDNumber = async function (session) {
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = currentYear.toString().slice(-2);
+
+  const doc = await this.findOneAndUpdate(
+    { year: currentYear },
+    { $inc: { sequence: 1 } },
+    { upsert: true, new: true, setDefaultsOnInsert: true, session }
+  );
+
+  return `${doc.prefix}/${doc.useYearSuffix ? yearSuffix : currentYear}/${doc.sequence}`;
+};
+
+CounterSchema.statics.getCurrentIPDNumber = async function (session) {
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = currentYear.toString().slice(-2);
+
+  const doc = await this.findOneAndUpdate(
+    { year: currentYear },
+    {},
+    { upsert: true, new: true, setDefaultsOnInsert: true, session }
+  );
+
+  return `${doc.prefix}/${doc.useYearSuffix ? yearSuffix : currentYear}/${(doc.sequence + 1)}`;
+};
+
 const Counter = mongoose.model("IPDCounter", CounterSchema);
 
 const ipdAdmissionSchema = new mongoose.Schema(
@@ -87,31 +120,15 @@ const ipdAdmissionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
 ipdAdmissionSchema.statics.getNextIpdNumber = async function (session) {
-  const currentYear = new Date().getFullYear();
-  const yearSuffix = currentYear.toString().slice(-2);
-  const doc = await Counter.findOneAndUpdate(
-    { year: currentYear },
-    { $inc: { sequence: 1 } },
-    { upsert: true, new: true, setDefaultsOnInsert: true, session }
-  );
-  return `IPD/${yearSuffix}/${doc.sequence.toString()}`;
+  return Counter.getNextIPDNumber(session);
 };
+
 ipdAdmissionSchema.statics.getCurrentIPDNumber = async function (session) {
-  const currentYear = new Date().getFullYear();
-  const yearSuffix = currentYear.toString().slice(-2);
-  const doc = await Counter.findOneAndUpdate(
-    { year: currentYear },
-    {},
-    {
-      upsert: true,
-      new: true,
-      setDefaultsOnInsert: true,
-      session,
-    }
-  );
-  return `IPD/${yearSuffix}/${(doc.sequence + 1).toString()}`;
+  return Counter.getCurrentIPDNumber(session);
 };
+
 ipdAdmissionSchema.pre("save", async function (next) {
   if (!this.registrationNumber && this.patient) {
     const patient = await Patient.findById(this.patient);

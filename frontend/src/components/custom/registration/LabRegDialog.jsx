@@ -59,10 +59,12 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
   const labtestsTemplate = useSelector(
     (state) => state.templates.labTestsTemplate
   );
-  const allLabTests = [...labtestsTemplate]?.map((test) => ({
-    name: test.name || test,
-    rate: test.rate,
-  }));
+  const allLabTests = [...labtestsTemplate]
+    ?.filter((test) => test?.status !== "inactive")
+    .map((test) => ({
+      name: test?.name || test,  
+      rate: test?.rate,
+    }));
   const doctors = useSelector((state) => state.staff.doctors);
   const departments = useSelector((state) => state.departments.departments);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
@@ -391,6 +393,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
   const handleReset = () => {
     setFormData(initialFormData);
     setErrors({});
+    setSearchedPatient(null);
   };
 
   const handleDialogClose = () => {

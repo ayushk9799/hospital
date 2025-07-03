@@ -211,8 +211,7 @@ export const opdPrescriptionTemplateStringDefault = `(
 
 const OPDPrescriptionTemplate = forwardRef((props, ref) => {
   const { patient, formData, field, hospital } = props;
-  console.log(formData)
-  console.log(field)
+ 
 
   const headerTemplates = useSelector(
     (state) => state.templates.headerTemplateArray

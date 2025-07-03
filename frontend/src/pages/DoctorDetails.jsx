@@ -26,7 +26,6 @@ export default function DoctorDetails() {
   const { currentDoctorData, status, error } = useSelector(
     (state) => state.doctorData
   );
-  console.log(currentDoctorData);
 
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({

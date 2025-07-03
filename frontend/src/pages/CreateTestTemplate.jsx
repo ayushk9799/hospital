@@ -303,12 +303,13 @@ export default function CreateTestTemplate() {
             editTemplate({
               field: "labTestsTemplate",
               index,
-              template,
+              newValue: { ...editTemplateData, ...template },
             })
           ).unwrap();
           toast({
             title: "Success",
             description: "Template updated successfully",
+            variant: "success",
           });
         }
       } else {
@@ -316,6 +317,7 @@ export default function CreateTestTemplate() {
         toast({
           title: "Success",
           description: "Template created successfully",
+          variant: "success",
         });
       }
 

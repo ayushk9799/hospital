@@ -51,10 +51,12 @@ export default function LabEditDialog({ open, onOpenChange, labData }) {
   const labtestsTemplate = useSelector(
     (state) => state.templates.labTestsTemplate
   );
-  const allLabTests = [...labtestsTemplate]?.map((test) => ({
-    name: test.name || test,
-    rate: test.rate,
-  }));
+  const allLabTests = [...labtestsTemplate]
+    ?.filter((test) => test?.status !== "inactive")
+    .map((test) => ({
+      name: test?.name || test,
+      rate: test?.rate,
+    }));
   const doctors = useSelector((state) => state.staff.doctors);
   const departments = useSelector((state) => state.departments.departments);
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);

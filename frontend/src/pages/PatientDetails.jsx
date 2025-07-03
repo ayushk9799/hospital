@@ -176,7 +176,6 @@ export default function PatientDetails({
   // Helper function to transform prescription data to formData structure
   const transformPrescriptionToFormData = (visitData) => {
     const prescription = visitData.prescription || {};
-    console.log(prescription);
     
     return {
       vitals: visitData.vitals || {},
@@ -240,7 +239,6 @@ export default function PatientDetails({
     if (!selectedVisitProp || !patientData) return null;
 
     const visitData = selectedVisitProp;
-    console.log(visitData);
 
     const isIPD = patientData.admissionDetails?.some(
       (ad) => ad._id === visitData._id

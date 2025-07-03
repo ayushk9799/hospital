@@ -59,12 +59,8 @@ export default function TextTemplateSelector({
 
   // Handle deleting a template by index
   const handleDeleteTemplate = (idx, formTemplate, field) => {
-    console.log(formTemplate, field);
-    console.log(localTemplates);
-    console.log(idx);
-    
+ 
     const template = localTemplates[idx];
-    console.log(template);
  
 
     // If template has _id, mark for deletion on server

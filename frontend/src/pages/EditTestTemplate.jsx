@@ -4,6 +4,7 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { editTemplate, deleteTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import CustomRemarksEditor from "../components/custom/reports/CustomRemarksEditor";
 
 import { fetchLabData } from "../redux/slices/labSlice";
 
@@ -23,6 +24,8 @@ const checkMissingDependencies = (dependencies, fields) => {
   const fieldNames = Object.keys(fields);
   return dependencies.filter((dep) => !fieldNames.includes(dep));
 };
+
+
 
 // Add counter for generating unique IDs
 let idCounter = 0;
@@ -66,9 +69,10 @@ export default function EditTestTemplate() {
     notes: "",
     sections: [],
     order: [], // Array of {type: 'field'|'section', id: string}
+    remarksArray: [], // Add this line for custom remarks
   });
   useEffect(() => {
-    const existingTemplate = labTestsTemplate.find(
+    const existingTemplate = labTestsTemplate?.find(
       (t) => t.name.trim() === templateName.trim()
     );
 
@@ -164,6 +168,7 @@ export default function EditTestTemplate() {
         fields: processedFields,
         sections: processedSections,
         order: order,
+        remarksArray: existingTemplate.remarksArray || [],
       });
     }
   }, [templateName, labTestsTemplate]);
@@ -394,13 +399,14 @@ export default function EditTestTemplate() {
         fields: processedFields,
         notes: templateData.notes,
         sections: sectionsWithPositions,
+        remarksArray: templateData.remarksArray,
       };
 
       await dispatch(
         editTemplate({
           field: "labTestsTemplate",
           index: labTestsTemplate.findIndex((t) => t.name === templateName),
-          template: updatedTemplate,
+          newValue: updatedTemplate,
         })
       ).unwrap();
       navigate("/settings/lab-templates");
@@ -436,6 +442,7 @@ export default function EditTestTemplate() {
           fields: templateData.fields,
           notes: templateData.notes,
           sections: templateData.sections,
+          remarksArray: templateData.remarksArray,
         },
       },
     });
@@ -958,6 +965,20 @@ export default function EditTestTemplate() {
               )}
             </Droppable>
           </DragDropContext>
+
+          {/* Add Custom Remarks Editor */}
+          <div className="bg-white p-6 rounded-lg shadow-md space-y-4">
+            <h2 className="text-lg font-semibold">Custom Remarks</h2>
+            <CustomRemarksEditor
+              value={templateData.remarksArray}
+              onChange={(newRemarks) =>
+                setTemplateData((prev) => ({
+                  ...prev,
+                  remarksArray: newRemarks,
+                }))
+              }
+            />
+          </div>
         </div>
 
         <div className="flex justify-end space-x-3 pt-6">

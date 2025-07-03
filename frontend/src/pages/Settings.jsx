@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Backend_URL, labCategories, labReportFields } from "../assets/Data";
-
 import { Button } from "../components/ui/button";
 
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -14,36 +12,9 @@ export default function Settings() {
     navigate(-1);
   };
 
-  const handleAddStaff = () => {
-    navigate("/addstaff");
-  };
-
-  const handleCreateRoom = () => {
-    navigate("/create-room");
-  };
-
   const handleHospitalInfo = () => {
     navigate("/settings/hospital-info");
   };
-
-  // const handleLabData = async () => {
-  //   try{
-  //     const response = await fetch(`${Backend_URL}/api/superadmin/lab-data`,{
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       credentials: "include",
-  //       body: JSON.stringify({
-  //         labCategories: labCategories,
-  //         labReportFields: labReportFields,
-  //       }),
-  //     });
-  //     const data = await response.json();
-  //   }catch(error){
-  //     console.log(error);
-  //   }
-  // };
 
   const handleCustomization = () => {
     navigate("/settings/customization");
@@ -93,6 +64,10 @@ export default function Settings() {
     navigate("/settings/doctor-wise-data");
   };
 
+  const handleManageRecords = () => {
+    navigate("/settings/manage-records");
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -102,14 +77,12 @@ export default function Settings() {
           size="icon"
           className="h-8 w-8 p-0"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <Button onClick={handleAddStaff}>Add Staff</Button>
-        <Button onClick={handleCreateRoom}>Create Room</Button>
         <Button onClick={handleHospitalInfo}>Hospital Info</Button>
         <Button onClick={handleCustomization}>Customization</Button>
         <Button onClick={handleLabTemplates}>Manage Lab Templates</Button>
@@ -126,6 +99,7 @@ export default function Settings() {
           Doctors Prescription Settings
         </Button>
         <Button onClick={handleDoctorWiseData}>Doctor Wise Data</Button>
+        <Button onClick={handleManageRecords}>Manage Records</Button>
         {/* <Button onClick={handleLabData}>
           Lab Data
         </Button> */}

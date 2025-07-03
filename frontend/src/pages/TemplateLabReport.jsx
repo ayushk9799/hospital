@@ -354,6 +354,34 @@ const TemplateLabReport = ({
     setFields(reorderedFields);
   };
 
+  const handleKeyDown = (e, currentIndex) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      // Find all focusable elements including SearchSuggestion components
+      const inputs = document.querySelectorAll('input[tabindex="0"], textarea[tabindex="0"], [data-search-suggestion="true"]');
+      const inputsArray = Array.from(inputs);
+      const nextInput = inputsArray.find((input, index) => index > currentIndex);
+      
+      // If there's no next input and we're on the last input, submit the form
+      if (!nextInput && currentIndex === inputsArray.length - 1) {
+        handleSubmit(e);
+        return;
+      }
+
+      // Otherwise, focus the next input if it exists
+      if (nextInput) {
+        if (nextInput.hasAttribute('data-search-suggestion')) {
+          const searchInput = nextInput.querySelector('input');
+          if (searchInput) {
+            searchInput.focus();
+          }
+        } else {
+          nextInput.focus();
+        }
+      }
+    }
+  };
+
   const shouldeTextarea = (unit, normalRange,options) => {
     return (
       [undefined, "", null, "N/A", "-"].includes(unit) &&
@@ -363,8 +391,8 @@ const TemplateLabReport = ({
   };
   return (
     <div className="container px-0 max-w-6xl">
-      <h1 className="text-2xl font-bold mb-2 text-center">
-        Create {template.name} Report
+      <h1 className="text-2xl font-bold mb-2 text-center capitalize">
+        {template.name}
       </h1>
       <Card className="p-6  w-full">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -446,6 +474,7 @@ const TemplateLabReport = ({
                                 onChange={(e) =>
                                   handleInputChange(e, field.name)
                                 }
+                                onKeyDown={(e) => handleKeyDown(e, index)}
                                 className="h-32 w-full"
                                 tabIndex={0}
                               />
@@ -471,25 +500,28 @@ const TemplateLabReport = ({
                               </div>
                               <div>
                                 {field.options?.length > 0 ? (
-                                  <SearchSuggestion
-                                    suggestions={field.options?.map(
-                                      (option) => ({
-                                        name: option,
-                                      })
-                                    )}
-                                    placeholder={`Select ${field.label}`}
-                                    value={field.value}
-                                    setValue={(value) =>
-                                      handleInputChange(
-                                        { target: { value } },
-                                        field.name
-                                      )
-                                    }
-                                    onSuggestionSelect={(suggestion) =>
-                                      handleOptionSelect(field.name, suggestion)
-                                    }
-                                    tabIndex={0}
-                                  />
+                                  <div data-search-suggestion="true">
+                                    <SearchSuggestion
+                                      suggestions={field.options?.map(
+                                        (option) => ({
+                                          name: option,
+                                        })
+                                      )}
+                                      placeholder={`Select ${field.label}`}
+                                      value={field.value}
+                                      setValue={(value) =>
+                                        handleInputChange(
+                                          { target: { value } },
+                                          field.name
+                                        )
+                                      }
+                                      onSuggestionSelect={(suggestion) =>
+                                        handleOptionSelect(field.name, suggestion)
+                                      }
+                                      onKeyDown={(e) => handleKeyDown(e, index)}
+                                      tabIndex={0}
+                                    />
+                                  </div>
                                 ) : (
                                   <Input
                                     type={field?.unit ? "text" : "text"}
@@ -499,6 +531,7 @@ const TemplateLabReport = ({
                                     onChange={(e) =>
                                       handleInputChange(e, field.name)
                                     }
+                                    onKeyDown={(e) => handleKeyDown(e, index)}
                                     step="0.01"
                                     className="font-bold"
                                     style={{
@@ -572,6 +605,7 @@ const TemplateLabReport = ({
               name: template.name,
               date: reportDate,
               notes: template.notes,
+              remarksArray: template.remarksArray,
               sections: template.sections,
               order: template.sections
                 ? (() => {

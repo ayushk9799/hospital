@@ -127,9 +127,8 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
 
     // Notes if present
   
-
     // Report Content
-    React.createElement("div", { className: "border-t-2 border-b-2 border-[#ecf0f1] pb-[60mm]" },
+    React.createElement("div", { className: "border-t-2 border-b-2 border-[#ecf0f1]" },
       // Only show table header if there are table-format fields
       reportData.order && reportData.order.some(item => 
         item.type === 'field' && shouldUseTextarea(item.unit, item.normalRange)
@@ -216,12 +215,77 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
       React.createElement("span", {}, reportData.notes)
     ),
 
+    // Modified notes section
+    React.createElement("div", {
+      className: "mt-[10px] text-sm"
+    },
+    reportData.remarksArray && reportData.remarksArray.map((noteItem, index) => {
+      if (noteItem.type === "paragraph") {
+        return React.createElement("p", {
+          key: index,
+          className: "whitespace-pre-wrap"
+        }, noteItem.content);
+      } else if (noteItem.type === "header") {
+        return React.createElement("h3", {
+          key: index,
+          className: "text-md font-bold"
+        }, noteItem.content);
+      } else if (noteItem.type === "table") {
+        return React.createElement("table", {
+            key: index,
+            className: "w-full table-fixed border-collapse border border-gray-300 my-4"
+          },
+          React.createElement("thead", null,
+            React.createElement("tr", {
+                className: "bg-gray-100"
+              },
+              noteItem.header.map((heading, hIndex) =>
+                React.createElement("th", {
+                  key: hIndex,
+                  className: "border border-gray-300 p-2 text-left"
+                }, heading)
+              )
+            )
+          ),
+          React.createElement("tbody", null,
+            noteItem.rows.map((row, rIndex) =>
+              React.createElement("tr", {
+                  key: rIndex
+                },
+                row.map((cell, cIndex) =>
+                  React.createElement("td", {
+                    key: cIndex,
+                    className: "border border-gray-300 p-2"
+                  }, cell)
+                )
+              )
+            )
+          )
+        );
+      } else if (noteItem.type === "list") {
+        return React.createElement("ul", {
+          key: index,
+          className: "list-disc list-inside ml-4 my-2"
+        },
+          noteItem.items.map((item, itemIndex) =>
+            React.createElement("li", {
+              key: itemIndex
+            }, item)
+          )
+        );
+      }
+      // Add more types as needed (e.g., "image", "heading")
+      return null;
+    })
+  ),
+
     // Footer
-    React.createElement("div", { className: "absolute bottom-[7mm] left-[10mm] right-[10mm] pt-[5mm]" },
-      React.createElement("div", { className: "text-right pr-[20mm] border-t border-black pt-[4mm]" },
-        React.createElement("div", { className: "text-[10pt] font-bold" }, "Doctor's Signature")
+     React.createElement("div", { className: "absolute bottom-[24mm] left-[10mm] right-[10mm] text-right pr-[20mm] " },
+        React.createElement("div", { className: "text-[10pt] font-bold " }, "Doctor's Signature")
       ),
-      React.createElement("div", { className: "text-[8pt] text-[#666] mb-[2mm] text-center" },
+    React.createElement("div", { className: "absolute bottom-[7mm] left-[10mm] right-[10mm] border-t border-black" },
+      React.createElement("div", { className: "text-[10pt] font-bold text-center" },  "NOT VALID FOR MEDICO LEGAL PURPOSE"),
+      React.createElement("div", { className: "text-[8pt] text-[#666] text-center" },
         "This is a computer-generated report and does not require a physical signature."
       )
     )

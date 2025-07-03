@@ -18,6 +18,7 @@ import {
   ChevronRight,
   UsersIcon,
   IndianRupee,
+  DatabaseZap,
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
@@ -28,14 +29,8 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../ui/tooltip";
-
-const labReportTypes = [
-  { name: "Lipid Profile", path: "/lab/lipid-profile" },
-  { name: "Blood Work", path: "/lab/blood-work" },
-  { name: "CT Scan", path: "/lab/ct-scan" },
-  { name: "IVP", path: "/lab/ivp" },
-  { name: "MRI", path: "/lab/mri" },
-];
+import { useSelector } from "react-redux";
+import { useToast } from "../../../hooks/use-toast";
 
 export const navItems = [
   { name: "Quick Menu", icon: Home, path: "/" },
@@ -47,9 +42,9 @@ export const navItems = [
   { name: "Lab", icon: TestTube, path: "/lab/list" },
   { name: "Rooms", icon: Bed, path: "/rooms" },
   { name: "Services", icon: ClipboardList, path: "/services" },
-  { name: "Statistics", icon: BarChart, path: "/statistics" },
-  { name: "Staffs", icon: UsersIcon, path: "/staff" },
-  { name: "Settings", icon: Settings, path: "/settings" },
+  { name: "Statistics", icon: BarChart, path: "/statistics", permission: "view_financial" },
+  { name: "Staffs", icon: UsersIcon, path: "/staff", permission: "edit_staff" },
+  { name: "Settings", icon: Settings, path: "/settings", permission: "edit_hospital" },
 ];
 
 export const ColorfulLogo = ({ className }) => (
@@ -86,15 +81,34 @@ export const ColorfulLogo = ({ className }) => (
   </svg>
 );
 
+const hasPermission = (userData, permission) => {
+  return userData?.permissions?.includes(permission) || false;
+};
+
+
 export default function VerticalNav({ isCollapsed }) {
   const navigate = useNavigate();
   const location = useLocation();
-
+  const { toast } = useToast();
+  const { userData } = useSelector((state) => state.user);
   const isActive = (itemPath) => {
     if (itemPath === "/") {
       return location.pathname === "/";
     }
     return location.pathname.startsWith(itemPath);
+  };
+
+  const handleClick = (item) => {
+    if (item.permission && !hasPermission(userData, item.permission)) {
+      toast({
+        title: "You don't have permission to view this page",
+        description: "Please contact your administrator",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    navigate(item.path);
   };
 
   return (
@@ -120,7 +134,7 @@ export default function VerticalNav({ isCollapsed }) {
                           : "text-gray-600 hover:bg-blue-300 hover:text-white",
                         isCollapsed ? "px-2" : "px-4"
                       )}
-                      onClick={() => navigate(item.path)}
+                      onClick={() => handleClick(item)}
                     >
                       <item.icon
                         className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")}

@@ -30,10 +30,11 @@ import labRoutes from "./routes/labRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import consultationFeeRoutes from "./routes/consultationFeeRoutes.js";
 import textTemplateRoutes from "./routes/textTemplateRoutes.js";
+import manageRecordRoutes from "./routes/ManageRecordRoute.js";
 dotenv.config({ path: "./config/config.env" });
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 
 // Get the directory name of the current module
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -79,6 +80,8 @@ app.use("/api/lab", labRoutes);
 app.use("/api/consultation-fees", consultationFeeRoutes);
 app.use("/api/prescription-templates", prescriptionTemplateRoutes);
 app.use("/api/doctor/doctor-data", doctorDataRoutes);
+app.use('/api/manage-records', manageRecordRoutes);
+
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {
