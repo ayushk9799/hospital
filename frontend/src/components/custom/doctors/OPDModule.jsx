@@ -529,9 +529,9 @@ export default function OPDModule({ patient, doctorId }) {
           ))}
         </div>
       </ScrollArea>
-      <div style={{}}>
+      <div style={{display:"none"}}>
         <OPDPrescriptionTemplate
-          patient={{ ...patient.patient, age: parseAge(patient?.patient?.age) }}
+          patient={{ ...patient.patient, age: parseAge(patient?.patient?.age) , registrationNumber:patient?.registrationNumber }}
           formData={formData}
           field={formConfig.sections}
           hospital={hospital}
