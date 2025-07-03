@@ -39,10 +39,10 @@ import {
   X,
   UserX,
   MoreVertical,
-  ChevronLeft,
   Loader2,
   ListChecks,
   Filter,
+  ArrowLeft,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useMediaQuery } from "../hooks/use-media-query";
@@ -624,8 +624,8 @@ export default function LabList() {
 
   return (
     <Card className="w-full border-none shadow-none">
-      <CardHeader className="pb-2">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full gap-4">
+      <CardHeader className="pb-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center w-full ">
           <div className="flex items-center gap-4 w-full sm:w-auto">
             <Button
               variant="ghost"
@@ -633,7 +633,7 @@ export default function LabList() {
               onClick={() => navigate(-1)}
               className="hidden sm:flex"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="w-full sm:w-auto">
               <CardTitle className="text-center sm:text-left text-2xl">
@@ -641,7 +641,56 @@ export default function LabList() {
               </CardTitle>
             </div>
           </div>
-          <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+           {/* test status symbols */}
+           <div className="flex items-center gap-4 text-sm">
+            <span className="font-medium">Test Status:</span>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-[#b51616]"></span>
+              <span>Registered</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-[#f5a158]"></span>
+              <span>Sample Collected</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-600"></span>
+              <span>Completed</span>
+            </div>
+          </div>
+          
+        </div>
+        {/* left side filters */}
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 ">
+          <div className="w-full md:w-1/4 relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+         {/* right side filters */}
+         <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
+         {dateFilter === "Custom" && (
+              <div className="col-span-2 sm:col-span-1">
+                <DateRangePicker
+                  from={tempDateRange.from}
+                  to={tempDateRange.to}
+                  onSelect={(range) => setTempDateRange(range)}
+                  onSearch={handleDateRangeSearch}
+                  onCancel={handleDateRangeCancel}
+                />
+              </div>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-auto">
@@ -702,51 +751,7 @@ export default function LabList() {
               <span className="hidden sm:inline">New Registration</span>
               <span className="sm:hidden">New</span>
             </Button>
-            {dateFilter === "Custom" && (
-              <div className="col-span-2 sm:col-span-1">
-                <DateRangePicker
-                  from={tempDateRange.from}
-                  to={tempDateRange.to}
-                  onSelect={(range) => setTempDateRange(range)}
-                  onSearch={handleDateRangeSearch}
-                  onCancel={handleDateRangeCancel}
-                />
-              </div>
-            )}
-          </div>
-        </div>
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-4">
-          <div className="w-full md:w-1/3 relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-8"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-4 text-sm">
-            <span className="font-medium">Test Status:</span>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[#b51616]"></span>
-              <span>Registered</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-[#f5a158]"></span>
-              <span>Sample Collected</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-green-600"></span>
-              <span>Completed</span>
-            </div>
+            
           </div>
         </div>
       </CardHeader>

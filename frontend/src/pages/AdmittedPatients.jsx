@@ -51,6 +51,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select";
+import { formatCurrency } from "../assets/Data";
 
 export default function AdmittedPatients() {
   const { toast } = useToast();
@@ -438,13 +439,13 @@ export default function AdmittedPatients() {
                                 )}
                               </TableCell>
                               <TableCell className="text-right tabular-nums font-bold">
-                                {patient.totalAmount.toFixed(2)}
+                                {formatCurrency(patient.totalAmount)}
                               </TableCell>
                               <TableCell className="text-right tabular-nums font-bold text-green-600">
-                                {patient.amountPaid.toFixed(2)}
+                                {formatCurrency(patient.amountPaid)}
                               </TableCell>
                               <TableCell className="text-right tabular-nums font-bold text-red-600">
-                                {patient.amountDue.toFixed(2)}
+                                {formatCurrency(patient.amountDue)}
                               </TableCell>
                               <TableCell className="text-center">
                                 <div className="flex gap-2 justify-end pr-4">
@@ -613,7 +614,7 @@ export default function AdmittedPatients() {
                                     Total:
                                   </span>
                                   <span className="font-medium">
-                                    ₹{patient.totalAmount.toFixed(2)}
+                                    {formatCurrency(patient.totalAmount)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -621,7 +622,7 @@ export default function AdmittedPatients() {
                                     Paid:
                                   </span>
                                   <span className="font-medium text-green-600">
-                                    ₹{patient.amountPaid.toFixed(2)}
+                                    {formatCurrency(patient.amountPaid)}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -629,7 +630,7 @@ export default function AdmittedPatients() {
                                     Due:
                                   </span>
                                   <span className="font-medium text-red-600">
-                                    ₹{patient.amountDue.toFixed(2)}
+                                    {formatCurrency(patient.amountDue)}
                                   </span>
                                 </div>
                               </div>

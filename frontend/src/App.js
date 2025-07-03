@@ -183,7 +183,7 @@ const AppContent = () => {
                   <Route path="/rooms" element={<Rooms />} />
                   <Route path="/staff" element={<Reports />} />
                   <Route path="/settings" element={<Settings />} />
-                  <Route path="/manage-records" element={<ManageRecords />} />
+                  <Route path="/settings/manage-records" element={<ManageRecords />} />
                   <Route path="/staff/:staffId" element={<StaffProfile />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route

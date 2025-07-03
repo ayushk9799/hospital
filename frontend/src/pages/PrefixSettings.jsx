@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Button } from "../components/ui/button";
 import { Backend_URL } from "../../src/assets/Data";
 import { useToast } from "../hooks/use-toast.js";
-import { ChevronLeft, Save } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 export default function PrefixSettings() {
@@ -175,10 +175,10 @@ export default function PrefixSettings() {
             onClick={handleBack}
             className="h-8 w-8 p-0"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4" />
           </Button>
           <h1 className="text-xl sm:text-2xl font-bold">
-            Number Format Settings
+            Prefix Settings
           </h1>
         </div>
         <Button 

@@ -31,6 +31,7 @@ import { headerTemplateString as headerTemplateStringDefault } from "../../../te
 import { X } from "lucide-react";
 import PaymentReceipt from "../print/PaymentReceipt";
 import RenewalAlertDlg from "../renewal/RenewalAlertDlg";
+import { formatCurrency } from "../../../assets/Data";
 
 const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp }) => {
   const componentRef = useRef();
@@ -228,10 +229,10 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                     {service.quantity || 0}
                   </TableCell>
                   <TableCell className="border-r border-gray-200 h-[25px] py-1 text-right">
-                    {(service.rate || 0).toFixed(2)}
+                    {formatCurrency(service.rate || 0)}
                   </TableCell>
                   <TableCell className="border-r border-gray-200 h-[25px] py-1 text-right">
-                    {((service.quantity || 0) * (service.rate || 0)).toFixed(2)}
+                    {formatCurrency((service.quantity || 0) * (service.rate || 0))}
                   </TableCell>
                 </TableRow>
               ))}
@@ -275,10 +276,10 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
               {service.quantity || 0}
             </TableCell>
             <TableCell className="border-r border-gray-200 h-[25px] py-1 text-right">
-              {(service.rate || 0).toFixed(2)}
+              {formatCurrency(service.rate || 0)}
             </TableCell>
             <TableCell className="border-r border-gray-200 h-[25px] py-1 text-right">
-              {((service.quantity || 0) * (service.rate || 0)).toFixed(2)}
+              {formatCurrency((service.quantity || 0) * (service.rate || 0))}
             </TableCell>
           </TableRow>
         ))}
@@ -465,32 +466,31 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                             <div className="flex justify-between w-full items-center">
                               <span className="text-gray-600">Sub Total:</span>
                               <span>
-                                ₹{calculateSelectedTotals().subTotal.toFixed(2)}
+                                {formatCurrency(calculateSelectedTotals().subTotal)}
                               </span>
                             </div>
 
                             <div className="flex justify-between w-full items-center">
                               <span className="text-gray-600">Discount:</span>
                               <span>
-                                ₹{(billData.additionalDiscount || 0).toFixed(2)}
+                                {formatCurrency(billData.additionalDiscount || 0)}
                               </span>
                             </div>
 
                             <div className="flex justify-between w-full items-center border-t border-gray-200 pt-0.5">
                               <span className="font-medium">Net Total:</span>
                               <span className="font-medium">
-                                ₹
-                                {(
+                                {formatCurrency(
                                   calculateSelectedTotals().subTotal -
                                   (billData.additionalDiscount || 0)
-                                ).toFixed(2)}
+                                )}
                               </span>
                             </div>
 
                             <div className="flex justify-between w-full items-center">
                               <span className="text-gray-600">Paid:</span>
                               <span className="text-green-600">
-                                ₹{(billData.amountPaid || 0).toFixed(2)}
+                                {formatCurrency(billData.amountPaid || 0)}
                               </span>
                             </div>
 
@@ -499,11 +499,10 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                                 Balance:
                               </span>
                               <span className="text-red-600 font-semibold">
-                                ₹
-                                {(
+                                {formatCurrency(
                                   (billData.totalAmount || 0) -
                                   (billData.amountPaid || 0)
-                                ).toFixed(2)}
+                                )}
                               </span>
                             </div>
 
@@ -547,7 +546,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                             Sub Total:
                           </span>
                           <span className="font-medium">
-                            ₹{calculateSelectedTotals().subTotal.toFixed(2)}
+                            {formatCurrency(calculateSelectedTotals().subTotal)}
                           </span>
                         </div>
 
@@ -556,18 +555,17 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                             Discount:
                           </span>
                           <span className="font-medium">
-                            ₹{(billData.additionalDiscount || 0).toFixed(2)}
+                            {formatCurrency(billData.additionalDiscount || 0)}
                           </span>
                         </div>
 
                         <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2">
                           <span className="font-semibold">Net Total:</span>
                           <span className="font-semibold">
-                            ₹
-                            {(
+                            {formatCurrency(
                               billData.subtotal -
                               (billData.additionalDiscount || 0)
-                            ).toFixed(2)}
+                            )}
                           </span>
                         </div>
 
@@ -576,18 +574,17 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                             Paid:
                           </span>
                           <span className="text-green-600 font-medium">
-                            ₹{(billData.amountPaid || 0).toFixed(2)}
+                            {formatCurrency(billData.amountPaid || 0)}
                           </span>
                         </div>
 
                         <div className="flex justify-between items-center text-base border-t-2 border-gray-200 pt-2">
                           <span className="font-semibold">Balance:</span>
                           <span className="text-red-600 font-semibold">
-                            ₹
-                            {(
+                            {formatCurrency(
                               (billData.totalAmount || 0) -
                               (billData.amountPaid || 0)
-                            ).toFixed(2)}
+                            )}
                           </span>
                         </div>
 
@@ -681,10 +678,7 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                                   </TableCell>
                                 )}
                                 <TableCell className="text-xs font-medium h-[25px] py-1">
-                                  {payment?.amount?.toLocaleString("en-IN", {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
+                                  {formatCurrency(payment?.amount)}
                                 </TableCell>
                                 <TableCell className="text-xs h-[25px] py-1">
                                   {payment.paymentMethod}

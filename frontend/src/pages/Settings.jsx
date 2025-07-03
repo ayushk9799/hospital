@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 
 import { Button } from "../components/ui/button";
 
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -56,6 +56,10 @@ export default function Settings() {
     navigate("/settings/subscription");
   };
 
+  const handleManageRecords = () => {
+    navigate("/settings/manage-records");
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -65,7 +69,7 @@ export default function Settings() {
           size="icon"
           className="h-8 w-8 p-0"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ArrowLeft className="h-4 w-4" />
         </Button>
         <h1 className="text-xl sm:text-2xl font-bold">Settings</h1>
       </div>
@@ -83,6 +87,7 @@ export default function Settings() {
           Discharge Form Templates
         </Button>
         <Button onClick={handleSubscription}>Subscription</Button>
+        <Button onClick={handleManageRecords}>Manage Records</Button>
         {/* <Button onClick={handleLabData}>
           Lab Data
         </Button> */}

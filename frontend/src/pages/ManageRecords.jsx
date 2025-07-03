@@ -11,6 +11,8 @@ import { format } from 'date-fns';
 import { Backend_URL } from '../assets/Data';
 import { Separator } from '../components/ui/separator';
 import { setLoading } from '../redux/slices/loaderSlice';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const ManageRecords = () => {
     const [dateRange, setDateRange] = useState({ from: null, to: null });
@@ -26,7 +28,7 @@ const ManageRecords = () => {
     const { toast } = useToast();
     const dispatch = useDispatch();
     const { isLoading } = useSelector((state) => state.loader);
-
+    const navigate = useNavigate();
     const handleDelete = async () => {
         if (!dateRange.from || !dateRange.to) {
             toast({
@@ -221,14 +223,25 @@ const ManageRecords = () => {
         }
     };
 
+    const handleBack = () => {
+        navigate(-1);
+    };
+
     return (
-        <div className="container mx-auto p-4">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Manage Records</CardTitle>
-                    <CardDescription>Permanently delete records from the database.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
+        <div className="p-4 sm:p-6">
+            <div className="flex items-center gap-2 mb-4">
+                <Button
+                    onClick={handleBack}
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 p-0"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                </Button>
+                <h1 className="text-xl sm:text-2xl font-bold">Manage Records</h1>
+            </div>
+            
+                <div className="space-y-6">
                     <div className="p-4 border rounded-md">
                         <h3 className="text-lg font-semibold text-destructive">Delete All OPD Records in Date Range</h3>
                         <p className="text-sm text-muted-foreground mb-4">
@@ -443,8 +456,7 @@ const ManageRecords = () => {
                             </AlertDialog>
                         </div>
                     </div>
-                </CardContent>
-            </Card>
+                </div>
         </div>
     );
 };
