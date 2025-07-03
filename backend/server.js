@@ -27,6 +27,7 @@ import babyRoutes from "./routes/babyRoutes.js";
 import labRoutes from "./routes/labRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import consultationFeeRoutes from "./routes/consultationFeeRoutes.js";
+import manageRecordRoutes from "./routes/ManageRecordRoute.js";
 dotenv.config({ path: "./config/config.env" });
 
 const app = express();
@@ -73,6 +74,8 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/babies", babyRoutes);
 app.use("/api/lab", labRoutes);
 app.use("/api/consultation-fees", consultationFeeRoutes);
+app.use('/api/manage-records', manageRecordRoutes);
+
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {

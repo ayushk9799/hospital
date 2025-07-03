@@ -18,6 +18,7 @@ import {
   ChevronRight,
   UsersIcon,
   IndianRupee,
+  DatabaseZap,
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
@@ -50,6 +51,7 @@ export const navItems = [
   { name: "Statistics", icon: BarChart, path: "/statistics" },
   { name: "Staffs", icon: UsersIcon, path: "/staff" },
   { name: "Settings", icon: Settings, path: "/settings" },
+  { name: "Manage Records", icon: DatabaseZap, path: "/manage-records" },
 ];
 
 export const ColorfulLogo = ({ className }) => (

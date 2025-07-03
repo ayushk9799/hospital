@@ -62,11 +62,11 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
         variant={styleData ? "outline" : "ghost"}
         size="icon"
         onClick={handlePrint}
-        className={`flex print:hidden justify-center items-center${
-          styleData ? "px-2 w-[200px] ml-2" : "h-6 w-6"
+        className={`flex print:hidden justify-center text-xs h-6 items-center${
+          styleData ? "px-2 w-[150px] ml-2" : "h-6 w-6"
         }`}
       >
-        <Printer className="h-4 w-4 mr-2" />{" "}
+        <Printer className="h-3 w-3 mr-1" />{" "}
         {styleData ? "Print All Payments" : ""}
       </Button>
 
@@ -127,6 +127,18 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
                     ""}
                 </p>
               </div>
+              {paymentsToRender.map((p) => p.paymentNumber).filter(Boolean)
+                .length > 0 && (
+                <div className="grid grid-cols-3">
+                  <p className="font-semibold">Payment No:</p>
+                  <p className="col-span-2 capitalize">
+                    {paymentsToRender
+                      .map((p) => p.paymentNumber)
+                      .filter(Boolean)
+                      .join(", ")}
+                  </p>
+                </div>
+              )}
               <div className="grid grid-cols-3">
                 <p className="font-semibold">Receipt Date</p>
                 <p className="col-span-2 capitalize">

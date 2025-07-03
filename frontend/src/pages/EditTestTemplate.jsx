@@ -72,7 +72,7 @@ export default function EditTestTemplate() {
     remarksArray: [], // Add this line for custom remarks
   });
   useEffect(() => {
-    const existingTemplate = labTestsTemplate.find(
+    const existingTemplate = labTestsTemplate?.find(
       (t) => t.name.trim() === templateName.trim()
     );
 
@@ -406,7 +406,7 @@ export default function EditTestTemplate() {
         editTemplate({
           field: "labTestsTemplate",
           index: labTestsTemplate.findIndex((t) => t.name === templateName),
-          template: updatedTemplate,
+          newValue: updatedTemplate,
         })
       ).unwrap();
       navigate("/settings/lab-templates");
@@ -442,6 +442,7 @@ export default function EditTestTemplate() {
           fields: templateData.fields,
           notes: templateData.notes,
           sections: templateData.sections,
+          remarksArray: templateData.remarksArray,
         },
       },
     });

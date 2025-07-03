@@ -17,6 +17,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "../components/ui/sheet";
+import thousandWaysLogo from "../assets/logo.jpeg";
 
 export default function LandingPage() {
   const dispatch = useDispatch();
@@ -381,17 +382,27 @@ export default function LandingPage() {
         </section>
       </main>
       <footer className="flex flex-col sm:flex-row justify-between items-center py-6 px-4 md:px-6 border-t bg-white">
-        <p className="text-xs text-gray-500 mb-2 sm:mb-0">© 2024 TheHospital. All rights reserved.</p>
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="flex items-center gap-2">
+            <ColorfulLogo className="h-5 w-5 text-blue-600" />
+            <p className="text-xs text-gray-500">© 2024 TheHospital. All rights reserved.</p>
+          </div>
+          <span className="hidden sm:inline text-gray-300">|</span>
+          <div className="flex items-center gap-2">
+            <img src={thousandWaysLogo} alt="Thousand Ways Logo" className="h-5 w-5 object-contain" />
+            <p className="text-xs text-gray-500">Powered by <a href="https://thethousandways.com/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Thousand Ways</a></p>
+          </div>
+        </div>
         <nav className="flex gap-4">
           <Link
             className="text-xs hover:underline underline-offset-4"
-            // to="/terms"
+            to="/terms"
           >
             Terms of Service
           </Link>
           <Link
             className="text-xs hover:underline underline-offset-4"
-            // to="/privacy"
+            to="/privacy"
           >
             Privacy
           </Link>

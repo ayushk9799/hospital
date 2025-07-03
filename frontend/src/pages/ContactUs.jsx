@@ -13,6 +13,7 @@ import {
   SheetTrigger,
 } from "../components/ui/sheet";
 import { Menu } from "lucide-react";
+import thousandWaysLogo from "../assets/logo.jpeg";
 
 export default function ContactPage() {
   const navigate = useNavigate();
@@ -156,11 +157,11 @@ export default function ContactPage() {
                     <div className="space-y-4">
                       <div className="flex items-center space-x-4">
                         <Phone className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base">+91 9097849090</span>
+                        <span className="text-sm sm:text-base">+91 9942000425</span>
                       </div>
                       <div className="flex items-center space-x-4">
                         <Mail className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0" />
-                        <span className="text-sm sm:text-base">support@thehospital.com</span>
+                        <span className="text-sm sm:text-base">thousandways.help@gmail.com  </span>
                       </div>
                       <div className="flex items-start space-x-4">
                         <MapPin className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600 flex-shrink-0 mt-1" />
@@ -239,12 +240,28 @@ export default function ContactPage() {
         </section>
       </main>
       <footer className="flex flex-col sm:flex-row justify-between items-center py-6 px-4 md:px-6 border-t bg-white">
-        <p className="text-xs text-gray-500 mb-2 sm:mb-0">© 2024 The Hospital. All rights reserved.</p>
+        <div className="flex flex-col sm:flex-row items-center gap-2">
+          <div className="flex items-center gap-2">
+            <ColorfulLogo className="h-5 w-5 text-blue-600" />
+            <p className="text-xs text-gray-500">© 2024 The Hospital. All rights reserved.</p>
+          </div>
+          <span className="hidden sm:inline text-gray-300">|</span>
+          <div className="flex items-center gap-2">
+            <img src={thousandWaysLogo} alt="Thousand Ways Logo" className="h-5 w-5 object-contain" />
+            <p className="text-xs text-gray-500">Powered by <a href="https://thethousandways.com/" target="_blank" rel="noopener noreferrer" className="hover:text-blue-600 transition-colors">Thousand Ways</a></p>
+          </div>
+        </div>
         <nav className="flex gap-4">
-          <Link className="text-xs hover:underline underline-offset-4" href="#">
+          <Link
+            className="text-xs hover:underline underline-offset-4"
+            to="/terms"
+          >
             Terms of Service
           </Link>
-          <Link className="text-xs hover:underline underline-offset-4" href="#">
+          <Link
+            className="text-xs hover:underline underline-offset-4"
+            to="/privacy"
+          >
             Privacy
           </Link>
         </nav>

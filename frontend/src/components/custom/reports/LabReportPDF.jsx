@@ -215,7 +215,7 @@ const LabReportPDF = React.forwardRef(
       "React",
       "HospitalHeader",
       "styles",
-      `return (${lipidProfileNotes||labReportTemplateStringDefault});`
+      `return (${labReportTemplate||labReportTemplateStringDefault});`
     );
 
     try {

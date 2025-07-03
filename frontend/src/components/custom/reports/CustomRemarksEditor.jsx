@@ -16,6 +16,16 @@ import {
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "../../../lib/utils";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../ui/alert-dialog";
 
 const REMARK_TYPES = [
   { value: "header", label: "Header", icon: Heading1 },
@@ -27,6 +37,8 @@ const REMARK_TYPES = [
 export default function CustomRemarksEditor({ value = [], onChange }) {
   const [isTableDialogOpen, setIsTableDialogOpen] = useState(false);
   const [expandedRemarks, setExpandedRemarks] = useState({});
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [remarkToDelete, setRemarkToDelete] = useState(null);
   const [newTableData, setNewTableData] = useState({
     header: ["", "", ""],
     rows: [["", "", ""]],
@@ -46,9 +58,18 @@ export default function CustomRemarksEditor({ value = [], onChange }) {
   };
 
   const handleRemoveRemark = (index) => {
-    const newValue = [...value];
-    newValue.splice(index, 1);
-    onChange(newValue);
+    setRemarkToDelete(index);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (remarkToDelete !== null) {
+      const newValue = [...value];
+      newValue.splice(remarkToDelete, 1);
+      onChange(newValue);
+      setDeleteDialogOpen(false);
+      setRemarkToDelete(null);
+    }
   };
 
   const handleRemarkChange = (index, updatedRemark) => {
@@ -124,7 +145,7 @@ export default function CustomRemarksEditor({ value = [], onChange }) {
                 <Input
                   value={item}
                   onChange={(e) => {
-                    const newItems = [...remark.items];
+                    const newItems = [...remark.items]; 
                     newItems[itemIndex] = e.target.value;
                     handleRemarkChange(index, { items: newItems });
                   }}
@@ -324,10 +345,14 @@ export default function CustomRemarksEditor({ value = [], onChange }) {
                         {...provided.draggableProps}
                         className="border rounded-lg p-5 bg-white shadow-sm hover:shadow-md transition-shadow"
                       >
-                        <div className="flex items-center justify-between">
+                        <div 
+                          className="flex items-center justify-between cursor-pointer"
+                          onClick={() => toggleRemarkExpansion(remarkIdentifier)}
+                        >
                           <div
                             {...provided.dragHandleProps}
                             className="flex items-center gap-3 text-gray-600"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             <GripVertical className="h-5 w-5 text-gray-400" />
                             {(() => {
@@ -345,34 +370,29 @@ export default function CustomRemarksEditor({ value = [], onChange }) {
                               }
                             </span>
                           </div>
-                          <div className="flex items-center">
+                          <div className="flex items-center gap-2">
                             <Button
                               type="button"
                               variant="ghost"
                               size="icon"
                               className="text-gray-400 hover:text-red-500 hover:bg-red-50"
-                              onClick={() => handleRemoveRemark(index)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleRemoveRemark(index);
+                              }}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                toggleRemarkExpansion(remarkIdentifier)
-                              }
-                              className="p-1 rounded-full hover:bg-gray-100"
+                            <motion.div
+                              animate={{
+                                rotate: expandedRemarks[remarkIdentifier]
+                                  ? 180
+                                  : 0,
+                              }}
+                              transition={{ duration: 0.2 }}
                             >
-                              <motion.div
-                                animate={{
-                                  rotate: expandedRemarks[remarkIdentifier]
-                                    ? 180
-                                    : 0,
-                                }}
-                                transition={{ duration: 0.2 }}
-                              >
-                                <ChevronDown className="h-5 w-5 text-gray-500" />
-                              </motion.div>
-                            </button>
+                              <ChevronDown className="h-5 w-5 text-gray-500" />
+                            </motion.div>
                           </div>
                         </div>
                         <AnimatePresence>
@@ -384,7 +404,7 @@ export default function CustomRemarksEditor({ value = [], onChange }) {
                               transition={{ duration: 0.2 }}
                               className="overflow-hidden"
                             >
-                              <div className="pt-4 mt-4 border-t">
+                              <div className="pt-4 mt-4 border-t p-1">
                                 {renderRemarkEditor(remark, index)}
                               </div>
                             </motion.div>
@@ -406,6 +426,21 @@ export default function CustomRemarksEditor({ value = [], onChange }) {
           )}
         </Droppable>
       </DragDropContext>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Remark</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this remark? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setRemarkToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 } 

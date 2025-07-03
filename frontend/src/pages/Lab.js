@@ -5,8 +5,6 @@ import {
   Card,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
 } from "../components/ui/card";
 import { Input } from "../components/ui/input";
 import { ScrollArea } from "../components/ui/scroll-area";
@@ -35,7 +33,6 @@ const Lab = () => {
   const [selectedTest, setSelectedTest] = useState(null);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedReports, setSelectedReports] = useState([]);
-  const [showMergedReport, setShowMergedReport] = useState(false);
   const [merging, setMerging] = useState(false);
   const componentRef = useRef(null);
   const handlePrint = useReactToPrint({
@@ -75,8 +72,6 @@ const Lab = () => {
     );
   };
 
- 
-
   const handleTemplateSelection = (template) => {
     setSelectedTemplate(template);
     setSelectedTest(null);
@@ -95,7 +90,6 @@ const Lab = () => {
 
   const sortedLabTestsTemplate = React.useMemo(() => {
    
-
     // If no patient data or lab tests, return all templates
     let templates = [...(labTestsTemplate || [])];
 
@@ -107,6 +101,9 @@ const Lab = () => {
     }
 
     // If there's patient data, sort templates with matching tests first
+    console.log('templates',templates);
+    console.log('patientData',patientData)
+    
     if (patientData?.labTests) {
       return templates.sort((a, b) => {
         const aMatches = patientData.labTests.some(
@@ -273,9 +270,9 @@ const Lab = () => {
                         >
                           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-3">
                             <div className="flex items-center gap-2">
-                              <CardTitle className="text-[14px]">
-                                {template.name.toUpperCase()}
-                              </CardTitle>
+                              <CardTitle className="text-[14px] uppercase">
+                                {template?.name}
+                              </CardTitle> 
                               <span className="text-gray-500 text-xs">
                                 ({Object.keys(template?.fields || {}).length} fields)
                               </span>

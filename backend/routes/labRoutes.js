@@ -41,8 +41,9 @@ router.post("/register", verifyToken, async (req, res) => {
 
     const user = req.user;
 
-    // Generate lab number
-    const labNumber = await LabRegistration.getNextLabNumber(session);
+    // Generate lab number using the Counter model's static method
+    const Counter = mongoose.model("LabCounter");
+    const labNumber = await Counter.getNextLabNumber(session);
 
     // Create lab registration
     const labRegistration = new LabRegistration({
@@ -61,7 +62,6 @@ router.post("/register", verifyToken, async (req, res) => {
       paymentInfo: {
         totalAmount: paymentInfo.totalAmount,
         amountPaid: paymentInfo.amountPaid,
-
         additionalDiscount: paymentInfo.additionalDiscount,
       },
       referredBy: referredBy?._id,
@@ -76,8 +76,8 @@ router.post("/register", verifyToken, async (req, res) => {
       relation,
     });
 
-    // Create services bill
-    let invoiceNumber = await BillCounter.getNextBillNumber(session);
+    // Create services bill using BillCounter's static method
+    const invoiceNumber = await BillCounter.getNextBillNumber(session);
     const bill = new ServicesBill({
       invoiceNumber,
       services: labRegistration.labTests.map((test) => ({
@@ -106,6 +106,7 @@ router.post("/register", verifyToken, async (req, res) => {
       },
       createdBy: user._id,
     });
+
     let payments = [];
     // Create payment records if payment is made
     if (paymentInfo.paymentMethod?.length > 0 && paymentInfo.amountPaid > 0) {
@@ -127,10 +128,12 @@ router.post("/register", verifyToken, async (req, res) => {
         })
       );
     }
+
     labRegistration.billDetails = {
       invoiceNumber,
       billId: bill._id,
     };
+
     await bill.save({ session });
     await labRegistration.save({ session });
 
@@ -1010,7 +1013,7 @@ router.get("/lab-data", verifyToken, async (req, res) => {
 });
 
 // Delete a lab registration
-router.delete("/delete/:id", verifyToken,checkPermission("delete_patient"), async (req, res) => {
+router.delete("/delete/:id", verifyToken,checkPermission("delete_patients"), async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 

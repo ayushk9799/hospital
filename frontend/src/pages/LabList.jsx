@@ -15,6 +15,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableFooter,
 } from "../components/ui/table";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
@@ -41,6 +42,7 @@ import {
   ChevronLeft,
   Loader2,
   ListChecks,
+  Filter,
 } from "lucide-react";
 import { format } from "date-fns";
 import { useMediaQuery } from "../hooks/use-media-query";
@@ -53,7 +55,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
 } from "../components/ui/dialog";
 import {
@@ -72,6 +73,7 @@ import { Label } from "../components/ui/label";
 import LabPaymentDialog from "../components/custom/registration/LabPaymentDialog";
 import LabEditDialog from "../components/custom/registration/LabEditDialog";
 import { useToast } from "../hooks/use-toast";
+import { formatCurrency } from "../assets/Data";
 
 export default function LabList() {
   const navigate = useNavigate();
@@ -87,12 +89,13 @@ export default function LabList() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);
   const [selectedLabForPayment, setSelectedLabForPayment] = useState(null);
-  const [openDropdownId, setOpenDropdownId] = useState(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [selectedLabForEdit, setSelectedLabForEdit] = useState(null);
   const [labToDelete, setLabToDelete] = useState(null);
   const [showTestCountDialog, setShowTestCountDialog] = useState(false);
   const [testCounts, setTestCounts] = useState({});
+  const [testFilter, setTestFilter] = useState(null);
+  const [paymentStatusFilter, setPaymentStatusFilter] = useState("All");
   const { toast } = useToast();
   const {
     registrations,
@@ -103,6 +106,7 @@ export default function LabList() {
   const hospitalInfo = useSelector((state) => state.hospital.hospitalInfo);
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [filteredTests, setFilteredTests] = useState([]);
+  const [unfilteredTests, setUnfilteredTests] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false);
 
   const isUpdating = updateStatus === "loading";
@@ -134,13 +138,13 @@ export default function LabList() {
       );
 
       if (filtered.length > 0) {
-        setFilteredTests(filtered);
+        setUnfilteredTests(filtered);
       } else {
         // If no local results, search in backend
         dispatch(searchLabRegistrations(searchTerm));
       }
     } else {
-      setFilteredTests(registrations);
+      setUnfilteredTests(registrations);
       dispatch(clearSearchResults());
     }
   }, [searchTerm, registrations, dispatch]);
@@ -148,9 +152,31 @@ export default function LabList() {
   // Add new useEffect to handle search results
   useEffect(() => {
     if (searchResults.length > 0) {
-      setFilteredTests(searchResults);
+      setUnfilteredTests(searchResults);
     }
   }, [searchResults]);
+
+  useEffect(() => {
+    let finalFiltered = [...unfilteredTests];
+
+    if (testFilter) {
+      finalFiltered = finalFiltered.filter((reg) =>
+        reg.labTests.some((test) => test.name === testFilter)
+      );
+    }
+
+    if (paymentStatusFilter === "Paid") {
+      finalFiltered = finalFiltered.filter(
+        (reg) => reg.paymentInfo?.balanceDue <= 0
+      );
+    } else if (paymentStatusFilter === "Due") {
+      finalFiltered = finalFiltered.filter(
+        (reg) => reg.paymentInfo?.balanceDue > 0
+      );
+    }
+
+    setFilteredTests(finalFiltered);
+  }, [testFilter, unfilteredTests, paymentStatusFilter]);
 
   const getDateRange = () => {
     const today = new Date();
@@ -258,18 +284,15 @@ export default function LabList() {
   const handlePayments = (test) => {
     setSelectedLabForPayment(test);
     setShowPaymentDialog(true);
-    setOpenDropdownId(null);
   };
 
   const handleEdit = (test) => {
     setSelectedLabForEdit(test);
     setShowEditDialog(true);
-    setOpenDropdownId(null);
   };
 
   const handleDeleteClick = (test) => {
     setLabToDelete(test);
-    setOpenDropdownId(null);
   };
 
   const handleDeleteConfirm = async () => {
@@ -294,16 +317,58 @@ export default function LabList() {
     }
   };
 
+  const handleTestCountClick = (testName) => {
+    setTestFilter(testName);
+    setShowTestCountDialog(false);
+  };
+
   const handleShowTestCounts = () => {
-    const counts = filteredTests.reduce((acc, registration) => {
-      if (registration.labTests) {
-        registration.labTests.forEach((test) => {
-          acc[test.name] = (acc[test.name] || 0) + 1;
-        });
+    const summary = filteredTests.reduce((acc, registration) => {
+      const { labTests, paymentInfo } = registration;
+
+      if (!labTests || !paymentInfo) {
+        return acc;
       }
+
+      const {
+        totalAmount = 0,
+        additionalDiscount = 0,
+        amountPaid = 0,
+      } = paymentInfo;
+
+      if (totalAmount === 0) {
+        return acc;
+      }
+
+      const totalDiscountedAmount = totalAmount - additionalDiscount;
+
+      labTests.forEach((test) => {
+        const testName = test.name;
+        if (!acc[testName]) {
+          acc[testName] = { count: 0, total: 0, collected: 0, due: 0 };
+        }
+
+        acc[testName].count += 1;
+
+        const testPrice = test.price || 0;
+        const testProportion = testPrice / totalAmount;
+        const testDiscount = additionalDiscount * testProportion;
+        const testDiscountedPrice = testPrice - testDiscount;
+
+        acc[testName].total += testDiscountedPrice;
+
+        if (totalDiscountedAmount > 0) {
+          const paidProportion = amountPaid / totalDiscountedAmount;
+          const testCollected = testDiscountedPrice * paidProportion;
+          acc[testName].collected += testCollected;
+          acc[testName].due += testDiscountedPrice - testCollected;
+        }
+      });
+
       return acc;
     }, {});
-    setTestCounts(counts);
+
+    setTestCounts(summary);
     setShowTestCountDialog(true);
   };
 
@@ -476,38 +541,86 @@ export default function LabList() {
     </Dialog>
   );
 
-  const TestCountDialog = () => (
-    <Dialog open={showTestCountDialog} onOpenChange={setShowTestCountDialog}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Test Counts</DialogTitle>
-          <DialogDescription>
-            The number of times each test appears list.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="max-h-[60vh] overflow-y-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Test Name</TableHead>
-                <TableHead className="text-right">Count</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Object.entries(testCounts)
-                .sort(([, a], [, b]) => b - a)
-                .map(([name, count]) => (
-                  <TableRow key={name}>
-                    <TableCell className="font-medium">{name}</TableCell>
-                    <TableCell className="text-right">{count}</TableCell>
-                  </TableRow>
-                ))}
-            </TableBody>
-          </Table>
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
+  const TestCountDialog = () => {
+    const totals = Object.values(testCounts).reduce(
+      (acc, curr) => {
+        acc.count += curr.count;
+        acc.total += curr.total;
+        acc.collected += curr.collected;
+        acc.due += curr.due;
+        return acc;
+      },
+      { count: 0, total: 0, collected: 0, due: 0 }
+    );
+    return (
+      <Dialog open={showTestCountDialog} onOpenChange={setShowTestCountDialog}>
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Test Wise Summary</DialogTitle>
+            <DialogDescription>
+              Summary of test counts, collections, and dues. Click a row to
+              filter.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-y-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[250px]">Test Name</TableHead>
+                  <TableHead className="text-right">Count</TableHead>
+                  <TableHead className="text-right">Total (₹)</TableHead>
+                  <TableHead className="text-right">Collected (₹)</TableHead>
+                  <TableHead className="text-right">Due (₹)</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(testCounts)
+                  .sort(([, a], [, b]) => b.count - a.count)
+                  .map(([name, data]) => (
+                    <TableRow
+                      key={name}
+                      onClick={() => handleTestCountClick(name)}
+                      className="cursor-pointer hover:bg-muted/50"
+                    >
+                      <TableCell className="font-medium pr-4">{name}</TableCell>
+                      <TableCell className="text-right pr-4">
+                        {data.count}
+                      </TableCell>
+                      <TableCell className="text-right pr-4">
+                        {formatCurrency(data.total)}
+                      </TableCell>
+                      <TableCell className="text-right pr-4 text-green-600">
+                        {formatCurrency(data.collected)}
+                      </TableCell>
+                      <TableCell className="text-right pr-4 text-red-600">
+                        {formatCurrency(data.due)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </TableBody>
+              <TableFooter>
+                <TableRow>
+                  <TableCell className="font-bold">Total</TableCell>
+                  <TableCell className="text-right font-bold">
+                    {totals.count}
+                  </TableCell>
+                  <TableCell className="text-right font-bold">
+                    {formatCurrency(totals.total)}
+                  </TableCell>
+                  <TableCell className="text-right font-bold text-green-600">
+                    {formatCurrency(totals.collected)}
+                  </TableCell>
+                  <TableCell className="text-right font-bold text-red-600">
+                    {formatCurrency(totals.due)}
+                  </TableCell>
+                </TableRow>
+              </TableFooter>
+            </Table>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  };
 
   return (
     <Card className="w-full border-none shadow-none">
@@ -523,32 +636,12 @@ export default function LabList() {
               <ChevronLeft className="h-5 w-5" />
             </Button>
             <div className="w-full sm:w-auto">
-              <CardTitle className="text-center sm:text-left">
+              <CardTitle className="text-center sm:text-left text-2xl">
                 Laboratory Tests
               </CardTitle>
-              <CardDescription className="hidden sm:block">
-                Manage and view lab test records
-              </CardDescription>
             </div>
           </div>
           <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto">
-            <Button
-              onClick={() => setIsDialogOpen(true)}
-              className="w-full sm:w-auto"
-            >
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">New Registration</span>
-              <span className="sm:hidden">New</span>
-            </Button>
-            <Button
-              variant="outline"
-              onClick={handleShowTestCounts}
-              className="w-full sm:w-auto"
-            >
-              <ListChecks className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Test Counts</span>
-              <span className="sm:hidden">Counts</span>
-            </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" className="w-full sm:w-auto">
@@ -572,7 +665,43 @@ export default function LabList() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <Filter className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">{paymentStatusFilter}</span>
+                  <span className="sm:hidden">Status</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={() => setPaymentStatusFilter("All")}>
+                  All
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setPaymentStatusFilter("Paid")}>
+                  Paid
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => setPaymentStatusFilter("Due")}>
+                  Due
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button
+              variant="outline"
+              onClick={handleShowTestCounts}
+              className="w-full sm:w-auto"
+            >
+              <ListChecks className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Summary/Filter</span>
+              <span className="sm:hidden">Summary</span>
+            </Button>
+            <Button
+              onClick={() => setIsDialogOpen(true)}
+              className="w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Registration</span>
+              <span className="sm:hidden">New</span>
+            </Button>
             {dateFilter === "Custom" && (
               <div className="col-span-2 sm:col-span-1">
                 <DateRangePicker
@@ -584,6 +713,40 @@ export default function LabList() {
                 />
               </div>
             )}
+          </div>
+        </div>
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4 pt-4">
+          <div className="w-full md:w-1/3 relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-8"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-4 text-sm">
+            <span className="font-medium">Test Status:</span>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-[#b51616]"></span>
+              <span>Registered</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-[#f5a158]"></span>
+              <span>Sample Collected</span>
+            </div>
+            <div className="flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-600"></span>
+              <span>Completed</span>
+            </div>
           </div>
         </div>
       </CardHeader>
@@ -646,43 +809,20 @@ export default function LabList() {
         </AlertDialog>
 
         <div className="flex flex-col space-y-4 mb-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="w-full md:w-1/2 relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search using Lab Number, UHID No or Contact Number..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-8"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
-            <div className="flex items-center gap-4 mb-4 text-sm">
-              <span className="font-medium">Test Status:</span>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#b51616]"></span>
-                <span>Registered</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-[#f5a158]"></span>
-                <span>Sample Collected</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <span className="w-2 h-2 rounded-full bg-green-600"></span>
-                <span>Completed</span>
-              </div>
-            </div>
+          {testFilter && (
+          <div className="flex items-center">
+            <Badge variant="success">
+              {testFilter}
+              <button
+                className="ml-1 rounded-full p-0.5 hover:bg-background"
+                onClick={() => setTestFilter(null)}
+              >
+                <X className="h-3 w-3 hover:text-red-500" />
+              </button>
+            </Badge>
           </div>
+        )}
         </div>
-
-        {/* Status Legend */}
 
         {isSmallScreen ? (
           filteredTests.length > 0 ? (
@@ -707,7 +847,7 @@ export default function LabList() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  {dateFilter === "Today" && <TableHead>Sl.</TableHead>}
+                  <TableHead>Sl.</TableHead>
                   <TableHead>Lab No.</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Phone</TableHead>
@@ -723,9 +863,7 @@ export default function LabList() {
               <TableBody>
                 {filteredTests.map((test, index) => (
                   <TableRow key={test._id}>
-                    {dateFilter === "Today" && (
                       <TableCell className="font-medium">{index + 1}</TableCell>
-                    )}
                     <TableCell>{test.labNumber}</TableCell>
                     <TableCell className="font-bold">
                       {`${test.patientName} ${
@@ -761,17 +899,16 @@ export default function LabList() {
                       </span>
                     </TableCell>
                     <TableCell className="font-bold text-black">
-                      ₹
-                      {(
+                      {formatCurrency(
                         test.paymentInfo?.totalAmount -
                         test.paymentInfo?.additionalDiscount
-                      ).toLocaleString("en-IN")}
+                      )}
                     </TableCell>
                     <TableCell className="font-bold text-green-600">
-                      ₹{test.paymentInfo.amountPaid?.toLocaleString("en-IN")}
+                      {formatCurrency(test.paymentInfo.amountPaid)}
                     </TableCell>
                     <TableCell className="font-bold text-red-600">
-                      ₹{test.paymentInfo.balanceDue?.toLocaleString("en-IN")}
+                      {formatCurrency(test.paymentInfo.balanceDue)}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>

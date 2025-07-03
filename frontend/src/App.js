@@ -83,6 +83,10 @@ import HospitalSettings from "./pages/HospitalSettings";
 import ConsultationFees from "./pages/ConsultationFees";
 import { fetchConsultationFees } from "./redux/slices/consultationFeeSlice";
 import Subscription from "./pages/Subscription";
+import PrivacyPage from "./pages/Privacy";
+import TermsPage from "./pages/Terms";
+import ManageRecords from "./pages/ManageRecords";
+
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
@@ -159,6 +163,8 @@ const AppContent = () => {
               />
               <Route path="/about" element={<AboutPage />} />
               <Route path="/contact" element={<ContactPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
+              <Route path="/terms" element={<TermsPage />} />
 
               {isAuthenticated && (
                 <>
@@ -177,6 +183,7 @@ const AppContent = () => {
                   <Route path="/rooms" element={<Rooms />} />
                   <Route path="/staff" element={<Reports />} />
                   <Route path="/settings" element={<Settings />} />
+                  <Route path="/manage-records" element={<ManageRecords />} />
                   <Route path="/staff/:staffId" element={<StaffProfile />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route

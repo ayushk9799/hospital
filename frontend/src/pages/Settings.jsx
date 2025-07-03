@@ -1,8 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { Backend_URL, labCategories, labReportFields } from "../assets/Data";
-
 import { Button } from "../components/ui/button";
 
 import { ChevronLeft } from "lucide-react";
@@ -14,36 +12,9 @@ export default function Settings() {
     navigate(-1);
   };
 
-  const handleAddStaff = () => {
-    navigate("/addstaff");
-  };
-
-  const handleCreateRoom = () => {
-    navigate("/create-room");
-  };
-
   const handleHospitalInfo = () => {
     navigate("/settings/hospital-info");
   };
-
-  // const handleLabData = async () => {
-  //   try{
-  //     const response = await fetch(`${Backend_URL}/api/superadmin/lab-data`,{
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       credentials: "include",
-  //       body: JSON.stringify({
-  //         labCategories: labCategories,
-  //         labReportFields: labReportFields,
-  //       }),
-  //     });
-  //     const data = await response.json();
-  //   }catch(error){
-  //     console.log(error);
-  //   }
-  // };
 
   const handleCustomization = () => {
     navigate("/settings/customization");
@@ -100,8 +71,6 @@ export default function Settings() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        <Button onClick={handleAddStaff}>Add Staff</Button>
-        <Button onClick={handleCreateRoom}>Create Room</Button>
         <Button onClick={handleHospitalInfo}>Hospital Info</Button>
         <Button onClick={handleCustomization}>Customization</Button>
         <Button onClick={handleLabTemplates}>Manage Lab Templates</Button>

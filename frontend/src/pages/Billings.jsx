@@ -98,6 +98,10 @@ const Billings = () => {
   const [searchResults, setSearchResults] = useState(null);
   const [printType, setPrintType] = useState("broken");
 
+  const handlePaymentSuccess = (updatedBill) => {
+    setSelectedBillForPayment(updatedBill);
+  };
+
   useEffect(() => {
     if (billsStatus === "idle") {
       const today = new Date();
@@ -1025,6 +1029,7 @@ const Billings = () => {
         isOpen={isPaymentDialogOpen}
         setIsOpen={setIsPaymentDialogOpen}
         billData={selectedBillForPayment}
+        onPaymentSuccess={handlePaymentSuccess}
       />
     </Card>
   );

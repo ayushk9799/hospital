@@ -1,5 +1,6 @@
 import express from "express";
 import orderRoutes from "./routes/orderRoutes.js";
+import hospitalPlugin from './plugins/hospitalPlugin.js';
 
 const app = express();
 

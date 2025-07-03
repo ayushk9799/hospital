@@ -92,23 +92,23 @@ export default function LabTemplatesManager() {
   };
 
   const filteredTemplates = labTestsTemplate?.filter((template) => {
-    const matchesActivity = showInactive ? true : template.status !== "inactive";
+    const matchesActivity = showInactive ? true : template?.status !== "inactive";
     if (!matchesActivity) return false;
 
-    const matchesSearchQuery = template.name
+    const matchesSearchQuery = template?.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
     if (filterNoParameters) {
       return (
         matchesSearchQuery &&
-        (!template.fields || Object.keys(template.fields).length === 0)
+        (!template?.fields || Object.keys(template?.fields).length === 0)
       );
     }
     return matchesSearchQuery;
   });
 
   const templatesWithNoParametersCount = labTestsTemplate?.filter(
-    (template) => !template.fields || Object.keys(template.fields).length === 0
+    (template) => !template?.fields || Object.keys(template?.fields).length === 0
   ).length;
 
   return (

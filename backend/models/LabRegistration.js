@@ -1,13 +1,50 @@
 import mongoose from "mongoose";
 import { hospitalPlugin } from "../plugins/hospitalPlugin.js";
 import { Patient } from "./Patient.js";
+import { getHospitalId } from '../utils/asyncLocalStorage.js';
 
+// Lab Counter Schema
 const CounterSchema = new mongoose.Schema({
-  year: { type: Number },
+  department: { type: String, required: true, default: 'LAB' },
+  year: { type: Number, required: true },
   sequence: { type: Number, default: 0 },
-});
+  prefix: { type: String, default: 'LAB' },
+  useYearSuffix: { type: Boolean, default: true },
+  hospital: { type: mongoose.Schema.Types.ObjectId, ref: "Hospital", required: true }
+}, { timestamps: true });
 
 CounterSchema.plugin(hospitalPlugin);
+
+CounterSchema.statics.getNextLabNumber = async function (session) {
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = currentYear.toString().slice(-2);
+  const hospitalId = getHospitalId();
+
+  const doc = await this.findOneAndUpdate(
+    { year: currentYear, hospital: hospitalId },
+    { $inc: { sequence: 1 } },
+    { upsert: true, new: true, setDefaultsOnInsert: true, session }
+  );
+
+  // Use the prefix and useYearSuffix from the counter document
+  return `${doc.prefix}/${doc.useYearSuffix ? yearSuffix : currentYear}/${doc.sequence}`;
+};
+
+CounterSchema.statics.getCurrentLabNumber = async function (session) {
+  const currentYear = new Date().getFullYear();
+  const yearSuffix = currentYear.toString().slice(-2);
+  const hospitalId = getHospitalId();
+
+  const doc = await this.findOneAndUpdate(
+    { year: currentYear, hospital: hospitalId },
+    {},
+    { upsert: true, new: true, setDefaultsOnInsert: true, session }
+  );
+
+  // Use the prefix and useYearSuffix from the counter document
+  return `${doc.prefix}/${doc.useYearSuffix ? yearSuffix : currentYear}/${(doc.sequence + 1)}`;
+};
+
 const Counter = mongoose.model("LabCounter", CounterSchema);
 
 const labRegistrationSchema = new mongoose.Schema(
@@ -86,30 +123,6 @@ const labRegistrationSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
-
-// Generate unique lab number
-labRegistrationSchema.statics.getNextLabNumber = async function (session) {
-  const currentYear = new Date().getFullYear();
-  const yearSuffix = currentYear.toString().slice(-2);
-  const doc = await Counter.findOneAndUpdate(
-    { year: currentYear },
-    { $inc: { sequence: 1 } },
-    { upsert: true, new: true, setDefaultsOnInsert: true, session }
-  );
-  return `LAB/${yearSuffix}/${doc.sequence.toString()}`;
-};
-
-// Get current lab number without incrementing
-labRegistrationSchema.statics.getCurrentLabNumber = async function (session) {
-  const currentYear = new Date().getFullYear();
-  const yearSuffix = currentYear.toString().slice(-2);
-  const doc = await Counter.findOneAndUpdate(
-    { year: currentYear },
-    {},
-    { upsert: true, new: true, setDefaultsOnInsert: true, session }
-  );
-  return `LAB/${yearSuffix}/${(doc.sequence + 1).toString()}`;
-};
 
 // Pre-save middleware to handle patient data
 labRegistrationSchema.pre("save", async function (next) {
