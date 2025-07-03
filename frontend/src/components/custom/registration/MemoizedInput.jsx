@@ -21,6 +21,7 @@ const MemoizedInput = React.memo(({ id, label, type = "text", value, onChange, e
         }`}
         placeholder=" "
         {...props}
+        autoComplete="none"
       />
       <Label
         htmlFor={id}

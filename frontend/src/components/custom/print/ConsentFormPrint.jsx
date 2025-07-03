@@ -51,7 +51,7 @@ export const consentFormTemplateStringDefault = `(patient, hospitalInfo, ref) =>
       ),
       React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
         React.createElement("span", null, "Age:"),
-        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.patient?.age ? \`\${patient?.patient?.age} Years\` : "")
+        React.createElement("span", { style: { fontWeight: "600", textTransform: "capitalize", gridColumn: "span 2" } }, patient?.patient?.age ? \`\${patient?.patient?.age}\` : "")
       ),
       React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)" } },
         React.createElement("span", null, "Gender:"),

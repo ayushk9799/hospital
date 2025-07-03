@@ -1,5 +1,6 @@
 import React, { forwardRef } from "react";
 import { useSelector } from "react-redux";
+import { parseAge } from "../../../assets/Data";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplate } from "../../../templates/headertemplate";
 // import { consentFormTemplateStringDefault } from "../../../templatesExperiments/consentExperiment";
@@ -31,7 +32,7 @@ const ConsentDynamicForm = forwardRef((props, ref) => {
     // Get the component function
     const ComponentFunction = templateFunction(React, HospitalHeader);
     // Execute the component function with the props
-    return ComponentFunction(patient, hospitalInfo, ref);
+    return ComponentFunction({...patient, patient:{...patient.patient, age:parseAge(patient.patient?.age,{yearLabel:"Years",monthLabel:"Months",dayLabel:"Days"})}}, hospitalInfo, ref);
   } catch (error) {
     console.error("Error rendering Consent form:", error);
     return React.createElement(

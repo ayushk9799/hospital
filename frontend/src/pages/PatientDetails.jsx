@@ -1,6 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "../hooks/use-toast";
+import { parseAge } from "../assets/Data";
+import { useSelector, useDispatch } from "react-redux";
+import OPDPrescriptionTemplate from "../templates/opdPrescription";
+import { DEFAULT_PRESCRIPTION_FORM_CONFIG } from "../config/opdPrescriptionConfig";
+import { fetchDoctorPrescriptionTemplates } from "../redux/slices/doctorPrescriptionSlice";
 import {
   User,
   Phone,
@@ -63,9 +68,20 @@ export default function PatientDetails({
   onVisitSelect,
 }) {
   const { toast } = useToast();
+  const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState("");
   const [allDates, setAllDates] = useState([]);
   const navigate = useNavigate();
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
+  const { templates: doctorTemplates, status: doctorTemplatesStatus } =
+    useSelector((state) => state.doctorPrescription);
+
+  // Fetch doctor templates when component mounts
+  useEffect(() => {
+    if (doctorTemplatesStatus === "idle") {
+      dispatch(fetchDoctorPrescriptionTemplates());
+    }
+  }, [doctorTemplatesStatus, dispatch]);
 
   useEffect(() => {
     if (patientData) {
@@ -112,14 +128,126 @@ export default function PatientDetails({
 
   if (!patientData) return null;
 
+  // Get form configuration based on doctor (similar to OPDModule.jsx)
+  const getFormConfigForVisit = (visitData) => {
+    if (doctorTemplates && visitData?.doctor?._id) {
+      const doctorTemplate = doctorTemplates.find((template) =>
+        template.associatedDoctors.some(
+          (doc) => doc._id === visitData.doctor._id
+        )
+      );
+      if (doctorTemplate) {
+        return doctorTemplate.value;
+      }
+    }
+    return DEFAULT_PRESCRIPTION_FORM_CONFIG;
+  };
+
+  // Helper function to transform prescription data to formData structure
+   // Helper function to standardize array formatting
+   const standardizeArrayFormat = (value, defaultStructure = { name: '' }) => {
+    if (!value) return [];
+    
+    if (!Array.isArray(value)) {
+      // If it's a string, split by comma and convert to objects
+      if (typeof value === 'string') {
+        return value.split(',').map(item => ({ name: item.trim() })).filter(item => item.name);
+      }
+      return [];
+    }
+    
+    // If it's already an array, check the format of elements
+    return value.map(item => {
+      if (typeof item === 'string') {
+        return { name: item };
+      } else if (typeof item === 'object' && item !== null) {
+        // If it's already an object, ensure it has the required structure
+        if (!item.name && Object.keys(defaultStructure).length === 1) {
+          // If it's a simple object but missing 'name', try to extract a meaningful value
+          const firstKey = Object.keys(item)[0];
+          return { name: item[firstKey] || '' };
+        }
+        return { ...defaultStructure, ...item };
+      }
+      return defaultStructure;
+    }).filter(item => item.name); // Remove empty items
+  };
+
+  // Helper function to transform prescription data to formData structure
+  const transformPrescriptionToFormData = (visitData) => {
+    const prescription = visitData.prescription || {};
+    console.log(prescription);
+    
+    return {
+      vitals: visitData.vitals || {},
+      
+      // Handle medications with proper structure
+      medications: (() => {
+        const meds = prescription.medications || visitData.medications || [];
+        if (!Array.isArray(meds)) return [];
+        
+        return meds.map(med => {
+          if (typeof med === 'string') {
+            return { name: med, frequency: '', duration: '', remarks: '' };
+          } else if (typeof med === 'object' && med !== null) {
+            return {
+              name: med.name || '',
+              frequency: med.frequency || '',
+              duration: med.duration || '',
+              remarks: med.remarks || '',
+              ...med
+            };
+          }
+          return { name: '', frequency: '', duration: '', remarks: '' };
+        }).filter(med => med.name);
+      })(),
+      
+      // Standardize diagnosis array
+      diagnosis: standardizeArrayFormat(prescription.diagnosis),
+      
+      // Standardize comorbidities array  
+      comorbidities: standardizeArrayFormat(prescription.comorbidities || visitData.comorbidities),
+      
+      // Standardize labTests array
+      labTests: standardizeArrayFormat(prescription.labTests || visitData.labTests),
+      
+      // Handle text fields
+      chiefComplaints: prescription.chiefComplaint || prescription.chiefComplaints || visitData.reasonForVisit || '',
+      treatment: prescription.treatment || visitData.treatment || '',
+      additionalInstructions: prescription.additionalInstructions || visitData.additionalInstructions || '',
+      advice: prescription.advice || '',
+      followUp: prescription.followUp || '',
+      
+      // Include any other dynamic fields from prescription
+      ...Object.keys(prescription).reduce((acc, key) => {
+        // Skip fields we've already processed
+        const processedFields = ['medications', 'diagnosis', 'comorbidities', 'labTests', 'chiefComplaint', 'chiefComplaints', 'treatment', 'additionalInstructions', 'advice', 'followUp'];
+        if (!processedFields.includes(key)) {
+          const value = prescription[key];
+          // If it's an array, try to standardize it
+          if (Array.isArray(value)) {
+            acc[key] = standardizeArrayFormat(value);
+          } else {
+            acc[key] = value;
+          }
+        }
+        return acc;
+      }, {})
+    };
+  };
+
   const renderVisitDetails = () => {
     if (!selectedVisitProp || !patientData) return null;
 
     const visitData = selectedVisitProp;
+    console.log(visitData);
 
     const isIPD = patientData.admissionDetails?.some(
       (ad) => ad._id === visitData._id
     );
+
+    // Get the appropriate form configuration for this visit's doctor
+    const formConfig = getFormConfigForVisit(visitData);
 
     return (
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -151,6 +279,11 @@ export default function PatientDetails({
             <TabsTrigger value="labReports" className="px-3">
               Lab Reports
             </TabsTrigger>
+            {!isIPD && (
+              <TabsTrigger value="prescription" className="px-3">
+                Prescription
+              </TabsTrigger>
+            )}
           </TabsList>
         </div>
 
@@ -421,6 +554,49 @@ export default function PatientDetails({
             </CardContent>
           </Card>
         </TabsContent>
+        {!isIPD && (
+          <TabsContent value="prescription">
+            <Card>
+              <CardHeader>
+                <CardTitle>Prescription Preview</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {(visitData.prescription &&
+                  Object.keys(visitData.prescription).length > 0) ||
+                visitData.vitals ||
+                visitData.medications?.length > 0 ? (
+                  <div className="flex justify-center bg-gray-100 p-4 min-h-[600px] overflow-auto">
+                    <div
+                      className="bg-white shadow-lg"
+                      style={{
+                        width: "210mm",
+                        minHeight: "297mm",
+                        padding: "6mm 5mm",
+                        margin: "0 auto",
+                        transform: "scale(0.8)",
+                        transformOrigin: "top center",
+                      }}
+                    >
+                      <OPDPrescriptionTemplate
+                        patient={{
+                          ...patientData,
+                          age: parseAge(patientData.age),
+                        }}
+                        formData={transformPrescriptionToFormData(visitData)}
+                        field={formConfig.sections}
+                        hospital={hospital}
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-gray-500">
+                    <p>No prescription data available for this visit.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     );
   };
@@ -486,7 +662,7 @@ export default function PatientDetails({
             <InfoItem
               icon={<User className="h-4 w-4" />}
               label="Age & Gender"
-              value={`${patientData.age} yrs, ${patientData.gender}`}
+              value={`${parseAge(patientData.age)}, ${patientData.gender}`}
             />
             <InfoItem
               icon={<Phone className="h-4 w-4" />}

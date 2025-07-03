@@ -61,6 +61,8 @@ export default function LandingPage() {
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+ 
+  
 
   const handleSubmit = async (e) => {
     e.preventDefault();

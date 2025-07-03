@@ -32,6 +32,7 @@ import { Badge } from "../../ui/badge";
 import { X, Trash2 } from "lucide-react";
 import LabDetailsModal from "./LabDetailsModal";
 import SearchSuggestion from "./CustomSearchSuggestion";
+import { parseAge } from "../../../assets/Data";
 
 const paymentMethods = [
   { name: "Cash" },
@@ -353,7 +354,7 @@ export default function LabEditDialog({ open, onOpenChange, labData }) {
                     <MemoizedInput
                       id="age"
                       label="Age"
-                      type="number"
+                      type="text"
                       value={formData.age}
                       onChange={handleInputChange}
                       error={errors.age}

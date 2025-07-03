@@ -22,6 +22,10 @@ export default function MergeTemplatePreview() {
     labNumber: "LAB-2023-0123",
     dateOfBirth: "1978-05-15",
     contactNumber: "+1 (555) 123-4567",
+    patient:{
+      age:"45-41",
+      gender:"Male"
+    },
     address: "123 Main Street, Anytown, USA",
     labTests: [
       { name: "Complete Blood Count", reportStatus: "Completed" },

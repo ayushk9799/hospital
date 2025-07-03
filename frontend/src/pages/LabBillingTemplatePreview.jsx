@@ -15,7 +15,7 @@ export default function LabBillingTemplatePreview() {
   // Sample data for preview
   const sampleLabData = {
     patientName: "John Doe",
-    age: "35",
+    age: "35-1",
     gender: "Male",
     registrationNumber: "LAB123",
     contactNumber: "9876543210",

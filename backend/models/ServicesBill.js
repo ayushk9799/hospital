@@ -36,7 +36,7 @@ const servicesBillSchema = new mongoose.Schema(
       phone: String,
       registrationNumber: String,
       ipdNumber: String,
-      age: Number,
+      age: String,
       gender: String,
       address: String,
     },

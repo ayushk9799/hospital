@@ -326,7 +326,7 @@ const OPDProcedureDialog = ({ open, onOpenChange, initialPatientData }) => {
                 <MemoizedInput
                   id="age"
                   name="age"
-                  type="number"
+                  type="text"
                   label="Age"
                   value={formData.age}
                   onChange={handleInputChange}

@@ -18,6 +18,10 @@ import paymentReducer from "./slices/paymentSlice";
 import labReducer from "./slices/labSlice";
 import hospitalSettingsReducer from "./slices/hospitalSettingsSlice";
 import consultationFeeReducer from "./slices/consultationFeeSlice";
+import prescriptionTemplatesReducer from "./slices/prescriptionTemplateSlice";
+import doctorDataReducer from "./slices/doctorDataSlice";
+import doctorPrescriptionReducer from "./slices/doctorPrescriptionSlice";
+import textTemplatesReducer from "./slices/textTemplatesSlice";
 
 export const store = configureStore({
   reducer: {
@@ -40,5 +44,9 @@ export const store = configureStore({
     lab: labReducer,
     hospitalSettings: hospitalSettingsReducer,
     consultationFees: consultationFeeReducer,
+    prescriptionTemplates: prescriptionTemplatesReducer,
+    doctorData: doctorDataReducer,
+    doctorPrescription: doctorPrescriptionReducer,
+    textTemplates: textTemplatesReducer,
   },
 });

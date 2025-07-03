@@ -22,8 +22,8 @@ import {
 import { cn } from "../lib/utils";
 
 // backend url
-export const Backend_URL = "https://thehospital.in";
-// export const Backend_URL = "http://localhost:3000";
+//export const Backend_URL = "https://thehospital.in";
+export const Backend_URL = "http://localhost:3000";
 
 export const formatCurrency = (amount) => {
   const hasDecimal = amount % 1 !== 0;
@@ -34,7 +34,7 @@ export const formatCurrency = (amount) => {
   })
     .format(Math.abs(amount))
     .replace(/^(\D+)/, "₹");
-  
+
   return amount < 0 ? `-${formattedAmount}` : formattedAmount;
 };
 
@@ -81,6 +81,9 @@ export const permissionGroups = {
     { id: "delete_staff", label: "Delete Staff" },
   ],
   "Hospital Management": [{ id: "edit_hospital", label: "Edit Hospital" }],
+  "Doctor Section": [
+    { id: "make_prescription", label: "Make Prescription" },
+  ],
 };
 
 export const DateRangePicker = ({ from, to, onSelect, onSearch, onCancel }) => {
@@ -301,7 +304,7 @@ export const convertTo12Hour = (time24) => {
 //       "Alpha-2-Macroglobulin",
 //       "Aldolase",
 //       "Lithium Level",
-     
+
 //     ],
 //   },
 //   {
@@ -355,7 +358,7 @@ export const convertTo12Hour = (time24) => {
 //       "Stool Culture",
 //       "Blood Culture",
 //       "Sputum Culture",
-    
+
 //     ],
 //   },
 //   {
@@ -1238,7 +1241,7 @@ export const convertTo12Hour = (time24) => {
 //         normalRange: "<5.0",
 //       },
 //       {
-//         name: "myoglobin", 
+//         name: "myoglobin",
 //         label: "Myoglobin",
 //         unit: "ng/mL",
 //         normalRange: "<72"
@@ -1250,7 +1253,7 @@ export const convertTo12Hour = (time24) => {
 //         normalRange: "<100",
 //       },
 //       {
-//         name: "nt_probnp_level", 
+//         name: "nt_probnp_level",
 //         label: "NT-proBNP (N-terminal pro-BNP)",
 //         unit: "pg/mL",
 //         normalRange:"",
@@ -1732,7 +1735,7 @@ export const convertTo12Hour = (time24) => {
 //         label: "Anti-HBc Total (HBcAb Total)",
 //         unit: "Index",
 //         normalRange: "<1",
-        
+
 //       },
 //       {
 //         name: "hbv_dna_quant",
@@ -2532,7 +2535,6 @@ export const convertTo12Hour = (time24) => {
 //   ]
 // },
 
- 
 //   "tumor-markers": {
 //     "Prostate Specific Antigen (PSA)": [
 //       {
@@ -4231,3 +4233,59 @@ export const comorbidities = [
   "Anemia",
   "Atrial fibrillation",
 ];
+
+// Parses an age string (e.g., "45", "45-1", "45-12-365") and formats it
+// into a human-readable string. The input is assumed to be in the order
+// Years-Months-Days, but the function is tolerant:
+//   "45"          → 45 Yrs
+//   "45-1"        → 45 Yrs 1 M (second part ≤12 treated as months, otherwise days)
+//   "45-12-365"   → 45 Yrs 12 M 365 D
+// You can customise the labels for year/month/day via the second argument.
+export function parseAge(
+  ageInput,
+  { yearLabel = "Yrs", monthLabel = "Months", dayLabel = "Days" } = {}
+) {
+  if (ageInput === null || ageInput === undefined || ageInput === "") {
+    return "N/A";
+  }
+
+  // Accept numeric age directly.
+  if (typeof ageInput === "number") {
+    return `${ageInput} ${yearLabel}`;
+  }
+
+  // Clean and split the string by hyphen/dash.
+  const parts = ageInput
+    .toString()
+    .trim()
+    .split("-")
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  let years = 0,
+    months = 0,
+    days = 0;
+
+  if (parts.length === 1) {
+    // Only years provided
+    years = parseInt(parts[0], 10) || 0;
+  } else if (parts.length === 2) {
+    years = parseInt(parts[0], 10) || 0;
+    const second = parseInt(parts[1], 10) || 0;
+
+    // Heuristic: <=12 → months, otherwise days
+    if (second <= 12) months = second;
+    else days = second;
+  } else if (parts.length >= 3) {
+    years = parseInt(parts[0], 10) || 0;
+    months = parseInt(parts[1], 10) || 0;
+    days = parseInt(parts[2], 10) || 0;
+  }
+
+  const segments = [];
+  if (years) segments.push(`${years} ${yearLabel}`);
+  if (months) segments.push(`${months} ${monthLabel}`);
+  if (days) segments.push(`${days} ${dayLabel}`);
+
+  return segments.join(" ").trim() || `0 ${yearLabel}`;
+}

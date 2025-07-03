@@ -6,6 +6,9 @@ export const opdBillTokenTemplateDefault = `(patientData, hospitalInfo, ref) => 
     const year = d.getFullYear();
     return \`\${day}/\${month}/\${year}\`;
   };
+
+
+
 let city = hospitalInfo?.address?.split(",").at(-1).trim();
   const hardcodedTerms = [
     "This receipt is valid only once.",
@@ -48,7 +51,7 @@ let city = hospitalInfo?.address?.split(",").at(-1).trim();
             ),
             React.createElement("div", { className: "flex gap-1 justify-end" },
               React.createElement("span", { className: "font-semibold" }, "Age/Sex:"),
-              React.createElement("span", { className: "font-semibold" }, \`\${patient.age} yrs/\${patient.gender}\`)
+              React.createElement("span", { className: "font-semibold" }, \`\${patient.age}/\${patient.gender}\`)
             ),
             React.createElement("div", { className: "flex gap-1 justify-end" },
               React.createElement("span", { className: "font-semibold" }, "UHID No:"),

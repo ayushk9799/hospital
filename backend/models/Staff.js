@@ -148,6 +148,7 @@ const staffSchema = new mongoose.Schema({
         "view_otherscollection_for_just_today", // Permission to view only today's collections/payments
 
         "record_expense",
+        "make_prescription",
 
         // Appointments
         "view_appointments",

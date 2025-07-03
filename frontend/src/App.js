@@ -83,6 +83,10 @@ import HospitalSettings from "./pages/HospitalSettings";
 import ConsultationFees from "./pages/ConsultationFees";
 import { fetchConsultationFees } from "./redux/slices/consultationFeeSlice";
 import Subscription from "./pages/Subscription";
+import DoctorPrescriptionSettings from "./pages/DoctorPrescriptionSettings";
+import DoctorWiseData from "./pages/DoctorWiseData";
+import DoctorDetails from "./pages/DoctorDetails";
+
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const dispatch = useDispatch();
@@ -314,9 +318,23 @@ const AppContent = () => {
                     path="/settings/consultation-fees"
                     element={<ConsultationFees />}
                   />
-                  <Route path="/settings/subscription" element={<Subscription />} />
+                  <Route
+                    path="/settings/subscription"
+                    element={<Subscription />}
+                  />
+                  <Route
+                    path="/settings/prescription-settings"
+                    element={<DoctorPrescriptionSettings />}
+                  />
+                  <Route
+                    path="/settings/doctor-wise-data"
+                    element={<DoctorWiseData />}
+                  />
+                  <Route
+                    path="/settings/doctor-wise-data/:doctorId"
+                    element={<DoctorDetails />}
+                  />
                 </>
-
               )}
             </Routes>
           </main>

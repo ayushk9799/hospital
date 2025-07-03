@@ -38,26 +38,25 @@ export const FloatingLabelSelect = ({
           className={`peer px-3 py-2 w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
             error && !value && !isFocused ? "border-red-500" : "border-gray-300"
           }`}
-        ><label
-        htmlFor={id}
-        className={`absolute text-xs duration-300 font-medium transform -translate-y-1/2 left-3
+        >
+          <label
+            htmlFor={id}
+            className={`absolute text-xs duration-300 font-medium transform -translate-y-1/2 left-3
           peer-placeholder-shown:text-sm peer-placeholder-shown:top-1/2
           peer-focus:text-xs peer-focus:top-0 peer-focus:-translate-y-1/2
           ${value || isFocused ? "top-0 -translate-y-1/2 text-xs" : "top-1/2"}
           ${error && !value && !isFocused ? "text-red-500" : "text-gray-500"}
           bg-white px-1`}
-      >
-        {label}
-        {error && !value && !isFocused && (
-          <span className="text-red-500 ml-1">*Required</span>
-        )}
-      </label>
+          >
+            {label}
+            {error && !value && !isFocused && (
+              <span className="text-red-500 ml-1">*Required</span>
+            )}
+          </label>
           <SelectValue placeholder=" " />
         </SelectTrigger>
         <SelectContent>{children}</SelectContent>
-        
       </Select>
-      
     </div>
   );
 };
@@ -78,10 +77,20 @@ export default function PatientInfoForm({
     (e) => {
       const dateOfBirth = e.target.value;
       const age = dateOfBirth
-        ? new Date().getFullYear() - new Date(dateOfBirth).getFullYear()
+        ? (() => {
+            const today = new Date();
+            const dob = new Date(dateOfBirth);
+            let years = today.getFullYear() - dob.getFullYear();
+            let months = today.getMonth() - dob.getMonth();
+            if (months < 0) {
+              years -= 1;
+              months += 12;
+            }
+            return `${years}-${months}`;
+          })()
         : "";
       handleInputChange({ target: { id: "dateOfBirth", value: dateOfBirth } });
-      handleInputChange({ target: { id: "age", value: age.toString() } });
+      handleInputChange({ target: { id: "age", value: age } });
     },
     [handleInputChange]
   );
@@ -95,25 +104,36 @@ export default function PatientInfoForm({
     [handleInputChange]
   );
   const checkFollowUpDate = (patient, formData, consultationFeeSettings) => {
-    try{
-    let lastVisitDate = patient?.visits.filter(visit=>visit.consultationType!=="follow-up")?.sort((a,b)=>new Date(b.bookingDate)-new Date(a.bookingDate))[0]?.bookingDate;
-    if(lastVisitDate){
-      lastVisitDate = new Date(lastVisitDate);
-    }
-    const bookingDate = new Date(new Date(formData.visit.bookingDate).toDateString())
-    const followUpLimitDate = new Date(lastVisitDate);
-    followUpLimitDate.setDate(followUpLimitDate.getDate() + (consultationFeeSettings.masterFollowup===-1?14:consultationFeeSettings.masterFollowup));
-   
-    return bookingDate >= lastVisitDate && bookingDate <= followUpLimitDate;
-    }catch(error){
+    try {
+      let lastVisitDate = patient?.visits
+        .filter((visit) => visit.consultationType !== "follow-up")
+        ?.sort(
+          (a, b) => new Date(b.bookingDate) - new Date(a.bookingDate)
+        )[0]?.bookingDate;
+      if (lastVisitDate) {
+        lastVisitDate = new Date(lastVisitDate);
+      }
+      const bookingDate = new Date(
+        new Date(formData.visit.bookingDate).toDateString()
+      );
+      const followUpLimitDate = new Date(lastVisitDate);
+      followUpLimitDate.setDate(
+        followUpLimitDate.getDate() +
+          (consultationFeeSettings.masterFollowup === -1
+            ? 14
+            : consultationFeeSettings.masterFollowup)
+      );
+
+      return bookingDate >= lastVisitDate && bookingDate <= followUpLimitDate;
+    } catch (error) {
       console.error("Error checking follow-up date:", error);
       return false;
     }
   };
-  
+
   const handleSearch = async () => {
     if (!formData.registrationNumber) return;
-    
+
     try {
       const result = await dispatch(searchPatients({searchQuery:formData.registrationNumber.trim()})).unwrap();
       if (result.results?.patients && result.results?.patients?.length > 0) {
@@ -122,7 +142,12 @@ export default function PatientInfoForm({
           ...patient,
           isFromSearch: true
         });
-       handleSelectChange("visit.consultationType", checkFollowUpDate(patient, formData, consultationFeeSettings)?"follow-up":"new");
+        handleSelectChange(
+          "visit.consultationType",
+          checkFollowUpDate(patient, formData, consultationFeeSettings)
+            ? "follow-up"
+            : "new"
+        );
       }
     } catch (error) {
       console.error("Search failed:", error);
@@ -145,7 +170,6 @@ export default function PatientInfoForm({
             <MemoizedInput
               id="age"
               label="Age"
-              type="number"
               value={formData.age}
               onChange={handleAgeChange}
               error={errors.age}
@@ -168,7 +192,7 @@ export default function PatientInfoForm({
             <MemoizedInput
               id="age"
               label="Age"
-              type="number"
+              type="text"
               value={formData.age}
               onChange={handleAgeChange}
               error={errors.age}
@@ -202,7 +226,7 @@ export default function PatientInfoForm({
             type="button"
             onClick={handleSearch}
             className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
-        >
+          >
             <Search className="h-5 w-5" />
           </button>
         )}

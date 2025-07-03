@@ -90,7 +90,7 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
         ),
         React.createElement("div", { className: "flex items-center" },
           React.createElement("span", { className: " font-bold text-[#34495e] mr-[2mm] min-w-[20mm]" }, "Age/Gender:"),
-          React.createElement("span", { className: " text-[#2c3e50]" }, \`\${patientData?.patient?.age || patientData.age} YEARS/\${patientData?.patient?.gender?.charAt(0) || patientData.gender?.charAt(0)}\`)
+          React.createElement("span", { className: " text-[#2c3e50]" }, \`\${patientData.age}/\${patientData?.patient?.gender?.charAt(0) || patientData.gender?.charAt(0)}\`)
         ),
         React.createElement("div", { className: "flex items-center" },
           React.createElement("span", { className: " font-bold text-[#34495e] mr-[2mm] min-w-[20mm]" }, "Reg/Lab No:"),
@@ -412,7 +412,7 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
       React.createElement("div", { className: "flex items-center" },
         React.createElement("span", { className: "font-bold text-[#34495e] mr-[2mm] min-w-[20mm]" }, "Age/Gender:"),
         React.createElement("span", { className: "text-[#2c3e50]" }, 
-          \`\${patientData?.patient?.age || patientData?.age} YEARS/\${patientData?.patient?.gender || patientData?.gender}\`
+          \`\${patientData?.age}/\${patientData?.patient?.gender || patientData?.gender}\`
         )
       ),
       React.createElement("div", { className: "flex items-center" },

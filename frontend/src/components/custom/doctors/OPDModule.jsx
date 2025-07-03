@@ -1,275 +1,392 @@
 import { useState, useEffect, useMemo, useRef } from "react";
 import { Button } from "../../ui/button";
-import { Input } from "../../ui/input";
-import { Label } from "../../ui/label";
 import { ScrollArea } from "../../ui/scroll-area";
-import { Textarea } from "../../ui/textarea";
-import { PlusCircle, Trash2 } from "lucide-react";
-import SearchSuggestion from "../registration/CustomSearchSuggestion";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchItems } from "../../../redux/slices/pharmacySlice";
 import { savePrescription } from "../../../redux/slices/patientSlice";
 import { fetchTemplates } from "../../../redux/slices/templatesSlice";
 import { useToast } from "../../../hooks/use-toast";
 import OPDPrescriptionTemplate from "../../../templates/opdPrescription";
-import { Badge } from "../../ui/badge";
-import { X } from "lucide-react";
-import MultiSelectInput from "../MultiSelectInput";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
 import { useReactToPrint } from "react-to-print";
+import { fetchDoctorPrescriptionTemplates } from "../../../redux/slices/doctorPrescriptionSlice";
+import { DEFAULT_PRESCRIPTION_FORM_CONFIG } from "../../../config/opdPrescriptionConfig";
+import FormField from "./form-fields/FormField";
+import { fetchDoctorData } from "../../../redux/slices/doctorDataSlice";
+import { parseAge } from "../../../assets/Data";
+import { fetchTextTemplates } from "../../../redux/slices/textTemplatesSlice";
 
-// Flatten the lab categories
+const generateInitialStateFromConfig = (config) => {
+  const initialState = {
+    vitals: {},
+  };
 
+  if (!config || !config.sections) {
+    return initialState;
+  }
 
-export default function OPDModule({ patient }) {
-  const [vitals, setVitals] = useState({
-    temperature: "",
-    heartRate: "",
-    bloodPressure: "",
-    respiratoryRate: "",
-    height: "",
-    weight: "",
-    oxygenSaturation: "",
+  config.sections.forEach((section) => {
+    section.fields.forEach((field) => {
+      const { id, type, disabled, suggestions } = field;
+
+      if (disabled) {
+        return;
+      }
+
+      switch (type) {
+        case "vitals":
+          initialState.vitals = {
+            temperature: "",
+            heartRate: "",
+            bloodPressure: "",
+            respiratoryRate: "",
+            height: "",
+            weight: "",
+            oxygenSaturation: "",
+            bmi: "",
+          };
+          break;
+        case "medicineAdvice":
+          initialState.medications = [
+            { name: "", frequency: "0-0-0", duration: "", remarks: "" },
+          ];
+          break;
+        case "multiselect":
+          initialState[id] = [];
+          if (id === "diagnosis") {
+            initialState.diagnosis = [];
+          }
+          break;
+        case "text":
+          initialState[id] = "";
+          break;
+        case "textarea":
+          initialState[id] = "";
+          break;
+
+         
+        default:
+          break;
+      }
+    });
   });
-  const hospital = useSelector((state) => state.hospital.hospitalInfo);
-  const {labTestsTemplate} = useSelector((state) => state.templates);
-  const allLabTests = labTestsTemplate.map((test) => {
-    return {
-      name:test.name
-    }
-  });
-  const [prescription, setPrescription] = useState({
-    diagnosis: "",
-    treatment: "",
-    medications: [{ name: "", frequency: "0-0-0", duration: "" }],
-    additionalInstructions: "",
-  });
-  const [labTests, setLabTests] = useState([]);
+
+  return initialState;
+};
+
+export default function OPDModule({ patient, doctorId }) {
   const dispatch = useDispatch();
+  const { toast } = useToast();
+  const prescriptionRef = useRef();
 
-  const [selectedLabTests, setSelectedLabTests] = useState([]);
-
-  // const [comorbidities, setComorbidities] = useState([]);
-  const [selectedComorbidities, setSelectedComorbidities] = useState([]);
+  const { templates: doctorTemplates, status: doctorTemplatesStatus } =
+    useSelector((state) => state.doctorPrescription);
+  const hospital = useSelector((state) => state.hospital.hospitalInfo);
   const {
+    labTestsTemplate,
     diagnosisTemplate = [],
-    comorbidities = [],
-    medicinelist = [],
-    status,
+    comorbidities: comorbiditiesTemplate = [],
+    status: templatesStatus,
   } = useSelector((state) => state.templates);
-  const [isPrinting, setIsPrinting] = useState(false);
-  useEffect(() => {
-    if (status === "idle") {
-      dispatch(fetchTemplates());
-    }
-  }, [status, dispatch]);
-  const [selectedDiagnoses, setSelectedDiagnoses] = useState([]);
+  const { currentDoctorData } = useSelector((state) => state.doctorData);
+  const { templates: textTemplates } = useSelector(
+    (state) => state.textTemplates
+  );
 
-  const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const prescriptionUpdateStatus = useSelector(
     (state) => state.patients.prescriptionUpdateStatus
   );
-  const { toast } = useToast();
 
-  const prescriptionRef = useRef();
+  const [formData, setFormData] = useState(() =>
+    generateInitialStateFromConfig(DEFAULT_PRESCRIPTION_FORM_CONFIG)
+  );
 
-  const handlePrint = useReactToPrint({
-    content: () => prescriptionRef.current,
-    onBeforeGetContent: () => {
-      setIsPrinting(true);
-      return new Promise((resolve) => {
-        setTimeout(() => {
-          setIsPrinting(false);
-          resolve();
-        }, 500);
+  useEffect(() => {
+    if (templatesStatus === "idle") {
+      dispatch(fetchTemplates());
+    }
+    if (doctorTemplatesStatus === "idle") {
+      dispatch(fetchDoctorPrescriptionTemplates());
+    }
+  }, [templatesStatus, dispatch, doctorTemplatesStatus]);
+
+  useEffect(() => {
+    if (patient?.doctor?._id) {
+      dispatch(fetchDoctorData(patient.doctor._id));
+    }
+  }, [patient?.doctor?._id, dispatch]);
+
+  const formConfig = useMemo(() => {
+    if (doctorTemplates && patient.doctor?._id) {
+      const doctorTemplate = doctorTemplates.find((template) =>
+        template.associatedDoctors.some(
+          (doc) => doc._id === patient.doctor?._id
+        )
+      );
+      if (doctorTemplate) {
+        return doctorTemplate.value;
+      }
+    }
+    return DEFAULT_PRESCRIPTION_FORM_CONFIG;
+  }, [doctorTemplates, patient.doctor?._id, patient]);
+
+  // Helper function to create field type map from form configuration
+  const getFieldTypeMap = (config) => {
+    const fieldTypeMap = {};
+    if (!config || !config.sections) return fieldTypeMap;
+
+    config.sections.forEach((section) => {
+      section.fields.forEach((field) => {
+        if (!field.disabled) {
+          fieldTypeMap[field.id] = field.type;
+        }
       });
-    },
-    pageStyle: `
-    @media print {
-     @page {
-          size: A4;
-          margin: 20mm;
-        }
-        body {
-          print-color-adjust: exact;
-          -webkit-print-color-adjust: exact;
-        }
-        .print-only {
-          display: block !important;
-        }
-        .no-print {
-          display: none !important;   
-        }
-        .print-content {
-          position: relative;
-          min-height: 100vh;
-          padding: 25px;
-        }
-      }`,
-  });
+    });
 
-  const handlePreviewClick = async () => {
-    try {
-      await handlePrint();
-    } catch (error) {
-      console.error("Print failed:", error);
-      toast({
-        title: "Print Error",
-        description: "Failed to generate prescription preview",
-        variant: "destructive",
-      });
+    return fieldTypeMap;
+  };
+
+  // Helper function to preprocess data based on field type
+  const preprocessDataForFieldType = (value, fieldType, fieldId) => {
+    if (value === undefined || value === null) {
+      return fieldType === "multiselect" ? [] : value;
+    }
+
+    switch (fieldType) {
+      case "multiselect":
+        // Handle multiselect field type compatibility
+        if (typeof value === "string") {
+          // Split comma-separated string into array of objects
+          return value
+            .split(",")
+            .map((item) => ({ name: item.trim() }))
+            .filter((item) => item.name);
+        } else if (Array.isArray(value)) {
+          // If already array, check if it's array of strings or objects
+          if (value.length > 0 && typeof value[0] === "string") {
+            // Convert array of strings to array of objects
+            return value.map((item) => ({ name: item }));
+          } else if (
+            value.length > 0 &&
+            typeof value[0] === "object" &&
+            value[0].name !== undefined
+          ) {
+            // Already in correct format
+            return value;
+          }
+        }
+        return [];
+
+      case "diagnosis":
+        // Diagnosis can be stored as string but displayed as multiselect
+        if (typeof value === "string") {
+          return value
+            .split(",")
+            .map((d) => ({ name: d.trim() }))
+            .filter((d) => d.name);
+        } else if (Array.isArray(value)) {
+          if (value.length > 0 && typeof value[0] === "string") {
+            return value.map((item) => ({ name: item }));
+          }
+        }
+        return Array.isArray(value) ? value : [];
+
+      case "medicineAdvice":
+        // Medications should be an array
+        return Array.isArray(value) ? value : [];
+
+      case "vitals":
+        // Vitals should be an object
+        return typeof value === "object" && value !== null ? value : {};
+
+      default:
+        // For text, textarea, and other simple types, return as-is
+        return value;
     }
   };
 
   useEffect(() => {
-    if (itemsStatus === "idle") {
-      dispatch(fetchItems());
-    }
-  }, [dispatch, itemsStatus]);
+    let newFormData = generateInitialStateFromConfig(formConfig);
+    
 
-  useEffect(() => {
-    // Initialize state with patient data if available
     if (patient) {
-      setVitals({
-        temperature: patient.vitals?.temperature || "",
-        heartRate: patient.vitals?.heartRate || "",
-        bloodPressure: patient.vitals?.bloodPressure || "",
-        respiratoryRate: patient.vitals?.respiratoryRate || "",
-        height: patient.vitals?.height || "",
-        weight: patient.vitals?.weight || "",
-        oxygenSaturation: patient.vitals?.oxygenSaturation || "",
-      });
-      setPrescription({
-        diagnosis: patient.diagnosis || "",
-        treatment: patient.treatment || "",
-        medications:
-          patient.medications?.length > 0
-            ? patient.medications
-            : [{ name: "", frequency: "0-0-0", duration: "" }],
-        additionalInstructions: patient.additionalInstructions || "",
-      });
-      // Update labTests and selectedLabTests
-      const patientLabTests =
-        patient.labTests?.map((test) => ({ name: test })) || [];
-      setLabTests(patientLabTests);
-      setSelectedLabTests(patientLabTests);
+      const fieldTypeMap = getFieldTypeMap(formConfig);
 
-      // Update comorbidities and selectedComorbidities
-      const patientComorbidities =
-        patient.comorbidities?.map((comorbidity) => ({ name: comorbidity })) ||
-        [];
-      // setComorbidities(patientComorbidities);
-      setSelectedComorbidities(patientComorbidities);
-      // Update selectedDiagnoses from patient data
-      const patientDiagnoses =
-        patient.diagnosis?.split(",").map((d) => ({ name: d.trim() })) || [];
-      setSelectedDiagnoses(patientDiagnoses);
+      newFormData = Object.keys(newFormData).reduce(
+        (acc, key) => {
+          const prescription = patient.prescription || {};
+          const fieldType = fieldTypeMap[key];
+
+          if (key === "vitals") {
+            // Handle vitals specially
+            if (patient.vitals) {
+              for (const vitalKey in acc.vitals) {
+                acc.vitals[vitalKey] = patient.vitals[vitalKey] || "";
+              }
+            }
+          } else if (key === "medications") {
+            // Handle medications specially for backward compatibility
+            const medsFromPrescription = prescription.medications;
+            const medsFromLegacy = patient.medications;
+            const rawMedications =
+              medsFromPrescription && medsFromPrescription.length > 0
+                ? medsFromPrescription
+                : medsFromLegacy && medsFromLegacy.length > 0
+                ? medsFromLegacy
+                : newFormData.medications;
+
+            acc[key] = preprocessDataForFieldType(
+              rawMedications,
+              "medicineAdvice",
+              key
+            );
+          } else {
+           
+            // Use generic preprocessing for all other fields
+            let rawValue;
+
+            if (prescription[key] !== undefined) {
+              rawValue = prescription[key];
+            } else if (patient[key] !== undefined) {
+              rawValue = patient[key];
+            } else if (patient.vitals && patient.vitals[key] !== undefined) {
+              rawValue = patient.vitals[key];
+            } else {
+              rawValue = newFormData[key];
+            }
+
+
+            // Apply preprocessing based on field type
+            acc[key] = preprocessDataForFieldType(rawValue, fieldType, key);
+          }
+
+          return acc;
+        },
+        { ...newFormData }
+      );
     }
-  }, [patient]);
 
-  const commonMedications = useMemo(() => {
-    return medicinelist.map((item) => ({ name: item }));
-  }, [medicinelist]);
+    setFormData(newFormData);
+  }, [patient, formConfig]);
+ 
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
   const handleVitalChange = (e) => {
     const { name, value } = e.target;
-    setVitals((prev) => {
-      const newVitals = { ...prev, [name]: value };
-      // Calculate BMI if both height and weight are present
+    setFormData((prev) => {
+      const newVitals = { ...prev.vitals, [name]: value };
+
       if (name === "height" || name === "weight") {
-        if (newVitals.height && newVitals.weight) {
-          const heightInMeters = newVitals.height / 100;
-          const bmi = (
-            newVitals.weight /
-            (heightInMeters * heightInMeters)
-          ).toFixed(1);
-          newVitals.bmi = bmi;
+        const height = name === "height" ? value : newVitals.height;
+        const weight = name === "weight" ? value : newVitals.weight;
+        if (height && weight) {
+          const heightInMeters = height / 100;
+          newVitals.bmi = (weight / (heightInMeters * heightInMeters)).toFixed(
+            1
+          );
+        } else {
+          newVitals.bmi = "";
         }
       }
-      return newVitals;
+      return { ...prev, vitals: newVitals };
     });
-  };
-
-  const handlePrescriptionChange = (e) => {
-    setPrescription({ ...prescription, [e.target.name]: e.target.value });
   };
 
   const handleMedicationChange = (index, field, value) => {
-    const newMedications = [...prescription.medications];
-    newMedications[index] = { ...newMedications[index], [field]: value };
-    setPrescription({ ...prescription, medications: newMedications });
-  };
-
-  const handleMedicationSuggestionSelect = (index, suggestion) => {
-    handleMedicationChange(index, "name", suggestion.name);
-  };
-
-  const addMedication = () => {
-    setPrescription({
-      ...prescription,
-      medications: [
-        ...prescription.medications,
-        { name: "", frequency: "0-0-0", duration: "" },
-      ],
+    setFormData((prev) => {
+      const newMedications = [...prev.medications];
+      newMedications[index] = { ...newMedications[index], [field]: value };
+      return { ...prev, medications: newMedications };
     });
   };
 
+  const addMedication = () => {
+    setFormData((prev) => ({
+      ...prev,
+      medications: [
+        ...prev.medications,
+        { name: "", frequency: "0-0-0", duration: "" },
+      ],
+    }));
+  };
+
   const removeMedication = (index) => {
-    const newMedications = prescription.medications.filter(
-      (_, i) => i !== index
-    );
-    setPrescription({ ...prescription, medications: newMedications });
+    setFormData((prev) => {
+      const newMedications = prev.medications.filter((_, i) => i !== index);
+      return { ...prev, medications: newMedications };
+    });
   };
 
-  const handleLabTestChange = (index, suggestion) => {
-    const newLabTests = [...labTests];
-    newLabTests[index] = suggestion;
-    setLabTests(newLabTests);
+  const handleMultiSelectChange = (fieldId, values) => {
+    setFormData((prev) => ({ ...prev, [fieldId]: values }));
   };
 
-  const addLabTest = () => {
-    setLabTests([...labTests, { name: "" }]);
+  const handleRemoveValue = (fieldId, valueName) => {
+    setFormData((prev) => {
+      const newValues = prev[fieldId].filter((v) => v.name !== valueName);
+      return { ...prev, [fieldId]: newValues };
+    });
   };
 
-  const removeLabTest = (index) => {
-    const newLabTests = labTests.filter((_, i) => i !== index);
-    setLabTests(newLabTests);
-  };
+  // Helper function to dynamically build prescription payload based on form configuration
+  const buildPrescriptionPayload = () => {
+    const prescription = {};
 
-  const handleComorbiditiesChange = (newComorbidities) => {
-    setSelectedComorbidities(newComorbidities);
-  };
-  const handleRemoveComorbidity = (name) => {
-    setSelectedComorbidities(
-      selectedComorbidities.filter((c) => c.name !== name)
-    );
-  };
+    // Always include vitals if they exist
+    if (formData.vitals) {
+      prescription.vitals = formData.vitals;
+    }
 
-  const handleLabTestsChange = (newLabTests) => {
-    setSelectedLabTests(newLabTests);
-    setLabTests(newLabTests);
-  };
+    // Iterate through form configuration to build payload dynamically
+    formConfig.sections.forEach((section) => {
+      section.fields.forEach((field) => {
+        const { id, type, disabled } = field;
 
-  const handleRemoveLabTest = (name) => {
-    setSelectedLabTests(selectedLabTests.filter((test) => test.name !== name));
-    setLabTests(labTests.filter((test) => test.name !== name));
-  };
+        // Skip disabled fields
+        if (disabled) {
+          return;
+        }
 
-  const handleDiagnosisChange = (newDiagnoses) => {
-    setSelectedDiagnoses(newDiagnoses);
-    // Update the prescription diagnosis field by joining the names
-    setPrescription((prev) => ({
-      ...prev,
-      diagnosis: newDiagnoses.map((d) => d.name).join(", "),
-    }));
-  };
+        // Skip vitals as they're handled separately above
+        if (type === "vitals") {
+          return;
+        }
 
-  const handleRemoveDiagnosis = (name) => {
-    const newDiagnoses = selectedDiagnoses.filter((d) => d.name !== name);
-    setSelectedDiagnoses(newDiagnoses);
-    setPrescription((prev) => ({
-      ...prev,
-      diagnosis: newDiagnoses.map((d) => d.name).join(", "),
-    }));
+        // Handle different field types
+        switch (type) {
+          case "medicineAdvice":
+            if (formData.medications) {
+              prescription.medications = formData.medications;
+            }
+            break;
+
+          case "multiselect":
+            if (formData[id] && Array.isArray(formData[id])) {
+              // Convert array of objects with name property to array of strings
+              prescription[id] = formData[id].map((item) => item.name);
+            }
+            break;
+
+          case "diagnosis":
+            if (formData[id] && Array.isArray(formData[id])) {
+              // Diagnosis is typically stored as comma-separated string
+              prescription[id] = formData[id].map((d) => d.name).join(", ");
+            }
+            break;
+
+          default:
+            // Handle regular text fields, textareas, etc.
+            if (formData[id] !== undefined) {
+              prescription[id] = formData[id];
+            }
+            break;
+        }
+      });
+    });
+
+    return prescription;
   };
 
   const handleSavePrescription = async () => {
@@ -282,17 +399,14 @@ export default function OPDModule({ patient }) {
       return;
     }
 
+    const payload = {
+      prescription: buildPrescriptionPayload(),
+      selectedPatientType: "OPD",
+      selectedVisitId: patient.ID,
+    };
+
     try {
-      await dispatch(
-        savePrescription({
-          selectedVisitId: patient.ID,
-          vitals,
-          prescription,
-          selectedPatientType: "OPD",
-          labTests: selectedLabTests.map((test) => test.name),
-          comorbidities: selectedComorbidities.map((c) => c.name),
-        })
-      ).unwrap();
+      await dispatch(savePrescription(payload)).unwrap();
 
       toast({
         variant: "success",
@@ -309,6 +423,49 @@ export default function OPDModule({ patient }) {
     }
   };
 
+  const [isPrinting, setIsPrinting] = useState(false);
+  const handlePrint = useReactToPrint({
+    content: () => {
+      return prescriptionRef.current;
+    },
+
+    onBeforeGetContent: () => {
+      setIsPrinting(true);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          setIsPrinting(false);
+          resolve();
+        }, 500);
+      });
+    },
+
+    pageStyle: `
+    @media print {
+     @page {
+          size: A4;
+          margin: 20mm;
+        }
+        body {
+          print-color-adjust: exact;
+          -webkit-print-color-adjust: exact;
+        }
+      }`,
+  });
+
+  const [suggestions, setSuggestions] = useState({});
+  useEffect(() => {
+    setSuggestions({
+      diagnosisTemplate: currentDoctorData.diagnosis.map((item) => ({
+        name: item,
+      })),
+      comorbidities: currentDoctorData.comorbidities.map((name) => ({
+        name,
+      })),
+      labTests: labTestsTemplate.map((test) => ({ name: test.name })),
+    });
+  }, [currentDoctorData]);
+
+
   return (
     <div className="space-y-2">
       <div className="flex justify-between items-center border-b border-gray-300 pb-2">
@@ -321,7 +478,7 @@ export default function OPDModule({ patient }) {
             className="font-semibold hidden lg:block"
             size="sm"
             variant="outline"
-            onClick={handlePreviewClick}
+            onClick={handlePrint}
           >
             Preview PDF
           </Button>
@@ -336,675 +493,49 @@ export default function OPDModule({ patient }) {
         </div>
       </div>
       <ScrollArea className="h-[calc(100vh-125px)] md:pr-4">
-        <Tabs defaultValue="vitals" className="w-full lg:hidden">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="vitals">Vitals</TabsTrigger>
-            <TabsTrigger value="diagnosis">Diagnosis</TabsTrigger>
-            <TabsTrigger value="tests">Tests</TabsTrigger>
-            <TabsTrigger className="px-2" value="medications">
-              Medications
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="vitals">
-            <div className="px-1 bg-gray-50">
-              <h3 className="text-lg font-semibold">Vitals</h3>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <div>
-                  <Label
-                    htmlFor="temperature"
-                    className="text-xs font-semibold"
-                  >
-                    Temperature (°C)
-                  </Label>
-                  <Input
-                    id="temperature"
-                    name="temperature"
-                    value={vitals.temperature}
-                    onChange={handleVitalChange}
-                    className="h-8 text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="heartRate" className="text-xs font-semibold">
-                    Heart Rate (bpm)
-                  </Label>
-                  <Input
-                    id="heartRate"
-                    name="heartRate"
-                    value={vitals.heartRate}
-                    onChange={handleVitalChange}
-                    className="h-8 text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor="bloodPressure"
-                    className="text-xs font-semibold"
-                  >
-                    Blood Pressure (mmHg)
-                  </Label>
-                  <Input
-                    id="bloodPressure"
-                    name="bloodPressure"
-                    value={vitals.bloodPressure}
-                    onChange={handleVitalChange}
-                    className="h-8 text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor="respiratoryRate"
-                    className="text-xs font-semibold"
-                  >
-                    Respiratory Rate (bpm)
-                  </Label>
-                  <Input
-                    id="respiratoryRate"
-                    name="respiratoryRate"
-                    value={vitals.respiratoryRate}
-                    onChange={handleVitalChange}
-                    className="h-8 text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="height" className="text-xs font-semibold">
-                    Height (cm)
-                  </Label>
-                  <Input
-                    id="height"
-                    name="height"
-                    value={vitals.height}
-                    onChange={handleVitalChange}
-                    className="h-8 text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="weight" className="text-xs font-semibold">
-                    Weight (kg)
-                  </Label>
-                  <Input
-                    id="weight"
-                    name="weight"
-                    value={vitals.weight}
-                    onChange={handleVitalChange}
-                    className="h-8 text-sm font-medium"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="bmi" className="text-xs font-semibold">
-                    BMI
-                  </Label>
-                  <Input
-                    id="bmi"
-                    name="bmi"
-                    value={vitals.bmi}
-                    readOnly
-                    className="h-8 text-sm font-medium bg-gray-100"
-                  />
-                </div>
-                <div>
-                  <Label
-                    htmlFor="oxygenSaturation"
-                    className="text-xs font-semibold"
-                  >
-                    O₂ Saturation (%)
-                  </Label>
-                  <Input
-                    id="oxygenSaturation"
-                    name="oxygenSaturation"
-                    value={vitals.oxygenSaturation}
-                    onChange={handleVitalChange}
-                    className="h-8 text-sm font-medium"
-                  />
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="diagnosis">
-            <div className="pt-4 p-1 bg-gray-50">
-              <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="diagnosis" className="text-xs font-semibold">
-                    Diagnosis
-                  </Label>
-                  <div className="space-y-2">
-                    <div className="flex gap-2">
-                      <MultiSelectInput
-                        suggestions={diagnosisTemplate.map((item) => ({
-                          name: item,
-                        }))}
-                        selectedValues={selectedDiagnoses}
-                        setSelectedValues={handleDiagnosisChange}
-                        placeholder="Select diagnosis"
-                      />
-                    </div>
-                    <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                      {selectedDiagnoses.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {selectedDiagnoses.map((diagnosis, index) => (
-                            <Badge
-                              key={index}
-                              variant="primary"
-                              className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
-                            >
-                              {diagnosis.name}
-                              <X
-                                className="ml-1 h-3 w-3 cursor-pointer"
-                                onClick={() =>
-                                  handleRemoveDiagnosis(diagnosis.name)
-                                }
-                              />
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500 text-sm">
-                          No diagnoses selected
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <Label htmlFor="treatment" className="text-xs font-semibold">
-                    Treatment
-                  </Label>
-                  <Textarea
-                    id="treatment"
-                    name="treatment"
-                    value={prescription.treatment}
-                    onChange={handlePrescriptionChange}
-                    placeholder="Enter recommended treatment"
-                    className="min-h-[100px] text-sm font-medium"
-                  />
-                </div>
-              </div>
-            </div>
-          </TabsContent>
-          <TabsContent value="tests">
-            <div className="grid grid-cols-1 px-1 gap-4 bg-gray-50">
-              <div className="pt-2 bg-gray-50">
-                <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <MultiSelectInput
-                      suggestions={allLabTests}
-                      selectedValues={selectedLabTests}
-                      setSelectedValues={handleLabTestsChange}
-                      placeholder="Select lab tests"
+        <div
+          className="p-1 bg-gray-50"
+          key={`form-${
+            JSON.stringify(formConfig) !==
+            JSON.stringify(DEFAULT_PRESCRIPTION_FORM_CONFIG)
+              ? "doctor"
+              : "default"
+          }`}
+        >
+          {formConfig.sections.map((section) => (
+            <div key={section.id} className={section.className}>
+              <div className="space-y-6">
+                {section.fields
+                  .filter((field) => !field.disabled)
+                  .map((field) => (
+                    <FormField
+                      key={field.id}
+                      formConfig={formConfig}
+                      field={field}
+                      doctorData={patient.doctor}
+                      formData={formData}
+                      handleChange={handleChange}
+                      handleVitalChange={handleVitalChange}
+                      handleMultiSelectChange={handleMultiSelectChange}
+                      handleRemoveValue={handleRemoveValue}
+                      handleMedicationChange={handleMedicationChange}
+                      addMedication={addMedication}
+                      removeMedication={removeMedication}
+                      suggestions={suggestions}
                     />
-                  </div>
-                  <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                    {selectedLabTests.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {selectedLabTests.map((test, index) => (
-                          <Badge
-                            key={index}
-                            variant="primary"
-                            className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
-                          >
-                            {test.name}
-                            <X
-                              className="ml-1 h-3 w-3 cursor-pointer"
-                              onClick={() => handleRemoveLabTest(test.name)}
-                            />
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">
-                        No lab tests selected
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-2 bg-gray-50">
-                <h3 className="text-lg font-semibold">Comorbidities</h3>
-                <div className=" space-y-2">
-                  <div className="flex gap-2">
-                    <MultiSelectInput
-                      suggestions={comorbidities.map((name) => ({ name }))}
-                      selectedValues={selectedComorbidities}
-                      setSelectedValues={handleComorbiditiesChange}
-                      placeholder="Select comorbidities"
-                    />
-                  </div>
-                  <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                    {selectedComorbidities?.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {selectedComorbidities?.map((comorbidity, index) => (
-                          <Badge
-                            key={index}
-                            variant="primary"
-                            className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
-                          >
-                            ayush
-                            <X
-                              className="ml-1 h-3 w-3 cursor-pointer"
-                              onClick={() =>
-                                handleRemoveComorbidity(comorbidity.name)
-                              }
-                            />
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">
-                        No comorbidities selected
-                      </p>
-                    )}
-                  </div>
-                </div>
+                  ))}
               </div>
             </div>
-          </TabsContent>
-          <TabsContent value="medications">
-            <div className="pt-0 px-1 bg-gray-50">
-              <h3 className="text-lg font-semibold mb-2">Medications</h3>
-              <div className="space-y-4">
-                {prescription.medications?.map((medication, index) => (
-                  <div
-                    key={index}
-                    className="bg-white p-3 rounded-md shadow-sm"
-                  >
-                    <div className="grid grid-cols-1 gap-2 mb-2">
-                      <SearchSuggestion
-                        suggestions={commonMedications}
-                        placeholder="Select medicine"
-                        value={medication.name}
-                        setValue={(value) =>
-                          handleMedicationChange(index, "name", value)
-                        }
-                        onSuggestionSelect={(suggestion) =>
-                          handleMedicationSuggestionSelect(index, suggestion)
-                        }
-                      />
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          placeholder="Frequency (e.g., 1-0-1)"
-                          value={medication.frequency}
-                          onChange={(e) =>
-                            handleMedicationChange(
-                              index,
-                              "frequency",
-                              e.target.value
-                            )
-                          }
-                          className="font-medium"
-                        />
-                        <Input
-                          placeholder="Duration"
-                          value={medication.duration}
-                          onChange={(e) =>
-                            handleMedicationChange(
-                              index,
-                              "duration",
-                              e.target.value
-                            )
-                          }
-                          className="font-medium"
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => removeMedication(index)}
-                      disabled={prescription.medications.length === 1}
-                      className="w-full mt-2"
-                    >
-                      <Trash2 className="h-4 w-4 mr-2" /> Remove
-                    </Button>
-                  </div>
-                ))}
-                <Button
-                  onClick={addMedication}
-                  variant="outline"
-                  className="w-full font-semibold"
-                >
-                  <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
-                </Button>
-              </div>
-              <div className="space-y-2 pt-6">
-                <h3 className="text-lg font-semibold">
-                  Additional Instructions
-                </h3>
-                <Textarea
-                  id="additionalInstructions"
-                  name="additionalInstructions"
-                  value={prescription.additionalInstructions}
-                  onChange={handlePrescriptionChange}
-                  placeholder="Any additional instructions or notes"
-                  className="min-h-[100px] text-sm font-medium"
-                />
-              </div>
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        <div className="hidden lg:block">
-          <div className="px-1 bg-gray-50">
-            <h3 className="text-lg font-semibold">Vitals</h3>
-            <div className="grid grid-cols-4 gap-3">
-              <div>
-                <Label htmlFor="temperature" className="text-xs font-semibold">
-                  Temperature (°F)
-                </Label>
-                <Input
-                  id="temperature"
-                  name="temperature"
-                  value={vitals.temperature}
-                  onChange={handleVitalChange}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-              <div>
-                <Label htmlFor="heartRate" className="text-xs font-semibold">
-                  Heart Rate (bpm)
-                </Label>
-                <Input
-                  id="heartRate"
-                  name="heartRate"
-                  value={vitals.heartRate}
-                  onChange={handleVitalChange}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-              <div>
-                <Label
-                  htmlFor="bloodPressure"
-                  className="text-xs font-semibold"
-                >
-                  Blood Pressure (mmHg)
-                </Label>
-                <Input
-                  id="bloodPressure"
-                  name="bloodPressure"
-                  value={vitals.bloodPressure}
-                  onChange={handleVitalChange}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-              <div>
-                <Label
-                  htmlFor="respiratoryRate"
-                  className="text-xs font-semibold"
-                >
-                  Respiratory Rate (bpm)
-                </Label>
-                <Input
-                  id="respiratoryRate"
-                  name="respiratoryRate"
-                  value={vitals.respiratoryRate}
-                  onChange={handleVitalChange}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-              <div>
-                <Label htmlFor="height" className="text-xs font-semibold">
-                  Height (cm)
-                </Label>
-                <Input
-                  id="height"
-                  name="height"
-                  value={vitals.height}
-                  onChange={handleVitalChange}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-              <div>
-                <Label htmlFor="weight" className="text-xs font-semibold">
-                  Weight (kg)
-                </Label>
-                <Input
-                  id="weight"
-                  name="weight"
-                  value={vitals.weight}
-                  onChange={handleVitalChange}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-              <div>
-                <Label htmlFor="bmi" className="text-xs font-semibold">
-                  BMI
-                </Label>
-                <Input
-                  id="bmi"
-                  name="bmi"
-                  value={vitals.bmi}
-                  readOnly
-                  className="h-8 text-sm font-medium bg-gray-100"
-                />
-              </div>
-              <div>
-                <Label
-                  htmlFor="oxygenSaturation"
-                  className="text-xs font-semibold"
-                >
-                  O₂ Saturation (%)
-                </Label>
-                <Input
-                  id="oxygenSaturation"
-                  name="oxygenSaturation"
-                  value={vitals.oxygenSaturation}
-                  onChange={handleVitalChange}
-                  className="h-8 text-sm font-medium"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="pt-4 p-1 bg-gray-50">
-            <h3 className="text-lg font-semibold">Diagnosis and Treatment</h3>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="diagnosis" className="text-xs font-semibold">
-                  Diagnosis
-                </Label>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
-                    <MultiSelectInput
-                      suggestions={diagnosisTemplate.map((item) => ({
-                        name: item,
-                      }))}
-                      selectedValues={selectedDiagnoses}
-                      setSelectedValues={handleDiagnosisChange}
-                      placeholder="Select diagnosis"
-                    />
-                  </div>
-                  <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                    {selectedDiagnoses.length > 0 ? (
-                      <div className="flex flex-wrap gap-1">
-                        {selectedDiagnoses.map((diagnosis, index) => (
-                          <Badge
-                            key={index}
-                            variant="primary"
-                            className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
-                          >
-                            {diagnosis.name}
-                            <X
-                              className="ml-1 h-3 w-3 cursor-pointer"
-                              onClick={() =>
-                                handleRemoveDiagnosis(diagnosis.name)
-                              }
-                            />
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500 text-sm">
-                        No diagnoses selected
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Label htmlFor="treatment" className="text-xs font-semibold">
-                  Treatment
-                </Label>
-                <Textarea
-                  id="treatment"
-                  name="treatment"
-                  value={prescription.treatment}
-                  onChange={handlePrescriptionChange}
-                  placeholder="Enter recommended treatment"
-                  className="min-h-[100px] text-sm font-medium"
-                />
-              </div>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 px-1 gap-4 bg-gray-50">
-            <div className="pt-2 bg-gray-50">
-              <h3 className="text-lg font-semibold">Recommended Lab Tests</h3>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <MultiSelectInput
-                    suggestions={allLabTests}
-                    selectedValues={selectedLabTests}
-                    setSelectedValues={handleLabTestsChange}
-                    placeholder="Select lab tests"
-                  />
-                </div>
-                <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                  {selectedLabTests.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedLabTests.map((test, index) => (
-                        <Badge
-                          key={index}
-                          variant="primary"
-                          className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded"
-                        >
-                          {test.name}
-                          <X
-                            className="ml-1 h-3 w-3 cursor-pointer"
-                            onClick={() => handleRemoveLabTest(test.name)}
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-sm">
-                      No lab tests selected
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-2 bg-gray-50">
-              <h3 className="text-lg font-semibold">Comorbidities</h3>
-              <div className=" space-y-2">
-                <div className="flex gap-2">
-                  <MultiSelectInput
-                    suggestions={comorbidities.map((name) => ({ name }))}
-                    selectedValues={selectedComorbidities}
-                    setSelectedValues={handleComorbiditiesChange}
-                    placeholder="Select comorbidities"
-                  />
-                </div>
-                <div className="border border-gray-300 rounded-md p-2 min-h-[80px]">
-                  {selectedComorbidities.length > 0 ? (
-                    <div className="flex flex-wrap gap-1">
-                      {selectedComorbidities.map((comorbidity, index) => (
-                        <Badge
-                          key={index}
-                          variant="primary"
-                          className="flex items-center bg-blue-100 text-blue-800 px-1 py-0.5 rounded"
-                        >
-                          {comorbidity.name}
-                          <X
-                            className="ml-1 h-3 w-3 cursor-pointer"
-                            onClick={() =>
-                              handleRemoveComorbidity(comorbidity.name)
-                            }
-                          />
-                        </Badge>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500 text-sm">
-                      No comorbidities selected
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="pt-4 px-1 bg-gray-50">
-            <h3 className="text-lg font-semibold">Medications</h3>
-            <div>
-              {prescription.medications?.map((medication, index) => (
-                <div key={index} className="grid grid-cols-4 gap-2 mb-2">
-                  <SearchSuggestion
-                    suggestions={commonMedications}
-                    placeholder="Select medicine"
-                    value={medication.name}
-                    setValue={(value) =>
-                      handleMedicationChange(index, "name", value)
-                    }
-                    onSuggestionSelect={(suggestion) =>
-                      handleMedicationSuggestionSelect(index, suggestion)
-                    }
-                  />
-                  <Input
-                    placeholder="0-0-0"
-                    value={medication.frequency}
-                    onChange={(e) =>
-                      handleMedicationChange(index, "frequency", e.target.value)
-                    }
-                    className="font-medium"
-                  />
-                  <Input
-                    placeholder="Duration"
-                    value={medication.duration}
-                    onChange={(e) =>
-                      handleMedicationChange(index, "duration", e.target.value)
-                    }
-                    className="font-medium"
-                  />
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => removeMedication(index)}
-                    disabled={prescription.medications.length === 1}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                onClick={addMedication}
-                variant="outline"
-                className="mt-2 font-semibold"
-              >
-                <PlusCircle className="h-4 w-4 mr-2" /> Add Medication
-              </Button>
-            </div>
-          </div>
-          <div className="space-y-2 px-1 pt-4 mb-4 bg-gray-50">
-            <h3 className="text-lg font-semibold">Additional Instructions</h3>
-            <Textarea
-              id="additionalInstructions"
-              name="additionalInstructions"
-              value={prescription.additionalInstructions}
-              onChange={handlePrescriptionChange}
-              placeholder="Any additional instructions or notes"
-              className="min-h-[100px] text-sm font-medium"
-            />
-          </div>
+          ))}
         </div>
       </ScrollArea>
-      <div style={{ display: "none" }}>
+      <div style={{}}>
         <OPDPrescriptionTemplate
-          patient={patient.patient}
-          vitals={vitals}
-          prescription={prescription}
-          labTests={labTests.map((test) => test.name)}
-          selectedComorbidities={selectedComorbidities}
+          patient={{ ...patient.patient, age: parseAge(patient?.patient?.age) }}
+          formData={formData}
+          field={formConfig.sections}
           hospital={hospital}
+          
           ref={prescriptionRef}
         />
       </div>

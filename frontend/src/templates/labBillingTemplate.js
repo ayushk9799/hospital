@@ -29,7 +29,7 @@ export const labBillingTemplateStringDefault = `
         React.createElement("div", { className: "grid grid-cols-3" },
           React.createElement("p", { className: "font-semibold" }, "Age/Gender:"),
           React.createElement("p", { className: "col-span-2 capitalize" }, 
-            \`\${labData?.age ? \`\${labData.age} Years\` : 'N/A'} / \${labData?.gender || 'N/A'}\`
+            \`\${labData?.age ? \`\${labData.age}\` : 'N/A'} / \${labData?.gender || 'N/A'}\`
           )
         ),
         React.createElement("div", { className: "grid grid-cols-3" },

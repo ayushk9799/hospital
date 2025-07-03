@@ -1,5 +1,6 @@
 import React, { useRef, useState } from "react";
 import { useReactToPrint } from "react-to-print";
+import { parseAge } from "../../../assets/Data";
 import {
   Dialog,
   DialogContent,
@@ -141,7 +142,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Age/Gender:</Label>
                       <p>
-                        {labData?.age || "N/A"}/{labData?.gender || "N/A"}
+                        {parseAge(labData?.age) || "N/A"}/{labData?.gender || "N/A"}
                       </p>
                     </div>
                     <div className="flex items-center">

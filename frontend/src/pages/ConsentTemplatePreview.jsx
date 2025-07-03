@@ -124,7 +124,7 @@ export default function ConsentTemplatePreview() {
   const patient = {
     patient: {
       name: "John Doe",
-      age: 45,
+      age: "45-4",
       gender: "Male",
       address: "123 Main St",
       contactNumber: "1234567890",

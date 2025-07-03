@@ -7,19 +7,23 @@ import { Button } from "../components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "../components/ui/sheet";
 import { Menu, ScrollText } from "lucide-react";
 import { useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { fetchVisitDetails } from "../redux/slices/patientSlice";
 
 export default function Doctors() {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [selectedPatientType, setSelectedPatientType] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const location = useLocation();
+  const dispatch = useDispatch();
 
-  const handlePatientSelect = ({
+  const handlePatientSelect = async ({
     ID,
     bookingNumber,
     patient,
     bookingDate,
     clinicalSummary,
+    doctor,
     notes,
     type,
     vitals,
@@ -32,25 +36,24 @@ export default function Doctors() {
     conditionOnAdmission,
     conditionOnDischarge,
   }) => {
-    setSelectedPatient({
-      ID,
-      bookingNumber,
-      patient,
-      bookingDate,
-      clinicalSummary,
-      notes,
-      vitals,
-      diagnosis,
-      treatment,
-      medications,
-      additionalInstructions,
-      labTests,
-      comorbidities,
-      conditionOnAdmission,
-      conditionOnDischarge,
-    });
-    setSelectedPatientType(type);
+    try {
+      const fullVisit = await dispatch(
+        fetchVisitDetails({ id: ID, type })
+      ).unwrap();
+
+      // Ensure compatibility with existing components that expect ID
+      const clonedVisit = { ...fullVisit, ID: fullVisit._id };
+
+      setSelectedPatient(clonedVisit);
+      setSelectedPatientType(type);
+    } catch (error) {
+      console.error("Failed to fetch visit details:", error);
+    }
     setIsDrawerOpen(false);
+  };
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const handleDoctorSelect = (doctorId) => {
+    setSelectedDoctor(doctorId);
   };
 
   useEffect(() => {
@@ -77,25 +80,34 @@ export default function Doctors() {
               <ScrollText className="h-4 w-4" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] sm:w-[400px] px-4 pt-8">
+          <SheetContent
+            side="right"
+            className="w-[300px] sm:w-[400px] px-4 pt-8"
+          >
             <ScrollArea className="h-full pr-4">
-              <AppointmentsQueue onPatientSelect={handlePatientSelect} />
+              <AppointmentsQueue
+                onPatientSelect={handlePatientSelect}
+                onDoctorSelect={handleDoctorSelect}
+              />
             </ScrollArea>
           </SheetContent>
         </Sheet>
       </div>
       <div
-        className="grid grid-cols-4 gap-2"
+        className="grid grid-cols-4 gap-1"
         style={{ height: "calc(100vh - 55px)" }}
       >
-        <ScrollArea className="col-span-1 pr-4 h-full hidden lg:block">
-          <AppointmentsQueue onPatientSelect={handlePatientSelect} />
+        <ScrollArea className="col-span-1 pr-1 h-full hidden lg:block">
+          <AppointmentsQueue
+            onPatientSelect={handlePatientSelect}
+            onDoctorSelect={handleDoctorSelect}
+          />
         </ScrollArea>
         <ScrollArea className="col-span-4 lg:col-span-3 h-full">
           <div className="flex-1 p-2 overflow-auto w-full">
             {selectedPatient ? (
               selectedPatientType === "OPD" ? (
-                <OPDModule patient={selectedPatient} />
+                <OPDModule patient={selectedPatient} doctorId={selectedDoctor} />
               ) : (
                 <IPDModule patient={selectedPatient} />
               )

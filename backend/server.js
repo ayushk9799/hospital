@@ -19,6 +19,8 @@ import superAdminRoutes from "./routes/superAdmin.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import pharmacyRoutes from "./routes/pharmacyRoutes.js";
 import eventRoutes from "./routes/eventRoutes.js";
+import prescriptionTemplateRoutes from "./routes/prescriptionTemplateRoutes.js";
+import doctorDataRoutes from "./routes/doctorData.js";
 import billingRoutes from "./routes/BillingRoutes.js";
 import dashboardRoute from "./routes/dashboardRoute.js";
 import expenseRoutes from "./routes/expenseRoutes.js";
@@ -27,10 +29,11 @@ import babyRoutes from "./routes/babyRoutes.js";
 import labRoutes from "./routes/labRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import consultationFeeRoutes from "./routes/consultationFeeRoutes.js";
+import textTemplateRoutes from "./routes/textTemplateRoutes.js";
 dotenv.config({ path: "./config/config.env" });
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Get the directory name of the current module
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -64,6 +67,7 @@ app.use("/api/departments", departmentRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/pharmacy", pharmacyRoutes);
 app.use("/api/events", eventRoutes);
+app.use("/api/text-templates", textTemplateRoutes);
 app.use("/api/billing", billingRoutes);
 app.use("/api/dashboard", dashboardRoute);
 app.use("/api/expenses", expenseRoutes);
@@ -73,6 +77,8 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/babies", babyRoutes);
 app.use("/api/lab", labRoutes);
 app.use("/api/consultation-fees", consultationFeeRoutes);
+app.use("/api/prescription-templates", prescriptionTemplateRoutes);
+app.use("/api/doctor/doctor-data", doctorDataRoutes);
 
 // Serve index.html for any other routes
 app.get("*", (req, res) => {

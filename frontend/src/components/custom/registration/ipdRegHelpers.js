@@ -27,7 +27,7 @@ export const validateForm = (formData, setErrors) => {
 
 export const formatSubmissionData = (formData) => ({
   ...formData,
-  age: Number(formData.age),
+  age: formData.age,
   patientType: "IPD",
   lastVisit:formData.admission.bookingDate,
   lastVisitType:"IPD",

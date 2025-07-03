@@ -17,12 +17,16 @@ export default function LabTemplatePreview() {
   // Sample data for preview
   const samplePatientData = {
     patientName: "ANJU KUMARI",
-    age: "21",
+     age: "21-3",
     gender: "FEMALE",
     registrationNumber: "850125",
     contactNumber: "9876543210",
     referredBy:{
       name:"Ayush"
+    },
+    patient:{
+      age:"21-4",
+      gender:"FEMALE"
     }
   };
 

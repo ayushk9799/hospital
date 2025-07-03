@@ -2,6 +2,7 @@ import React from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
 import { newlifeline } from "../templatesExperiments/labbillingexperiment";
+import { parseAge } from "../assets/Data";
 import {headerTemplateStringnew} from "../templatesExperiments/HospitalHeaderTemplate"
 import { labReportTemplateStringExperiment } from "../templatesExperiments/labtemplateExperiment";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
@@ -226,7 +227,7 @@ const BillingTemplate = React.forwardRef(
       // Get the component function
       const ComponentFunction = templateFunction(React, HospitalHeader);
       // Execute the component function with the props
-      return ComponentFunction( hospital,labData, ref);
+      return ComponentFunction( hospital,{...labData, age: parseAge(labData.age)}, ref);
     } catch (error) {
       console.error("Error rendering dynamic lab report:", error);
       return React.createElement(

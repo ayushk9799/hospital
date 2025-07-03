@@ -9,16 +9,34 @@ import {
   CardHeader,
   CardTitle,
 } from "../components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select";
 import { fetchTemplates, updateTemplate } from "../redux/slices/templatesSlice";
-import { X, Plus, ChevronLeft } from "lucide-react";
+import {
+  updateDoctorData,
+  resetDoctorData,
+  fetchDoctorData,
+  copyDoctorData,
+  clearCopiedData,
+} from "../redux/slices/doctorDataSlice";
+import { fetchStaffMembers } from "../redux/slices/staffSlice";
+import { X, Plus, ChevronLeft, Save, Copy, Clipboard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../hooks/use-toast";
 
 export default function Customization() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [newDiagnosis, setNewDiagnosis] = useState("");
   const [newComorbidity, setNewComorbidity] = useState("");
   const [newMedicine, setNewMedicine] = useState("");
+  const [selectedDoctor, setSelectedDoctor] = useState("");
 
   const [selectedDiagnoses, setSelectedDiagnoses] = useState([]);
   const [selectedComorbidities, setSelectedComorbidities] = useState([]);
@@ -29,17 +47,32 @@ export default function Customization() {
     comorbidities = [],
     medicinelist = [],
   } = useSelector((state) => state.templates);
+
+  const { doctors } = useSelector((state) => state.staff);
+  const {
+    status,
+    error,
+    updateStatus,
+    updateError,
+    copiedData,
+    currentDoctorData,
+  } = useSelector((state) => state.doctorData);
+
   useEffect(() => {
     dispatch(fetchTemplates());
+    dispatch(fetchStaffMembers());
   }, [dispatch]);
 
   useEffect(() => {
-    if (selectedDiagnoses !== diagnosisTemplate)
-      setSelectedDiagnoses(diagnosisTemplate);
-    if (selectedComorbidities !== comorbidities)
-      setSelectedComorbidities(comorbidities);
-    if (selectedMedicines !== medicinelist) setSelectedMedicines(medicinelist);
-  }, [diagnosisTemplate]);
+    if (!selectedDoctor) {
+      if (selectedDiagnoses !== diagnosisTemplate)
+        setSelectedDiagnoses(diagnosisTemplate);
+      if (selectedComorbidities !== comorbidities)
+        setSelectedComorbidities(comorbidities);
+      if (selectedMedicines !== medicinelist)
+        setSelectedMedicines(medicinelist);
+    }
+  }, [diagnosisTemplate, selectedDoctor]);
 
   const handleAddItem = (
     newItem,
@@ -56,18 +89,114 @@ export default function Customization() {
     setSelectedItems(selectedItems.filter((i) => i !== item));
   };
 
-  const handleSave = () => {
-    dispatch(
-      updateTemplate({
-        diagnosisTemplate: selectedDiagnoses,
-        comorbidities: selectedComorbidities,
-        medicinelist: selectedMedicines,
-      })
-    );
+  const handleDoctorChange = async (doctorId) => {
+    setSelectedDoctor(doctorId);
+    if (doctorId) {
+      try {
+        // Fetch doctor specific data when a doctor is selected
+        const result = await dispatch(fetchDoctorData(doctorId)).unwrap();
+        if (result) {
+          setSelectedDiagnoses(result.diagnosis || []);
+          setSelectedComorbidities(result.comorbidities || []);
+          setSelectedMedicines(result.medicines || []);
+        }
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch doctor data",
+          variant: "destructive",
+        });
+      }
+    } else {
+      // Reset to template data when no doctor is selected
+      setSelectedDiagnoses(diagnosisTemplate);
+      setSelectedComorbidities(comorbidities);
+      setSelectedMedicines(medicinelist);
+      dispatch(resetDoctorData());
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      if (selectedDoctor) {
+        // If doctor selected, save to DoctorData
+        const result = await dispatch(
+          updateDoctorData({
+            doctor: selectedDoctor,
+            medicines: selectedMedicines,
+            diagnosis: selectedDiagnoses,
+            comorbidities: selectedComorbidities,
+            complaints: [], // Adding this as per schema, with default empty array
+          })
+        ).unwrap();
+
+        toast({
+          title: "Success",
+          variant: "success",
+          description: "Doctor-specific customization saved successfully",
+        });
+      } else {
+        // If no doctor selected, save to global templates
+        await dispatch(
+          updateTemplate({
+            diagnosisTemplate: selectedDiagnoses,
+            comorbidities: selectedComorbidities,
+            medicinelist: selectedMedicines,
+          })
+        );
+
+        toast({
+          title: "Success",
+          variant: "success",
+          description: "Global templates updated successfully",
+        });
+      }
+    } catch (error) {
+      console.error("Save error:", error);
+      toast({
+        title: "Error",
+        description: updateError || "Failed to save customization",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleBack = () => {
     navigate(-1);
+  };
+
+  const handleCopy = () => {
+    if (selectedDoctor) {
+      dispatch(copyDoctorData());
+    } else {
+      // When no doctor is selected, copy the current template data
+      const templateData = {
+        diagnosis: selectedDiagnoses,
+        comorbidities: selectedComorbidities,
+        medicines: selectedMedicines,
+      };
+      // Since we don't have a specific action for copying template data,
+      // we'll manually set it in the Redux store or handle it locally
+      dispatch(copyDoctorData(templateData));
+    }
+    toast({
+      title: "Success",
+      variant: "success",
+      description: "Customization data copied successfully",
+    });
+  };
+
+  const handlePaste = () => {
+    if (copiedData) {
+      setSelectedDiagnoses(copiedData.diagnosis);
+      setSelectedComorbidities(copiedData.comorbidities);
+      setSelectedMedicines(copiedData.medicines);
+      toast({
+        title: "Success",
+        variant: "success",
+        description: "Customization data pasted successfully",
+      });
+    }
   };
 
   const renderSection = (
@@ -131,47 +260,104 @@ export default function Customization() {
   return (
     <div className="h-full flex flex-col p-2 sm:p-4">
       <Card className="flex-grow flex flex-col overflow-hidden">
-        <CardHeader className="flex flex-row items-center gap-2 p-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleBack}
-            className="h-8 w-8 p-0"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <div>
+        <CardHeader className="flex flex-row items-center justify-between p-4">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleBack}
+              className="h-8 w-8 p-0"
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
             <CardTitle className="text-xl">Customization</CardTitle>
+          </div>
+          <div className="flex items-center gap-2">
+            <Select
+              value={selectedDoctor}
+              onValueChange={handleDoctorChange}
+              disabled={status === "loading"}
+            >
+              <SelectTrigger className="w-[200px]">
+                <SelectValue
+                  placeholder={
+                    status === "loading"
+                      ? "Loading..."
+                      : "Select a doctor (optional)"
+                  }
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {doctors.map((doctor) => (
+                  <SelectItem key={doctor._id} value={doctor._id}>
+                    {doctor.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleCopy}
+              className="h-8 w-8"
+              title="Copy customization"
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
+            {copiedData && (
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={handlePaste}
+                className="h-8 w-8"
+                title="Paste customization"
+              >
+                <Clipboard className="h-4 w-4" />
+              </Button>
+            )}
+            <Button
+              onClick={handleSave}
+              className="whitespace-nowrap"
+              disabled={status === "loading" || updateStatus === "loading"}
+            >
+              <Save className="h-4 w-4 mr-2" />
+              {updateStatus === "loading" ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
         </CardHeader>
         <CardContent className="flex-grow flex flex-col p-2 sm:p-4 border-2">
-          {renderSection(
-            "Diagnosis Customization",
-            "Add new diagnosis like this (Diagnosis1, Diagnosis2) in comma separated form, then add then save changes",
-            newDiagnosis,
-            setNewDiagnosis,
-            selectedDiagnoses,
-            setSelectedDiagnoses
+          {status === "loading" ? (
+            <div className="flex items-center justify-center h-32">
+              <p className="text-gray-500">Loading doctor data...</p>
+            </div>
+          ) : (
+            <>
+              {renderSection(
+                "Diagnosis Customization",
+                "Add new diagnosis like this (Diagnosis1, Diagnosis2) in comma separated form, then add then save changes",
+                newDiagnosis,
+                setNewDiagnosis,
+                selectedDiagnoses,
+                setSelectedDiagnoses
+              )}
+              {renderSection(
+                "Comorbidities Customization",
+                "Add new comorbidities like this (Comorbidites1, Comorbidites2) in comma separated form, then add then save changes",
+                newComorbidity,
+                setNewComorbidity,
+                selectedComorbidities,
+                setSelectedComorbidities
+              )}
+              {renderSection(
+                "Medicine List Customization",
+                "Add new medicine like this (Medicine1, Medicine2) in comma separated form, then add then save changes",
+                newMedicine,
+                setNewMedicine,
+                selectedMedicines,
+                setSelectedMedicines
+              )}
+            </>
           )}
-          {renderSection(
-            "Comorbidities Customization",
-            "Add new comorbidities like this (Comorbidites1, Comorbidites2) in comma separated form, then add then save changes",
-            newComorbidity,
-            setNewComorbidity,
-            selectedComorbidities,
-            setSelectedComorbidities
-          )}
-          {renderSection(
-            "Medicine List Customization",
-            "Add new medicine like this (Medicine1, Medicine2) in comma separated form, then add then save changes",
-            newMedicine,
-            setNewMedicine,
-            selectedMedicines,
-            setSelectedMedicines
-          )}
-          <Button onClick={handleSave} className="w-full">
-            Save Changes
-          </Button>
         </CardContent>
       </Card>
     </div>

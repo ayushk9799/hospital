@@ -661,6 +661,51 @@ export default function AddStaff() {
               </div>
               <Separator className="my-4" />
             </div>
+
+            {/* Doctor Section */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-semibold text-gray-700">
+                  Doctor Section
+                </Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    handleSelectAllInGroup(
+                      permissionGroups["Doctor Section"],
+                      true
+                    )
+                  }
+                  className="h-7 px-2 text-xs"
+                >
+                  Select All
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {permissionGroups["Doctor Section"]?.map((permission) => (
+                  <div
+                    key={permission.id}
+                    className="flex items-center space-x-2"
+                  >
+                    <Checkbox
+                      id={permission.id}
+                      checked={(formData.permissions || []).includes(
+                        permission.id
+                      )}
+                      onCheckedChange={(checked) =>
+                        handlePermissionChange(permission.id, checked)
+                      }
+                    />
+                    <label htmlFor={permission.id} className="text-sm">
+                      {permission.label}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              <Separator className="my-4" />
+            </div>
           </div>
         </div>
       </div>
@@ -925,7 +970,13 @@ export default function AddStaff() {
                       htmlFor={role}
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                     >
-                      {role.split(" ")?.map((word) => word.charAt(0)?.toUpperCase() + word.slice(1))?.join(" ")}
+                      {role
+                        .split(" ")
+                        ?.map(
+                          (word) =>
+                            word.charAt(0)?.toUpperCase() + word.slice(1)
+                        )
+                        ?.join(" ")}
                     </label>
                   </div>
                 ))}

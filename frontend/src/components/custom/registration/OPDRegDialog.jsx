@@ -307,19 +307,26 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           dateOfBirth: formData.dateOfBirth
             ? new Date(formData.dateOfBirth).toISOString()
             : null,
-          age: Number(formData.age, 10),
+          age: formData.age,
           lastVisit: formData.visit.bookingDate,
           lastVisitType: formData.patientType,
           visit: {
             ...formData.visit,
             bookingDate: formData.visit.bookingDate,
-            vitals: Object.fromEntries(
+            vitals:  Object.fromEntries(
               Object.entries(formData.visit.vitals).map(([key, value]) =>
                 key === "bloodPressure"
                   ? [key, value]
                   : [key, parseFloat(value)]
               )
             ),
+            prescription:{vitals: Object.fromEntries(
+              Object.entries(formData.visit.vitals).map(([key, value]) =>
+                key === "bloodPressure"
+                  ? [key, value]
+                  : [key, parseFloat(value)]
+              )
+            )},
           },
         };
         // Choose the appropriate action based on whether this is a revisit

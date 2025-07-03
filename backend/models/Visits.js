@@ -75,6 +75,11 @@ const visitSchema = new mongoose.Schema(
         report: { type: mongoose.Schema.Types.Mixed },
       },
     ],
+    // Dynamic prescription payload – stores everything coming from the configurable OPD form
+    prescription: {
+      type: mongoose.Schema.Types.Mixed,
+      default: {},
+    },
   },
   { timestamps: true }
 );

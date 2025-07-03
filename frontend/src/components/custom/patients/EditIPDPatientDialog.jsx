@@ -380,13 +380,23 @@ export default function EditIPDPatientDialog({
     (e) => {
       const dateOfBirth = e.target.value;
       const age = dateOfBirth
-        ? new Date().getFullYear() - new Date(dateOfBirth).getFullYear()
+        ? (() => {
+            const today = new Date();
+            const dob = new Date(dateOfBirth);
+            let years = today.getFullYear() - dob.getFullYear();
+            let months = today.getMonth() - dob.getMonth();
+            if (months < 0) {
+              years -= 1;
+              months += 12;
+            }
+            return `${years}-${months}`;
+          })()
         : "";
       handleInputChange({
         target: { id: "patient.dateOfBirth", value: dateOfBirth },
       });
       handleInputChange({
-        target: { id: "patient.age", value: age.toString() },
+        target: { id: "patient.age", value: age },
       });
     },
     [handleInputChange]
@@ -748,8 +758,8 @@ export default function EditIPDPatientDialog({
       }
       setFormData({
         patient: patientForm,
-        admission: {...admissionDetailsInit}, 
-        bill: billDetailsInit, 
+        admission: { ...admissionDetailsInit },
+        bill: billDetailsInit,
       });
       setErrors({});
       setDeletedPayments([]);
@@ -845,7 +855,7 @@ export default function EditIPDPatientDialog({
           <Tabs defaultValue="basic-info" className="w-full">
             <TabsList
               className={`grid w-full ${
-                isMobile ? "grid-cols-3" : "grid-cols-3" 
+                isMobile ? "grid-cols-3" : "grid-cols-3"
               }`}
             >
               <TabsTrigger value="basic-info">
@@ -875,7 +885,7 @@ export default function EditIPDPatientDialog({
                     <MemoizedInput
                       id="patient.age"
                       label="Age"
-                      type="number"
+                      type="text"
                       value={formData.patient.age}
                       onChange={handleAgeChange}
                       error={errors.age}
@@ -1007,11 +1017,9 @@ export default function EditIPDPatientDialog({
                       id="admission.assignedRoom"
                       label="Assigned Room"
                       value={formData.admission.assignedRoom}
-                      onValueChange={(value) =>
-                        {
-                          handleSelectChange("admission.assignedRoom", value)
-                        }
-                      }
+                      onValueChange={(value) => {
+                        handleSelectChange("admission.assignedRoom", value);
+                      }}
                     >
                       {rooms.map((room) => (
                         <SelectItem key={room._id} value={room._id}>
@@ -1023,19 +1031,19 @@ export default function EditIPDPatientDialog({
                       id="admission.assignedBed"
                       label="Assigned Bed"
                       value={formData.admission.assignedBed}
-                      onValueChange={(value) =>
-                      {
-                        if(value){
-                          handleSelectChange("admission.assignedBed", value)
+                      onValueChange={(value) => {
+                        if (value) {
+                          handleSelectChange("admission.assignedBed", value);
                         }
-                      }
-                      }
+                      }}
                       disabled={!formData.admission.assignedRoom}
                     >
                       {formData.admission.assignedRoom &&
                         rooms
                           .find(
-                            (r) => r._id?.toString() === formData.admission?.assignedRoom?.toString()
+                            (r) =>
+                              r._id?.toString() ===
+                              formData.admission?.assignedRoom?.toString()
                           )
                           ?.beds.filter(
                             (b) =>

@@ -49,7 +49,7 @@ export const dischargeSummaryTemplateStringDefault = `
           React.createElement("span", { style: styles.infoItem },
             React.createElement("span", { style: styles.label }, "Age/Gender: "),
             React.createElement("span", { style: styles.value }, 
-              patient?.age && patient?.gender ? \`\${patient?.age} yrs/\${patient?.gender}\` : "--"
+              patient?.age && patient?.gender ? \`\${patient?.age}/\${patient?.gender}\` : "--"
             )
           ),
           React.createElement("span", { style: styles.infoItem },

@@ -19,7 +19,7 @@ const opdProcedureSchema = new mongoose.Schema({
     
   },
   age: {
-    type: Number,
+    type: String,
     
   },
   procedureName : String,

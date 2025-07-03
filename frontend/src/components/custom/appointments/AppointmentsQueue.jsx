@@ -13,6 +13,14 @@ import { Button } from "../../ui/button";
 import { Calendar } from "../../ui/calendar";
 import { CalendarIcon } from "@radix-ui/react-icons";
 import { cn } from "../../../lib/utils";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../ui/select";
+import { fetchDoctorPrescriptionTemplates } from "../../../redux/slices/doctorPrescriptionSlice";
 
 const PatientEntry = ({
   ID,
@@ -26,8 +34,10 @@ const PatientEntry = ({
   onSelect,
   vitals,
   diagnosis,
+  doctor,
   treatment,
   medications,
+  activeTab,
   additionalInstructions,
   labTests,
   isSelected,
@@ -51,7 +61,7 @@ const PatientEntry = ({
 
   return (
     <div
-      className={`flex items-center justify-between border-b p-4 cursor-pointer hover:bg-gray-100 ${
+      className={`flex items-center justify-between border-b px-4 py-2 cursor-pointer hover:bg-gray-100 ${
         isSelected ? "border-2 border-green-400 bg-green-50" : ""
       }`}
       onClick={() =>
@@ -63,6 +73,7 @@ const PatientEntry = ({
           bookingDate,
           type,
           clinicalSummary,
+          doctor,
           notes,
           vitals,
           diagnosis,
@@ -85,29 +96,44 @@ const PatientEntry = ({
           <h3 className="font-semibold capitalize">
             {truncateName(patient.name)}
           </h3>
-          <p className="text-sm text-gray-500">{patient.contactNumber}</p>
-          <p className="text-xs text-gray-400">Reg: {registrationNumber}</p>
+          <p className="text-xs font-semibold">UHID: {registrationNumber}</p>
+          <p className="text-xs font-semibold">Slot: {bookingNumber}</p>
         </div>
       </div>
       <div className="text-right">
-        <p className="text-sm font-semibold">
+        {/* <p className="text-sm font-semibold">
           {format(bookingDate, "dd-MM-yyyy")}
-        </p>
-        <Badge variant="outline">{type}</Badge>
+        </p> */}
+        {activeTab === "all" && <Badge variant="outline">{type}</Badge>}
       </div>
     </div>
   );
 };
 
-const AppointmentsQueue = ({ onPatientSelect }) => {
+const AppointmentsQueue = ({ onPatientSelect, onDoctorSelect }) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const [selectedPatientId, setSelectedPatientId] = useState(null);
   const [date, setDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState("");
   const dispatch = useDispatch();
-  // const { patientlist, status } = useSelector((state) => state.patients);
   const [patientlist, setPatientlist] = useState([]);
+  const doctors = useSelector((state) => state.staff.doctors);
+  const { userData } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    dispatch(fetchDoctorPrescriptionTemplates());
+  }, []);
+
+
+  useEffect(() => {
+    if (userData?.roles?.includes("doctor") && userData?._id) {
+      onDoctorSelect(userData._id);
+      setSelectedDoctor(userData._id);
+    }
+  }, [userData]);
+
   useEffect(() => {
     if (date) {
       const formattedDate = format(date, "yyyy-MM-dd");
@@ -123,8 +149,14 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
         ?.toLowerCase()
         ?.includes(searchTerm?.toLowerCase()) ||
         booking.bookingNumber?.toString()?.includes(searchTerm)) &&
-      (activeTab === "all" || booking.type.toLowerCase() === activeTab)
+      (activeTab === "all" || booking.type.toLowerCase() === activeTab) &&
+      booking.doctor?._id === selectedDoctor
   );
+
+  const handleDoctorChange = (value) => {
+    onDoctorSelect(value);
+    setSelectedDoctor(value);
+  };
 
   const handlePatientSelect = (patient) => {
     setSelectedPatientId(patient.ID);
@@ -138,7 +170,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
 
   return (
     <Card className="h-full flex flex-col">
-      <div className="mb-4">
+      <div className="mb-4 flex w-[280px] justify-between">
         <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
           <PopoverTrigger asChild>
             <Button
@@ -161,6 +193,23 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
             />
           </PopoverContent>
         </Popover>
+
+        <Select
+          value={selectedDoctor}
+          onValueChange={handleDoctorChange}
+          disabled={userData?.roles?.includes("doctor")}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select Doctor" />
+          </SelectTrigger>
+          <SelectContent>
+            {doctors?.map((doctor) => (
+              <SelectItem key={doctor._id} value={doctor._id}>
+                {doctor.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <Tabs
         value={activeTab}
@@ -173,7 +222,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
               <span className="hidden lg:block">All Bookings</span>
               <span className="lg:hidden">All</span>
               <span className="bg-blue-500 text-white rounded-lg w-10 h-6 flex items-center justify-center">
-                {patientlist.length}
+                {filteredPatients.length}
               </span>
             </div>
           </TabsTrigger>
@@ -182,7 +231,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
               <span>OPD</span>
               <span className="bg-green-500 text-white rounded-lg w-10 h-6 flex items-center justify-center">
                 {
-                  patientlist?.filter(
+                  filteredPatients?.filter(
                     (booking) => booking.type.toLowerCase() === "opd"
                   ).length
                 }
@@ -194,7 +243,7 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
               <span>IPD</span>
               <span className="bg-yellow-500 text-white rounded-lg w-10 h-6 flex items-center justify-center">
                 {
-                  patientlist.filter(
+                  filteredPatients?.filter(
                     (booking) => booking.type.toLowerCase() === "ipd"
                   ).length
                 }
@@ -223,13 +272,15 @@ const AppointmentsQueue = ({ onPatientSelect }) => {
                 key={booking._id}
                 ID={booking._id}
                 bookingNumber={booking.bookingNumber}
-                patient={booking.patient}
+                patient={{...booking.patient,registrationNumber:booking.registrationNumber}}
                 bookingDate={booking.bookingDate}
+                doctor={booking.doctor}
                 type={booking.type}
                 vitals={booking.vitals}
                 diagnosis={booking.diagnosis}
                 clinicalSummary={booking.clinicalSummary}
                 notes={booking.notes}
+                activeTab={activeTab}
                 treatment={booking.treatment}
                 medications={booking.medications}
                 labTests={booking.labTests}

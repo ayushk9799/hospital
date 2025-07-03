@@ -16,7 +16,7 @@ export default function OPDBillTokenPreview() {
   const samplePatientData = {
     patient: {
       name: "John Doe",
-      age: "35",
+      age: "35-1",
       gender: "Male",
       registrationNumber: "REG123456",
       contactNumber: "9876543210",

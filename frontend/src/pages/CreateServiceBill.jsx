@@ -2,6 +2,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useEffect, useMemo, useState } from "react";
 import { Card, CardContent } from "../components/ui/card";
+import { parseAge } from "../assets/Data";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import {
   ArrowLeft,
@@ -1121,7 +1122,7 @@ const CreateServiceBill = ({
                 <h2 className="font-semibold">{patientDetails?.name}</h2>
                 <div className="flex flex-wrap gap-1 mt-0.5">
                   <Badge variant="outline">{patientDetails?.gender}</Badge>
-                  <Badge variant="outline">{patientDetails?.age} yrs</Badge>
+                  <Badge variant="outline">{parseAge(patientDetails?.age,{yearLabel:"Years",monthLabel:"Months",dayLabel:"Days"})}</Badge>
                   {patientDetails?.bloodGroup && (
                     <Badge variant="outline">{patientDetails.bloodGroup}</Badge>
                   )}

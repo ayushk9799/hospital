@@ -1,6 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
+import { parseAge } from "../../../assets/Data";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 // import { opdBillTokenTemplateSingle ,opdBillTokenTemplateaad} from "../../../templatesExperiments/opdBilltokenExperiment";
@@ -40,7 +41,7 @@ const OPDBillTokenPrint = React.forwardRef(
       // Get the component function
       const ComponentFunction = templateFunction(React, HospitalHeader);
       // Execute the component function with the props
-      return ComponentFunction( patientData, hospital, ref);
+      return ComponentFunction( {...patientData,patient:{...patientData.patient,age:parseAge(patientData.patient.age)}}, hospital, ref);
     } catch (error) {
       console.error("Error rendering dynamic lab report:", error);
       return React.createElement(

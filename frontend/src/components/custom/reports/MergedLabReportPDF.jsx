@@ -2,6 +2,7 @@ import React, { forwardRef, useEffect } from "react";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplate } from "../../../templates/headertemplate";
+import { parseAge } from "../../../assets/Data";
 import { mergedLabReportTemplateStringExperiment2 } from "../../../templatesExperiments/labtemplateExperiment";
 import { mergedLabReportTemplateStringDefault } from "../../../templates/labReportTemplate";
 
@@ -72,7 +73,7 @@ const MergedLabReportPDF = forwardRef((props, ref) => {
 
   try {
     const ComponentFunction = templateFunction(React, HospitalHeader, styles);
-    return ComponentFunction(reportsData, patientData, hospital, ref);
+    return ComponentFunction(reportsData, { ...patientData, age: parseAge(patientData.patient?.age||patientData.age) }, hospital, ref);
   } catch (error) {
     console.error("Error rendering merged lab report:", error);
     return React.createElement(

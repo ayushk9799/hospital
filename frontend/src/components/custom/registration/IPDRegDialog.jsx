@@ -50,9 +50,6 @@ const paymentMethods = [
   { name: "Insurance" },
 ];
 
-
-
-
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const departments = useSelector((state) => state.departments.departments);
   const rooms = useSelector((state) => state.rooms.rooms);
@@ -355,10 +352,20 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     (e) => {
       const dateOfBirth = e.target.value;
       const age = dateOfBirth
-        ? new Date().getFullYear() - new Date(dateOfBirth).getFullYear()
+        ? (() => {
+            const today = new Date();
+            const dob = new Date(dateOfBirth);
+            let years = today.getFullYear() - dob.getFullYear();
+            let months = today.getMonth() - dob.getMonth();
+            if (months < 0) {
+              years -= 1;
+              months += 12;
+            }
+            return `${years}-${months}`;
+          })()
         : "";
       handleInputChange({ target: { id: "dateOfBirth", value: dateOfBirth } });
-      handleInputChange({ target: { id: "age", value: age.toString() } });
+      handleInputChange({ target: { id: "age", value: age } });
     },
     [handleInputChange]
   );
@@ -559,14 +566,14 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
     // Combine room service (if exists) with available services
     return availableServices;
-  }, [ services]);
+  }, [services]);
 
   const handleSearch = async () => {
     if (!formData.registrationNumber) return;
 
     try {
       const result = await dispatch(
-        searchPatients({searchQuery:formData.registrationNumber?.trim()})
+        searchPatients({ searchQuery: formData.registrationNumber?.trim() })
       ).unwrap();
       if (result.results?.patients && result.results?.patients?.length > 0) {
         const patient = result.results?.patients?.[0];
@@ -665,7 +672,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           <MemoizedInput
                             id="age"
                             label="Age"
-                            type="number"
+                            type="text"
                             value={formData.age}
                             onChange={handleAgeChange}
                             error={errors.age}
@@ -753,7 +760,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             <MemoizedInput
                               id="age"
                               label="Age"
-                              type="number"
+                              type="text"
                               value={formData.age}
                               onChange={handleAgeChange}
                               error={errors.age}
@@ -1133,7 +1140,6 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           label="Department"
                           error={errors["admission.department"]}
                         >
-                        
                             {departments.map((dept) => (
                               <SelectItem key={dept._id} value={dept.name}>
                                 {dept.name}
@@ -1152,16 +1158,12 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           label="Doctor"
                           error={errors["admission.assignedDoctor"]}
                         >
-                          
                             {doctors.map((doctor) => (
                               <SelectItem key={doctor._id} value={doctor._id}>
                                 {doctor.name}
                               </SelectItem>
                             ))}
                         </FloatingLabelSelect>
-                        
-                      
-                          
                       </div>
                     )}
                     <div className="flex flex-col">

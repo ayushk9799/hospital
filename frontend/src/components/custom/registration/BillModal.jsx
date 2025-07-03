@@ -25,6 +25,7 @@ import { numberToWords } from "../../../assets/Data";
 import HospitalHeader from "../../../utils/print/HospitalHeader";
 import { ScrollArea } from "../../ui/scroll-area";
 import PaymentReceipt from "../print/PaymentReceipt";
+import { parseAge } from "../../../assets/Data";
 
 const BillModal = ({
   isOpen,
@@ -137,7 +138,7 @@ const BillModal = ({
                   <div className="flex items-center">
                     <Label className="font-semibold mr-2">Age/Gender:</Label>
                     <p>
-                      {patient?.age || "N/A"}/{patient?.gender || "N/A"}
+                      {parseAge(patient?.age) || "N/A"}/{patient?.gender || "N/A"}
                     </p>
                   </div>
                   <div className="flex items-center">

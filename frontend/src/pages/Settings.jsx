@@ -85,6 +85,14 @@ export default function Settings() {
     navigate("/settings/subscription");
   };
 
+  const handleDoctorPrescriptionSettings = () => {
+    navigate("/settings/prescription-settings");
+  };
+
+  const handleDoctorWiseData = () => {
+    navigate("/settings/doctor-wise-data");
+  };
+
   return (
     <div className="p-4 sm:p-6">
       <div className="flex items-center gap-2 mb-4">
@@ -114,6 +122,10 @@ export default function Settings() {
           Discharge Form Templates
         </Button>
         <Button onClick={handleSubscription}>Subscription</Button>
+        <Button onClick={handleDoctorPrescriptionSettings}>
+          Doctors Prescription Settings
+        </Button>
+        <Button onClick={handleDoctorWiseData}>Doctor Wise Data</Button>
         {/* <Button onClick={handleLabData}>
           Lab Data
         </Button> */}

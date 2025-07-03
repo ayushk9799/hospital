@@ -141,16 +141,22 @@ export const savePrescription = createLoadingAsyncThunk(
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          vitals,
-          prescription,
-          labTests,
-          clinicalSummary,
-          notes,
-          comorbidities,
-          conditionOnAdmission,
-          conditionOnDischarge,
-        }),
+        body: JSON.stringify(
+          selectedPatientType === "OPD"
+            ? {
+                prescription,
+              }
+            : {
+                vitals,
+                prescription,
+                labTests,
+                clinicalSummary,
+                notes,
+                comorbidities,
+                conditionOnAdmission,
+                conditionOnDischarge,
+              }
+        ),
       }
     );
 
@@ -955,7 +961,6 @@ const patientSlice = createSlice({
       .addCase(fetchIPDAdmissionDetailsFull.fulfilled, (state, action) => {
         state.ipdAdmissionDetailsFullStatus = "succeeded";
         state.ipdAdmissionDetailsFull = action.payload;
-       
       })
       .addCase(fetchIPDAdmissionDetailsFull.rejected, (state, action) => {
         state.ipdAdmissionDetailsFullStatus = "failed";
@@ -969,12 +974,11 @@ const patientSlice = createSlice({
         state.editIPDAdmissionStatus = "succeeded";
         const updatedAdmission = action.payload;
 
-       
         // Update in patientlist if it exists there (e.g., if patientlist shows all types)
         const patientListIndex = state.patientlist.findIndex(
           (item) => item._id === updatedAdmission._id && item.type === "IPD"
         );
-        
+
         if (patientListIndex !== -1) {
           state.patientlist[patientListIndex] = {
             ...state.patientlist[patientListIndex], // Keep patient sub-object

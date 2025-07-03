@@ -1,6 +1,7 @@
 import React, { forwardRef } from "react";
 import { format, addDays } from "date-fns";
 import { useSelector } from "react-redux";
+import { parseAge } from "../assets/Data";
 import { createDynamicComponentFromString } from "../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplate } from "../templates/headertemplate";
 //  import { opdRxTemplateStringExperimental6 } from "../templatesExperiments/opdRxExperimental";
@@ -81,7 +82,7 @@ const OPDRxTemplate = forwardRef((props, ref) => {
       format,
       addDays
     );
-    return ComponentFunction(patient, hospital, ref);
+    return ComponentFunction({...patient, patient: {...patient.patient, age: parseAge(patient.patient?.age||patient.age)}}, hospital, ref);
   } catch (error) {
     console.error("Error rendering OPD Rx:", error);
     return React.createElement("div", null, "Error rendering OPD Rx template");

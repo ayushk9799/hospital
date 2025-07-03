@@ -24,7 +24,7 @@ export default function OPDRxTemplatePreview() {
   const patient = {
     patient: {
       name: "Sample Patient",
-      age: "45",
+      age: "45-1",
       gender: "Male",
       address: "123 Sample Street",
     },

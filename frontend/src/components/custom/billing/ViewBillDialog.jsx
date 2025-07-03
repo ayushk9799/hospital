@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "../../ui/table";
 import { PrinterIcon } from "lucide-react";
-import { numberToWords } from "../../../assets/Data";
+import { numberToWords, parseAge } from "../../../assets/Data";
 import { useSelector } from "react-redux";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { AlertCircle } from "lucide-react";
@@ -336,8 +336,8 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                     <div className="flex items-center">
                       <Label className="font-semibold mr-2">Age/Gender:</Label>
                       <p>{`${
-                        billData.patientInfo?.age || billData.patient?.age
-                      } yrs/${
+                        parseAge(billData.patientInfo?.age || billData.patient?.age)
+                      }/${
                         billData.patientInfo?.gender || billData.patient?.gender
                       }`}</p>
                     </div>

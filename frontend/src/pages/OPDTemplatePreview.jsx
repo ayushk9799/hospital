@@ -7,6 +7,7 @@ import OPDPrescriptionTemplate, {
 } from "../templates/opdPrescription";
 import { Input } from "../components/ui/input";
 import { cn } from "../lib/utils";
+import { DEFAULT_PRESCRIPTION_FORM_CONFIG } from "../config/opdPrescriptionConfig";
 import { opdPrescriptionTemplateString } from "../templatesExperiments/opdPrescription";
 
 export default function OPDTemplatePreview() {
@@ -32,6 +33,7 @@ export default function OPDTemplatePreview() {
   const [selectedTemplate, setSelectedTemplate] = useState(
     availableTemplates[0] || { name: "", value: "" }
   );
+  const formData = {comorbidities:[{"name":"BP"},{"name":"CKD"},{"name":"Sugar"}],diagnosis:[{"name":"Fever"},{"name":"Cold"}],labTests:[{"name":"CBC"},{"name":"Reticulocyte Count"}],medications:[{name:"Paracetamol",frequency:"100mg",duration:"10 days"},{name:"Crocin",frequency:"100mg",duration:"10 days"}]};
 
   const [editingTemplateId, setEditingTemplateId] = useState(null);
 
@@ -122,14 +124,12 @@ export default function OPDTemplatePreview() {
           }}
         >
           <OPDPrescriptionTemplate
-            previewMode={true}
             hospital={hospitalInfo}
             patient={patient}
-            vitals={vitals}
-            prescription={prescription}
-            labTests={labTests}
-            selectedComorbidities={selectedComorbidities}
-            templateString={selectedTemplate?.value}
+            formData={formData}
+            field={DEFAULT_PRESCRIPTION_FORM_CONFIG.sections}
+
+           
           />
         </div>
       </div>

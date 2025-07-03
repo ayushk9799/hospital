@@ -1,6 +1,7 @@
 import React, { forwardRef } from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
+import { parseAge } from "../../../assets/Data";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { dischargeSummaryTemplateStringDefault } from "../../../templates/dischargesummary";
 import { configBasedDischargeSummaryTemplate } from "../../../templatesExperiments/dischargeSummaryExperimental";
@@ -114,7 +115,11 @@ const hasValue = (obj) => {
 
 // Create the dynamic component
 const DischargeSummaryPDF = forwardRef((props, ref) => {
-  const { formData, patient, formConfig, hospital, templateString } = props;
+  let { formData, patient, formConfig, hospital, templateString } = props;
+   patient={
+    ...patient,
+    age: parseAge(patient?.age)
+   }
  
   const templateFunction = new Function(
     "React",

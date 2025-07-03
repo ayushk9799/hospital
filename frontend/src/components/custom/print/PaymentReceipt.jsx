@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useReactToPrint } from "react-to-print";
 import { Button } from "../../ui/button";
 import { Printer } from "lucide-react";
+import { parseAge } from "../../../assets/Data";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
 import { format } from "date-fns";
@@ -115,10 +116,8 @@ const PaymentReceipt = ({ payment, payments, billData, styleData }) => {
                   billData?.age ||
                   billData?.patientInfo?.age
                     ? `${
-                        billData?.patient?.age ||
-                        billData?.age ||
-                        billData?.patientInfo?.age
-                      } Years`
+                      parseAge(billData?.patient?.age||billData?.age||billData?.patientInfo?.age)
+                      }`
                     : ""}{" "}
                   /{" "}
                   {billData?.patient?.gender ||

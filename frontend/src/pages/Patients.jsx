@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { parseAge } from "../assets/Data";
 import {
   Card,
   CardContent,
@@ -406,7 +407,7 @@ export default function Patients() {
                   {patient.patient.address || "--"}
                 </div>
               </TableCell>
-              <TableCell>{`${patient.patient.gender?.charAt(0)} / ${patient.patient.age}Y`}</TableCell>
+              <TableCell>{`${patient.patient.gender?.charAt(0)} / ${parseAge(patient.patient.age,{yearLabel:"Y",monthLabel:"M",dayLabel:"D"})}`}</TableCell>
               <TableCell>{patient.doctor?.name || "--"}</TableCell>
 
               <TableCell>

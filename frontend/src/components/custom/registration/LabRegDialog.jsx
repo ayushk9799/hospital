@@ -248,7 +248,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
 
     try {
       const response = await dispatch(
-        searchPatients({searchQuery:formData.registrationNumber.trim()})
+        searchPatients({ searchQuery: formData.registrationNumber.trim() })
       ).unwrap();
       let data = response.results?.patients[0];
       if (response.results?.patients?.length > 0) {
@@ -259,7 +259,8 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
           data.guardianDetails?.guardianName ||
           "";
         const tempRelation =
-          data.visits[0]?.relation || data.admissionDetails[0]?.relation ||
+          data.visits[0]?.relation ||
+          data.admissionDetails[0]?.relation ||
           data.guardianDetails?.relation ||
           "";
 
@@ -404,13 +405,23 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
   const handleDobChange = (e) => {
     const dateOfBirth = e.target.value;
     const age = dateOfBirth
-      ? new Date().getFullYear() - new Date(dateOfBirth).getFullYear()
+      ? (() => {
+          const today = new Date();
+          const dob = new Date(dateOfBirth);
+          let years = today.getFullYear() - dob.getFullYear();
+          let months = today.getMonth() - dob.getMonth();
+          if (months < 0) {
+            years -= 1;
+            months += 12;
+          }
+          return `${years}-${months}`;
+        })()
       : "";
 
     setFormData((prev) => ({
       ...prev,
       dateOfBirth,
-      age: age.toString(),
+      age,
     }));
   };
 
@@ -550,7 +561,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
                     <MemoizedInput
                       id="age"
                       label="Age"
-                      type="number"
+                      type="text"
                       value={formData.age}
                       onChange={handleAgeChange}
                       error={errors.age}
@@ -618,7 +629,11 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
                   </Select>
                   <MemoizedInput
                     id="guardianName"
-                    label={formData.relation ? `${formData.relation}'s Name` : "Guardian's Name"}
+                    label={
+                      formData.relation
+                        ? `${formData.relation}'s Name`
+                        : "Guardian's Name"
+                    }
                     value={formData.guardianName}
                     onChange={handleInputChange}
                   />

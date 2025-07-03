@@ -41,6 +41,8 @@ router.get("/registration-ipd-numbers", verifyToken, async (req, res) => {
   }
 });
 
+
+
 // Move this route BEFORE any routes with parameters (/:id)
 router.get("/admittedpatients", verifyToken, async (req, res) => {
   try {
@@ -309,6 +311,7 @@ router.post(
           contactNumber: patient.contactNumber,
           registrationNumber: patient.registrationNumber,
           doctor: visit.doctor?.id || visit.doctor || null,
+          prescription: visit.prescription || {},
         });
 
         // Create bill
@@ -1174,7 +1177,9 @@ router.delete(
       if (visitId) {
         const visit = await Visit.findById(visitId).session(session);
         if (!visit || visit.patient.toString() !== id) {
-          throw new Error("Visit not found or does not belong to this patient.");
+          throw new Error(
+            "Visit not found or does not belong to this patient."
+          );
         }
 
         const serviceBillIds = visit.bills?.services || [];
@@ -1204,11 +1209,16 @@ router.delete(
         }
 
         // Remove from patient's visits array
-        const patientData = await Patient.findByIdAndUpdate(id, { $pull: { visits: visitId } }, { new: true }).session(
-          session
-        );
+        const patientData = await Patient.findByIdAndUpdate(
+          id,
+          { $pull: { visits: visitId } },
+          { new: true }
+        ).session(session);
 
-        if (patientData.visits.length === 0 && patientData.admissionDetails.length === 0) {
+        if (
+          patientData.visits.length === 0 &&
+          patientData.admissionDetails.length === 0
+        ) {
           await Patient.findByIdAndDelete(id).session(session);
         }
 
@@ -1284,14 +1294,21 @@ router.delete(
         }
 
         // Remove from patient's admissionDetails array
-        const patientData = await Patient.findByIdAndUpdate(id, {
-          $pull: { admissionDetails: admissionId },
-        }, { new: true }).session(session);
+        const patientData = await Patient.findByIdAndUpdate(
+          id,
+          {
+            $pull: { admissionDetails: admissionId },
+          },
+          { new: true }
+        ).session(session);
 
         // Delete the admission itself
-       await IPDAdmission.findByIdAndDelete(admissionId).session(session);
+        await IPDAdmission.findByIdAndDelete(admissionId).session(session);
 
-        if (patientData.admissionDetails.length === 0 && patientData.visits.length === 0) {
+        if (
+          patientData.admissionDetails.length === 0 &&
+          patientData.visits.length === 0
+        ) {
           await Patient.findByIdAndDelete(id).session(session);
         }
 
@@ -1308,7 +1325,9 @@ router.delete(
       }
 
       // Find all related documents
-      const visits = await Visit.find({ patient: patient._id }).session(session);
+      const visits = await Visit.find({ patient: patient._id }).session(
+        session
+      );
       const ipdAdmissions = await IPDAdmission.find({
         patient: patient._id,
       }).session(session);
@@ -1531,6 +1550,7 @@ router.post(
         contactNumber: patient.contactNumber,
         registrationNumber: patient.registrationNumber,
         doctor: visit.doctor?.id || visit.doctor || null,
+        prescription: visit.prescription || {},
       });
 
       // Create bill
@@ -1633,35 +1653,29 @@ router.put(
   async (req, res) => {
     const session = await mongoose.startSession();
     session.startTransaction();
+
     try {
       const { id } = req.params;
-      const { vitals, prescription, labTests, comorbidities } = req.body;
-      const visit = await Visit.findById(id)
-        .session(session)
-        .select(
-          "diagnosis bookingNumber treatment medications labTests additionalInstructions vitals comorbidities"
-        );
+      const { prescription } = req.body;
+
+      const visit = await Visit.findById(id).session(session);
+
       if (!visit) {
         throw new Error("Visit not found");
       }
-      // Update vitals
-      visit.vitals = {
-        ...visit.vitals,
-        ...vitals,
-      };
-      // Update prescription details
-      visit.diagnosis = prescription.diagnosis;
-      visit.treatment = prescription.treatment;
-      visit.medications = prescription.medications;
-      visit.additionalInstructions = prescription.additionalInstructions;
-      // Update lab tests
-      visit.labTests = labTests;
-      visit.comorbidities = comorbidities;
+
+      // Replace the entire prescription blob
+      visit.prescription = { ...prescription };
+      visit.markModified("prescription");
+
       await visit.save({ session });
       await session.commitTransaction();
+
       res.status(200).json(visit);
     } catch (error) {
-      await session.abortTransaction();
+      if (session.inTransaction()) {
+        await session.abortTransaction();
+      }
       res.status(400).json({ error: error.message });
     } finally {
       session.endSession();
@@ -2247,6 +2261,7 @@ router.post("/visit-details", verifyToken, async (req, res) => {
         labTests: result.labTests,
         timeSlot: result.timeSlot,
         additionalInstructions: result.additionalInstructions,
+        prescription: result.prescription,
         type: "OPD",
         createdAt: result.createdAt,
         bills: result.bills,
@@ -2673,13 +2688,12 @@ router.put("/ipd-admission/:admissionId", verifyToken, async (req, res) => {
 
     if (admissionDataUpdates) {
       if (admissionDataUpdates.assignedRoom === "") {
-          admissionDataUpdates.assignedRoom = null;
+        admissionDataUpdates.assignedRoom = null;
       }
       if (admissionDataUpdates.assignedBed === "") {
-          admissionDataUpdates.assignedBed = null;
+        admissionDataUpdates.assignedBed = null;
       }
-      
-  }
+    }
 
     // 3. Update IPDAdmission details
     // Ensure to preserve fields not explicitly being updated

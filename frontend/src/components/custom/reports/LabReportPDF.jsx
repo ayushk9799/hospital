@@ -1,6 +1,7 @@
 import React from "react";
 import { format } from "date-fns";
 import { useSelector } from "react-redux";
+import { parseAge } from "../../../assets/Data";
 import { labReportTemplateStringExperiment2 } from "../../../templatesExperiments/labtemplateExperiment";
 import { createDynamicComponentFromString } from "../../../utils/print/HospitalHeader";
 import { headerTemplateString as headerTemplateStringDefault } from "../../../templates/headertemplate";
@@ -192,6 +193,7 @@ const styles = {
 
 const LabReportPDF = React.forwardRef(
   ({ reportData, patientData, hospital }, ref) => {
+    
     const headerTemplateStrings = useSelector(
       (state) => state.templates.headerTemplateArray
     );
@@ -221,7 +223,7 @@ const LabReportPDF = React.forwardRef(
       // Get the component function
       const ComponentFunction = templateFunction(React, HospitalHeader, styles);
       // Execute the component function with the props
-      return ComponentFunction(reportData, patientData, hospital, ref);
+      return ComponentFunction(reportData, { ...patientData, age: parseAge(patientData.patient?.age||patientData.age) }, hospital, ref);
     } catch (error) {
       console.error("Error rendering dynamic lab report:", error);
       return React.createElement(
