@@ -24,6 +24,15 @@ router.post("/create", verifyToken, async (req, res) => {
 
     // Ensure only the date is stored (not time)
     const expenseDate = getStartOfDay(date);
+    const now = new Date();
+    const combinedDateTime = new Date(
+      expenseDate.getFullYear(),
+      expenseDate.getMonth(),
+      expenseDate.getDate(),
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds()
+    );
 
     const newExpense = new Expense({
       category,
@@ -38,13 +47,14 @@ router.post("/create", verifyToken, async (req, res) => {
     if (amountPaid > 0) {
       const payment = new Payment({
         amount: amountPaid,
-        associatedId: newExpense._id,
+        associatedInvoiceOrId: newExpense._id,
         paymentMethod,
         paymentType: { name: "Expense", id: newExpense._id },
         type: "Expense",
         createdByName: req.user?.name,
         createdBy: req.user._id,
         description: category + " paid to " + description || "Payment for Expense",
+        createdAt: combinedDateTime
       });
       await payment.save({ session });
       newExpense.payments.push(payment._id);
@@ -81,33 +91,52 @@ router.post("/update/:id", verifyToken, async (req, res) => {
     const { category, description, amount, date, amountPaid, paymentMethod } =
       req.body;
 
-    const expense = await Expense.findById(id);
+    const expense = await Expense.findById(id).session(session);
 
     if (!expense) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: "Expense not found" });
     }
 
+    // Delete existing payments associated with the expense
+    if (expense.payments && expense.payments.length > 0) {
+      await Payment.deleteMany({ _id: { $in: expense.payments } }, { session });
+    }
+
     // Ensure only the date is stored (not time)
-    const expenseDate = date ? getStartOfDay(date) : expense.date;
+    const expenseDate = getStartOfDay(date);
+    const now = new Date();
+    const combinedDateTime = new Date(
+      expenseDate.getFullYear(),
+      expenseDate.getMonth(),
+      expenseDate.getDate(),
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds()
+    );
 
     // Update expense fields
     expense.category = category || expense.category;
     expense.description = description || expense.description;
-    expense.amount = amount || expense.amount;
+    expense.amount = amount;
     expense.date = expenseDate;
-    expense.amountPaid = amountPaid || expense.amountPaid;
+    expense.amountPaid = amountPaid;
+    expense.payments = []; // Reset payments array
 
-    // Handle payment update
-    if (amountPaid > expense.amountPaid) {
-      const additionalPayment = amountPaid - expense.amountPaid;
+    // Create a new payment if amountPaid > 0
+    if (amountPaid > 0) {
       const payment = new Payment({
-        amount: additionalPayment,
+        amount: amountPaid,
         paymentMethod,
+        associatedInvoiceOrId: expense._id,
         paymentType: { name: "Expense", id: expense._id },
         type: "Expense",
         createdByName: req.user?.name,
         createdBy: req.user._id,
-        description: description || "Additional Payment for Expense",
+        description:
+          `${category} paid to ${description}` || "Payment for Expense",
+        createdAt: combinedDateTime,
       });
       await payment.save({ session });
       expense.payments.push(payment._id);
@@ -155,6 +184,17 @@ router.post("/:id/pay", verifyToken, async (req, res) => {
         .json({ message: "Payment amount exceeds the remaining balance" });
     }
 
+    const expenseDate = new Date(expense.date);
+    const now = new Date();
+    const combinedDateTime = new Date(
+      expenseDate.getFullYear(),
+      expenseDate.getMonth(),
+      expenseDate.getDate(),
+      now.getHours(),
+      now.getMinutes(),
+      now.getSeconds()
+    );
+
     const payment = new Payment({
       amount,
       paymentMethod,
@@ -163,6 +203,7 @@ router.post("/:id/pay", verifyToken, async (req, res) => {
       createdByName: req.user?.name,
       createdBy: req.user._id,
       description: description || "Payment for Expense",
+      createdAt: combinedDateTime
     });
 
     await payment.save({ session });

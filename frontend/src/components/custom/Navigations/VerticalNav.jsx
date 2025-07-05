@@ -31,6 +31,7 @@ import {
 } from "../../ui/tooltip";
 import { useSelector } from "react-redux";
 import { useToast } from "../../../hooks/use-toast";
+import { hasPermission } from "../../../lib/permissions";
 
 export const navItems = [
   { name: "Quick Menu", icon: Home, path: "/" },
@@ -81,11 +82,6 @@ export const ColorfulLogo = ({ className }) => (
   </svg>
 );
 
-const hasPermission = (userData, permission) => {
-  return userData?.permissions?.includes(permission) || false;
-};
-
-
 export default function VerticalNav({ isCollapsed }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,7 +95,7 @@ export default function VerticalNav({ isCollapsed }) {
   };
 
   const handleClick = (item) => {
-    if (item.permission && !hasPermission(userData, item.permission)) {
+    if (item.permission && !hasPermission(item.permission)) {
       toast({
         title: "You don't have permission to view this page",
         description: "Please contact your administrator",

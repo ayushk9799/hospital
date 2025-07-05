@@ -14,6 +14,10 @@ const hospitalSettingsSchema = new mongoose.Schema({
     type: String,
     default: "listwithoutdate",
     enum: ["datewise", "list","listwithoutdate"],
+  },
+  labFinancialSummaryView : {
+    type : Boolean,
+    default : false,
   }
 
   // Add any other settings as needed

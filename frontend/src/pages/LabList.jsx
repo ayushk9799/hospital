@@ -637,7 +637,7 @@ export default function LabList() {
             </Button>
             <div className="w-full sm:w-auto">
               <CardTitle className="text-center sm:text-left text-2xl">
-                Laboratory Tests
+                Laboratory
               </CardTitle>
             </div>
           </div>
@@ -756,7 +756,7 @@ export default function LabList() {
         </div>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="px-4">
         <LabRegDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
         <LabDetailsModal
           isOpen={showDetailsModal}
@@ -866,95 +866,113 @@ export default function LabList() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTests.map((test, index) => (
-                  <TableRow key={test._id}>
+                {filteredTests.length > 0 ? (
+                  filteredTests.map((test, index) => (
+                    <TableRow key={test._id}>
                       <TableCell className="font-medium">{index + 1}</TableCell>
-                    <TableCell>{test.labNumber}</TableCell>
-                    <TableCell className="font-bold">
-                      {`${test.patientName} ${
-                        test.registrationNumber
-                          ? `(${test.registrationNumber})`
-                          : ""
-                      }`}
-                    </TableCell>
-                    <TableCell>{test.contactNumber}</TableCell>
-                    <TableCell>
-                      {format(new Date(test.bookingDate), "dd/MM/yyyy")}
-                    </TableCell>
-                    <TableCell className="font-bold">
-                      {test.labTests.map((t, index) => (
-                        <span key={index}>
-                          <button
-                            onClick={() => handleTestClick(test, t)}
-                            className={`${getReportStatusColor(
-                              t.reportStatus
-                            )} hover:underline cursor-pointer`}
-                          >
-                            {t.name}
-                          </button>
-                          {index < test.labTests.length - 1 ? ", " : ""}
+                      <TableCell>{test.labNumber}</TableCell>
+                      <TableCell className="font-bold">
+                        {`${test.patientName} ${
+                          test.registrationNumber
+                            ? `(${test.registrationNumber})`
+                            : ""
+                        }`}
+                      </TableCell>
+                      <TableCell>{test.contactNumber}</TableCell>
+                      <TableCell>
+                        {format(new Date(test.bookingDate), "dd/MM/yyyy")}
+                      </TableCell>
+                      <TableCell className="font-bold">
+                        {test.labTests.map((t, index) => (
+                          <span key={index}>
+                            <button
+                              onClick={() => handleTestClick(test, t)}
+                              className={`${getReportStatusColor(
+                                t.reportStatus
+                              )} hover:underline cursor-pointer`}
+                            >
+                              {t.name}
+                            </button>
+                            {index < test.labTests.length - 1 ? ", " : ""}
+                          </span>
+                        ))}
+                      </TableCell>
+                      <TableCell>
+                        <span
+                          className={`${getStatusColor(test.status)} font-bold`}
+                        >
+                          {test.status}
                         </span>
-                      ))}
-                    </TableCell>
-                    <TableCell>
-                      <span
-                        className={`${getStatusColor(test.status)} font-bold`}
-                      >
-                        {test.status}
-                      </span>
-                    </TableCell>
-                    <TableCell className="font-bold text-black">
-                      {formatCurrency(
-                        test.paymentInfo?.totalAmount -
-                        test.paymentInfo?.additionalDiscount
-                      )}
-                    </TableCell>
-                    <TableCell className="font-bold text-green-600">
-                      {formatCurrency(test.paymentInfo.amountPaid)}
-                    </TableCell>
-                    <TableCell className="font-bold text-red-600">
-                      {formatCurrency(test.paymentInfo.balanceDue)}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => handleViewDetails(test)}
-                          >
-                            Print Bills
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handlePayments(test)}
-                          >
-                            Payments
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              navigate("/lab", { state: { patientData: test } })
-                            }
-                          >
-                            Make Report
-                          </DropdownMenuItem>
+                      </TableCell>
+                      <TableCell className="font-bold text-black">
+                        {formatCurrency(
+                          test.paymentInfo?.totalAmount -
+                            test.paymentInfo?.additionalDiscount
+                        )}
+                      </TableCell>
+                      <TableCell className="font-bold text-green-600">
+                        {formatCurrency(test.paymentInfo.amountPaid)}
+                      </TableCell>
+                      <TableCell className="font-bold text-red-600">
+                        {formatCurrency(test.paymentInfo.balanceDue)}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="h-8 w-8 p-0">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => handleViewDetails(test)}
+                            >
+                              Print Bills
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handlePayments(test)}
+                            >
+                              Payments
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() =>
+                                navigate("/lab", {
+                                  state: { patientData: test },
+                                })
+                              }
+                            >
+                              Make Report
+                            </DropdownMenuItem>
 
-                          <DropdownMenuItem onClick={() => handleEdit(test)}>
-                            Edit Registration
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => handleDeleteClick(test)}
-                            className="text-red-500"
-                          >
-                            Delete Registration
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuItem onClick={() => handleEdit(test)}>
+                              Edit Registration
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleDeleteClick(test)}
+                              className="text-red-500"
+                            >
+                              Delete Registration
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={11}>
+                      <div className="flex flex-col items-center justify-center py-12">
+                        <UserX className="h-16 w-16 text-gray-400 mb-4" />
+                        <p className="text-xl font-semibold text-gray-600">
+                          No tests found
+                        </p>
+                        <p className="text-gray-500">
+                          Try adjusting your search or filters
+                        </p>
+                      </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>

@@ -121,7 +121,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
   return (
     <>
       <Dialog open={isOpen} onOpenChange={handleClose}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-visible rounded-lg">
+        <DialogContent className="max-w-3xl text-sm max-h-[90vh] overflow-visible rounded-lg">
           <ScrollArea className="max-h-[80vh] pr-3">
             <div ref={componentRef}>
               <div className="hidden print:block mb-2">
@@ -248,9 +248,7 @@ const LabDetailsModal = ({ isOpen, setShowModal, labData, hospitalInfo }) => {
 
                     <div className="flex justify-end">
                       <div className="mt-4 border-2 rounded-lg p-4 bg-gray-50 w-1/2">
-                        <h4 className="text-lg font-semibold mb-3">
-                          Payment Summary
-                        </h4>
+                        
                         <div className="space-y-1">
                           <div className="flex justify-between">
                             <span>Sub Total:</span>

@@ -18,6 +18,7 @@ import { useSelector, useDispatch } from "react-redux";
 import { addLabReport } from "../redux/slices/patientSlice";
 import { useToast } from "../hooks/use-toast";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import { Printer } from "lucide-react";
 
 const getValueColor = (value, normalRange, gender) => {
   if (!value || !normalRange) return "inherit";
@@ -390,26 +391,33 @@ const TemplateLabReport = ({
     );
   };
   return (
-    <div className="container px-0 max-w-6xl">
-      <h1 className="text-2xl font-bold mb-2 text-center capitalize">
-        {template.name}
-      </h1>
-      <Card className="p-6  w-full">
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="w-full">
+      
+      <Card className="p-4  w-full">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center mb-4">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline">{format(reportDate, "PPP")}</Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
-                <Calendar
-                  mode="single"
-                  selected={reportDate}
-                  onSelect={handleDateChange}
-                  initialFocus
-                />
-              </PopoverContent>
-            </Popover>
+            <h1 className="text-xl font-bold mb-2 text-center capitalize">
+              {template.name}
+            </h1>
+            <div className="flex gap-4">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline">{format(reportDate, "PPP")}</Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={reportDate}
+                    onSelect={handleDateChange}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button variant="outline" type="button" onClick={handlePrint} className="flex items-center gap-2">
+                <Printer className="h-4 w-4" />
+                Print Report
+              </Button>
+            </div>
           </div>
 
           {/* Table Header */}

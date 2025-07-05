@@ -52,7 +52,7 @@ const paymentMethods = [
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const departments = useSelector((state) => state.departments.departments);
-  const rooms = useSelector((state) => state.rooms.rooms);
+  const {rooms,status:roomsStatus } = useSelector((state) => state.rooms);
   const doctors = useSelector((state) => state.staff.doctors);
   const initialFormData = {
     name: "",
@@ -157,13 +157,16 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   });
 
   useEffect(() => {
+    if (roomsStatus === "idle" && open) {
+      dispatch(fetchRooms());
+    }
     if (status === "idle") {
       dispatch(fetchTemplates());
     }
     if (servicesStatus === "idle") {
       dispatch(fetchServices());
     }
-  }, [dispatch, status, servicesStatus]);
+  }, [dispatch, status, servicesStatus, roomsStatus]);
 
   useEffect(() => {
     // Only calculate room charge when room is selected
@@ -255,7 +258,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
 
   useEffect(() => {
     if (!open) {
-      dispatch(fetchRooms());
+      // dispatch(fetchRooms());
       resetFormData();
       setTotalAmount(""); // Reset total amount
       setRoomCharge(0); // Reset room charge
