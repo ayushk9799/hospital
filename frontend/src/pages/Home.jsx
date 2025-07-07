@@ -3,7 +3,7 @@ import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { CardContent, Card } from "../components/ui/card";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Users, BarChart, Pill, Loader2, Eye, EyeOff, Menu, LogIn } from "lucide-react";
+import { ShieldCheck, Users, BarChart, Pill, Loader2, Eye, EyeOff, Menu, LogIn, Youtube } from "lucide-react";
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
@@ -100,9 +100,8 @@ export default function LandingPage() {
     }
   };
 
-  // Add a new function to handle the "Learn More" button click
-  const handleLearnMore = () => {
-    navigate('/about');
+  const handleWatchTutorial = () => {
+    window.open('https://youtube.com/@thehospital_in?si=7bUryvDSFQC8Lxtf', '_blank', 'noopener,noreferrer');
   };
 
   const closeDrawer = () => {
@@ -229,6 +228,12 @@ export default function LandingPage() {
                     management.
                   </p>
                 </div>
+                <p className="text-lg text-gray-700">
+                  Contact us for demo:{" "}
+                  <a href="tel:+919942000425" className="font-bold text-blue-600 hover:underline">
+                    +91 9942000425
+                  </a>
+                </p>
                 <div className="hidden md:flex lg:flex flex-col gap-2 min-[400px]:flex-row">
                   <Button 
                     className="w-full sm:w-auto inline-flex h-10 items-center justify-center rounded-md bg-blue-600 px-4 sm:px-8 text-sm font-medium text-white shadow transition-colors hover:bg-blue-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-blue-700 disabled:pointer-events-none disabled:opacity-50"
@@ -237,11 +242,11 @@ export default function LandingPage() {
                     Get Started
                   </Button>
                   <Button
-                    className="w-full sm:w-auto inline-flex h-10 items-center justify-center rounded-md border border-gray-200 bg-white px-4 sm:px-8 text-sm font-medium shadow-sm transition-colors hover:bg-gray-100 hover:text-gray-900 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-gray-950 disabled:pointer-events-none disabled:opacity-50"
-                    variant="outline"
-                    onClick={handleLearnMore}
+                    className="w-full sm:w-auto inline-flex h-10 items-center justify-center rounded-md bg-red-600 px-4 sm:px-8 text-sm font-medium text-white shadow transition-colors hover:bg-red-700 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-700 disabled:pointer-events-none disabled:opacity-50"
+                    onClick={handleWatchTutorial}
                   >
-                    Learn More
+                    <Youtube className="mr-2 h-5 w-5" />
+                    Watch Demo
                   </Button>
                 </div>
               </div>
