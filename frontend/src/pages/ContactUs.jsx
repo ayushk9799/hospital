@@ -4,7 +4,7 @@ import { Input } from "../components/ui/input"
 import { Textarea } from "../components/ui/textarea"
 import { CardContent, Card } from "../components/ui/card"
 import { Link } from "react-router-dom"
-import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin, LogIn } from "lucide-react"
+import { Phone, Mail, MapPin, Facebook, Twitter, Linkedin, LogIn, Youtube } from "lucide-react"
 import { ColorfulLogo } from "../components/custom/Navigations/VerticalNav";
 import { useNavigate, useLocation } from 'react-router-dom';
 import {
@@ -183,10 +183,10 @@ export default function ContactPage() {
                       <Twitter className="h-5 w-5 sm:h-6 sm:w-6" />
                       <span className="sr-only">Twitter</span>
                     </Link>
-                    <Link href="#" className="text-gray-500 hover:text-blue-600">
-                      <Linkedin className="h-5 w-5 sm:h-6 sm:w-6" />
-                      <span className="sr-only">LinkedIn</span>
-                    </Link>
+                    <a href="https://youtube.com/@thehospital_in?si=7bUryvDSFQC8Lxtf" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-blue-600">
+                      <Youtube className="h-5 w-5 sm:h-6 sm:w-6" />
+                      <span className="sr-only">Youtube</span>
+                    </a>
                   </div>
                 </div>
               </div>
