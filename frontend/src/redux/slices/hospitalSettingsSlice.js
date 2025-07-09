@@ -15,7 +15,8 @@ export const fetchHospitalSettings = createLoadingAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  }
+  }, 
+  { useGlobalLoader: true }
 );
 
 // Update hospital settings
@@ -37,7 +38,46 @@ export const updateHospitalSettings = createLoadingAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  }
+  },
+  { useGlobalLoader: true }
+);
+
+export const updatePrefixData = createLoadingAsyncThunk(
+  "hospitalSettings/updatePrefixData",
+  async (settings, { rejectWithValue }) => {
+    try {
+      const response = await fetch(
+        `${Backend_URL}/api/registration/settings`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify(settings),
+        }
+      );
+      if (!response.ok) throw new Error("Failed to update prefix settings");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
+);
+
+export const fetchPrefixData = createLoadingAsyncThunk(
+  "hospitalSettings/prefixData",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await fetch(`${Backend_URL}/api/registration/settings`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch prefix data");
+      return await response.json();
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  },
+  { useGlobalLoader: true }
 );
 
 const hospitalSettingsSlice = createSlice({
@@ -46,6 +86,8 @@ const hospitalSettingsSlice = createSlice({
     settings: null,
     status: "idle",
     error: null,
+    prefixData: null,
+    prefixDataStatus: "idle",
   },
   reducers: {},
   extraReducers: (builder) => {
@@ -63,6 +105,28 @@ const hospitalSettingsSlice = createSlice({
       })
       .addCase(updateHospitalSettings.fulfilled, (state, action) => {
         state.settings = action.payload;
+      })
+      .addCase(fetchPrefixData.pending, (state) => {
+        state.prefixDataStatus = "loading";
+      })
+      .addCase(fetchPrefixData.fulfilled, (state, action) => {
+        state.prefixDataStatus = "succeeded";
+        state.prefixData = action.payload;
+      })
+      .addCase(fetchPrefixData.rejected, (state, action) => {
+        state.prefixDataStatus = "failed";
+        state.error = action.payload;
+      })
+      .addCase(updatePrefixData.pending, (state) => {
+        state.prefixDataStatus = "loading";
+      })
+      .addCase(updatePrefixData.fulfilled, (state, action) => {
+        state.prefixDataStatus = "succeeded";
+        state.prefixData = action.payload;
+      })
+      .addCase(updatePrefixData.rejected, (state, action) => {
+        state.prefixDataStatus = "failed";
+        state.error = action.payload;
       });
   },
 });

@@ -96,6 +96,7 @@ export default function Patients() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isEditIPDDialogOpen, setIsEditIPDDialogOpen] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [patientForIpd, setPatientForIpd] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [patientToDelete, setPatientToDelete] = useState(null);
   const [isLabDialogOpen, setIsLabDialogOpen] = useState(false);
@@ -173,9 +174,9 @@ export default function Patients() {
   }, [dateFilter, dateRange, dispatch]);
 
   const filteredPatients = patients.filter((patient) => {
-    const nameMatch = patient.patient?.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
+    const nameMatch = patient?.patient?.name
+      ?.toLowerCase()
+      ?.includes(searchTerm.toLowerCase());
 
     const doctorMatch =
       selectedDoctor === "All" || patient.doctor?._id === selectedDoctor;
@@ -201,6 +202,11 @@ export default function Patients() {
     } else if (patient.type === "IPD") {
       setIsEditIPDDialogOpen(true);
     }
+  };
+
+  const handleMoveToIpd = (patient) => {
+    setPatientForIpd(patient);
+    setIsIPDDialogOpen(true);
   };
 
   const handleDeletePatient = (patient) => {
@@ -438,6 +444,9 @@ export default function Patients() {
                         >
                           Print OPD Token
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleMoveToIpd(patient)}>
+                          Move to IPD
+                        </DropdownMenuItem>
                       </>
                     )}
                     {patient.type === "IPD" && (
@@ -560,6 +569,9 @@ export default function Patients() {
                           onClick={() => handlePrintOPDToken(patient)}
                         >
                           Print OPD Token
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleMoveToIpd(patient)}>
+                          Move to IPD
                         </DropdownMenuItem>
                       </>
                     )}
@@ -700,7 +712,13 @@ export default function Patients() {
         {isIPDDialogOpen && (
           <IPDRegDialog
             open={isIPDDialogOpen}
-            onOpenChange={setIsIPDDialogOpen}
+            onOpenChange={(isOpen) => {
+              setIsIPDDialogOpen(isOpen);
+              if (!isOpen) {
+                setPatientForIpd(null);
+              }
+            }}
+            patientData={patientForIpd}
           />
         )}
         {isEditDialogOpen && (

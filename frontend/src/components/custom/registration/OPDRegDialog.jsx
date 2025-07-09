@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { Button } from "../../ui/button";
-import { Badge } from "../../ui/badge";
 import {
   Dialog,
   DialogContent,
@@ -23,20 +22,14 @@ import VitalsForm from "./VitalsForm";
 import InsuranceForm from "./InsuranceForm";
 
 import {
-  Select,
-  SelectContent,
   SelectItem,
-  SelectTrigger,
-  SelectValue,
 } from "../../ui/select";
 import { useToast } from "../../../hooks/use-toast";
-import { ChevronDown, Loader2, MoreVertical } from "lucide-react";
+import { Loader2, MoreVertical } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
-import { Checkbox } from "../../ui/checkbox";
 import { useMediaQuery } from "../../../hooks/use-media-query";
 import MemoizedInput from "./MemoizedInput";
 import { FloatingLabelSelect } from "./PatientInfoForm";
-import { fetchServices } from "../../../redux/slices/serviceSlice";
 import OPDBillTokenModal from "./OPDBillTokenModal";
 import MultiSelectInput from "../MultiSelectInput";
 import { format, differenceInDays } from "date-fns";
@@ -44,7 +37,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../../ui/dropdown-menu";
@@ -116,7 +108,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   const registerPatientStatus = useSelector(
     (state) => state.patients.registerPatientStatus
   );
-  const { services, servicesStatus } = useSelector((state) => state.services);
+  const { services } = useSelector((state) => state.services);
 
   const consultationService = services.find((service) =>
     service.name.toLowerCase().includes("consultation")
@@ -125,8 +117,6 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     (state) => state.consultationFees
   );
 
-  const { doctorWiseFee, consultationTypes } = consultationFeeSettings;
-
   const [formData, setFormData] = useState(initialFormData);
   const [errors, setErrors] = useState(initialErrors);
   const doctors = useSelector((state) => state.staff.doctors);
@@ -134,9 +124,14 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
 
   const [showBillModal, setShowBillModal] = useState(false);
   const [registeredPatient, setRegisteredPatient] = useState(null);
-  const [billData, setBillData] = useState(null);
 
   const [searchedPatient, setSearchedPatient] = useState(null);
+
+  useEffect(() => {
+    if (patientData) {
+      setSearchedPatient(patientData);
+    }
+  }, [patientData]);
 
   const [generatedRegNumber, setGeneratedRegNumber] = useState(null);
   const handleInputChange = useCallback(
@@ -215,6 +210,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       },
     }));
   };
+
   useEffect(() => {
     const amount = formData.visit.paymentMethod.reduce(
       (sum, pm) => sum + (pm.amount ? parseFloat(pm.amount) : 0),
@@ -228,6 +224,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
       },
     }));
   }, [formData.visit.paymentMethod]);
+
   const handlePaymentMethodChange = (newMethods) => {
     setFormData((prev) => {
       // Get existing payment methods with their amounts
@@ -256,7 +253,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
     });
   };
 
-  const validateForm = () => {
+  const validateForm = useCallback(() => {
     const newErrors = {};
     if (!formData.name) newErrors.name = "Full name is required";
     if (!formData.dateOfBirth && !formData.age)
@@ -288,7 +285,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  };
+  }, [formData]);
 
   const handleSubmit = useCallback(
     async (e) => {
@@ -330,7 +327,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           },
         };
         // Choose the appropriate action based on whether this is a revisit
-        const sourceData = searchedPatient || patientData;
+        const sourceData = searchedPatient;
         const action = sourceData
           ? opdRevisit({
               patientId: sourceData._id,
@@ -342,10 +339,10 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           .unwrap()
           .then((response) => {
             toast({
-              title: patientData
+              title: sourceData
                 ? "Patient revisit recorded successfully"
                 : "Patient registered successfully",
-              description: patientData
+              description: sourceData
                 ? "The patient visit has been recorded."
                 : "The new patient has been added.",
               variant: "success",
@@ -370,7 +367,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           })
           .catch((error) => {
             toast({
-              title: patientData
+              title: searchedPatient
                 ? "Failed to record revisit"
                 : "Failed to register patient",
               description:
@@ -380,7 +377,15 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           });
       }
     },
-    [formData, validateForm, dispatch, toast, onOpenChange, patientData]
+    [
+      formData,
+      validateForm,
+      dispatch,
+      toast,
+      onOpenChange,
+      searchedPatient,
+      generatedRegNumber,
+    ]
   );
 
   const handleReset = useCallback(() => {
@@ -396,8 +401,8 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [onOpenChange, consultationService]);
 
   useEffect(() => {
-    if (patientData || searchedPatient) {
-      const sourceData = searchedPatient || patientData;
+    if (searchedPatient) {
+      const sourceData = searchedPatient;
 
       const tempGuardianName =
         sourceData?.visits?.[0]?.guardianName ||
@@ -425,7 +430,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
         // Add any other fields you want to prefill
       }));
     }
-  }, [patientData, searchedPatient]);
+  }, [searchedPatient]);
 
   useEffect(() => {
     if (!open) {
@@ -518,7 +523,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
   }, [open]);
 
   useEffect(() => {
-    if (open && !patientData && !searchedPatient) {
+    if (open && !searchedPatient && !patientData) {
       dispatch(fetchRegistrationAndIPDNumbers())
         .unwrap()
         .then((numbers) => {
@@ -535,7 +540,7 @@ export default function OPDRegDialog({ open, onOpenChange, patientData }) {
           console.error("Failed to fetch numbers:", error);
         });
     }
-  }, [open, dispatch, patientData, searchedPatient]);
+  }, [open, dispatch, searchedPatient]);
 
   // Add this useEffect to update bookingDate when the dialog opens
   useEffect(() => {

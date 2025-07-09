@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { Button } from "../components/ui/button";
-import { Backend_URL } from "../../src/assets/Data";
 import { useToast } from "../hooks/use-toast.js";
 import { ArrowLeft, Save } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { fetchPrefixData, updatePrefixData } from "../redux/slices/hospitalSettingsSlice.js";
 
 export default function PrefixSettings() {
   const [settings, setSettings] = useState({
@@ -39,7 +40,10 @@ export default function PrefixSettings() {
     }
   });
 
-  const [loading, setLoading] = useState(false);
+  const dispatch = useDispatch();
+  const { prefixData, prefixDataStatus } = useSelector((state) => state.hospitalSettings);
+  const loading = prefixDataStatus === 'loading';
+
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -48,96 +52,70 @@ export default function PrefixSettings() {
   };
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const response = await fetch(
-          `${Backend_URL}/api/registration/settings`,
-          {
-            credentials: "include",
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        const data = await response.json();
-        
-        // Update all settings from API response
-        setSettings(prev => ({
-          ...prev,
-          registration: {
-            ...prev.registration,
-            ...data.registration
-          },
-          ipd: {
-            ...prev.ipd,
-            ...data.ipd
-          },
-          lab: {
-            ...prev.lab,
-            ...data.lab
-          },
-          invoice: {
-            ...prev.invoice,
-            ...data.invoice
-          },
-          payment: {
-            ...prev.payment,
-            ...data.payment
-          }
-        }));
-      } catch (error) {
-        console.error('Error fetching settings:', error);
-        toast({
-          title: "Failed to fetch settings",
-          variant: "destructive",
-        });
-      }
-    };
-    fetchSettings();
-  }, []);
+    dispatch(fetchPrefixData());
+  }, [dispatch]);
+
+  useEffect(() => {
+    if (prefixData) {
+      // Update all settings from API response
+      setSettings(prev => ({
+        ...prev,
+        registration: {
+          ...prev.registration,
+          ...prefixData.registration
+        },
+        ipd: {
+          ...prev.ipd,
+          ...prefixData.ipd
+        },
+        lab: {
+          ...prev.lab,
+          ...prefixData.lab
+        },
+        invoice: {
+          ...prev.invoice,
+          ...prefixData.invoice
+        },
+        payment: {
+          ...prev.payment,
+          ...prefixData.payment
+        }
+      }));
+    }
+  }, [prefixData]);
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
-    setLoading(true);
     try {
-      const response = await fetch(`${Backend_URL}/api/registration/settings`, {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
+      const settingsToUpdate = {
+        registration: {
+          prefix: settings.registration.prefix,
+          useYearSuffix: settings.registration.useYearSuffix,
+          sequence: settings.registration.sequence
         },
-        body: JSON.stringify({
-          registration: {
-            prefix: settings.registration.prefix,
-            useYearSuffix: settings.registration.useYearSuffix,
-            sequence: settings.registration.sequence
-          },
-          ipd: {
-            prefix: settings.ipd.prefix,
-            useYearSuffix: settings.ipd.useYearSuffix,
-            sequence: settings.ipd.sequence
-          },
-          lab: {
-            prefix: settings.lab.prefix,
-            useYearSuffix: settings.lab.useYearSuffix,
-            sequence: settings.lab.sequence
-          },
-          invoice: {
-            prefix: settings.invoice.prefix,
-            useYearSuffix: settings.invoice.useYearSuffix,
-            sequence: settings.invoice.sequence
-          },
-          payment: {
-            prefix: settings.payment.prefix,
-            useYearSuffix: settings.payment.useYearSuffix,
-            sequence: settings.payment.sequence
-          }
-        }),
-      });
+        ipd: {
+          prefix: settings.ipd.prefix,
+          useYearSuffix: settings.ipd.useYearSuffix,
+          sequence: settings.ipd.sequence
+        },
+        lab: {
+          prefix: settings.lab.prefix,
+          useYearSuffix: settings.lab.useYearSuffix,
+          sequence: settings.lab.sequence
+        },
+        invoice: {
+          prefix: settings.invoice.prefix,
+          useYearSuffix: settings.invoice.useYearSuffix,
+          sequence: settings.invoice.sequence
+        },
+        payment: {
+          prefix: settings.payment.prefix,
+          useYearSuffix: settings.payment.useYearSuffix,
+          sequence: settings.payment.sequence
+        }
+      };
 
-      if (!response.ok) {
-        throw new Error('Failed to update settings');
-      }
+      await dispatch(updatePrefixData(settingsToUpdate)).unwrap();
 
       toast({
         title: "Settings updated successfully",
@@ -147,11 +125,9 @@ export default function PrefixSettings() {
       console.error('Error updating settings:', error);
       toast({
         title: "Failed to update settings",
-        description: error.message,
+        description: error.message || "An unexpected error occurred",
         variant: "destructive",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
