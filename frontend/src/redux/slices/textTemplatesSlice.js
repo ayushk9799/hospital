@@ -1,25 +1,8 @@
-import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import { createSlice } from "@reduxjs/toolkit";
+import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
 import { Backend_URL } from "../../assets/Data";
 
-export const fetchTextTemplates = createAsyncThunk(
-  "textTemplates/fetchAll",
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${Backend_URL}/api/text-templates`, {
-        credentials: "include",
-      });
-      const data = await response.json();
-      if (!data.success) {
-        throw new Error(data.message || "Failed to fetch text templates");
-      }
-      return data.templates;
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
-  }
-);
-
-export const saveTextTemplate = createAsyncThunk(
+export const saveTextTemplate = createLoadingAsyncThunk(
   "textTemplates/save",
   async (
     { templateData, formTemplate, field },
@@ -43,20 +26,23 @@ export const saveTextTemplate = createAsyncThunk(
         throw new Error(result.message || "Failed to save template");
       }
 
-      dispatch(fetchTextTemplates());
       return result.suggestion;
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  }
+  },
+  { useGlobalLoader: true }
 );
 
-export const deleteTextTemplate = createAsyncThunk(
+export const deleteTextTemplate = createLoadingAsyncThunk(
   "textTemplates/delete",
-  async ({ templateId, formTemplate, field }, { rejectWithValue, dispatch }) => {
+  async (
+    { templateId, formTemplate, field },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
       const response = await fetch(
-        `${Backend_URL}/api/prescription-templates/textTemplates/${formTemplate._id}`,
+        `${Backend_URL}/api/prescription-templates/textTemplates/delete/${formTemplate._id}`,
         {
           method: "DELETE",
           credentials: "include",
@@ -73,12 +59,12 @@ export const deleteTextTemplate = createAsyncThunk(
         throw new Error(result.message || "Failed to delete template");
       }
 
-      dispatch(fetchTextTemplates());
       return templateId;
     } catch (error) {
       return rejectWithValue(error.message);
     }
-  }
+  },
+  { useGlobalLoader: true }
 );
 
 const initialState = {
@@ -93,17 +79,6 @@ const textTemplatesSlice = createSlice({
   reducers: {},
   extraReducers: (builder) => {
     builder
-      .addCase(fetchTextTemplates.pending, (state) => {
-        state.status = "loading";
-      })
-      .addCase(fetchTextTemplates.fulfilled, (state, action) => {
-        state.status = "succeeded";
-        state.templates = action.payload;
-      })
-      .addCase(fetchTextTemplates.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload;
-      })
       .addCase(saveTextTemplate.pending, (state) => {
         state.status = "loading";
       })

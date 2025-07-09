@@ -1,10 +1,14 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import { Backend_URL } from "../../assets/Data";
+import { updateTemplateFieldSuggestions } from "./doctorPrescriptionSlice";
 
 // Save a new list suggestion (string) for a specific field within a prescription template
 export const saveListSuggestion = createAsyncThunk(
   "listSuggestions/save",
-  async ({ suggestion, formTemplate, field }, { rejectWithValue }) => {
+  async (
+    { suggestion, formTemplate, field },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
       const response = await fetch(
         `${Backend_URL}/api/prescription-templates/listSuggestions/${formTemplate._id}`,
@@ -21,6 +25,21 @@ export const saveListSuggestion = createAsyncThunk(
         throw new Error(result.message || "Failed to save suggestion");
       }
 
+      // Update the template field suggestions in doctorPrescriptionSlice
+      const currentSuggestions = field.suggestions || [];
+      const newSuggestions = [...currentSuggestions];
+      if (!newSuggestions.includes(suggestion)) {
+        newSuggestions.push(suggestion);
+      }
+
+      dispatch(
+        updateTemplateFieldSuggestions({
+          templateId: formTemplate._id,
+          fieldId: field.id,
+          newSuggestions: newSuggestions,
+        })
+      );
+
       return result.suggestion; // return the saved suggestion string
     } catch (error) {
       return rejectWithValue(error.message);
@@ -31,7 +50,10 @@ export const saveListSuggestion = createAsyncThunk(
 // Delete a suggestion string from a field
 export const deleteListSuggestion = createAsyncThunk(
   "listSuggestions/delete",
-  async ({ suggestion, formTemplate, field }, { rejectWithValue }) => {
+  async (
+    { suggestion, formTemplate, field },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
       const response = await fetch(
         `${Backend_URL}/api/prescription-templates/listSuggestions/${formTemplate._id}`,
@@ -48,6 +70,18 @@ export const deleteListSuggestion = createAsyncThunk(
         throw new Error(result.message || "Failed to delete suggestion");
       }
 
+      // Update the template field suggestions in doctorPrescriptionSlice
+      const currentSuggestions = field.suggestions || [];
+      const newSuggestions = currentSuggestions.filter((s) => s !== suggestion);
+
+      dispatch(
+        updateTemplateFieldSuggestions({
+          templateId: formTemplate._id,
+          fieldId: field.id,
+          newSuggestions: newSuggestions,
+        })
+      );
+
       return suggestion;
     } catch (error) {
       return rejectWithValue(error.message);
@@ -58,7 +92,10 @@ export const deleteListSuggestion = createAsyncThunk(
 // Save multiple list suggestions in one request
 export const saveListSuggestions = createAsyncThunk(
   "listSuggestions/saveMany",
-  async ({ suggestions, formTemplate, field }, { rejectWithValue }) => {
+  async (
+    { suggestions, formTemplate, field },
+    { rejectWithValue, dispatch }
+  ) => {
     try {
       const response = await fetch(
         `${Backend_URL}/api/prescription-templates/listSuggestions/${formTemplate._id}`,
@@ -74,6 +111,27 @@ export const saveListSuggestions = createAsyncThunk(
       if (!result.success) {
         throw new Error(result.message || "Failed to save suggestions");
       }
+
+      // Update the template field suggestions in doctorPrescriptionSlice
+      const currentSuggestions = field.suggestions || [];
+      const suggArray = Array.isArray(suggestions)
+        ? suggestions
+        : [suggestions];
+      const newSuggestions = [...currentSuggestions];
+
+      suggArray.forEach((sug) => {
+        if (sug && !newSuggestions.includes(sug)) {
+          newSuggestions.push(sug);
+        }
+      });
+
+      dispatch(
+        updateTemplateFieldSuggestions({
+          templateId: formTemplate._id,
+          fieldId: field.id,
+          newSuggestions: newSuggestions,
+        })
+      );
 
       return result.suggestions; // return array of saved suggestions
     } catch (error) {

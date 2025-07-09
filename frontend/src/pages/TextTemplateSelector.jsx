@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch } from "react-redux";
 import {
   saveTextTemplate,
@@ -19,6 +19,7 @@ import { Input } from "../components/ui/input";
 import { Textarea } from "../components/ui/textarea";
 import { Label } from "../components/ui/label";
 import { TrashIcon, PlusIcon } from "@radix-ui/react-icons";
+import { useToast } from "../hooks/use-toast";
 
 /*
   TextTemplateSelector
@@ -30,6 +31,7 @@ import { TrashIcon, PlusIcon } from "@radix-ui/react-icons";
     onTemplatesChange   function          Called with (newTemplates) whenever templates list is updated.
     formTemplate        object            The form template object.
     field             object            The field object.
+    onDialogClose       function          Called when the dialog is closed.
 
   This component renders a dropdown to select a pre-saved template and
   a dialog to create / delete templates for a textarea field.
@@ -42,11 +44,18 @@ export default function TextTemplateSelector({
   onTemplatesChange = () => {},
   formTemplate = null,
   field = {},
+  onDialogClose = () => {},
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const dispatch = useDispatch();
+  const { toast } = useToast();
   const [localTemplates, setLocalTemplates] = useState([...templates]);
   const [newTemplate, setNewTemplate] = useState({ name: "", content: "" });
+
+  // Sync localTemplates with templates prop when it changes
+  useEffect(() => {
+    setLocalTemplates([...templates]);
+  }, [templates]);
 
   // Handle adding a new template
   const handleAddTemplate = () => {
@@ -59,15 +68,36 @@ export default function TextTemplateSelector({
 
   // Handle deleting a template by index
   const handleDeleteTemplate = (idx, formTemplate, field) => {
- 
     const template = localTemplates[idx];
- 
 
     // If template has _id, mark for deletion on server
     if (template._id) {
-      dispatch(deleteTextTemplate({ templateId: template._id, formTemplate, field }));
+      dispatch(
+        deleteTextTemplate({ templateId: template._id, formTemplate, field })
+      )
+        .then(() => {
+          toast({
+            title: "Success",
+            variant: "success",
+            description: "Template deleted successfully",
+          });
+          // Close parent dialog after successful deletion
+          
+          onDialogClose();
+        })
+        .catch((error) => {
+          toast({
+            title: "Error",
+            description: "Failed to delete template",
+            variant: "destructive",
+          });
+        });
+    } else {
+      // For local templates, close parent dialog immediately
+      onDialogClose();
     }
     setLocalTemplates(localTemplates.filter((_, i) => i !== idx));
+    onTemplatesChange(localTemplates.filter((_, i) => i !== idx));
   };
 
   // Persist only the newly added templates (without _id)
@@ -86,7 +116,21 @@ export default function TextTemplateSelector({
         ).unwrap()
       );
 
-      savedTemplates = await Promise.all(savePromises).catch(() => []);
+      try {
+        savedTemplates = await Promise.all(savePromises);
+        toast({
+          title: "Success",
+          variant: "success",
+          description: `${savedTemplates.length} template(s) saved successfully`,
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to save templates",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     const combined = [
@@ -96,6 +140,8 @@ export default function TextTemplateSelector({
 
     onTemplatesChange(combined);
     setDialogOpen(false);
+    // Close parent dialog after successful save
+    onDialogClose();
   };
 
   // If needed, selecting from list inside dialog could call onChange
@@ -104,6 +150,8 @@ export default function TextTemplateSelector({
     if (template) {
       onChange(template.content);
       setDialogOpen(false);
+      // Close parent dialog after using template
+      onDialogClose();
     }
   };
 

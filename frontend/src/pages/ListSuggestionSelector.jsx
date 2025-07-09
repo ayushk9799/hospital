@@ -30,6 +30,7 @@ import { X } from "lucide-react";
     onSuggestionsChange function       Called with (newSuggestions) when suggestions updated.
     formTemplate        object         The template object.
     field               object         The field object.
+    onDialogClose       function       Called when the dialog is closed.
 */
 
 export default function ListSuggestionSelector({
@@ -39,6 +40,7 @@ export default function ListSuggestionSelector({
   onSuggestionsChange = () => {},
   formTemplate = null,
   field = {},
+  onDialogClose = () => {},
 }) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const dispatch = useDispatch();
@@ -79,7 +81,17 @@ export default function ListSuggestionSelector({
           formTemplate,
           field,
         })
-      );
+      )
+        .then(() => {
+          // Close parent dialog after successful deletion
+          onDialogClose();
+        })
+        .catch((error) => {
+          console.error("Failed to delete suggestion:", error);
+        });
+    } else {
+      // For local suggestions, close parent dialog immediately
+      onDialogClose();
     }
     setLocalSuggestions(localSuggestions.filter((_, i) => i !== idx));
   };
@@ -101,6 +113,8 @@ export default function ListSuggestionSelector({
     // Pass combined suggestions up
     onSuggestionsChange(localSuggestions);
     setDialogOpen(false);
+    // Close parent dialog after successful save
+    onDialogClose();
   };
 
   const handleUseSuggestion = (idx) => {
@@ -108,6 +122,8 @@ export default function ListSuggestionSelector({
     if (suggestion) {
       onChange(suggestion);
       setDialogOpen(false);
+      // Close parent dialog after using suggestion
+      onDialogClose();
     }
   };
 

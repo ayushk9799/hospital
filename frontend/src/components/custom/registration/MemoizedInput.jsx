@@ -20,8 +20,9 @@ const MemoizedInput = React.memo(({ id, label, type = "text", value, onChange, e
           showError ? "border-red-500" : "border-gray-300"
         }`}
         placeholder=" "
-        {...props}
         autoComplete="none"
+        {...props}
+
       />
       <Label
         htmlFor={id}

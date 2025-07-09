@@ -265,6 +265,7 @@ export default function LandingPage() {
                         value={formData.hospitalId}
                         onChange={handleInputChange}
                         ref={hospitalIdRef}
+                        autoComplete="on"
                       />
                     </div>
                     <div className="space-y-2">
@@ -282,6 +283,7 @@ export default function LandingPage() {
                         required
                         value={formData.username}
                         onChange={handleInputChange}
+                        autoComplete="on"
                       />
                     </div>
                     <div className="space-y-2">

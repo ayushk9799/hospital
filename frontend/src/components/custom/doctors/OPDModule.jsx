@@ -12,7 +12,6 @@ import { DEFAULT_PRESCRIPTION_FORM_CONFIG } from "../../../config/opdPrescriptio
 import FormField from "./form-fields/FormField";
 import { fetchDoctorData } from "../../../redux/slices/doctorDataSlice";
 import { parseAge } from "../../../assets/Data";
-import { fetchTextTemplates } from "../../../redux/slices/textTemplatesSlice";
 
 const generateInitialStateFromConfig = (config) => {
   const initialState = {
