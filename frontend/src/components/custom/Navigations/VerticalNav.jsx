@@ -19,6 +19,7 @@ import {
   UsersIcon,
   IndianRupee,
   DatabaseZap,
+  Youtube,
 } from "lucide-react";
 import { cn } from "../../../lib/utils";
 import { Button } from "../../ui/button";
@@ -31,6 +32,7 @@ import {
 } from "../../ui/tooltip";
 import { useSelector } from "react-redux";
 import { useToast } from "../../../hooks/use-toast";
+import { hasPermission } from "../../../lib/permissions";
 
 export const navItems = [
   { name: "Quick Menu", icon: Home, path: "/" },
@@ -81,11 +83,6 @@ export const ColorfulLogo = ({ className }) => (
   </svg>
 );
 
-const hasPermission = (userData, permission) => {
-  return userData?.permissions?.includes(permission) || false;
-};
-
-
 export default function VerticalNav({ isCollapsed }) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -99,7 +96,7 @@ export default function VerticalNav({ isCollapsed }) {
   };
 
   const handleClick = (item) => {
-    if (item.permission && !hasPermission(userData, item.permission)) {
+    if (item.permission && !hasPermission(item.permission)) {
       toast({
         title: "You don't have permission to view this page",
         description: "Please contact your administrator",
@@ -118,7 +115,7 @@ export default function VerticalNav({ isCollapsed }) {
         isCollapsed ? "w-16" : "w-56"
       )}
     >
-      <ScrollArea className="flex-1 overflow-y-auto py-4">
+      <ScrollArea className="flex-1 overflow-y-auto py-4 h-[calc(100vh-200px)]">
         <ul className="space-y-1 px-3">
           {navItems.map((item) => (
             <li key={item.name}>
@@ -153,6 +150,38 @@ export default function VerticalNav({ isCollapsed }) {
           ))}
         </ul>
       </ScrollArea>
+      {/* Footer for tutorial button */}
+      <div className="px-3 border-t border-gray-200 h-[100px]">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start text-red-600 hover:bg-red-500 hover:text-white",
+                  isCollapsed ? "px-2" : "px-4"
+                )}
+                onClick={() =>
+                  window.open(
+                    "https://youtube.com/@thehospital_in?si=7bUryvDSFQC8Lxtf",
+                    "_blank"
+                  )
+                }
+              >
+                <Youtube
+                  className={cn("h-5 w-5", isCollapsed ? "mr-0" : "mr-3")}
+                />
+                {!isCollapsed && <span>Watch Tutorial</span>}
+              </Button>
+            </TooltipTrigger>
+            {isCollapsed && (
+              <TooltipContent side="right">
+                <p className="font-semibold">Watch Tutorial</p>
+              </TooltipContent>
+            )}
+          </Tooltip>
+        </TooltipProvider>
+      </div>
     </div>
   );
 }

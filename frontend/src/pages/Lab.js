@@ -11,11 +11,13 @@ import { ScrollArea } from "../components/ui/scroll-area";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchTemplates } from "../redux/slices/templatesSlice";
 import TemplateLabReport from "./TemplateLabReport";
-import { ChevronLeft } from "lucide-react";
+import { ArrowLeft, ChevronDown } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Checkbox } from "../components/ui/checkbox";
 import MergedLabReportPDF from "../components/custom/reports/MergedLabReportPDF";
 import { useReactToPrint } from "react-to-print";
+import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "../lib/utils";
 
 const Lab = () => {
   const location = useLocation();
@@ -34,6 +36,7 @@ const Lab = () => {
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [selectedReports, setSelectedReports] = useState([]);
   const [merging, setMerging] = useState(false);
+  const [isPatientInfoExpanded, setIsPatientInfoExpanded] = useState(true);
   const componentRef = useRef(null);
   const handlePrint = useReactToPrint({
     content: () => componentRef.current,
@@ -55,8 +58,6 @@ const Lab = () => {
       setPatientData(location.state.patientData);
     }
   }, [location.state]);
-
- 
 
   const highlightMatch = (text, term) => {
     if (!term) return text;
@@ -89,36 +90,30 @@ const Lab = () => {
   };
 
   const sortedLabTestsTemplate = React.useMemo(() => {
-   
-    // If no patient data or lab tests, return all templates
-    let templates = [...(labTestsTemplate || [])];
+    if (!patientData?.labTests) {
+      if (searchTerm) {
+        return (labTestsTemplate || []).filter((template) =>
+          template.name.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      }
+      return [];
+    }
 
-    // Filter templates based on search term
+    const patientTestNames = new Set(
+      patientData.labTests.map((test) => test.name.toLowerCase())
+    );
+
+    let filteredTemplates = (labTestsTemplate || []).filter((template) =>
+      patientTestNames.has(template.name.toLowerCase())
+    );
+
     if (searchTerm) {
-      templates = templates.filter((template) =>
+      filteredTemplates = filteredTemplates.filter((template) =>
         template.name.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    // If there's patient data, sort templates with matching tests first
- 
-    
-    if (patientData?.labTests) {
-      return templates.sort((a, b) => {
-        const aMatches = patientData.labTests.some(
-          (test) => test.name.toLowerCase() === a.name.toLowerCase()
-        );
-        const bMatches = patientData.labTests.some(
-          (test) => test.name.toLowerCase() === b.name.toLowerCase()
-        );
-
-        if (aMatches && !bMatches) return -1;
-        if (!aMatches && bMatches) return 1;
-        return 0;
-      });
-    }
-
-    return templates;
+    return filteredTemplates;
   }, [labTestsTemplate, patientData, searchTerm]);
 
   const getReportStatusColor = (status) => {
@@ -163,44 +158,78 @@ const Lab = () => {
   };
 
   return (
-    <div className="container mx-auto p-4 flex h-screen">
+    <div className="container mx-auto p-4 flex h-[calc(100vh-55px)]">
       <div className="flex flex-col md:flex-row gap-8 w-full h-full">
-        <div className="w-full md:w-1/3 flex flex-col h-full">
+        <div className="w-full md:w-1/3 flex flex-col h-full border-r border-gray-200 pr-2">
           <div className="flex items-center gap-1 mb-1">
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-              <ChevronLeft className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="text-sm font-bold">Laboratory Reports</div>
           </div>
 
           {/* Patient Info */}
           {patientData && (
-            <div className="mb-4 p-2 bg-white rounded-lg shadow">
-              <div className="flex items-baseline text-sm justify-between">
+            <div
+              className={cn(
+                "mb-4 p-2 bg-white rounded-lg border border-gray-200"
+              )}
+            >
+              <div
+                className="flex items-baseline text-sm justify-between cursor-pointer"
+                onClick={() => setIsPatientInfoExpanded(!isPatientInfoExpanded)}
+              >
                 <div className=" font-semibold">
                   Name: {patientData.patientName}
                 </div>
-                <div className="text-gray-600 font-semibold">
-                  Lab No: {patientData.labNumber}
+                <div className="flex items-center gap-2">
+                  <div className="text-gray-600 font-semibold">
+                    Lab No: {patientData.labNumber}
+                  </div>
+                  <motion.div
+                    animate={{ rotate: isPatientInfoExpanded ? 180 : 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <ChevronDown
+                      className={cn(
+                        "h-5 w-5 transition-colors duration-200",
+                        isPatientInfoExpanded
+                          ? "text-blue-500"
+                          : "text-gray-400"
+                      )}
+                    />
+                  </motion.div>
                 </div>
               </div>
-
-              <div className="mt-2 text-sm font-bold">
-                <h3 className=" mb-1">Ordered Tests:</h3>
-                <ul className="list-disc list-inside">
-                  {patientData.labTests.map((test, index) => (
-                    <li
-                      key={index}
-                      className={`${getReportStatusColor(test.reportStatus)} `}
-                    >
-                      {test.name}
-                      <span className="text-gray-500 text-sm ml-2">
-                        ({test.reportStatus})
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+              <AnimatePresence>
+                {isPatientInfoExpanded && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="mt-2 text-sm font-bold pt-2 border-t border-blue-200">
+                      <ul className="list-disc list-inside">
+                        {patientData.labTests.map((test, index) => (
+                          <li
+                            key={index}
+                            className={`${getReportStatusColor(
+                              test.reportStatus
+                            )} `}
+                          >
+                            {test.name}
+                            <span className="text-gray-500 text-sm ml-2">
+                              ({test.reportStatus})
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           )}
 
@@ -215,25 +244,25 @@ const Lab = () => {
 
           {/* Lab Tests List */}
           <ScrollArea className="flex-grow">
-            <div className="pr-4 space-y-4">
+            <div className=" space-y-4">
               {/* Display labTestsTemplate */}
               {status === "succeeded" && sortedLabTestsTemplate && (
                 <div className="mb-4">
                   <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-bold">Lab Test Templates</h2>
+                    <h2 className="text-lg font-bold">Templates</h2>
                     {patientData?.labTests?.length > 0 && (
                       <div className="flex gap-2">
                         <Button
                           variant="outline"
                           onClick={() => setMerging(!merging)}
-                          className="text-[13px] p-1 h-auto"
+                          className="text-[13px] px-4 py-1 h-auto"
                         >
                           {merging ? "Cancel Merge" : "Select Reports"}
                         </Button>
                         {merging && (
                           <Button
                             onClick={handlePrint}
-                            className="text-[13px] p-1 h-auto"
+                            className="text-[13px] px-4 py-1 h-auto"
                           >
                             Merge & Print
                           </Button>

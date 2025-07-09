@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { ChevronDown, LogOut, Bell, Menu, Clock, Search } from "lucide-react";
 import { Input } from "../../ui/input";
 import { useSelector, useDispatch } from "react-redux";
@@ -11,7 +11,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "../../ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
+import { Avatar, AvatarFallback } from "../../ui/avatar";
 import { ColorfulLogo } from "./VerticalNav";
 import { clearUserData } from "../../../redux/slices/userSlice";
 import { Backend_URL } from "../../../assets/Data";
@@ -22,18 +22,28 @@ import { Separator } from "../../ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "../../ui/sheet";
 import { searchPatients } from "../../../redux/slices/patientSlice";
 import RenewalAlertDlg from "../renewal/RenewalAlertDlg";
+import { fetchPrefixData } from "../../../redux/slices/hospitalSettingsSlice";
 
 const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const user = useSelector((state) => state.user.userData);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
+  const { prefixData, prefixDataStatus } = useSelector(
+    (state) => state.hospitalSettings
+  );
+
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
   const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
+
+  useEffect(() => {
+    if (prefixDataStatus === "idle") {
+      dispatch(fetchPrefixData());
+    }
+  }, [dispatch, prefixDataStatus]);
 
   const handleLogout = async () => {
     try {
@@ -87,15 +97,30 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
     setIsOpen(false); // Close the drawer after navigation
   };
 
+  const formatSearchQuery = (query) => {
+    const trimmedQuery = query.trim();
+    if (
+      /^\d+$/.test(trimmedQuery) &&
+      prefixData?.registration?.prefix
+    ) {
+      const regSettings = prefixData.registration;
+      const year = new Date().getFullYear().toString();
+      const yearPart = regSettings.useYearSuffix ? year.slice(-2) : year;
+      return `${regSettings.prefix}/${yearPart}/${trimmedQuery}`;
+    }
+    return trimmedQuery;
+  };
+
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!searchQuery.trim()) return;
 
     try {
+      const tempSearchQuery = formatSearchQuery(searchQuery);
       const resultAction = await dispatch(
-        searchPatients({ searchQuery:searchQuery.trim(), page: 1, limit: 10 })
+        searchPatients({ searchQuery: tempSearchQuery, page: 1, limit: 10 })
       );
-    
+
       if (searchPatients.fulfilled.match(resultAction)) {
         navigate("/search", {
           state: {
@@ -203,13 +228,13 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
           </Button>
         </form>
       </div>
-     
+
       <div className="flex items-center">
       {hospital?.renewalDate &&
       getDaysLeft(hospital.renewalDate) !== null &&
       (getDaysLeft(hospital.renewalDate) < 0 || getDaysLeft(hospital.renewalDate) < 15) ? (
         <>
-          <button 
+          <button
             onClick={() => setIsRenewalDialogOpen(true)}
             className="ml-2 from-[#ff0f0f] to-[#ff8383] bg-gradient-to-r pl-5 pr-2  py-1 rounded-md mr-5 relative hover:shadow-lg transition-all duration-300"
           >
@@ -226,7 +251,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
              <ChevronDown className="h-5 w-5 text-white" />
             </div>
           </button>
-          <RenewalAlertDlg 
+          <RenewalAlertDlg
             isOpen={isRenewalDialogOpen}
             setIsOpen={setIsRenewalDialogOpen}
             daysLeft={getDaysLeft(hospital.renewalDate)}

@@ -191,7 +191,7 @@ export default function PatientInfoForm({
           <div className="w-full sm:w-30 relative">
             <MemoizedInput
               id="age"
-              label="Age"
+              label="Age (Y-M-D)"
               type="text"
               value={formData.age}
               onChange={handleAgeChange}
@@ -201,7 +201,7 @@ export default function PatientInfoForm({
           <div className="flex-grow relative hidden sm:block">
             <MemoizedInput
               id="dateOfBirth"
-              label="Date of Birth"
+              label="DATE OF BIRTH"
               type="date"
               tabIndex={-1}
               value={formData.dateOfBirth}

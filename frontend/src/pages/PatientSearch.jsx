@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useLocation, useParams, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 import {
@@ -9,20 +9,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../components/ui/table";
+} from "../components/ui/table";  
 import {
   Eye,
-  Calendar,
   UserPlus,
   FileText,
-  Heart,
   Bed,
-  Stethoscope,
-  Pill,
   ChevronDown,
-  Search,
-  X,
-  ClipboardList,
 } from "lucide-react";
 import {
   Card,
@@ -36,7 +29,6 @@ import { CalendarDays, Phone, Mail, MapPin } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import OPDRegDialog from "../components/custom/registration/OPDRegDialog";
 import IPDRegDialog from "../components/custom/registration/IPDRegDialog";
-import { Input } from "../components/ui/input";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import {
   DropdownMenu,
@@ -71,7 +63,6 @@ export default function PatientSearch() {
   const dispatch = useDispatch();
 
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
-  const isMediumScreen = useMediaQuery("(max-width: 1024px)");
 
   useEffect(() => {
     if (patients.length === 1) {
@@ -128,8 +119,13 @@ export default function PatientSearch() {
           name: selectedPatient.name,
           age: selectedPatient.age,
           gender: selectedPatient.gender,
+          address: selectedPatient.address,
           contactNumber: selectedPatient.contactNumber,
           registrationNumber: selectedPatient.registrationNumber,
+          lastVisit: selectedPatient.lastVisit,
+          lastVisitType: selectedPatient.lastVisitType,
+          visits: selectedPatient.visits,
+          admissionDetails: selectedPatient.admissionDetails,
           _id: selectedPatient._id,
         });
         setIsOPDRegDialogOpen(true);

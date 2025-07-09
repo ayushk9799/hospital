@@ -17,20 +17,15 @@ import { fetchItems } from "../redux/slices/pharmacySlice";
 import { Badge } from "../components/ui/badge";
 import {
   X,
-  CalendarIcon,
   ChevronRight,
   PlusCircle,
   Trash2,
-  Plus,
   Search,
   ArrowLeft,
   Check,
 } from "lucide-react";
 import TemplateLabReport from "./TemplateLabReport";
-import {
-  fetchVisitDetails,
-  fetchRegistrationDetails,
-} from "../redux/slices/patientSlice.js";
+import { fetchVisitDetails } from "../redux/slices/patientSlice.js";
 import { useLocation } from "react-router-dom";
 import MultiSelectInput from "../components/custom/MultiSelectInput";
 import {
@@ -57,12 +52,9 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import { updateTemplate } from "../redux/slices/templatesSlice";
 import {
   getFormConfig,
-  DEFAULT_FORM_CONFIG,
 } from "../config/dischargeSummaryConfig";
-import FormCustomizer from "../components/custom/FormCustomizer";
 import { searchBabyByNumber } from "../redux/slices/babySlice";
 import { ScrollArea, ScrollBar } from "../components/ui/scroll-area";
 
@@ -75,31 +67,6 @@ const convertTo24Hour = (time12, meridiem) => {
   if (meridiem === "AM" && hours === 12) hours = 0;
 
   return `${hours.toString().padStart(2, "0")}:${minutes}`;
-};
-
-const LabReportTable = ({ report }) => {
-  return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Test</TableHead>
-          <TableHead>Result</TableHead>
-          <TableHead>Unit</TableHead>
-          <TableHead>Normal Range</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {Object.entries(report).map(([key, value]) => (
-          <TableRow key={key}>
-            <TableCell>{value.label}</TableCell>
-            <TableCell>{value.value}</TableCell>
-            <TableCell>{value.unit}</TableCell>
-            <TableCell>{value.normalRange}</TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-  );
 };
 
 const FormField = ({
@@ -133,11 +100,11 @@ const FormField = ({
     case "text":
       return (
         <div
-          className={`flex items-center ${
+          className={`flex py-2 items-center ${
             field.width === "half" ? "sm:col-span-1" : "sm:col-span-2"
           }`}
         >
-          <Label htmlFor={field.id} className="w-24 font-bold">
+          <Label htmlFor={field.id} className="w-36 font-bold">
             {label?.toUpperCase() || field.label}:
           </Label>
           <Input
@@ -152,8 +119,8 @@ const FormField = ({
       );
     case "date":
       return (
-        <div className="flex items-center">
-          <Label htmlFor={field.id} className="w-24 font-bold">
+        <div className="flex items-center py-2">
+          <Label htmlFor={field.id} className="w-36 font-bold">
             {field.label}:
           </Label>
           <Input
@@ -169,10 +136,10 @@ const FormField = ({
       );
     case "textarea":
       return (
-        <div className="py-2">
-          <Label htmlFor={field.id}>{field.label}</Label>
+        <div className="py-3">
+          <Label htmlFor={field.id} className="text-xl italic">{field.label}</Label>
           {field.templates && field.templates.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-2 mb-1">
               {field.templates.map((template, index) => (
                 <div key={index} className="relative group">
                   <button
@@ -184,7 +151,7 @@ const FormField = ({
                         handleTemplateSelect(template.content);
                       }
                     }}
-                    className={`px-3 py-1 rounded-full text-sm font-medium transition-colors
+                    className={`px-3 py-1 rounded-md text-sm font-medium transition-all duration-200 border border-gray-300 hover:border-gray-500 hover:primary/2 hover:shadow-md hover:text-[15px]
                       ${
                         value === template.content
                           ? "bg-primary text-primary-foreground"
@@ -197,10 +164,10 @@ const FormField = ({
 
                   {/* Hover Preview - Only show when not selected */}
                   {value !== template.content && (
-                    <div className="absolute z-50 invisible group-hover:visible bg-popover text-popover-foreground p-3 rounded-lg shadow-lg min-w-[200px] max-w-[400px] mt-2 left-0 whitespace-pre-wrap text-sm border">
-                      <div className="font-semibold mb-1">
+                    <div className="absolute z-50 invisible group-hover:visible bg-popover text-popover-foreground p-3 rounded-lg shadow-lg min-w-[200px] w-[400px] mt-2 left-0 whitespace-pre-wrap text-sm border border-gray-300">
+                      {/* <div className="font-semibold mb-1">
                         Template Preview:
-                      </div>
+                      </div> */}
                       {template.content}
                     </div>
                   )}
@@ -213,7 +180,7 @@ const FormField = ({
             name={field.id}
             value={value}
             onChange={onChange}
-            className="mt-1 min-h-[9rem] leading-tight"
+            className="mt-1 min-h-[9rem] text-[15px]"
             {...extraProps}
           />
         </div>
@@ -229,8 +196,8 @@ const FormField = ({
       const time24 = timeValue;
 
       return (
-        <div className="flex items-center gap-2">
-          <Label htmlFor={field.id} className="w-24 font-bold">
+        <div className="flex items-center py-2 gap-2">
+          <Label htmlFor={field.id} className="w-36 font-bold">
             {label?.toUpperCase() || field.label}:
           </Label>
           <div className="flex gap-2">
@@ -308,8 +275,8 @@ const FormField = ({
 
       return (
         <div>
-          <Label htmlFor={field.id}>{field.label}</Label>
-          <div className="mt-1 space-y-2">
+          <Label className="text-xl italic" htmlFor={field.id}>{field.label}</Label>
+          <div className="space-y-1">
             <div className="flex flex-wrap gap-1">
               {selectedValues.map((val, index) => (
                 <Badge
@@ -631,17 +598,11 @@ export default function DischargeSummary() {
   const dischargeSummaryTemplates = useSelector(
     (state) => state.templates.dischargeSummaryTemplateArray
   );
-  const [
-    selectedTemplateDischargeSummary,
-    setSelectedTemplateDischargeSummary,
-  ] = useState(
+  const [selectedTemplateDischargeSummary] = useState(
     dischargeSummaryTemplates[0] || {
       name: "Template 1",
       value: dischargeSummaryTemplateStringDefault,
     }
-  );
-  const savedConfig = useSelector(
-    (state) => state.templates.dischargeFormTemplateArray
   );
 
   const [formConfig, setFormConfig] = useState(() => {
@@ -904,7 +865,7 @@ export default function DischargeSummary() {
     formConfig,
     hasDischarged,
   ]);
-  const medicines = useSelector((state) => state.pharmacy.items);
+
   const itemsStatus = useSelector((state) => state.pharmacy.itemsStatus);
   const hospital = useSelector((state) => state.hospital.hospitalInfo);
   const templateStatus = useSelector((state) => state.templates.status);
@@ -1003,7 +964,6 @@ export default function DischargeSummary() {
     }
   }, [patient, hasDischarged]);
 
-  const [selectedReport, setSelectedReport] = useState(null);
   const handlePatientInfoChange = (e) => {
     const { name, value } = e.target;
     setPatientInfo((prev) => ({ ...prev, [name]: value }));
@@ -1012,9 +972,6 @@ export default function DischargeSummary() {
     const { name, value } = e.target;
 
     setFormData((prev) => ({ ...prev, [name]: value }));
-  };
-  const handleDateChange = (field, date) => {
-    setFormData((prev) => ({ ...prev, [field]: date }));
   };
 
   const handleInvestigationChange = (index, suggestion) => {
@@ -1053,17 +1010,6 @@ export default function DischargeSummary() {
     }));
   };
 
-  const handleComorbiditiesChange = (newComorbidities) => {
-    setFormData((prev) => ({ ...prev, comorbidities: newComorbidities }));
-  };
-
-  const handleRemoveSelected = (name) => {
-    setFormData((prev) => ({
-      ...prev,
-      comorbidities: prev.comorbidities.filter((val) => val.name !== name),
-    }));
-  };
-
   const handleComorbidityHandlingChange = (value) => {
     setFormData((prev) => ({ ...prev, comorbidityHandling: value }));
   };
@@ -1073,7 +1019,21 @@ export default function DischargeSummary() {
     (state) => state.discharge
   );
 
-  const [isPrintDialogOpen, setIsPrintDialogOpen] = useState(false);
+  const medicineNameRefs = useRef([]);
+  const dosageRefs = useRef([]);
+  const durationRefs = useRef([]);
+  const addMedicineBtnRef = useRef(null);
+  const prevMedicineAdviceLength = useRef(
+    formData.medicineAdvice?.length || 0
+  );
+
+  useEffect(() => {
+    const currentLength = formData.medicineAdvice?.length || 0;
+    if (currentLength > prevMedicineAdviceLength.current) {
+      medicineNameRefs.current[currentLength - 1]?.focus();
+    }
+    prevMedicineAdviceLength.current = currentLength;
+  }, [formData.medicineAdvice]);
 
   // Add this selector to get the current user's permissions
   const userPermissions = useSelector(
@@ -1212,13 +1172,6 @@ export default function DischargeSummary() {
     }
   };
 
-  const handleTestSelect = (suggestion) => {
-    setFormData((prev) => ({
-      ...prev,
-      selectedTest: suggestion.name,
-      selectedCategory: suggestion.category,
-    }));
-  };
 
   const handleOpenLabReport = (investigation) => {
     // Check if this investigation matches any template
@@ -1394,92 +1347,6 @@ export default function DischargeSummary() {
     </div>
   );
 
-  // Get the diagnosis template from the Redux store
-  // Add a new state for custom diagnosis input
-  const [customDiagnosis, setCustomDiagnosis] = useState("");
-
-  // Add this state to track custom diagnoses
-  const [customDiagnosesList, setCustomDiagnosesList] = useState([]);
-
-  // Modify the handleAddDiagnosis function
-  const handleAddDiagnosis = (diagnosis) => {
-    if (!diagnosis.trim()) return;
-
-    const currentDiagnoses = formData.diagnosis
-      ? formData.diagnosis.split(", ")
-      : [];
-
-    // Add to custom diagnoses list if it's not in the template
-    if (
-      !diagnosisTemplate.includes(diagnosis) &&
-      !customDiagnosesList.includes(diagnosis)
-    ) {
-      setCustomDiagnosesList((prev) => [...prev, diagnosis]);
-    }
-
-    if (currentDiagnoses.includes(diagnosis)) {
-      setFormData((prev) => ({
-        ...prev,
-        diagnosis: prev.diagnosis
-          .split(", ")
-          .filter((d) => d !== diagnosis)
-          .join(", "),
-      }));
-    } else {
-      // Add the diagnosis if it's not selected
-      setFormData((prev) => ({
-        ...prev,
-        diagnosis: prev.diagnosis
-          ? `${prev.diagnosis}, ${diagnosis}`
-          : diagnosis,
-      }));
-    }
-    setCustomDiagnosis("");
-  };
-
-  // Add this new function to check for matches
-  const getMatchingDiagnoses = (input) => {
-    if (!input) return [];
-    return diagnosisTemplate.filter((diagnosis) =>
-      diagnosis.toLowerCase().startsWith(input.toLowerCase())
-    );
-  };
-
-  const handleDiagnosisChange = (newDiagnoses) => {
-    const diagnosisString = newDiagnoses.map((d) => d.name).join(", ");
-    setFormData((prev) => ({ ...prev, diagnosis: diagnosisString }));
-  };
-
-  const handleRemoveDiagnosis = (name) => {
-    const currentDiagnoses = formData.diagnosis.split(", ");
-    const updatedDiagnoses = currentDiagnoses
-      .filter((d) => d !== name)
-      .join(", ");
-    setFormData((prev) => ({ ...prev, diagnosis: updatedDiagnoses }));
-  };
-
-  // if (!patient)
-  //   return (
-  //     <div className="flex justify-center items-center h-screen">
-  //       Loading...
-  //     </div>
-  //   );
-
-  const renderTextArea = (name, label) => (
-    <div>
-      <Label htmlFor={name}>{label}</Label>
-      <Textarea
-        id={name}
-        name={name}
-        value={formData[name]}
-        onChange={handleInputChange}
-        className="mt-1 min-h-[6rem] leading-tight"
-      />
-    </div>
-  );
-
-  // Add this function to handle registration search
-
   // Add this function near your other handler functions
   const handleBack = () => {
     navigate(-1); // This will go back to the previous page
@@ -1514,75 +1381,6 @@ export default function DischargeSummary() {
     `,
   });
 
-  // Add this function to handle print confirmation
- 
- 
-
-
-
-  // Get user role from Redux store or props
-
-  // Initialize form configuration based on user role and any saved custom config
-
-  const [showCustomizer, setShowCustomizer] = useState(false);
-  const [customConfig, setCustomConfig] = useState(null);
-
-  const handleCustomizeForm = () => {
-    setShowCustomizer(true);
-  };
-
-  const handleSaveCustomConfig = async (templateData) => {
-    try {
-      await dispatch(
-        updateTemplate({
-          dischargeFormTemplateArray: [
-            ...(savedConfig || []).filter((t) => t.name !== templateData.name),
-            templateData,
-          ],
-        })
-      ).unwrap();
-
-      setFormConfig(templateData.value);
-      setShowCustomizer(false);
-      toast({
-        title: "Success",
-        description: "Form template saved successfully",
-        variant: "success",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to save form template",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleCancelCustomize = () => {
-    setShowCustomizer(false);
-  };
-  // Render form sections based on configuration
-  // Add a new useEffect to handle form config changes
-  useEffect(() => {
-    if (formConfig) {
-      // Update form fields based on saved configuration
-      const patientInfoSection = formConfig.sections.find(
-        (section) => section.id === "patientInfo"
-      );
-
-      if (patientInfoSection) {
-        const updatedPatientInfo = {};
-        patientInfoSection.fields.forEach((field) => {
-          updatedPatientInfo[field.id] = patientInfo[field.id] || "";
-        });
-        setPatientInfo((prevInfo) => ({
-          ...prevInfo,
-          ...updatedPatientInfo,
-        }));
-      }
-    }
-  }, [formConfig]);
-
   return (
     <div className="container mx-auto py-2 sm:py-4 px-2 sm:px-4 lg:px-6 max-w-7xl">
       <Card className="w-full shadow-lg">
@@ -1615,7 +1413,7 @@ export default function DischargeSummary() {
                     {section.title}
                   </h2>
                 )}
-                <div className=" gap-2 sm:gap-4 text-sm sm:text-base">
+                <div className=" gap-2 sm:gap-4 text-sm sm:text-base py-4">
                   {section.fields.map((field) => {
                     // Handle special components separately
                     if (field.type === "vitals") {
@@ -1629,14 +1427,14 @@ export default function DischargeSummary() {
 
                     if (field.type === "investigations") {
                       return (
-                        <div key={field.id} className=" py-2">
-                          <Label htmlFor={field.id}>{field.label}</Label>
-                          <div className="space-y-2 mt-2">
+                        <div key={field.id} className=" py-6">
+                          <Label className="text-xl italic" htmlFor={field.id}>{field.label}</Label>
+                          <div className="space-y-2 mt-1">
                             {formData.investigations.map(
                               (investigation, index) => (
                                 <div
                                   key={index}
-                                  className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-2"
+                                  className="grid grid-cols-1 sm:grid-cols-5 gap-2"
                                 >
                                   <div className="sm:col-span-3">
                                     <SearchSuggestion
@@ -1726,13 +1524,13 @@ export default function DischargeSummary() {
 
                     if (field.type === "medicineAdvice") {
                       return (
-                        <div key={field.id} className=" py-2">
-                          <Label htmlFor={field.id}>{field.label}</Label>
-                          <div className="space-y-2 mt-2">
+                        <div key={field.id} className=" py-4">
+                          <Label className="text-xl italic" htmlFor={field.id}>{field.label}</Label>
+                          <div className="space-y-1">
                             {formData[field.id]?.map((item, index) => (
                               <div
                                 key={index}
-                                className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-2"
+                                className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-1"
                               >
                                 <div
                                   onKeyDown={(e) => {
@@ -1742,6 +1540,9 @@ export default function DischargeSummary() {
                                   }}
                                 >
                                   <SearchSuggestion
+                                    ref={(el) =>
+                                      (medicineNameRefs.current[index] = el)
+                                    }
                                     suggestions={medicinelist?.map((item) => ({
                                       name: item,
                                     }))}
@@ -1756,15 +1557,19 @@ export default function DischargeSummary() {
                                       )
                                     }
                                     onSuggestionSelect={(suggestion) =>
-                                      handleMedicineAdviceSuggestionSelect(
-                                        index,
-                                        suggestion,
-                                        field.id
-                                      )
+                                      {
+                                        handleMedicineAdviceSuggestionSelect(
+                                          index,
+                                          suggestion,
+                                          field.id
+                                        );
+                                        dosageRefs.current[index]?.focus();
+                                      }
                                     }
                                   />
                                 </div>
                                 <Input
+                                  ref={(el) => (dosageRefs.current[index] = el)}
                                   type="text"
                                   placeholder="Dosage"
                                   value={item.dosage}
@@ -1781,10 +1586,12 @@ export default function DischargeSummary() {
                                     // Prevent form submission on Enter key
                                     if (e.key === "Enter") {
                                       e.preventDefault();
+                                      durationRefs.current[index]?.focus();
                                     }
                                   }}
                                 />
                                 <Input
+                                  ref={(el) => (durationRefs.current[index] = el)}
                                   type="text"
                                   placeholder="Duration"
                                   value={item.duration}
@@ -1801,6 +1608,7 @@ export default function DischargeSummary() {
                                     // Prevent form submission on Enter key
                                     if (e.key === "Enter") {
                                       e.preventDefault();
+                                      addMedicineBtnRef.current?.focus();
                                     }
                                   }}
                                 />
@@ -1817,6 +1625,7 @@ export default function DischargeSummary() {
                               </div>
                             ))}
                             <Button
+                              ref={addMedicineBtnRef}
                               type="button" // Add type="button" to prevent form submission
                               onClick={() => addMedicineAdvice(field.id)}
                               variant="outline"
@@ -1975,20 +1784,6 @@ export default function DischargeSummary() {
           </div>
         </CardContent>
       </Card>
-
-      {/* Form Customizer Modal */}
-      {showCustomizer && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-2 sm:p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <FormCustomizer
-              config={DEFAULT_FORM_CONFIG}
-              enabledFields={formConfig}
-              onSave={handleSaveCustomConfig}
-              onCancel={handleCancelCustomize}
-            />
-          </div>
-        </div>
-      )}
 
       {/* Lab Report Modal */}
       {isLabReportOpen && selectedInvestigation && (

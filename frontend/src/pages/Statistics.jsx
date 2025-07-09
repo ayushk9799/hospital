@@ -593,14 +593,14 @@ const Dashboard = () => {
           </h2>
           <div className=" gap-2 flex flex-row">
             {hasFinancialViewPermission(userData) && (
-              <Button size="sm" onClick={handlePrint} className="print:hidden">
+              <Button size="sm" onClick={handlePrint} className="print:hidden px-4">
                 <Printer className="mr-2 h-4 w-4" />
                 Print
               </Button>
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="px-4">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {dateFilter}
                 </Button>

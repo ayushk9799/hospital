@@ -436,13 +436,13 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                                 Date
                               </TableHead>
                             )}
-                            <TableHead className="border-r border-gray-300 w-24 h-[30px] py-1">
+                            <TableHead className="border-r border-gray-300 w-24 h-[30px] py-1 text-center">
                               Quantity
                             </TableHead>
-                            <TableHead className="border-r border-gray-300 w-24 h-[30px] py-1">
+                            <TableHead className="border-r border-gray-300 w-24 h-[30px] py-1 text-center">
                               Price (INR)
                             </TableHead>
-                            <TableHead className="w-24 h-[30px]">
+                            <TableHead className="w-24 h-[30px] text-center">
                               Total (INR)
                             </TableHead>
                           </TableRow>
@@ -638,14 +638,15 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead className="w-[80px] h-[30px]">
-                                Date
+                              <TableHead className="w-[40px] h-[30px]">
+                                S.No.
                               </TableHead>
-                              {!isMobile && (
-                                <TableHead className="w-[80px] h-[30px]">
-                                  Time
-                                </TableHead>
-                              )}
+                              <TableHead className="w-[100px] h-[30px]">
+                                Payment No
+                              </TableHead>
+                              <TableHead className="w-[150pxx] h-[30px]">
+                                Date & Time
+                              </TableHead>
                               <TableHead className="h-[30px]">
                                 Amount (₹)
                               </TableHead>
@@ -662,21 +663,14 @@ const ViewBillDialog = ({ isOpen, setIsOpen, billData, viewMode: viewModeProp })
                             {billData.payments.map((payment, index) => (
                               <TableRow key={index} className=" h-[25px] py-1">
                                 <TableCell className="text-xs h-[25px] py-1">
-                                  {new Date(
-                                    payment.createdAt
-                                  ).toLocaleDateString("en-IN")}
+                                  {index + 1}
                                 </TableCell>
-                                {!isMobile && (
-                                  <TableCell className="text-xs h-[25px] py-1">
-                                    {new Date(
-                                      payment.createdAt
-                                    ).toLocaleTimeString("en-IN", {
-                                      hour: "numeric",
-                                      minute: "numeric",
-                                      hour12: true,
-                                    })}
-                                  </TableCell>
-                                )}
+                                <TableCell className="text-xs h-[25px] py-1">
+                                  {payment?.paymentNumber || "--"}
+                                </TableCell>
+                                <TableCell className="text-xs h-[25px] py-1">
+                                  {format(new Date(payment.createdAt), "dd/MM/yyyy hh:mm a")}
+                                </TableCell>  
                                 <TableCell className="text-xs font-medium h-[25px] py-1">
                                   {formatCurrency(payment?.amount)}
                                 </TableCell>

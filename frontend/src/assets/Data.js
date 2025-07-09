@@ -22,8 +22,8 @@ import {
 import { cn } from "../lib/utils";
 
 // backend url
-//export const Backend_URL = "https://thehospital.in";
-export const Backend_URL = "http://localhost:3000";
+export const Backend_URL = "https://thehospital.in";
+//export const Backend_URL = "http://localhost:3000";
 
 export const formatCurrency = (amount) => {
   const hasDecimal = amount % 1 !== 0;

@@ -90,6 +90,8 @@ import DoctorDetails from "./pages/DoctorDetails";
 import PrivacyPage from "./pages/Privacy";
 import TermsPage from "./pages/Terms";
 import ManageRecords from "./pages/ManageRecords";
+import ProtectedRoute from "./components/ProtectedRoute";
+import Unauthorized from "./pages/Unauthorized";
 
 const AppContent = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -172,6 +174,7 @@ const AppContent = () => {
 
               {isAuthenticated && (
                 <>
+                  <Route path="/unauthorized" element={<Unauthorized />} />
                   <Route
                     path="/patient-overview/:patientId"
                     element={<PatientOverview />}
@@ -185,9 +188,30 @@ const AppContent = () => {
                   <Route path="/appointments" element={<Appointments />} />
                   <Route path="/doctors" element={<Doctors />} />
                   <Route path="/rooms" element={<Rooms />} />
-                  <Route path="/staff" element={<Reports />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/settings/manage-records" element={<ManageRecords />} />
+                  <Route
+                    path="/staff"
+                    element={
+                      <ProtectedRoute permission="edit_staff">
+                        <Reports />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings"
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <Settings />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/settings/manage-records"
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <ManageRecords />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route path="/staff/:staffId" element={<StaffProfile />} />
                   <Route path="/analytics" element={<Analytics />} />
                   <Route
@@ -227,20 +251,35 @@ const AppContent = () => {
                     path="/billings/create-service-bill"
                     element={<CreateServiceBill />}
                   />
-                  <Route path="/statistics" element={<Statistics />} />
+                  <Route
+                    path="/statistics"
+                    element={
+                      <ProtectedRoute permission="view_financial">
+                        <Statistics />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/billings/edit/:billId"
                     element={<CreateServiceBill />}
                   />
                   <Route
                     path="/settings/hospital-info"
-                    element={<HospitalInfo />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <HospitalInfo />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route path="/expenses" element={<Expenses />} />
                   <Route path="/payments" element={<Payments />} />
                   <Route
                     path="/settings/customization"
-                    element={<Customization />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <Customization />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route path="/search" element={<PatientSearch />} />
                   <Route
@@ -249,59 +288,115 @@ const AppContent = () => {
                   />
                   <Route
                     path="/settings/lab-templates"
-                    element={<LabTemplatesManager />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <LabTemplatesManager />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/create-test-template"
-                    element={<CreateTestTemplate />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <CreateTestTemplate />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates"
-                    element={<PrintingTemplates />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <PrintingTemplates />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/discharge-preview"
-                    element={<DischargeTemplatePreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <DischargeTemplatePreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/header-preview"
-                    element={<HeaderTemplatePreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <HeaderTemplatePreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/lab-billing-preview"
-                    element={<LabBillingTemplatePreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <LabBillingTemplatePreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/opd-preview"
-                    element={<OPDTemplatePreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <OPDTemplatePreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/opd-rx-preview"
-                    element={<OPDRxTemplatePreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <OPDRxTemplatePreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/opd-bill-token-preview"
-                    element={<OPDBillTokenPreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <OPDBillTokenPreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/lab-report-preview"
-                    element={<LabTemplatePreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <LabTemplatePreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/merge-template-preview"
-                    element={<MergeTemplatePreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <MergeTemplatePreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/printing-templates/consent-preview"
-                    element={<ConsentTemplatePreview />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <ConsentTemplatePreview />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/prefix-settings"
-                    element={<PrefixSettings />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <PrefixSettings />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/discharge-form-templates"
-                    element={<DischargeFormTemplates />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <DischargeFormTemplates />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/patients/:ipdAdmissionId/babies"
@@ -311,35 +406,67 @@ const AppContent = () => {
                   <Route path="/babies/:babyId" element={<BabyDetails />} />
                   <Route
                     path="/settings/department"
-                    element={<DepartmentManger />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <DepartmentManger />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/edit-test-template"
-                    element={<EditTestTemplate />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <EditTestTemplate />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/hospital-settings"
-                    element={<HospitalSettings />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <HospitalSettings />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/consultation-fees"
-                    element={<ConsultationFees />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <ConsultationFees />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/subscription"
-                    element={<Subscription />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <Subscription />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/prescription-settings"
-                    element={<DoctorPrescriptionSettings />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <DoctorPrescriptionSettings />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/doctor-wise-data"
-                    element={<DoctorWiseData />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <DoctorWiseData />
+                      </ProtectedRoute>
+                    }
                   />
                   <Route
                     path="/settings/doctor-wise-data/:doctorId"
-                    element={<DoctorDetails />}
+                    element={
+                      <ProtectedRoute permission="edit_hospital">
+                        <DoctorDetails />
+                      </ProtectedRoute>
+                    }
                   />
                 </>
               )}

@@ -52,7 +52,7 @@ const paymentMethods = [
 
 export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const departments = useSelector((state) => state.departments.departments);
-  const rooms = useSelector((state) => state.rooms.rooms);
+  const {rooms,status:roomsStatus } = useSelector((state) => state.rooms);
   const doctors = useSelector((state) => state.staff.doctors);
   const initialFormData = {
     name: "",
@@ -150,20 +150,45 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   const [billData, setBillData] = useState(null);
   const [completedBill, setCompletedBill] = useState(null);
   const [roomCharge, setRoomCharge] = useState(0);
-  const [searchedPatient, setSearchedPatient] = useState(null);
+  const [activePatient, setActivePatient] = useState(null);
   const [generatedNumbers, setGeneratedNumbers] = useState({
     registrationNumber: null,
     ipdNumber: null,
   });
 
   useEffect(() => {
+    if (open) {
+      if (patientData) {
+        // If patientData has a 'patient' property, it's a visit object from Patients.jsx
+        if (patientData.patient) {
+          const transformedPatientData = {
+            ...patientData.patient,
+            visits: [patientData],
+            admissionDetails: [],
+          };
+          setActivePatient(transformedPatientData);
+        } else {
+          // Otherwise, it's a direct patient object from PatientSearch.jsx
+          setActivePatient(patientData);
+        }
+      } else {
+        // No patient data, so it's a new registration
+        setActivePatient(null);
+      }
+    }
+  }, [open, patientData]);
+
+  useEffect(() => {
+    if (roomsStatus === "idle" && open) {
+      dispatch(fetchRooms());
+    }
     if (status === "idle") {
       dispatch(fetchTemplates());
     }
     if (servicesStatus === "idle") {
       dispatch(fetchServices());
     }
-  }, [dispatch, status, servicesStatus]);
+  }, [dispatch, status, servicesStatus, roomsStatus]);
 
   useEffect(() => {
     // Only calculate room charge when room is selected
@@ -211,13 +236,13 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       setErrors({});
       setTotalAmount("");
       setRoomCharge(0);
-      setSearchedPatient(null);
+      setActivePatient(null);
     }
   }, [open]);
 
   useEffect(() => {
-    if (patientData || searchedPatient) {
-      const sourceData = searchedPatient || patientData;
+    if (activePatient) {
+      const sourceData = activePatient;
       const tempGuardianName =
         sourceData?.visits[0]?.guardianName ||
         sourceData?.admissionDetails[0]?.guardianName ||
@@ -251,23 +276,23 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         },
       }));
     }
-  }, [patientData, searchedPatient, open]);
+  }, [activePatient]);
 
   useEffect(() => {
     if (!open) {
-      dispatch(fetchRooms());
+      // dispatch(fetchRooms());
       resetFormData();
       setTotalAmount(""); // Reset total amount
       setRoomCharge(0); // Reset room charge
       setTimeout(() => {
         document.body.style = "";
       }, 500);
-      setSearchedPatient(null);
+      setActivePatient(null);
     }
   }, [open, resetFormData, dispatch]);
 
   useEffect(() => {
-    if (open && !patientData && !searchedPatient) {
+    if (open && !activePatient) {
       dispatch(fetchRegistrationAndIPDNumbers())
         .unwrap()
         .then((numbers) => {
@@ -288,7 +313,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
           console.error("Failed to fetch numbers:", error);
         });
     }
-  }, [open, dispatch, patientData, searchedPatient]);
+  }, [open, dispatch, activePatient]);
 
   // Effect to set current time when dialog opens
   useEffect(() => {
@@ -392,11 +417,11 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
 
-      if (patientData || searchedPatient) {
+      if (activePatient) {
         // This is a readmission
         dispatch(
           readmitPatient({
-            patientId: patientData?._id || searchedPatient?._id,
+            patientId: activePatient?._id,
             admission: submissionData,
           })
         )
@@ -499,6 +524,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       paymentInfo: { ...prev.paymentInfo, amountPaid },
     }));
   }, [formData.paymentInfo.paymentMethod]);
+  
   const handleDialogClose = () => {
     setTimeout(() => {
       document.body.style = "";
@@ -577,7 +603,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
       ).unwrap();
       if (result.results?.patients && result.results?.patients?.length > 0) {
         const patient = result.results?.patients?.[0];
-        setSearchedPatient({
+        setActivePatient({
           ...patient,
           isFromSearch: true,
         });
@@ -625,10 +651,10 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         >
           <DialogHeader className="mb-4 md:mb-0">
             <DialogTitle>
-              {patientData ? "Admit IPD Patient" : "Register New IPD Patient"}
+              {activePatient ? "Admit IPD Patient" : "Register New IPD Patient"}
             </DialogTitle>
             <DialogDescription className={isMobile ? "hidden" : ""}>
-              {patientData
+              {activePatient
                 ? "Fill details for patient Admission"
                 : "Fill basic details of patient for new IPD registration"}
             </DialogDescription>
@@ -759,7 +785,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           <div className="w-30 relative">
                             <MemoizedInput
                               id="age"
-                              label="Age"
+                              label="Age (Y-M-D)"
                               type="text"
                               value={formData.age}
                               onChange={handleAgeChange}
@@ -770,7 +796,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                             <MemoizedInput
                               id="dateOfBirth"
                               tabIndex={-1}
-                              label="Date of Birth"
+                              label="DATE OF BIRTH"
                               type="date"
                               value={formData.dateOfBirth}
                               onChange={handleDobChange}
@@ -872,6 +898,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                           value={
                             formData.admission.bookingTime.split(" ")[1] || "AM"
                           }
+                          tabIndex={-1} 
                           onValueChange={(value) => {
                             const timeOnly =
                               formData.admission.bookingTime.split(" ")[0];
@@ -899,6 +926,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                   <div className="space-y-4">
                     <div className="grid grid-cols-[1fr_2fr] gap-2">
                       <Select
+                      tabIndex={-1}
                         id="admisison.relation"
                         value={formData.admission.relation}
                         onValueChange={(value) =>
@@ -1561,6 +1589,14 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                   Reset
                 </Button>
                 <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleDialogClose}
+                  className={`${isMobile ? "w-full mt-2" : ""}`}
+                >
+                  Cancel
+                </Button>
+                <Button
                   type="submit"
                   disabled={registerPatientStatus === "loading"}
                   className={`${isMobile ? "w-full" : ""}`}
@@ -1568,12 +1604,12 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
                   {registerPatientStatus === "loading" ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {patientData ? "Readmitting..." : "Registering..."}
+                      {activePatient ? "Submitting..." : "Registering..."}
                     </>
-                  ) : patientData ? (
-                    "Readmit Patient"
+                  ) : activePatient ? (
+                    "Submit"
                   ) : (
-                    "Register Patient"
+                    "Register"
                   )}
                 </Button>
               </div>

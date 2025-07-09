@@ -25,13 +25,7 @@ import {
 } from "../../ui/select";
 import { Textarea } from "../../ui/textarea";
 import MultiSelectInput from "../MultiSelectInput";
-import BillModal from "./BillModal";
 import { useMediaQuery } from "../../../hooks/use-media-query";
-import { Backend_URL } from "../../../assets/Data";
-import { Label } from "../../ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
-import { ScrollArea } from "../../ui/scroll-area";
-import { Separator } from "../../ui/separator";
 import { searchPatients } from "../../../redux/slices/patientSlice";
 import MemoizedInput from "./MemoizedInput";
 import { format, differenceInDays } from "date-fns";
@@ -563,7 +557,7 @@ export default function LabRegDialog({ open, onOpenChange, patientData }) {
                   <div className="grid grid-cols-2 gap-2">
                     <MemoizedInput
                       id="age"
-                      label="Age"
+                      label="Age (Y-M-D)"
                       type="text"
                       value={formData.age}
                       onChange={handleAgeChange}

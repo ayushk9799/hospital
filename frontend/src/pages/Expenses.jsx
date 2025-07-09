@@ -45,6 +45,7 @@ import {
   FileX,
   Calendar as CalendarIcon,
   X,
+  PieChart,
 } from "lucide-react";
 import { DateRangePicker } from "../assets/Data";
 import { useSelector, useDispatch } from "react-redux";
@@ -71,6 +72,7 @@ import {
   SelectContent,
   SelectItem,
 } from "../components/ui/select";
+import ExpenseSummaryDialog from "../components/custom/expenses/ExpenseSummaryDialog";
 
 const Expenses = () => {
   const dispatch = useDispatch();
@@ -86,6 +88,7 @@ const Expenses = () => {
   const [dateRange, setDateRange] = useState({ from: null, to: null });
   const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
   const [isAddEditDialogOpen, setIsAddEditDialogOpen] = useState(false);
+  const [isSummaryDialogOpen, setIsSummaryDialogOpen] = useState(false);
   const [expenseToEdit, setExpenseToEdit] = useState(null);
   const { toast } = useToast();
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -299,9 +302,18 @@ const Expenses = () => {
             <CardDescription>Manage and view hospital expenses</CardDescription>
           </div>
           {isSmallScreen && (
-            <Button size="icon" onClick={handleAddExpense}>
-              <Plus className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center space-x-2">
+              <Button
+                size="icon"
+                variant="outline"
+                onClick={() => setIsSummaryDialogOpen(true)}
+              >
+                <PieChart className="h-4 w-4" />
+              </Button>
+              <Button size="icon" onClick={handleAddExpense}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
       </CardHeader>
@@ -446,6 +458,13 @@ const Expenses = () => {
             <div className="flex space-x-2">
               <Button
                 variant="outline"
+                onClick={() => setIsSummaryDialogOpen(true)}
+              >
+                <PieChart className="mr-2 h-4 w-4" />
+                Summary
+              </Button>
+              <Button
+                variant="outline"
                 onClick={handleAddExpense}
                 disabled={!userPermissions?.includes("record_expense")}
               >
@@ -579,6 +598,11 @@ const Expenses = () => {
         isOpen={isAddEditDialogOpen}
         onClose={handleCloseDialog}
         expenseToEdit={expenseToEdit}
+      />
+      <ExpenseSummaryDialog
+        isOpen={isSummaryDialogOpen}
+        onClose={() => setIsSummaryDialogOpen(false)}
+        expenses={filteredExpenses}
       />
       <AlertDialog
         open={isDeleteDialogOpen}

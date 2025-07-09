@@ -9,7 +9,6 @@ import {
   Pencil,
   Trash2,
   Plus,
-  AlertCircle,
   Loader2,
   PrinterIcon,
   Wallet,
@@ -17,13 +16,6 @@ import {
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../components/ui/select";
 import {
   Table,
   TableBody,
@@ -42,11 +34,9 @@ import {
   fetchBillById,
 } from "../redux/slices/BillingSlice";
 import { useToast } from "../hooks/use-toast";
-import { setSelectedPatientForBill } from "../redux/slices/patientSlice";
 import { CalendarDays, Phone, Mail, MapPin } from "lucide-react";
 import { Badge } from "../components/ui/badge";
 import { format } from "date-fns";
-import { ScrollArea } from "../components/ui/scroll-area";
 import OPDBillTokenModal from "../components/custom/registration/OPDBillTokenModal";
 import ViewBillDialog from "../components/custom/billing/ViewBillDialog";
 import {
@@ -58,14 +48,7 @@ import {
   DialogTitle,
 } from "../components/ui/dialog";
 import PaymentDialog from "../components/custom/billing/PaymentDialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../components/ui/tooltip";
 import { updateOperationName } from "../redux/slices/patientSlice";
-
 import SelectServicesDialog from "../components/custom/registration/SelectServicesDialog";
 
 const CreateServiceBill = ({
@@ -83,8 +66,6 @@ const CreateServiceBill = ({
     (state) => state.hospitalSettings.settings
   );
   const {settings} = useSelector((state) => state.hospitalSettings);
-
-
   const [billDataForPrint, setBillDataForPrint] = useState(null);
   const [newlyAddedServices, setNewlyAddedServices] = useState([]);
   const [isViewFromUpdate, setIsViewFromUpdate] = useState(false);
@@ -500,8 +481,6 @@ const CreateServiceBill = ({
     // Update target total based on existing services
   };
 
-
-
   const handleAddService = (e) => {
     e.preventDefault();
 
@@ -513,8 +492,6 @@ const CreateServiceBill = ({
       const currentBreakupTotal = addedServices
         .filter((ser) => ser.type === "breakup" || ser.category === "Room Rent")
         .reduce((sum, service) => sum + service.total, 0);
-
-      
 
       if (currentBreakupTotal + totalValue > parseFloat(targetTotal||0)) {
         toast({
@@ -1136,6 +1113,7 @@ const CreateServiceBill = ({
                       IPD No: {patientDetails.ipdNumber}
                     </Badge>
                   )}
+
                   {patientDetails?.type === "IPD" && (
                     <Badge
                       variant="bluish"
@@ -1268,7 +1246,6 @@ const CreateServiceBill = ({
             <div className="col-span-full sm:col-span-1 flex items-center justify-center mt-2 sm:mt-0">
               <Button
                 type="submit"
-                variant="outline"
                 size="sm"
                 className="h-8 w-full sm:w-auto sm:px-3 mr-2 flex items-center justify-center"
               >
@@ -1408,7 +1385,7 @@ const CreateServiceBill = ({
 
           {/* Desktop View */}
           <div className="hidden sm:block">
-            <ScrollArea className="h-[250px] w-full">
+            {/* <ScrollArea className="h-[250px] w-full"> */}
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1554,7 +1531,7 @@ const CreateServiceBill = ({
                       ))}
                 </TableBody>
               </Table>
-            </ScrollArea>
+            {/* </ScrollArea> */}
           </div>
         </CardContent>
       </Card>
