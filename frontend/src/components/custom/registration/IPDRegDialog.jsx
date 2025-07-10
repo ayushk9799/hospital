@@ -444,6 +444,9 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     if (formData.admission.ipdNumber === generatedNumbers?.ipdNumber) {
       formData.upgradegenIpd = true;
     }
+    console.log('formdata',formData);
+    console.log('generatedNumbers',generatedNumbers);
+    
     if (validateForm(formData, setErrors)) {
       const submissionData = formatSubmissionData(formData);
 
