@@ -156,6 +156,9 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
     ipdNumber: null,
   });
 
+  console.log("patientData", patientData);
+  console.log("activePatient", activePatient);
+
   useEffect(() => {
     if (open) {
       if (patientData) {
@@ -163,6 +166,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         if (patientData.patient) {
           const transformedPatientData = {
             ...patientData.patient,
+            registrationNumber: patientData.registrationNumber,
             visits: [patientData],
             admissionDetails: [],
           };
@@ -292,28 +296,54 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
   }, [open, resetFormData, dispatch]);
 
   useEffect(() => {
-    if (open && !activePatient) {
-      dispatch(fetchRegistrationAndIPDNumbers())
-        .unwrap()
-        .then((numbers) => {
-          setGeneratedNumbers({
-            registrationNumber: numbers.registrationNumber,
-            ipdNumber: numbers.ipdNumber,
+    if (open) {
+      if (patientData) {
+        // For an existing patient, we only need a new IPD number.
+        dispatch(fetchRegistrationAndIPDNumbers())
+          .unwrap()
+          .then((numbers) => {
+            setFormData((prev) => ({
+              ...prev,
+              admission: {
+                ...prev.admission,
+                ipdNumber: numbers.ipdNumber,
+              },
+            }));
+          })
+          .catch((error) => {
+            console.error("Failed to fetch IPD number:", error);
           });
-          setFormData((prev) => ({
-            ...prev,
-            registrationNumber: numbers.registrationNumber,
-            admission: {
-              ...prev.admission,
+      } else {
+        // For a new patient, we fetch both registration and IPD numbers.
+        dispatch(fetchRegistrationAndIPDNumbers())
+          .unwrap()
+          .then((numbers) => {
+            setGeneratedNumbers({
+              registrationNumber: numbers.registrationNumber,
               ipdNumber: numbers.ipdNumber,
-            },
-          }));
-        })
-        .catch((error) => {
-          console.error("Failed to fetch numbers:", error);
-        });
+            });
+            setFormData((prev) => ({
+              ...prev,
+              registrationNumber: numbers.registrationNumber,
+              admission: {
+                ...prev.admission,
+                ipdNumber: numbers.ipdNumber,
+              },
+            }));
+          })
+          .catch((error) => {
+            console.error("Failed to fetch numbers:", error);
+          });
+      }
     }
-  }, [open, dispatch, activePatient]);
+  }, [open, dispatch, patientData]);
+
+  useEffect(() => {
+    if (!showBillModal && completedBill) {
+      // only trigger after a submission
+      onOpenChange(false);
+    }
+  }, [showBillModal, completedBill, onOpenChange]);
 
   // Effect to set current time when dialog opens
   useEffect(() => {
@@ -457,7 +487,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
             });
           })
           .finally(() => {
-            onOpenChange(false);
+            // onOpenChange(false);
           });
       } else {
         // This is a new patient registration
@@ -469,7 +499,7 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
               description: "The new patient has been added.",
               variant: "success",
             });
-            onOpenChange(false);
+            // onOpenChange(false);
             dispatch(
               fetchPatients({
                 startDate: new Date()
