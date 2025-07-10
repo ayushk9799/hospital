@@ -357,6 +357,7 @@ const FormCustomizer = ({
       name: "",
       content: "",
     });
+    const [editingTemplate, setEditingTemplate] = useState(null);
 
     const handleFieldChange = (key, value) => {
       setLocalField((prev) => ({
@@ -376,6 +377,29 @@ const FormCustomizer = ({
       }
       handleEditField(field.sectionId, field.id, localField);
       setSelectedField(null);
+    };
+
+    const handleSaveEditedTemplate = () => {
+      if (!editingTemplate.name || !editingTemplate.content) {
+        toast({
+          title: "Error",
+          description: "Both template name and content are required.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      const updatedTemplates = localField.templates.map((t, i) =>
+        i === editingTemplate.index
+          ? { name: editingTemplate.name, content: editingTemplate.content }
+          : t
+      );
+
+      setLocalField((prev) => ({
+        ...prev,
+        templates: updatedTemplates,
+      }));
+      setEditingTemplate(null);
     };
 
     const handleClose = () => {
@@ -466,69 +490,140 @@ const FormCustomizer = ({
                       Pre-saved Templates
                     </Label>
                     <div className="space-y-4">
-                      {localField.templates?.map((template, index) => (
-                        <div
-                          key={index}
-                          className="flex items-start gap-2 p-3 bg-secondary/10 rounded-md border"
-                        >
-                          <div className="flex-1 space-y-2">
-                            <div className="flex items-center justify-between">
-                              <Label className="font-medium">
-                                {template.name}
-                              </Label>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleLocalRemoveTemplate(index)}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                            <div className="text-sm text-muted-foreground">
-                              {template.content}
+                      {localField.templates?.map((template, index) =>
+                        editingTemplate?.index === index ? (
+                          <div key={index} className="space-y-3 border-t pt-4">
+                            <Label className="text-sm font-medium">
+                              Edit Template
+                            </Label>
+                            <div className="space-y-3">
+                              <Input
+                                placeholder="Template Name"
+                                value={editingTemplate.name}
+                                onChange={(e) =>
+                                  setEditingTemplate((prev) => ({
+                                    ...prev,
+                                    name: e.target.value,
+                                  }))
+                                }
+                                className="h-9"
+                              />
+                              <Textarea
+                                placeholder="Template Content"
+                                value={editingTemplate.content}
+                                onChange={(e) =>
+                                  setEditingTemplate((prev) => ({
+                                    ...prev,
+                                    content: e.target.value,
+                                  }))
+                                }
+                                className="min-h-[100px]"
+                              />
+                              <div className="flex gap-2">
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  onClick={handleSaveEditedTemplate}
+                                  className="h-9"
+                                >
+                                  <Check className="h-4 w-4 mr-2" />
+                                  Save Template
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  onClick={() => setEditingTemplate(null)}
+                                  className="h-9"
+                                >
+                                  <X className="h-4 w-4 mr-2" />
+                                  Cancel
+                                </Button>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-
-                      <div className="space-y-3 border-t pt-4">
-                        <Label className="text-sm font-medium">
-                          Add New Template
-                        </Label>
-                        <div className="space-y-3">
-                          <Input
-                            placeholder="Template Name"
-                            value={localTemplate.name}
-                            onChange={(e) =>
-                              setLocalTemplate((prev) => ({
-                                ...prev,
-                                name: e.target.value,
-                              }))
-                            }
-                            className="h-9"
-                          />
-                          <Textarea
-                            placeholder="Template Content"
-                            value={localTemplate.content}
-                            onChange={(e) =>
-                              setLocalTemplate((prev) => ({
-                                ...prev,
-                                content: e.target.value,
-                              }))
-                            }
-                            className="min-h-[100px]"
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={handleLocalAddTemplate}
-                            className="w-full h-9"
+                        ) : (
+                          <div
+                            key={index}
+                            className="flex items-start gap-2 p-3 bg-secondary/10 rounded-md border"
                           >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Template
-                          </Button>
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="font-medium">
+                                  {template.name}
+                                </Label>
+                                <div className="flex">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      setEditingTemplate({
+                                        index,
+                                        name: template.name,
+                                        content: template.content,
+                                      })
+                                    }
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      handleLocalRemoveTemplate(index)
+                                    }
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+                                {template.content}
+                              </div>
+                            </div>
+                          </div>
+                        )
+                      )}
+
+                      {editingTemplate === null && (
+                        <div className="space-y-3 border-t pt-4">
+                          <Label className="text-sm font-medium">
+                            Add New Template
+                          </Label>
+                          <div className="space-y-3">
+                            <Input
+                              placeholder="Template Name"
+                              value={localTemplate.name}
+                              onChange={(e) =>
+                                setLocalTemplate((prev) => ({
+                                  ...prev,
+                                  name: e.target.value,
+                                }))
+                              }
+                              className="h-9"
+                            />
+                            <Textarea
+                              placeholder="Template Content"
+                              value={localTemplate.content}
+                              onChange={(e) =>
+                                setLocalTemplate((prev) => ({
+                                  ...prev,
+                                  content: e.target.value,
+                                }))
+                              }
+                              className="min-h-[100px]"
+                            />
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={handleLocalAddTemplate}
+                              className="w-full h-9"
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Add Template
+                            </Button>
+                          </div>
                         </div>
-                      </div>
+                      )}
                     </div>
                   </div>
                 </Card>

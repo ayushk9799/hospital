@@ -233,7 +233,7 @@ const OPDProcedureDialog = ({ open, onOpenChange, initialPatientData }) => {
       setFormData(initialFormData);
       setErrors({});
     }
-    onOpenChange(open);
+    onOpenChange(false);
   };
 
   const handleSearchClick = async () => {
@@ -438,7 +438,10 @@ const OPDProcedureDialog = ({ open, onOpenChange, initialPatientData }) => {
               </div>
             </div>
           </form>
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-end mt-4 gap-2">
+            <Button variant="outline" onClick={handleDialogClose} className="w-full sm:w-auto">
+              Cancel
+            </Button>
             <Button onClick={handleSubmit} className="w-full sm:w-auto">
               Submit
             </Button>
