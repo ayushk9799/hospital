@@ -302,6 +302,10 @@ export default function IPDRegDialog({ open, onOpenChange, patientData }) {
         dispatch(fetchRegistrationAndIPDNumbers())
           .unwrap()
           .then((numbers) => {
+            setGeneratedNumbers({
+              registrationNumber: numbers.registrationNumber,
+              ipdNumber: numbers.ipdNumber,
+            });
             setFormData((prev) => ({
               ...prev,
               admission: {

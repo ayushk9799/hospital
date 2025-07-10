@@ -40,7 +40,7 @@ const HorizontalNav = ({ isCollapsed, setIsCollapsed, navItems }) => {
   const [isRenewalDialogOpen, setIsRenewalDialogOpen] = useState(false);
 
   useEffect(() => {
-    if (prefixDataStatus === "idle") {
+    if (prefixDataStatus === "idle" || !prefixData) {
       dispatch(fetchPrefixData());
     }
   }, [dispatch, prefixDataStatus]);
