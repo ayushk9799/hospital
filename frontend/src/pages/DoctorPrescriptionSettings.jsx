@@ -4,6 +4,7 @@ import { Card } from "../components/ui/card";
 import { Switch } from "../components/ui/switch";
 import { Button } from "../components/ui/button";
 import TextTemplateSelector from "./TextTemplateSelector";
+import { useNavigate } from "react-router-dom";
 import ListSuggestionSelector from "./ListSuggestionSelector";
 import { Backend_URL } from "../assets/Data";
 import { useToast } from "../hooks/use-toast";
@@ -110,11 +111,13 @@ const FieldRow = ({
 
   // Handle updates to suggestions list for textarea type (template objects)
   const handleTemplatesChange = (newTemplates) => {
-    onUpdate({ templates: newTemplates });
+    onUpdate({ suggestions: newTemplates });
   };
+  
 
   // Sync local state when dialog opens / field changes
   useEffect(() => {
+ 
     if (open) {
       setTempLabel(field.label || "");
       setTempType(field.type || "");
@@ -125,6 +128,11 @@ const FieldRow = ({
       }
     }
   }, [open, field]);
+  
+
+  const handleListSuggestionChange = (newList) => {
+    onUpdate({ suggestions: newList });
+  };
 
   const handleSave = () => {
     const updatedField = {
@@ -170,12 +178,14 @@ const FieldRow = ({
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <GearIcon className="h-4 w-4" />
-            </Button>
-          </DialogTrigger>
-          {onDelete && (
+          {!field.new && (
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <GearIcon className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+          )}
+          {field.new && onDelete && (
             <Button
               variant="ghost"
               size="icon"
@@ -219,7 +229,11 @@ const FieldRow = ({
 
           <div className="space-y-2">
             <Label>Type</Label>
-            <Select value={tempType} onValueChange={setTempType} disabled={field.id}>
+            <Select
+              value={tempType}
+              onValueChange={setTempType}
+              disabled={field.id}
+            >
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Select type" />
               </SelectTrigger>
@@ -238,10 +252,11 @@ const FieldRow = ({
               <TextTemplateSelector
                 value={tempDataSource}
                 onChange={(value) => setTempDataSource(value)}
-                templates={field.templates || []}
+                templates={field.suggestions || []}
                 onTemplatesChange={handleTemplatesChange}
                 formTemplate={selectedTemplate}
                 field={field}
+                onDialogClose={() => setOpen(false)}
               />
             ) : (
               <ListSuggestionSelector
@@ -250,9 +265,10 @@ const FieldRow = ({
                 suggestions={
                   Array.isArray(field.suggestions) ? field.suggestions : []
                 }
-                onSuggestionsChange={(newList) => setTempDataSource(newList)}
+                onSuggestionsChange={handleListSuggestionChange}
                 formTemplate={selectedTemplate}
                 field={field}
+                onDialogClose={() => setOpen(false)}
               />
             )}
           </div>
@@ -280,6 +296,7 @@ const AddFieldDialog = ({ open, onOpenChange, onSave }) => {
         type,
         id: `custom-${label.toLowerCase().replace(/\s+/g, "-")}-${Date.now()}`,
         isCustom: true,
+        new: true,
       });
       setLabel("");
       setType(FIELD_TYPES[0]);
@@ -335,6 +352,7 @@ const AddFieldDialog = ({ open, onOpenChange, onSave }) => {
 
 const DoctorPrescriptionSettings = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { toast } = useToast();
 
   const {
@@ -344,6 +362,11 @@ const DoctorPrescriptionSettings = () => {
     selectedDoctors,
     status: loading,
   } = useSelector((state) => state.doctorPrescription);
+  useEffect(() => {
+    return () => {
+      dispatch(clearSelectedTemplate());
+    };
+  }, []);
 
   const doctors = useSelector((state) => state.staff.doctors);
   const [showDoctorDialog, setShowDoctorDialog] = useState(false);
@@ -481,11 +504,31 @@ const DoctorPrescriptionSettings = () => {
     }
   };
 
+  // Helper function to remove 'new' property from fields
+  const cleanFormConfig = (config) => {
+    const cleanedConfig = JSON.parse(JSON.stringify(config)); // Deep copy
+
+    cleanedConfig.sections.forEach((section) => {
+      if (section.fields) {
+        section.fields.forEach((field) => {
+          if (field.hasOwnProperty("new")) {
+            delete field.new;
+          }
+        });
+      }
+    });
+
+    return cleanedConfig;
+  };
+
   const handleSave = async () => {
+    // Clean the formConfig to remove 'new' property from fields
+    const cleanedFormConfig = cleanFormConfig(formConfig);
+
     const resultAction = await dispatch(
       saveDoctorPrescriptionTemplate({
         name: selectedTemplate.name,
-        value: formConfig,
+        value: cleanedFormConfig,
         associatedDoctors: selectedDoctors,
         _id: selectedTemplate._id,
       })
@@ -494,8 +537,10 @@ const DoctorPrescriptionSettings = () => {
     if (saveDoctorPrescriptionTemplate.fulfilled.match(resultAction)) {
       toast({
         title: "Template Saved",
+        variant: "success",
         description: "Prescription template saved successfully",
       });
+      dispatch(clearSelectedTemplate());
     } else {
       toast({
         variant: "destructive",
@@ -503,6 +548,7 @@ const DoctorPrescriptionSettings = () => {
         description:
           resultAction.payload || "Failed to save prescription template",
       });
+      dispatch(clearSelectedTemplate());
     }
   };
 
@@ -518,8 +564,9 @@ const DoctorPrescriptionSettings = () => {
               onClick={() => handleTemplateSelect(template)}
             >
               <h2 className="text-xl font-semibold mb-2">{template.name}</h2>
-              <p className="text-gray-600 text-sm">
-                Associated Doctors: {template.associatedDoctors?.length || 0}
+            
+              <p className="text-gray-600 text-sm text-black font-bold">
+                {template.associatedDoctors?.map((doc) => doc.name)?.join(", ")}
               </p>
               <p className="text-gray-600 text-sm mt-2">
                 Click to view and edit template

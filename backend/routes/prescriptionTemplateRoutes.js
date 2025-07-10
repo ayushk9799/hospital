@@ -30,7 +30,7 @@ router.post("/textTemplates/:id", verifyToken, async (req, res) => {
       (f) => f.id === fieldId
     );
 
-    if (!field) return; // no matching field: bail out
+    if (!field) throw new Error("Field not found"); // no matching field: bail out
 
     if (!Array.isArray(field.suggestions)) {
       field.suggestions = []; // make the array if it isn't there yet
@@ -45,12 +45,13 @@ router.post("/textTemplates/:id", verifyToken, async (req, res) => {
 
     template.markModified("value");
     await template.save();
-    res.json({ success: true, suggestion: newSuggestion });
+    res.json({ success: true, suggestion: newSuggestion ,template:template});
   } catch (error) {
     console.error("Error saving text template:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
-router.delete("/textTemplates/:id", verifyToken, async (req, res) => {
+router.delete("/textTemplates/delete/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { fieldId, templateId } = req.body;
@@ -62,13 +63,13 @@ router.delete("/textTemplates/:id", verifyToken, async (req, res) => {
       const field = template?.value?.sections[0]?.fields?.filter(
         (field) => field.id === fieldId
       );
-      if (field) {
-        if (Array.isArray(field.suggestions)) {
-          const originalLength = field.suggestions.length;
-          field.suggestions = field.suggestions.filter(
+      if (field[0]) {
+        if (Array.isArray(field[0].suggestions)) {
+          const originalLength = field[0].suggestions.length;
+          field[0].suggestions = field[0].suggestions.filter(
             (s) => s._id?.toString() !== templateId
           );
-          if (field.suggestions.length !== originalLength) {
+          if (field[0].suggestions.length !== originalLength) {
             modified = true;
             deleted = true;
           }

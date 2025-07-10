@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 import { Backend_URL } from "../../assets/Data";
 import { DEFAULT_PRESCRIPTION_FORM_CONFIG } from "../../config/opdPrescriptionConfig";
 import createLoadingAsyncThunk from "./createLoadingAsyncThunk";
+import { saveTextTemplate, deleteTextTemplate } from "./textTemplatesSlice";
 
 export const fetchDoctorPrescriptionTemplates = createLoadingAsyncThunk(
   "doctorPrescription/fetchTemplates",
@@ -92,6 +93,48 @@ const doctorPrescriptionSlice = createSlice({
       state.formConfig = null;
       state.selectedDoctors = [];
     },
+    updateTemplateFieldSuggestions: (state, action) => {
+      const { templateId, fieldId, newSuggestions } = action.payload;
+
+      // Update the template in the templates array
+      const templateIndex = state.templates.findIndex(
+        (template) => template._id === templateId
+      );
+      if (templateIndex !== -1) {
+        const template = state.templates[templateIndex];
+        const field = template?.value?.sections?.[0]?.fields?.find(
+          (f) => f.id === fieldId
+        );
+        if (field) {
+          field.suggestions = newSuggestions;
+          // Mark template as modified for Redux to detect change
+          state.templates[templateIndex] = { ...template };
+        }
+      }
+
+      // Update selectedTemplate if it matches
+      if (state.selectedTemplate && state.selectedTemplate._id === templateId) {
+        const selectedField =
+          state.selectedTemplate?.value?.sections?.[0]?.fields?.find(
+            (f) => f.id === fieldId
+          );
+        if (selectedField) {
+          selectedField.suggestions = newSuggestions;
+          state.selectedTemplate = { ...state.selectedTemplate };
+        }
+
+        // Update formConfig if it exists
+        if (state.formConfig) {
+          const configField = state.formConfig?.sections?.[0]?.fields?.find(
+            (f) => f.id === fieldId
+          );
+          if (configField) {
+            configField.suggestions = newSuggestions;
+            state.formConfig = { ...state.formConfig };
+          }
+        }
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -127,6 +170,7 @@ export const {
   updateSelectedDoctors,
   createNewTemplate,
   clearSelectedTemplate,
+  updateTemplateFieldSuggestions,
 } = doctorPrescriptionSlice.actions;
 
 export default doctorPrescriptionSlice.reducer;

@@ -89,9 +89,27 @@ export const getBabiesByAdmission = createLoadingAsyncThunk(
 // Create baby record
 export const fetchAllBabies = createLoadingAsyncThunk(
   "babies/fetchAllBabies",
-  async () => {
+  async (filters = {}) => {
     try {
-      const response = await fetch(`${Backend_URL}/api/babies/`, {
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+
+      if (filters.startDate) {
+        queryParams.append("startDate", filters.startDate);
+      }
+      if (filters.endDate) {
+        queryParams.append("endDate", filters.endDate);
+      }
+      if (filters.gender && filters.gender !== "All") {
+        queryParams.append("gender", filters.gender);
+      }
+
+      const queryString = queryParams.toString();
+      const url = `${Backend_URL}/api/babies${
+        queryString ? `?${queryString}` : ""
+      }`;
+
+      const response = await fetch(url, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

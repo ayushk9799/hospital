@@ -105,7 +105,29 @@ router.put("/", verifyToken, async (req, res) => {
 // Get all baby records
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const babies = await Baby.find({})
+    const { startDate, endDate, gender } = req.query;
+
+    // Build query object
+    let query = {};
+
+    // Date filtering logic - simplified approach
+    if (startDate) {
+      const start = new Date(startDate);
+      const end = endDate ? new Date(endDate) : new Date(startDate);
+      end.setDate(end.getDate() + 1); // Include the end date
+
+      query.dateOfBirth = {
+        $gte: start,
+        $lt: end,
+      };
+    }
+
+    // Gender filtering
+    if (gender && gender !== "All") {
+      query.gender = gender;
+    }
+
+    const babies = await Baby.find(query)
       .populate("mother", "name registrationNumber")
       .sort("-createdAt");
     res.json(babies);

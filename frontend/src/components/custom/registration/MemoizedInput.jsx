@@ -19,8 +19,10 @@ const MemoizedInput = React.memo(({ id, label, type = "text", value, onChange, e
         className={`peer px-3 py-2 block w-full border rounded-md text-gray-900 focus:ring-blue-500 focus:border-blue-500 bg-white ${
           showError ? "border-red-500" : "border-gray-300"
         }`}
-        {...props}
+        placeholder=" "
         autoComplete="none"
+        {...props}
+
       />
       <Label
         htmlFor={id}

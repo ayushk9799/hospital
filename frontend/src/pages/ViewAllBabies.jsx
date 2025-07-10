@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { format } from 'date-fns';
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { format } from "date-fns";
 import {
   Table,
   TableBody,
@@ -33,57 +33,111 @@ import {
   FileX,
   Calendar as CalendarIcon,
   ArrowLeft,
+  X,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useMediaQuery } from "../hooks/useMediaQuery";
 import { fetchAllBabies } from "../redux/slices/babySlice";
-import {
-  ScrollArea,
-  ScrollBar
-} from "../components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "../components/ui/scroll-area";
+import { DateRangePicker } from "../assets/Data";
 
 const ViewAllBabies = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterGender, setFilterGender] = useState("All");
-  const [dateFilter, setDateFilter] = useState("All Time");
+  const [dateFilter, setDateFilter] = useState("This Week");
+  const [dateRange, setDateRange] = useState({ from: null, to: null });
+  const [tempDateRange, setTempDateRange] = useState({ from: null, to: null });
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
   const isSmallScreen = useMediaQuery("(max-width: 640px)");
   const [openDropdownId, setOpenDropdownId] = useState(null);
 
   // Get babies from Redux store
   const { babies, status, error } = useSelector((state) => state.babies);
 
-  // Fetch babies on component mount
-  useEffect(() => {
-    if(status === 'idle') {
-        dispatch(fetchAllBabies());
+  // Function to fetch babies with filters
+  const fetchBabiesWithFilters = () => {
+    const filters = {};
+
+    if (filterGender !== "All") {
+      filters.gender = filterGender;
     }
-  }, [dispatch, babies]);
-  
 
-  // Filter babies based on search term and filters
+    if (dateFilter === "Custom" && dateRange?.from) {
+      filters.startDate = format(dateRange?.from, "yyyy-MM-dd");
+      if (dateRange?.to) {
+        filters.endDate = format(dateRange?.to, "yyyy-MM-dd");
+      } else {
+        filters.endDate = format(dateRange?.from, "yyyy-MM-dd"); // Single date
+      }
+    } else if (dateFilter === "Today") {
+      const today = format(new Date(), "yyyy-MM-dd");
+      filters.startDate = today;
+      filters.endDate = today;
+    } else if (dateFilter === "This Week") {
+      const today = new Date();
+      const weekStart = new Date(
+        today.setDate(today.getDate() - today.getDay())
+      );
+      filters.startDate = format(weekStart, "yyyy-MM-dd");
+      filters.endDate = format(new Date(), "yyyy-MM-dd");
+    } else if (dateFilter === "This Month") {
+      const today = new Date();
+      const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+      filters.startDate = format(monthStart, "yyyy-MM-dd");
+      filters.endDate = format(new Date(), "yyyy-MM-dd");
+    }
+
+    dispatch(fetchAllBabies(filters));
+  };
+
+  // Fetch babies on component mount and when filters change
+  useEffect(() => {
+    fetchBabiesWithFilters();
+  }, [dispatch, filterGender, dateFilter, dateRange]);
+
+  // Filter babies based on search term (client-side for name search)
   const filteredBabies = babies.filter((baby) => {
-    const matchesSearch = baby.mother?.name?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesGender = filterGender === "All" || baby.gender === filterGender;
-    
-    // Date filtering logic
-    const birthDate = new Date(baby.dateOfBirth);
-    const today = new Date();
-    const isToday = birthDate.toDateString() === today.toDateString();
-    const isThisWeek = (today - birthDate) / (1000 * 60 * 60 * 24) <= 7;
-    const isThisMonth = 
-      birthDate.getMonth() === today.getMonth() && 
-      birthDate.getFullYear() === today.getFullYear();
-
-    const matchesDate = 
-      dateFilter === "All Time" ||
-      (dateFilter === "Today" && isToday) ||
-      (dateFilter === "This Week" && isThisWeek) ||
-      (dateFilter === "This Month" && isThisMonth);
-
-    return matchesSearch && matchesGender && matchesDate;
+    const matchesSearch = baby.mother?.name
+      ?.toLowerCase()
+      .includes(searchTerm.toLowerCase());
+    return matchesSearch;
   });
+
+  // Handle date range search (when Apply is clicked)
+  const handleDateRangeSearch = () => {
+    setDateRange(tempDateRange);
+    setDateFilter("Custom");
+    setShowCustomDatePicker(false);
+  };
+
+  // Handle date range cancel
+  const handleDateRangeCancel = () => {
+    setTempDateRange({ from: null, to: null });
+    setShowCustomDatePicker(false);
+  };
+
+  // Clear all date filters
+  const clearDateFilters = () => {
+    setDateFilter("This Week");
+    setDateRange({ from: null, to: null });
+    setTempDateRange({ from: null, to: null });
+    setShowCustomDatePicker(false);
+  };
+
+  // Get display text for custom date filter
+  const getCustomDateDisplayText = () => {
+    if (dateRange?.from && dateRange?.to && dateRange?.from !== dateRange?.to) {
+      return `${format(dateRange?.from, "MMM dd")} - ${format(
+        dateRange?.to,
+        "MMM dd, yyyy"
+      )}`;
+    } else if (dateRange?.from) {
+      return format(dateRange?.from, "MMM dd, yyyy");
+    }
+    return "Custom";
+  };
 
   // Error state
   if (status === "failed") {
@@ -94,9 +148,21 @@ const ViewAllBabies = () => {
     );
   }
 
+  // Loading state
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-pink-500 mx-auto mb-2"></div>
+          <p className="text-gray-600">Loading birth records...</p>
+        </div>
+      </div>
+    );
+  }
+
   const handleViewBaby = (baby) => {
     navigate(`/patients/${baby.ipdAdmission}/babies`, {
-      state: { motherData: baby.mother }
+      state: { motherData: baby.mother },
     });
   };
 
@@ -126,13 +192,16 @@ const ViewAllBabies = () => {
                 <p className="font-sm">{baby.weight}g</p>
               </div>
               <div className="flex gap-2 items-center">
-                <p className="text-sm text-muted-foreground uppercase">Father:</p>
+                <p className="text-sm text-muted-foreground uppercase">
+                  Father:
+                </p>
                 <p className="font-sm">{baby.babyFatherName}</p>
               </div>
               <div className="flex gap-2 items-center col-span-2">
                 <p className="text-sm text-muted-foreground">Birth:</p>
                 <p className="font-sm">
-                  {format(new Date(baby.dateOfBirth), "MMM dd, yyyy")} at {baby.timeOfBirth}
+                  {format(new Date(baby.dateOfBirth), "MMM dd, yyyy")} at{" "}
+                  {baby.timeOfBirth}
                 </p>
               </div>
             </div>
@@ -174,7 +243,9 @@ const ViewAllBabies = () => {
                   <ArrowLeft className="h-5 w-5 text-gray-600" />
                 </Button>
                 <div>
-                  <CardTitle className="text-gray-800 text-2xl">Birth Records</CardTitle>
+                  <CardTitle className="text-gray-800 text-2xl">
+                    Birth Records
+                  </CardTitle>
                   {/* <CardDescription className="text-gray-600">
                     View and manage all birth records
                   </CardDescription> */}
@@ -196,7 +267,10 @@ const ViewAllBabies = () => {
                 </div>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="border-gray-200 hover:bg-pink-50/50 bg-white">
+                    <Button
+                      variant="outline"
+                      className="border-gray-200 hover:bg-pink-50/50 bg-white"
+                    >
                       <Filter className="mr-2 h-4 w-4 text-gray-500" />
                       {filterGender}
                     </Button>
@@ -208,35 +282,87 @@ const ViewAllBabies = () => {
                     <DropdownMenuItem onSelect={() => setFilterGender("Male")}>
                       Male
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setFilterGender("Female")}>
+                    <DropdownMenuItem
+                      onSelect={() => setFilterGender("Female")}
+                    >
                       Female
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="outline" className="border-gray-200 hover:bg-pink-50/50 bg-white">
+                    <Button
+                      variant="outline"
+                      className="border-gray-200 hover:bg-pink-50/50 bg-white"
+                    >
                       <CalendarIcon className="mr-2 h-4 w-4 text-gray-500" />
-                      {dateFilter}
+                      {dateFilter === "Custom"
+                        ? getCustomDateDisplayText()
+                        : dateFilter}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem onSelect={() => setDateFilter("All Time")}>
-                      All Time
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDateFilter("Today")}>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setDateFilter("Today");
+                        setDateRange({ from: null, to: null });
+                        setShowCustomDatePicker(false);
+                      }}
+                    >
                       Today
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDateFilter("This Week")}>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setDateFilter("This Week");
+                        setDateRange({ from: null, to: null });
+                        setShowCustomDatePicker(false);
+                      }}
+                    >
                       This Week
                     </DropdownMenuItem>
-                    <DropdownMenuItem onSelect={() => setDateFilter("This Month")}>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setDateFilter("This Month");
+                        setDateRange({ from: null, to: null });
+                        setShowCustomDatePicker(false);
+                      }}
+                    >
                       This Month
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => {
+                        setShowCustomDatePicker(true);
+                      }}
+                    >
+                      Custom Range
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                {showCustomDatePicker && (
+                  <DateRangePicker
+                    from={tempDateRange?.from}
+                    to={tempDateRange?.to}
+                    onSelect={(range) => setTempDateRange(range)}
+                    onSearch={handleDateRangeSearch}
+                    onCancel={handleDateRangeCancel}
+                  />
+                )}
+                {dateFilter === "Custom" && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={clearDateFilters}
+                    className="border-gray-200 hover:bg-red-50 bg-white"
+                    title="Clear date filter"
+                  >
+                    <X className="h-4 w-4 text-red-500" />
+                  </Button>
+                )}
               </div>
             </div>
+
+            {/* Custom Date Picker Section */}
+            {/* The DateRangePicker component is now rendered inline */}
 
             {filteredBabies.length > 0 ? (
               isSmallScreen ? (
@@ -250,41 +376,74 @@ const ViewAllBabies = () => {
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-gradient-to-r from-pink-50 to-white">
-                        <TableHead className="font-semibold text-gray-700">Birth ID</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Mother's Name</TableHead>
-                        <TableHead className="font-semibold text-gray-700">UHID</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Gender</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Date & Time</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Weight</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Father's Name</TableHead>
-                        <TableHead className="font-semibold text-gray-700">Actions</TableHead>
+                        <TableHead className="font-semibold text-gray-700">
+                          Birth ID
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700">
+                          Mother's Name
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700">
+                          UHID
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700">
+                          Gender
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700">
+                          Date & Time
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700">
+                          Weight
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700">
+                          Father's Name
+                        </TableHead>
+                        <TableHead className="font-semibold text-gray-700">
+                          Actions
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {filteredBabies.map((baby) => (
-                        <TableRow key={baby._id} className="hover:bg-pink-50/50 transition-colors">
+                        <TableRow
+                          key={baby._id}
+                          className="hover:bg-pink-50/50 transition-colors"
+                        >
                           <TableCell>{baby.birthCounter}</TableCell>
-                          <TableCell className="uppercase font-semibold text-gray-800">{baby.mother?.name}</TableCell>
-                          <TableCell>{baby.mother?.registrationNumber}</TableCell>
+                          <TableCell className="uppercase font-semibold text-gray-800">
+                            {baby.mother?.name}
+                          </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className="bg-pink-50/80 text-gray-700 border-pink-200">
+                            {baby.mother?.registrationNumber}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={baby.gender === "Male" ? "bluish" : "pinkish"}
+                            >
                               {baby.gender}
                             </Badge>
                           </TableCell>
                           <TableCell className="text-gray-600">
-                            {format(new Date(baby.dateOfBirth), "MMM dd, yyyy")} at {baby.timeOfBirth}
+                            {format(new Date(baby.dateOfBirth), "MMM dd, yyyy")}{" "}
+                            at {baby.timeOfBirth}
                           </TableCell>
                           <TableCell>{baby.weight}g</TableCell>
-                          <TableCell className="uppercase">{baby.babyFatherName}</TableCell>
+                          <TableCell className="uppercase">
+                            {baby.babyFatherName}
+                          </TableCell>
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="h-8 w-8 p-0 hover:text-pink-500">
+                                <Button
+                                  variant="ghost"
+                                  className="h-8 w-8 p-0 hover:text-pink-500"
+                                >
                                   <ChevronDown className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => handleViewBaby(baby)}>
+                                <DropdownMenuItem
+                                  onSelect={() => handleViewBaby(baby)}
+                                >
                                   View Details
                                 </DropdownMenuItem>
                                 {/* <DropdownMenuItem>Print Certificate</DropdownMenuItem>

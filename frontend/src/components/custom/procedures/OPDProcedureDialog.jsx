@@ -360,6 +360,7 @@ const OPDProcedureDialog = ({ open, onOpenChange, initialPatientData }) => {
                 label="UHID No"
                 value={formData.registrationNumber}
                 onChange={handleInputChange}
+                autoComplete="on"
               />
               <button
                 type="button"
