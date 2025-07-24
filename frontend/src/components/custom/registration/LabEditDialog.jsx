@@ -84,6 +84,8 @@ export default function LabEditDialog({ open, onOpenChange, labData }) {
     referredBy: {},
     department: "",
     notes: "",
+    relation: "",
+    guardianName: "",
   });
 
   const [errors, setErrors] = useState({});
@@ -104,6 +106,8 @@ export default function LabEditDialog({ open, onOpenChange, labData }) {
         labTests: labData.labTests,
         department: labData.department,
         notes: labData.notes,
+        relation: labData.relation || "",
+        guardianName: labData.guardianName || "",
       });
     }
   }, [labData]);
@@ -401,6 +405,38 @@ export default function LabEditDialog({ open, onOpenChange, labData }) {
                   onChange={handleInputChange}
                   className="min-h-9 h-9 no-scrollbar"
                 />
+                <div className="grid grid-cols-[1fr_2fr] gap-2">
+                  <Select
+                    id="relation"
+                    value={formData.relation}
+                    onValueChange={(value) =>
+                      handleInputChange({
+                        target: { id: "relation", value },
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Relation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Father">Father</SelectItem>
+                      <SelectItem value="Husband">Husband</SelectItem>
+                      <SelectItem value="Mother">Mother</SelectItem>
+                      <SelectItem value="Wife">Wife</SelectItem>
+                      <SelectItem value="Guardian">Guardian</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <MemoizedInput
+                    id="guardianName"
+                    label={
+                      formData.relation
+                        ? `${formData.relation}'s Name`
+                        : "Guardian's Name"
+                    }
+                    value={formData.guardianName}
+                    onChange={handleInputChange}
+                  />
+                </div>
                 <SearchSuggestion
                   suggestions={doctors.map((doctor) => ({
                     name: doctor.name,
