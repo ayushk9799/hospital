@@ -45,7 +45,7 @@ export const navItems = [
   { name: "Rooms", icon: Bed, path: "/rooms" },
   { name: "Services", icon: ClipboardList, path: "/services" },
   { name: "Statistics", icon: BarChart, path: "/statistics", permission: "view_financial" },
-  { name: "Staffs", icon: UsersIcon, path: "/staff", permission: "edit_staff" },
+  { name: "Staffs", icon: UsersIcon, path: "/staff", permission: "view_staff" },
   { name: "Settings", icon: Settings, path: "/settings", permission: "edit_hospital" },
 ];
 

@@ -93,18 +93,6 @@ export default function Reports() {
     return true;
   };
 
-  const handleStaffClick = (staff) => {
-    if (
-      checkPermissionAndNavigate(
-        `/staff/${staff._id}`,
-        "view staff details",
-        "view_staff",
-        staff
-      )
-    ) {
-      navigate(`/staff/${staff._id}`, { state: { staffData: staff } });
-    }
-  };
 
   const handleEditStaff = (staff) => {
     if (checkPermissionAndNavigate("/addstaff", "edit staff", "edit_staff")) {

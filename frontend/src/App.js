@@ -191,7 +191,7 @@ const AppContent = () => {
                   <Route
                     path="/staff"
                     element={
-                      <ProtectedRoute permission="edit_staff">
+                      <ProtectedRoute permission="view_staff">
                         <Reports />
                       </ProtectedRoute>
                     }

@@ -90,6 +90,7 @@ export default function AddStaff() {
   useEffect(() => {}, [formData]);
 
   useEffect(() => {
+
     if (location.state?.editMode && location.state?.staffData) {
       if (!hasEditStaffPermission) {
         toast({
@@ -712,25 +713,9 @@ export default function AddStaff() {
     </div>
   );
 
-  if (!hasCreateStaffPermission && !editMode) {
-    toast({
-      variant: "destructive",
-      title: "Access Denied",
-      description: "You don't have permission to create staff members.",
-    });
-    navigate(-1);
-    return null;
-  }
+  
 
-  if (editMode && !hasEditStaffPermission) {
-    toast({
-      variant: "destructive",
-      title: "Access Denied",
-      description: "You don't have permission to edit staff members.",
-    });
-    navigate(-1);
-    return null;
-  }
+
 
   return (
     <div className="max-w-[1200px] mx-auto p-4">

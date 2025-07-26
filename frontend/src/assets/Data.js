@@ -59,7 +59,7 @@ export const permissionGroups = {
     { id: "edit_inventory_price", label: "Edit Prices" },
   ],
   "Financial Management": [
-    { id: "view_financial", label: "View Financial Data" },
+    { id: "view_financial", label: "View Financials (Statistics)" },
 
     { id: "edit_bills", label: "Edit Bills" },
 

@@ -65,7 +65,7 @@ const CreateServiceBill = ({
   const hospitalSettings = useSelector(
     (state) => state.hospitalSettings.settings
   );
-  const {settings} = useSelector((state) => state.hospitalSettings);
+  const { settings } = useSelector((state) => state.hospitalSettings);
   const [billDataForPrint, setBillDataForPrint] = useState(null);
   const [newlyAddedServices, setNewlyAddedServices] = useState([]);
   const [isViewFromUpdate, setIsViewFromUpdate] = useState(false);
@@ -207,7 +207,6 @@ const CreateServiceBill = ({
             createdBy: billData.createdBy,
           };
 
-
           const formattedServices = services.map((service, index) => {
             return {
               id: index + 1,
@@ -297,7 +296,6 @@ const CreateServiceBill = ({
 
       // Ensure discount doesn't exceed target total
       discountValue = Math.min(discountValue, targetTotalValue);
-      
 
       return {
         subtotal: originalSubtotal, // Adjust subtotal to match target total after discount
@@ -341,7 +339,6 @@ const CreateServiceBill = ({
     targetTotal,
     manualSubtotal,
   ]);
-
 
   useEffect(() => {
     if (calculateTotals.totalAmount) {
@@ -493,7 +490,7 @@ const CreateServiceBill = ({
         .filter((ser) => ser.type === "breakup" || ser.category === "Room Rent")
         .reduce((sum, service) => sum + service.total, 0);
 
-      if (currentBreakupTotal + totalValue > parseFloat(targetTotal||0)) {
+      if (currentBreakupTotal + totalValue > parseFloat(targetTotal || 0)) {
         toast({
           title: "Exceeds Target Total",
           description: "This service would exceed the target total amount.",
@@ -903,7 +900,9 @@ const CreateServiceBill = ({
     setIsPaymentDialogOpen(true);
   };
 
-  const [viewMode, setViewMode] = useState(settings.defaultBillPrintView || "list");
+  const [viewMode, setViewMode] = useState(
+    settings.defaultBillPrintView || "list"
+  );
   useEffect(() => {
     if (settings) {
       setViewMode(settings.defaultBillPrintView || "list");
@@ -994,10 +993,8 @@ const CreateServiceBill = ({
     setIsOperationDialogOpen(false);
   };
 
-
   const handleOperationChoice = async (includeInBill) => {
     if (!pendingOperationServices) return;
-
 
     // Get all selected services
     const selectedOperations = pendingOperationServices.map(
@@ -1015,7 +1012,6 @@ const CreateServiceBill = ({
         };
       }
     );
-
 
     try {
       const result = await dispatch(
@@ -1052,8 +1048,7 @@ const CreateServiceBill = ({
           ...newServices.map((s) => s.id),
         ]);
         setPendingOperationServices(null);
-        setSelectedOperationServices([])
-        
+        setSelectedOperationServices([]);
       }
 
       toast({
@@ -1079,7 +1074,7 @@ const CreateServiceBill = ({
     useState(null);
 
   return (
-    <div className="w-full  max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col">
+    <div className="w-full  flex flex-col overflow-y-auto">
       {renderHeader()}
 
       <Card>
@@ -1099,7 +1094,13 @@ const CreateServiceBill = ({
                 <h2 className="font-semibold">{patientDetails?.name}</h2>
                 <div className="flex flex-wrap gap-1 mt-0.5">
                   <Badge variant="outline">{patientDetails?.gender}</Badge>
-                  <Badge variant="outline">{parseAge(patientDetails?.age,{yearLabel:"Years",monthLabel:"Months",dayLabel:"Days"})}</Badge>
+                  <Badge variant="outline">
+                    {parseAge(patientDetails?.age, {
+                      yearLabel: "Years",
+                      monthLabel: "Months",
+                      dayLabel: "Days",
+                    })}
+                  </Badge>
                   {patientDetails?.bloodGroup && (
                     <Badge variant="outline">{patientDetails.bloodGroup}</Badge>
                   )}
@@ -1386,151 +1387,143 @@ const CreateServiceBill = ({
           {/* Desktop View */}
           <div className="hidden sm:block">
             {/* <ScrollArea className="h-[250px] w-full"> */}
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[50px] h-[35px]">
-                      <input
-                        type="checkbox"
-                        className="h-4 w-4"
-                        checked={
-                          selectedServices.length ===
-                            filteredServicesForDisplay.length &&
-                          filteredServicesForDisplay.length > 0
-                        }
-                        onChange={handleSelectAll}
-                      />
-                    </TableHead>
-                    <TableHead className="h-[35px]">Service</TableHead>
-                    <TableHead className="h-[35px]">Date</TableHead>
-                    <TableHead className="h-[35px]">Quantity</TableHead>
-                    <TableHead className="text-right h-[35px]">Rate</TableHead>
-                    <TableHead className="text-right h-[35px]">Total</TableHead>
-                    <TableHead className="text-right h-[20px]">
-                      Action
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {viewMode === "datewise" && !breakTotalMode
-                    ? servicesGroupedByDate?.map(({ date, services }) => (
-                        <>
-                          <TableRow key={`date-${date}`}>
-                            <TableCell colSpan={7} className="bg-gray-50">
-                              <span className="font-semibold">
-                                {date === "No Date"
-                                  ? "No Date"
-                                  : format(new Date(date), "dd MMMM yyyy")}
-                              </span>
-                            </TableCell>
-                          </TableRow>
-                          {services.map((service) => (
-                            <TableRow key={service.id}>
-                              <TableCell>
-                                <input
-                                  type="checkbox"
-                                  className="h-3 w-3"
-                                  checked={selectedServices.includes(
-                                    service.id
-                                  )}
-                                  onChange={() =>
-                                    handleSelectService(service.id)
-                                  }
-                                />
-                              </TableCell>
-                              <TableCell className="font-medium">
-                                {service.service}
-                              </TableCell>
-                              <TableCell>
-                                {service.date
-                                  ? format(new Date(service.date), "hh:mm a")
-                                  : "-"}
-                              </TableCell>
-                              <TableCell>{service.quantity}</TableCell>
-                              <TableCell className="text-right">
-                                {service.rate.toLocaleString("en-IN")}
-                              </TableCell>
-                              <TableCell className="text-right font-semibold">
-                                {service.total.toLocaleString("en-IN")}
-                              </TableCell>
-                              <TableCell className="text-right">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-6 w-6 p-0 mr-2"
-                                  onClick={() => handleEditService(service.id)}
-                                >
-                                  <span className="sr-only">Edit</span>
-                                  <Pencil className="h-3 w-3" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="h-6 w-6 p-0"
-                                  onClick={() =>
-                                    handleRemoveService(service.id)
-                                  }
-                                >
-                                  <span className="sr-only">Remove</span>
-                                  <Trash2 className="h-3 w-3 text-red-600" />
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </>
-                      ))
-                    : filteredServicesForDisplay.map((service) => (
-                        <TableRow key={service.id}>
-                          <TableCell>
-                            <input
-                              type="checkbox"
-                              className="h-4 w-4"
-                              checked={selectedServices.includes(service.id)}
-                              onChange={() => handleSelectService(service.id)}
-                            />
-                          </TableCell>
-                          <TableCell className="font-medium">
-                            {service.service}
-                          </TableCell>
-                          <TableCell>
-                            {service.date
-                              ? format(
-                                  new Date(service.date),
-                                  "dd/MM/yyyy hh:mm a"
-                                )
-                              : "-"}
-                          </TableCell>
-                          <TableCell>{service.quantity}</TableCell>
-                          <TableCell className="text-right">
-                            {service.rate.toLocaleString("en-IN")}
-                          </TableCell>
-                          <TableCell className="text-right font-semibold">
-                            {service.total.toLocaleString("en-IN")}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-6 w-6 p-0 mr-2"
-                              onClick={() => handleEditService(service.id)}
-                            >
-                              <span className="sr-only">Edit</span>
-                              <Pencil className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="h-6 w-6 p-0"
-                              onClick={() => handleRemoveService(service.id)}
-                            >
-                              <span className="sr-only">Remove</span>
-                              <Trash2 className="h-3 w-3 text-red-600" />
-                            </Button>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px] h-[35px]">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={
+                        selectedServices.length ===
+                          filteredServicesForDisplay.length &&
+                        filteredServicesForDisplay.length > 0
+                      }
+                      onChange={handleSelectAll}
+                    />
+                  </TableHead>
+                  <TableHead className="h-[35px]">Service</TableHead>
+                  <TableHead className="h-[35px]">Date</TableHead>
+                  <TableHead className="h-[35px]">Quantity</TableHead>
+                  <TableHead className="text-right h-[35px]">Rate</TableHead>
+                  <TableHead className="text-right h-[35px]">Total</TableHead>
+                  <TableHead className="text-right h-[20px]">Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {viewMode === "datewise" && !breakTotalMode
+                  ? servicesGroupedByDate?.map(({ date, services }) => (
+                      <>
+                        <TableRow key={`date-${date}`}>
+                          <TableCell colSpan={7} className="bg-gray-50">
+                            <span className="font-semibold">
+                              {date === "No Date"
+                                ? "No Date"
+                                : format(new Date(date), "dd MMMM yyyy")}
+                            </span>
                           </TableCell>
                         </TableRow>
-                      ))}
-                </TableBody>
-              </Table>
+                        {services.map((service) => (
+                          <TableRow key={service.id}>
+                            <TableCell>
+                              <input
+                                type="checkbox"
+                                className="h-3 w-3"
+                                checked={selectedServices.includes(service.id)}
+                                onChange={() => handleSelectService(service.id)}
+                              />
+                            </TableCell>
+                            <TableCell className="font-medium">
+                              {service.service}
+                            </TableCell>
+                            <TableCell>
+                              {service.date
+                                ? format(new Date(service.date), "hh:mm a")
+                                : "-"}
+                            </TableCell>
+                            <TableCell>{service.quantity}</TableCell>
+                            <TableCell className="text-right">
+                              {service.rate.toLocaleString("en-IN")}
+                            </TableCell>
+                            <TableCell className="text-right font-semibold">
+                              {service.total.toLocaleString("en-IN")}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 w-6 p-0 mr-2"
+                                onClick={() => handleEditService(service.id)}
+                              >
+                                <span className="sr-only">Edit</span>
+                                <Pencil className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleRemoveService(service.id)}
+                              >
+                                <span className="sr-only">Remove</span>
+                                <Trash2 className="h-3 w-3 text-red-600" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </>
+                    ))
+                  : filteredServicesForDisplay.map((service) => (
+                      <TableRow key={service.id}>
+                        <TableCell>
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4"
+                            checked={selectedServices.includes(service.id)}
+                            onChange={() => handleSelectService(service.id)}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {service.service}
+                        </TableCell>
+                        <TableCell>
+                          {service.date
+                            ? format(
+                                new Date(service.date),
+                                "dd/MM/yyyy hh:mm a"
+                              )
+                            : "-"}
+                        </TableCell>
+                        <TableCell>{service.quantity}</TableCell>
+                        <TableCell className="text-right">
+                          {service.rate.toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell className="text-right font-semibold">
+                          {service.total.toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 w-6 p-0 mr-2"
+                            onClick={() => handleEditService(service.id)}
+                          >
+                            <span className="sr-only">Edit</span>
+                            <Pencil className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => handleRemoveService(service.id)}
+                          >
+                            <span className="sr-only">Remove</span>
+                            <Trash2 className="h-3 w-3 text-red-600" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+              </TableBody>
+            </Table>
             {/* </ScrollArea> */}
           </div>
         </CardContent>
@@ -1566,7 +1559,6 @@ const CreateServiceBill = ({
               >
                 List without Date
               </Button>
-
             </div>
           )}
           <div className="flex flex-col items-end space-y-0.5 text-sm">
