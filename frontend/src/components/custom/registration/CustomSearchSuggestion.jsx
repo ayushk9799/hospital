@@ -15,6 +15,7 @@ export const SearchSuggestion = forwardRef(
       setValue,
       onSuggestionSelect,
       showStock = false,
+      autoFocus = false,
     },
     ref
   ) => {
@@ -100,6 +101,7 @@ export const SearchSuggestion = forwardRef(
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             onFocus={() => setShowSuggestions(true)}
+            autoFocus={autoFocus}
             
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
             placeholder={placeholder || "Search or type"}

@@ -1531,7 +1531,7 @@ const CreateServiceBill = ({
 
       <Card>
         <CardContent
-          className={`p-1 grid grid-cols-${!breakTotalMode ? "2" : "1"}`}
+          className={` grid p-4 grid-cols-${!breakTotalMode ? "2" : "1"}`}
         >
           {!breakTotalMode && (
             <div className="flex  mb-2 space-x-2">
@@ -1575,18 +1575,78 @@ const CreateServiceBill = ({
             </div>
 
             {/* Discount */}
-            <div className="flex justify-end items-center w-full ">
+            <div className="flex justify-end items-center w-full gap-2">
+              <div className="flex items-center gap-2 mr-2">
+                <div className="w-20 flex items-center">
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    step="0.01"
+                    value={additionalDiscountType === "percentage" ? 
+                      additionalDiscount : 
+                      ((parseFloat(additionalDiscount) || 0) / calculateTotals.subtotal * 100).toFixed(2)}
+                    onChange={(e) => {
+                      let value = e.target.value;
+                      
+                      // Allow empty input
+                      if (value === "") {
+                        setAdditionalDiscountType("percentage");
+                        setAdditionalDiscount("");
+                        return;
+                      }
+
+                      // Parse the input value
+                      let numValue = parseFloat(value);
+                      
+                      // Check if it's a valid number
+                      if (!isNaN(numValue)) {
+                        // Don't allow values above 100
+                        if (numValue > 100) return;
+                        
+                        // Don't allow negative values
+                        if (numValue < 0) return;
+                        
+                        setAdditionalDiscountType("percentage");
+                        setAdditionalDiscount(value);
+                      }
+                    }}
+                    className="w-full h-7 text-right text-red-600 font-medium  p-0 focus:ring-1 focus-visible:ring-1 focus-visible:ring-offset-1 bg-transparent pr-2"
+                  />
+                  <span className="text-sm text-gray-500 ml-1">%</span>
+                </div>
+              </div>
               <span className="text-gray-600 mr-4 min-w-[100px] text-right">
                 Discount(₹):
               </span>
-              <div className="w-32">
+              <div className="w-32 flex items-center">
                 <Input
-                  value={(parseFloat(additionalDiscount) || 0).toFixed(2)}
+                                      value={additionalDiscountType === "amount" ? 
+                      additionalDiscount :
+                      ((parseFloat(additionalDiscount) || 0) / 100 * calculateTotals.subtotal).toFixed(2)}
+                  type="number"
+                  step="0.01"
                   onChange={(e) => {
-                    setAdditionalDiscount(e.target.value);
+                    let value = e.target.value;
+                    
+                    // Allow empty input
+                    if (value === "") {
+                      setAdditionalDiscountType("amount");
+                      setAdditionalDiscount("");
+                      return;
+                    }
+
+                    // Parse the input value
+                    let numValue = parseFloat(value);
+                    
+                    // Check if it's a valid number
+                    if (!isNaN(numValue)) {
+                      setAdditionalDiscountType("amount");
+                      setAdditionalDiscount(value);
+                    }
                   }}
                   className="w-full h-7 text-right text-red-600 font-medium border-0 p-0 focus:ring-1 focus-visible:ring-1 focus-visible:ring-offset-1 bg-transparent"
-                  placeholder=""
+                  placeholder="0.00"
                 />
               </div>
             </div>

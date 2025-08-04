@@ -1022,15 +1022,18 @@ export default function DischargeSummary() {
   const medicineNameRefs = useRef([]);
   const dosageRefs = useRef([]);
   const durationRefs = useRef([]);
+  const remarksRefs = useRef([]);
   const addMedicineBtnRef = useRef(null);
+  const isAddingNewMedicine = useRef(false);
   const prevMedicineAdviceLength = useRef(
     formData.medicineAdvice?.length || 0
   );
 
   useEffect(() => {
     const currentLength = formData.medicineAdvice?.length || 0;
-    if (currentLength > prevMedicineAdviceLength.current) {
+    if (currentLength > prevMedicineAdviceLength.current && isAddingNewMedicine.current) {
       medicineNameRefs.current[currentLength - 1]?.focus();
+      isAddingNewMedicine.current = false;
     }
     prevMedicineAdviceLength.current = currentLength;
   }, [formData.medicineAdvice]);
@@ -1084,6 +1087,7 @@ export default function DischargeSummary() {
           name: m.name,
           duration: m.duration,
           dosage: m.dosage,
+          remarks: m.remarks,
         })),
       investigations: formData.investigations
         .filter((inv) => inv.name.trim() !== "" && inv.isIncluded)
@@ -1145,6 +1149,7 @@ export default function DischargeSummary() {
           name: m.name,
           duration: m.duration,
           dosage: m.dosage,
+          remarks: m.remarks,
         })),
       investigations: formData.investigations
         .filter((inv) => inv.name.trim() !== "" && inv.isIncluded)
@@ -1257,9 +1262,10 @@ export default function DischargeSummary() {
   };
 
   const addMedicineAdvice = (id) => {
+    isAddingNewMedicine.current = true;
     setFormData((prev) => ({
       ...prev,
-      [id]: [...(prev[id] || []), { name: "", dosage: "", duration: "" }],
+      [id]: [...(prev[id] || []), { name: "", dosage: "", duration: "", remarks: "" }],
     }));
   };
 
@@ -1530,7 +1536,7 @@ export default function DischargeSummary() {
                             {formData[field.id]?.map((item, index) => (
                               <div
                                 key={index}
-                                className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-1"
+                                className="grid grid-cols-1 sm:grid-cols-5 gap-2 mb-1"
                               >
                                 <div
                                   onKeyDown={(e) => {
@@ -1546,6 +1552,7 @@ export default function DischargeSummary() {
                                     suggestions={medicinelist?.map((item) => ({
                                       name: item,
                                     }))}
+                                    autoFocus={false}
                                     placeholder="Select medicine/advice"
                                     value={item.name}
                                     setValue={(value) =>
@@ -1583,7 +1590,6 @@ export default function DischargeSummary() {
                                   }
                                   className="font-medium"
                                   onKeyDown={(e) => {
-                                    // Prevent form submission on Enter key
                                     if (e.key === "Enter") {
                                       e.preventDefault();
                                       durationRefs.current[index]?.focus();
@@ -1605,13 +1611,48 @@ export default function DischargeSummary() {
                                   }
                                   className="font-medium"
                                   onKeyDown={(e) => {
-                                    // Prevent form submission on Enter key
                                     if (e.key === "Enter") {
                                       e.preventDefault();
-                                      addMedicineBtnRef.current?.focus();
+                                      remarksRefs.current[index]?.focus();
                                     }
                                   }}
                                 />
+                                <div>
+                                  <SearchSuggestion
+                                    ref={(el) => (remarksRefs.current[index] = el)}
+                                    autoFocus={false}
+                                    suggestions={[
+                                      { name: "Before Food" },
+                                      { name: "After Food" },
+                                      { name: "With Food" },
+                                      { name: "Empty Stomach" },
+                                      { name: "Night" },
+                                      { name: "Morning" },
+                                      { name: "SOS" },
+                                      { name: "Twice Daily" },
+                                      { name: "Thrice Daily" },
+                                    ]}
+                                    placeholder="Remarks"
+                                    value={item.remarks}
+                                    setValue={(value) =>
+                                      handleMedicineAdviceChange(
+                                        index,
+                                        "remarks",
+                                        value,
+                                        field.id
+                                      )
+                                    }
+                                    onSuggestionSelect={(suggestion) => {
+                                      handleMedicineAdviceChange(
+                                        index,
+                                        "remarks",
+                                        suggestion.name,
+                                        field.id
+                                      );
+                                      addMedicineBtnRef.current?.focus();
+                                    }}
+                                  />
+                                </div>
                                 <Button
                                   type="button"
                                   variant="destructive"
