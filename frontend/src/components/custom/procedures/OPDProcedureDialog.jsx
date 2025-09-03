@@ -22,7 +22,7 @@ import {
 import MemoizedInput from "../registration/MemoizedInput";
 import { Textarea } from "../../ui/textarea";
 import { searchPatients } from "../../../redux/slices/patientSlice";
-import { Search } from "lucide-react";
+import { Loader2, Search } from "lucide-react";
 import { useSelector } from "react-redux";
 import OPDProcedureBillDialog from "./OPDProcedureBillDialog";
 import SearchSuggestion from "../registration/CustomSearchSuggestion";
@@ -66,6 +66,7 @@ const OPDProcedureDialog = ({ open, onOpenChange, initialPatientData }) => {
   //   // Add more procedures as needed
   // ];
   const proceduresList = useSelector((state) => state.services.services);
+  const {createStatus} = useSelector((state) => state.opdProcedure);
   // Convert proceduresList to the format expected by SearchSuggestion
   const proceduresSuggestions = useMemo(
     () =>
@@ -443,8 +444,15 @@ const OPDProcedureDialog = ({ open, onOpenChange, initialPatientData }) => {
             <Button variant="outline" onClick={handleDialogClose} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button onClick={handleSubmit} className="w-full sm:w-auto">
-              Submit
+            <Button onClick={handleSubmit} className="w-full sm:w-auto" disabled={createStatus === "loading"}>
+              {createStatus === "loading" ? (
+                <>
+                  <Loader2 className="mr-1 h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : (
+                "Submit"
+              )}
             </Button>
           </div>
         </DialogContent>

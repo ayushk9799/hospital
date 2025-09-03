@@ -22,6 +22,7 @@ import prescriptionTemplatesReducer from "./slices/prescriptionTemplateSlice";
 import doctorDataReducer from "./slices/doctorDataSlice";
 import doctorPrescriptionReducer from "./slices/doctorPrescriptionSlice";
 import textTemplatesReducer from "./slices/textTemplatesSlice";
+import opdProcedureReducer from "./slices/opdProcedureSlice";
 
 export const store = configureStore({
   reducer: {
@@ -48,5 +49,6 @@ export const store = configureStore({
     doctorData: doctorDataReducer,
     doctorPrescription: doctorPrescriptionReducer,
     textTemplates: textTemplatesReducer,
+    opdProcedure: opdProcedureReducer,
   },
 });
