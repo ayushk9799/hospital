@@ -251,8 +251,8 @@ router.put("/service/:id", async (req, res) => {
   }
 });
 
-// Delete a bill
-router.delete("/delete-bill/:id", async (req, res) => {
+// Delete an OPD Procedure bill and associated payments
+router.delete("/delete-bill/:id", verifyToken, async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
 
@@ -263,23 +263,42 @@ router.delete("/delete-bill/:id", async (req, res) => {
       throw new Error("Bill not found");
     }
 
-    // Remove bill reference from visit/admission if it exists
-    if (bill.patientType === "IPD") {
-      await IPDAdmission.updateOne(
-        { "bills.services": id },
-        { $pull: { "bills.services": id } }
-      ).session(session);
-    } else {
-      await Visit.updateOne(
-        { "bills.services": id },
-        { $pull: { "bills.services": id } }
-      ).session(session);
+    if (bill.patientType !== "OPDProcedure") {
+      throw new Error("Only OPD Procedure bills can be deleted from this route");
     }
 
+    // 1. Delete all associated payment records
+    const paymentIds = Array.isArray(bill.payments) ? bill.payments : [];
+    await Payment.deleteMany({
+      $or: [
+        { _id: { $in: paymentIds } },
+        { "paymentType.id": bill._id.toString() },
+        ...(bill.invoiceNumber ? [{ associatedInvoiceOrId: bill.invoiceNumber }] : []),
+      ],
+    }).session(session);
+
+    // 2. Delete associated OPDProcedure document
+    if (bill.opdProcedure) {
+      await OPDProcedure.findByIdAndDelete(bill.opdProcedure).session(session);
+    }
+    await OPDProcedure.deleteMany({ servicesBill: bill._id }).session(session);
+
+    // 3. Remove bill reference from patient if attached
+    if (bill.patient) {
+      await Patient.findByIdAndUpdate(
+        bill.patient,
+        { $pull: { opdProcedureBills: bill._id } },
+        { session }
+      );
+    }
+
+    // 4. Delete the ServicesBill itself
     await ServicesBill.findByIdAndDelete(id).session(session);
 
     await session.commitTransaction();
-    res.status(200).json({ message: "Bill deleted successfully" });
+    res.status(200).json({
+      message: "OPD Procedure bill and associated payments deleted successfully",
+    });
   } catch (error) {
     await session.abortTransaction();
     res.status(400).json({ message: error.message });

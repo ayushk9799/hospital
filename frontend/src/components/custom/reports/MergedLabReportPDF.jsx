@@ -73,7 +73,11 @@ const MergedLabReportPDF = forwardRef((props, ref) => {
 
   try {
     const ComponentFunction = templateFunction(React, HospitalHeader, styles);
-    return ComponentFunction(reportsData, { ...patientData, age: parseAge(patientData.patient?.age||patientData.age) }, hospital, ref);
+    return React.createElement(
+      "div",
+      { style: { whiteSpace: "pre-line" } },
+      ComponentFunction(reportsData, { ...patientData, age: parseAge(patientData.patient?.age||patientData.age) }, hospital, ref)
+    );
   } catch (error) {
     console.error("Error rendering merged lab report:", error);
     return React.createElement(

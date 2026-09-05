@@ -4,7 +4,9 @@ import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { editTemplate, deleteTemplate } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
 import CustomRemarksEditor from "../components/custom/reports/CustomRemarksEditor";
+import { normalizeNormalRange } from "../utils/labNormalRange";
 
 import { fetchLabData } from "../redux/slices/labSlice";
 
@@ -350,7 +352,7 @@ export default function EditTestTemplate() {
           label: field.label,
           value: field.value,
           unit: field.unit,
-          normalRange: field.normalRange,
+          normalRange: normalizeNormalRange(field.normalRange),
           ...(processedOptions?.length > 0 && { options: processedOptions }),
           ...((field.isFormulaApplied || !field.fromLabReportFields) &&
             field.calculationDetails?.formula && {
@@ -621,7 +623,7 @@ export default function EditTestTemplate() {
                                     <ChevronRight className="h-4 w-4" />
                                   )}
                                 </Button>
-                                <div className="grid grid-cols-[2fr,1fr,1fr,2fr,auto] gap-4 flex-1">
+                                <div className="grid grid-cols-[2fr_1fr_2fr_2fr_auto] gap-4 flex-1">
                                   <Input
                                     className="h-8 font-semibold"
                                     value={
@@ -648,8 +650,8 @@ export default function EditTestTemplate() {
                                       )
                                     }
                                   />
-                                  <Input
-                                    className="h-8"
+                                  <Textarea
+                                    className="min-h-16 resize-y whitespace-pre-line"
                                     value={
                                       templateData.fields[item.id]
                                         ?.normalRange || ""

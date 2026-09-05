@@ -86,7 +86,6 @@ const Billings = () => {
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [billToDelete, setBillToDelete] = useState(null);
-  const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [patientTypeFilter, setPatientTypeFilter] = useState("All");
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
@@ -361,17 +360,16 @@ const Billings = () => {
       .then(() => {
         setIsDeleteDialogOpen(false);
         setBillToDelete(null);
-        setDeleteConfirmation("");
         toast({
           title: "Bill deleted",
-          description: `Bill of ${billToDelete.patientInfo.name} has been successfully deleted.`,
+          description: `Bill of ${billToDelete?.patientInfo?.name || "patient"} and associated payments have been successfully deleted.`,
           variant: "success",
         });
       })
       .catch((error) => {
         toast({
           title: "Error",
-          description: `Failed to delete bill: ${error.message}`,
+          description: `Failed to delete bill: ${error?.message || error || "Unknown error"}`,
           variant: "destructive",
         });
       });
@@ -517,6 +515,14 @@ const Billings = () => {
                   <DropdownMenuItem onClick={() => handlePayments(bill)}>
                     Payments
                   </DropdownMenuItem>
+                  {bill.patientType === "OPDProcedure" && (
+                    <DropdownMenuItem
+                      className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                      onClick={() => handleDeleteBill(bill)}
+                    >
+                      Delete Bill
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -962,6 +968,14 @@ const Billings = () => {
                             >
                               Payments
                             </DropdownMenuItem>
+                            {bill.patientType === "OPDProcedure" && (
+                              <DropdownMenuItem
+                                className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                                onClick={() => handleDeleteBill(bill)}
+                              >
+                                Delete Bill
+                              </DropdownMenuItem>
+                            )}
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </TableCell>
@@ -995,30 +1009,17 @@ const Billings = () => {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              Delete Bill of {billToDelete?.patientInfo?.name}?
+              Delete OPD Procedure Bill of {billToDelete?.patientInfo?.name}?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete the bill from your records.
+              This action cannot be undone. This will permanently delete the OPD procedure bill and all its associated payment records from your accounts.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div>
-            <p className="text-sm mb-1">
-              Please type <span className="font-semibold">DELETE</span> to
-              confirm.
-            </p>
-            <Input
-              placeholder="Type DELETE"
-              value={deleteConfirmation}
-              onChange={(e) => setDeleteConfirmation(e.target.value)}
-            />
-          </div>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setDeleteConfirmation("")}>
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDelete}
-              disabled={deleteConfirmation !== "DELETE"}
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               Delete
             </AlertDialogAction>

@@ -7,6 +7,7 @@
 /backend/config
 /backend/load-test.yml
 /frontend/.pnp
+/backend/scripts
 /frontend/src/templatesExperiments
 .pnp.js
 # testing

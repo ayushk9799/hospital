@@ -14,9 +14,11 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
   
     // Handle gender-specific ranges
     if (normalRange.toLowerCase().includes("male") && normalRange.toLowerCase().includes("female")) {
-      const ranges = normalRange.split(/[,;]/).map(r => r.trim());
+      const ranges = normalRange.split(/[,;\\n]+/).map(r => r.trim());
       const genderRange = ranges.find(r => 
-        r.toLowerCase().includes(gender.toLowerCase()) || 
+        (gender?.toLowerCase().startsWith("f")
+          ? r.toLowerCase().includes("female")
+          : r.toLowerCase().includes("male") && !r.toLowerCase().includes("female")) ||
         r.toLowerCase().startsWith(gender.toLowerCase().charAt(0))
       );
       
@@ -57,9 +59,11 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
     if (!normalRange || !gender) return normalRange;
 
     if (normalRange.toLowerCase().includes("male") && normalRange.toLowerCase().includes("female")) {
-      const ranges = normalRange.split(/[,;]/).map(r => r.trim());
+      const ranges = normalRange.split(/[,;\\n]+/).map(r => r.trim());
       const genderRange = ranges.find(r => 
-        r.toLowerCase().includes(gender.toLowerCase()) || 
+        (gender?.toLowerCase().startsWith("f")
+          ? r.toLowerCase().includes("female")
+          : r.toLowerCase().includes("male") && !r.toLowerCase().includes("female")) ||
         r.toLowerCase().startsWith(gender.toLowerCase().charAt(0))
       );
       
@@ -71,6 +75,15 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
       }
     }
     return normalRange;
+  };
+
+  const getRangeBottomPadding = (normalRange) => {
+    const lines = String(normalRange || "").replace(/\\r\\n?/g, "\\n").split("\\n");
+    let blankLines = 0;
+    for (let index = lines.length - 1; index > 0 && lines[index].trim() === ""; index -= 1) {
+      blankLines += 1;
+    }
+    return blankLines > 0 ? (blankLines * 1.2) + "em" : undefined;
   };
 
   return React.createElement("div", { 
@@ -156,7 +169,7 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
           return item.value ? React.createElement("div", {
             key: \`field-\${index}\`,
             className: useTableFormat ? 
-              "grid grid-cols-12 gap-4 py-[2px] items-center text-[13px]" :
+              "grid grid-cols-12 gap-4 py-[2px] items-start text-[13px]" :
               "grid grid-cols-12 gap-5 py-[2px] items-baseline"
           },
             useTableFormat ? 
@@ -178,11 +191,16 @@ export const labReportTemplateStringDefault = `(reportData, patientData, hospita
                 React.createElement("div", { className: "col-span-2 text-center" }, 
                   item.unit || '-'
                 ),
-                React.createElement("div", { className: "col-span-3 text-right" },
-                  getGenderSpecificRange(
-                    item.normalRange, 
-                    patientData?.gender || patientData?.patient?.gender
-                  ) || '-'
+                React.createElement("div", { className: "col-span-3 flex justify-end self-start" },
+                  React.createElement("div", {
+                    className: "inline-block text-left whitespace-pre-line",
+                    style: { paddingBottom: getRangeBottomPadding(item.normalRange) }
+                  },
+                    getGenderSpecificRange(
+                      item.normalRange,
+                      patientData?.gender || patientData?.patient?.gender
+                    ) || '-'
+                  )
                 )
               ) :
               // Textarea format
@@ -306,9 +324,11 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
     if (!value || !normalRange) return "inherit";
   
     if (normalRange.toLowerCase().includes("male") && normalRange.toLowerCase().includes("female")) {
-      const ranges = normalRange.split(/[,;]/).map(r => r.trim());
+      const ranges = normalRange.split(/[,;\\n]+/).map(r => r.trim());
       const genderRange = ranges.find(r => 
-        r.toLowerCase().includes(gender.toLowerCase()) || 
+        (gender?.toLowerCase().startsWith("f")
+          ? r.toLowerCase().includes("female")
+          : r.toLowerCase().includes("male") && !r.toLowerCase().includes("female")) ||
         r.toLowerCase().startsWith(gender.toLowerCase().charAt(0))
       );
       
@@ -349,9 +369,11 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
     if (!normalRange || !gender) return normalRange;
 
     if (normalRange.toLowerCase().includes("male") && normalRange.toLowerCase().includes("female")) {
-      const ranges = normalRange.split(/[,;]/).map(r => r.trim());
+      const ranges = normalRange.split(/[,;\\n]+/).map(r => r.trim());
       const genderRange = ranges.find(r => 
-        r.toLowerCase().includes(gender.toLowerCase()) || 
+        (gender?.toLowerCase().startsWith("f")
+          ? r.toLowerCase().includes("female")
+          : r.toLowerCase().includes("male") && !r.toLowerCase().includes("female")) ||
         r.toLowerCase().startsWith(gender.toLowerCase().charAt(0))
       );
       
@@ -363,6 +385,15 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
       }
     }
     return normalRange;
+  };
+
+  const getRangeBottomPadding = (normalRange) => {
+    const lines = String(normalRange || "").replace(/\\r\\n?/g, "\\n").split("\\n");
+    let blankLines = 0;
+    for (let index = lines.length - 1; index > 0 && lines[index].trim() === ""; index -= 1) {
+      blankLines += 1;
+    }
+    return blankLines > 0 ? (blankLines * 1.2) + "em" : undefined;
   };
 
   // Group reports by table/non-table format
@@ -546,7 +577,7 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
                   }, item.name)
                 : item.value ? React.createElement("div", { 
                     key: \`table-\${reportIndex}-\${index}\`,
-                    className: "grid grid-cols-12 gap-4 items-center text-[14px]",
+                    className: "grid grid-cols-12 gap-4 items-start text-[14px]",
                   },
                     React.createElement("div", { className: "col-span-5 text-[#2c3e50] pr-[2mm] pl-4" }, item.label),
                     React.createElement("div", { 
@@ -554,8 +585,13 @@ export const mergedLabReportTemplateStringDefault = `(reportsData, patientData, 
                       style: { color: getValueColor(item.value, item.normalRange, patientData?.patient?.gender || patientData.gender) }
                     }, item.value),
                     React.createElement("div", { className: "col-span-2 text-center" }, item.unit),
-                    React.createElement("div", { className: "col-span-3 text-right" }, 
-                      getGenderSpecificRange(item.normalRange, patientData?.patient?.gender || patientData.gender)
+                    React.createElement("div", { className: "col-span-3 flex justify-end self-start" },
+                      React.createElement("div", {
+                        className: "inline-block text-left whitespace-pre-line",
+                        style: { paddingBottom: getRangeBottomPadding(item.normalRange) }
+                      },
+                        getGenderSpecificRange(item.normalRange, patientData?.patient?.gender || patientData.gender)
+                      )
                     )
                   ) : React.createElement("div",null)
             )

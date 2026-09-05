@@ -8,6 +8,7 @@ import {
 } from "../redux/slices/templatesSlice";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
+import { Textarea } from "../components/ui/textarea";
 import { ScrollArea } from "../components/ui/scroll-area";
 import { Checkbox } from "../components/ui/checkbox";
 import { fetchLabData } from "../redux/slices/labSlice";
@@ -23,6 +24,7 @@ import {
   DialogFooter,
 } from "../components/ui/dialog";
 import * as XLSX from "xlsx";
+import { normalizeNormalRange } from "../utils/labNormalRange";
 
 export default function CreateTestTemplate() {
   const { toast } = useToast();
@@ -248,7 +250,7 @@ export default function CreateTestTemplate() {
                   label: field.label,
                   value: field.value,
                   unit: field.unit,
-                  normalRange: field.normalRange,
+                  normalRange: normalizeNormalRange(field.normalRange),
                   ...(field.options &&
                     field.options.length > 0 && {
                       options: field.options
@@ -279,7 +281,7 @@ export default function CreateTestTemplate() {
                     label: field.label,
                     value: field.value,
                     unit: field.unit,
-                    normalRange: field.normalRange,
+                    normalRange: normalizeNormalRange(field.normalRange),
                     ...(processedOptions?.length > 0 && {
                       options: processedOptions,
                     }),
@@ -667,7 +669,7 @@ export default function CreateTestTemplate() {
             label: row.Field,
             value: "",
             unit: row.Unit || "",
-            normalRange: row.NormalRange || "",
+            normalRange: normalizeNormalRange(row.NormalRange || ""),
             options: row.Options
               ? row.Options.split(",").map((opt) => opt.trim())
               : [],
@@ -1025,9 +1027,10 @@ export default function CreateTestTemplate() {
                             }));
                           }}
                         />
-                        <Input
+                        <Textarea
                           placeholder="Normal Range"
                           value={field.normalRange}
+                          className="min-h-16 resize-y whitespace-pre-line"
                           onChange={(e) => {
                             setCustomFields((prev) => ({
                               ...prev,
@@ -1220,9 +1223,10 @@ export default function CreateTestTemplate() {
                                     )}
                                   </div>
                                   <div>
-                                    <Input
+                                    <Textarea
                                       placeholder="Normal Range"
                                       value={selectedField.normalRange || ""}
+                                      className="min-h-16 resize-y whitespace-pre-line"
                                       onChange={(e) =>
                                         handleFieldPropertyChange(
                                           category.name,

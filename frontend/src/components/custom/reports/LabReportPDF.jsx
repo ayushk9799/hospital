@@ -224,7 +224,11 @@ const LabReportPDF = React.forwardRef(
       // Get the component function
       const ComponentFunction = templateFunction(React, HospitalHeader, styles);
       // Execute the component function with the props
-      return ComponentFunction(reportData, { ...patientData, age: parseAge(patientData.patient?.age||patientData.age) }, hospital, ref);
+      return React.createElement(
+        "div",
+        { style: { whiteSpace: "pre-line" } },
+        ComponentFunction(reportData, { ...patientData, age: parseAge(patientData.patient?.age||patientData.age) }, hospital, ref)
+      );
     } catch (error) {
       console.error("Error rendering dynamic lab report:", error);
       return React.createElement(

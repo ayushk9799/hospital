@@ -19,71 +19,10 @@ import { addLabReport } from "../redux/slices/patientSlice";
 import { useToast } from "../hooks/use-toast";
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
 import { Printer } from "lucide-react";
-
-const getValueColor = (value, normalRange, gender) => {
-  if (!value || !normalRange) return "inherit";
-
-  // Handle gender-specific ranges
-  if (
-    normalRange?.toLowerCase()?.includes("male") &&
-    normalRange?.toLowerCase()?.includes("female")
-  ) {
-    const ranges = normalRange?.split(",")?.map((r) => r?.trim());
-    const genderRange = ranges.find((r) =>
-      r?.toLowerCase()?.includes(gender?.toLowerCase())
-    );
-    if (genderRange) {
-      normalRange = genderRange.replace(/\(.*?\)/g, "").trim();
-    }
-  }
-
-  // Extract numeric values from the range
-  const numericValue = parseFloat(value);
-  if (isNaN(numericValue)) return "inherit";
-
-  // Handle different range patterns
-  if (normalRange.includes("-")) {
-    // Range pattern: "x-y"
-    const [min, max] = normalRange.split("-").map((v) => parseFloat(v));
-    if (!isNaN(min) && !isNaN(max)) {
-      if (numericValue < min) return "#FF4444"; // Red for low
-      if (numericValue > max) return "#FF4444"; // Red for high
-      return "#2ECC71"; // Green for normal
-    }
-  } else if (normalRange.startsWith("<")) {
-    // Range pattern: "<x"
-    const max = parseFloat(normalRange.substring(1));
-    if (!isNaN(max)) {
-      return numericValue > max ? "#FF4444" : "#2ECC71";
-    }
-  } else if (normalRange.startsWith(">")) {
-    // Range pattern: ">x"
-    const min = parseFloat(normalRange.substring(1));
-    if (!isNaN(min)) {
-      return numericValue < min ? "#FF4444" : "#2ECC71";
-    }
-  }
-
-  return "inherit";
-};
-
-const getGenderSpecificRange = (normalRange, gender) => {
-  if (!normalRange || !gender) return normalRange;
-
-  if (
-    normalRange.toLowerCase()?.includes("male") &&
-    normalRange.toLowerCase()?.includes("female")
-  ) {
-    const ranges = normalRange.split(",").map((r) => r.trim());
-    const genderRange = ranges.find((r) =>
-      r.toLowerCase()?.includes(gender.toLowerCase())
-    );
-    if (genderRange) {
-      return genderRange.replace(/\(.*?\)/g, "").trim();
-    }
-  }
-  return normalRange;
-};
+import {
+  getLabValueColor,
+  normalizeNormalRange,
+} from "../utils/labNormalRange";
 
 // Helper function to reorder the list when items are dragged
 const reorder = (list, startIndex, endIndex) => {
@@ -295,7 +234,7 @@ const TemplateLabReport = ({
           value: field.value,
           label: field.label,
           unit: field.unit,
-          normalRange: field.normalRange,
+          normalRange: normalizeNormalRange(field.normalRange),
         };
         return acc;
       }, {}),
@@ -543,7 +482,7 @@ const TemplateLabReport = ({
                                     step="0.01"
                                     className="font-bold"
                                     style={{
-                                      color: getValueColor(
+                                      color: getLabValueColor(
                                         field.value,
                                         field.normalRange,
                                         patientData?.gender
@@ -565,12 +504,8 @@ const TemplateLabReport = ({
                                 />
                               </div>
                               <div>
-                                <Input
-                                  value={getGenderSpecificRange(
-                                    field.normalRange,
-                                    patientData?.gender ||
-                                      patientData?.patient?.gender
-                                  )}
+                                <Textarea
+                                  value={field.normalRange}
                                   onChange={(e) =>
                                     handleInputChange(
                                       e,
@@ -579,7 +514,7 @@ const TemplateLabReport = ({
                                     )
                                   }
                                   placeholder="-"
-                                  className="flex-1"
+                                  className="min-h-10 flex-1 resize-y whitespace-pre-line"
                                   tabIndex={-1}
                                 />
                               </div>
